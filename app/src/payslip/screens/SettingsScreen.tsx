@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import { usePayslipStore } from '../store/usePayslipStore';
 import { NumberInput } from '../components/input/NumberInput';
@@ -13,129 +14,148 @@ export const SettingsScreen: React.FC = () => {
   const ranks = settings.role === 'pil' ? RANKS_PILOT : RANKS_CC;
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Ruolo e Grado</Text>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Settings</Text>
+      </View>
+      
+      <ScrollView style={styles.content}>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Role and Rank</Text>
 
-        <View style={styles.roleContainer}>
-          <TouchableOpacity
-            style={[styles.roleButton, settings.role === 'pil' && styles.roleButtonActive]}
-            onPress={() => setSettings({ role: 'pil', rank: 'fo' })}
-          >
-            <Text style={[styles.roleText, settings.role === 'pil' && styles.roleTextActive]}>
-              Pilota
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.roleButton, settings.role === 'cc' && styles.roleButtonActive]}
-            onPress={() => setSettings({ role: 'cc', rank: 'sepe' })}
-          >
-            <Text style={[styles.roleText, settings.role === 'cc' && styles.roleTextActive]}>
-              Cabin Crew
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.ranksContainer}>
-          {ranks.map((rank) => (
+          <View style={styles.roleContainer}>
             <TouchableOpacity
-              key={rank}
-              style={[styles.rankButton, settings.rank === rank && styles.rankButtonActive]}
-              onPress={() => setSettings({ rank })}
+              style={[styles.roleButton, settings.role === 'pil' && styles.roleButtonActive]}
+              onPress={() => setSettings({ role: 'pil', rank: 'fo' })}
             >
-              <Text style={[styles.rankText, settings.rank === rank && styles.rankTextActive]}>
-                {rank.toUpperCase()}
+              <Text style={[styles.roleText, settings.role === 'pil' && styles.roleTextActive]}>
+                Pilot
               </Text>
             </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Opzioni Contratto</Text>
-
-        {settings.rank === 'cpt' && (
-          <View style={styles.switchRow}>
-            <Text style={styles.switchLabel}>New Captain (CU)</Text>
-            <Switch value={settings.cu} onValueChange={(v) => setSettings({ cu: v })} />
+            <TouchableOpacity
+              style={[styles.roleButton, settings.role === 'cc' && styles.roleButtonActive]}
+              onPress={() => setSettings({ role: 'cc', rank: 'sepe' })}
+            >
+              <Text style={[styles.roleText, settings.role === 'cc' && styles.roleTextActive]}>
+                Cabin Crew
+              </Text>
+            </TouchableOpacity>
           </View>
-        )}
 
-        {(settings.rank === 'tri' || settings.rank === 'tre') && (
-          <>
-            <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>BTC Based</Text>
-              <Switch value={settings.btc} onValueChange={(v) => setSettings({ btc: v })} />
-            </View>
-            {settings.rank === 'tri' && (
-              <View style={styles.switchRow}>
-                <Text style={styles.switchLabel}>LTC Position</Text>
-                <Switch
-                  value={settings.triAndLtc}
-                  onValueChange={(v) => setSettings({ triAndLtc: v })}
-                />
-              </View>
-            )}
-          </>
-        )}
-
-        <View style={styles.switchRow}>
-          <Text style={styles.switchLabel}>Part-time</Text>
-          <Switch value={settings.parttime} onValueChange={(v) => setSettings({ parttime: v })} />
+          <View style={styles.ranksContainer}>
+            {ranks.map((rank) => (
+              <TouchableOpacity
+                key={rank}
+                style={[styles.rankButton, settings.rank === rank && styles.rankButtonActive]}
+                onPress={() => setSettings({ rank })}
+              >
+                <Text style={[styles.rankText, settings.rank === rank && styles.rankTextActive]}>
+                  {rank.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
-        <View style={styles.switchRow}>
-          <Text style={styles.switchLabel}>Coniuge a Carico</Text>
-          <Switch
-            value={settings.coniugeCarico}
-            onValueChange={(v) => setSettings({ coniugeCarico: v })}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Contract Options</Text>
+
+          {settings.rank === 'cpt' && (
+            <View style={styles.switchRow}>
+              <Text style={styles.switchLabel}>New Captain (CU)</Text>
+              <Switch value={settings.cu} onValueChange={(v) => setSettings({ cu: v })} />
+            </View>
+          )}
+
+          {(settings.rank === 'tri' || settings.rank === 'tre') && (
+            <>
+              <View style={styles.switchRow}>
+                <Text style={styles.switchLabel}>BTC Based</Text>
+                <Switch value={settings.btc} onValueChange={(v) => setSettings({ btc: v })} />
+              </View>
+              {settings.rank === 'tri' && (
+                <View style={styles.switchRow}>
+                  <Text style={styles.switchLabel}>LTC Position</Text>
+                  <Switch
+                    value={settings.triAndLtc}
+                    onValueChange={(v) => setSettings({ triAndLtc: v })}
+                  />
+                </View>
+              )}
+            </>
+          )}
+
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>Part-time</Text>
+            <Switch value={settings.parttime} onValueChange={(v) => setSettings({ parttime: v })} />
+          </View>
+
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>Dependent Spouse</Text>
+            <Switch
+              value={settings.coniugeCarico}
+              onValueChange={(v) => setSettings({ coniugeCarico: v })}
+            />
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Deductions</Text>
+
+          <NumberInput
+            label="Union Fee"
+            value={settings.union}
+            onChange={(union) => setSettings({ union })}
+            suffix="€"
+          />
+
+          <NumberInput
+            label="Voluntary Pension Contribution"
+            value={settings.voluntaryPensionContribution}
+            onChange={(voluntaryPensionContribution) => setSettings({ voluntaryPensionContribution })}
+            suffix="%"
+          />
+
+          <NumberInput
+            label="Municipal Tax"
+            value={settings.addComunali}
+            onChange={(addComunali) => setSettings({ addComunali })}
+            suffix="%"
+          />
+
+          <NumberInput
+            label="Regional Tax"
+            value={settings.addRegionali}
+            onChange={(addRegionali) => setSettings({ addRegionali })}
+            suffix="%"
           />
         </View>
-      </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Detrazioni</Text>
-
-        <NumberInput
-          label="Quota Sindacale"
-          value={settings.union}
-          onChange={(union) => setSettings({ union })}
-          suffix="€"
-        />
-
-        <NumberInput
-          label="Contributo Volontario Pensione"
-          value={settings.voluntaryPensionContribution}
-          onChange={(voluntaryPensionContribution) => setSettings({ voluntaryPensionContribution })}
-          suffix="%"
-        />
-
-        <NumberInput
-          label="Addizionali Comunali"
-          value={settings.addComunali}
-          onChange={(addComunali) => setSettings({ addComunali })}
-          suffix="%"
-        />
-
-        <NumberInput
-          label="Addizionali Regionali"
-          value={settings.addRegionali}
-          onChange={(addRegionali) => setSettings({ addRegionali })}
-          suffix="%"
-        />
-      </View>
-
-      <View style={styles.bottomSpace} />
-    </ScrollView>
+        <View style={styles.bottomSpace} />
+      </ScrollView>
+    </SafeAreaView>
   );
 };
-
-import { TouchableOpacity } from 'react-native';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  header: {
+    backgroundColor: colors.primary,
+    paddingTop: 50,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.textInverse,
+    textAlign: 'center',
+  },
+  content: {
+    flex: 1,
   },
   card: {
     backgroundColor: colors.surface,

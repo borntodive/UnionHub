@@ -16,22 +16,22 @@ export const TotalCard: React.FC<TotalCardProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Totale</Text>
+      <Text style={styles.title}>Total</Text>
 
       <View style={styles.row}>
-        <Text style={styles.label}>Totale Competenze</Text>
+        <Text style={styles.label}>Total Earnings</Text>
         <Text style={styles.valuePositive}>{formatCurrency(totaleCompetenze)}</Text>
       </View>
 
       <View style={styles.row}>
-        <Text style={styles.label}>Totale Trattenute</Text>
+        <Text style={styles.label}>Total Deductions</Text>
         <Text style={styles.valueNegative}>{formatCurrency(-totaleTrattenute)}</Text>
       </View>
 
       <View style={styles.divider} />
 
       <View style={styles.row}>
-        <Text style={styles.netLabel}>Netto da Pagare</Text>
+        <Text style={styles.netLabel}>Net Payment</Text>
         <Text style={styles.netValue}>{formatCurrency(netPayment)}</Text>
       </View>
     </View>
@@ -58,6 +58,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   label: {
     fontSize: typography.sizes.base,

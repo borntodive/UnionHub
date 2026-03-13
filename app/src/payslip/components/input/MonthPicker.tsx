@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { colors, spacing, typography, borderRadius } from '../../../theme';
-import { formatDate, getYear, getMonthName } from '../../utils/formatters';
+import { getMonthName, getYear } from '../../utils/formatters';
 
 interface MonthPickerProps {
   value: string;
@@ -28,7 +28,7 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({ value, onChange }) => 
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Periodo di riferimento</Text>
+      <Text style={styles.label}>Reference Period</Text>
       <View style={styles.pickerContainer}>
         <TouchableOpacity onPress={handlePrevMonth} style={styles.button}>
           <ChevronLeft size={24} color={colors.primary} />

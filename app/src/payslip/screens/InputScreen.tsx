@@ -4,10 +4,8 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
-import { Calculator } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import { Button } from '../../components/Button';
 import { usePayslipStore } from '../store/usePayslipStore';
@@ -23,149 +21,155 @@ export const InputScreen: React.FC = () => {
   const isInstructor = ['sfi', 'tri', 'tre'].includes(settings.rank);
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.card}>
-        <MonthPicker value={input.date} onChange={(date) => setInput({ date })} />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Payslip Calculator</Text>
       </View>
+      
+      <ScrollView style={styles.content}>
+        <View style={styles.card}>
+          <MonthPicker value={input.date} onChange={(date) => setInput({ date })} />
+        </View>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Attività di Volo</Text>
-        <SbhPicker value={input.sbh} onChange={(sbh) => setInput({ sbh })} />
-      </View>
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Flight Activity</Text>
+          <SbhPicker value={input.sbh} onChange={(sbh) => setInput({ sbh })} />
+        </View>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Diarie</Text>
-        <NumberInput
-          label="Giorni diaria in volo"
-          value={input.flyDiaria}
-          onChange={(flyDiaria) => setInput({ flyDiaria })}
-        />
-        <NumberInput
-          label="Giorni diaria no-fly"
-          value={input.noFlyDiaria}
-          onChange={(noFlyDiaria) => setInput({ noFlyDiaria })}
-        />
-        {isPilot && (
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Per Diem</Text>
           <NumberInput
-            label="Atterraggi in giorno off"
-            value={input.landingInOffDay}
-            onChange={(landingInOffDay) => setInput({ landingInOffDay })}
+            label="Flying Per Diem Days"
+            value={input.flyDiaria}
+            onChange={(flyDiaria) => setInput({ flyDiaria })}
           />
+          <NumberInput
+            label="Non-Flying Per Diem Days"
+            value={input.noFlyDiaria}
+            onChange={(noFlyDiaria) => setInput({ noFlyDiaria })}
+          />
+          {isPilot && (
+            <NumberInput
+              label="Landings on Day Off"
+              value={input.landingInOffDay}
+              onChange={(landingInOffDay) => setInput({ landingInOffDay })}
+            />
+          )}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Leave & Absences</Text>
+          <NumberInput
+            label="Annual Leave Days"
+            value={input.al}
+            onChange={(al) => setInput({ al })}
+          />
+          {isPilot ? (
+            <NumberInput
+              label="Week Off Days"
+              value={input.woff}
+              onChange={(woff) => setInput({ woff })}
+            />
+          ) : (
+            <NumberInput
+              label="Bank Holidays"
+              value={input.bankHolydays}
+              onChange={(bankHolydays) => setInput({ bankHolydays })}
+            />
+          )}
+          <NumberInput
+            label="Out Of Base Nights"
+            value={input.oob}
+            onChange={(oob) => setInput({ oob })}
+          />
+          {!isPilot && (
+            <NumberInput
+              label="OOB Unplanned"
+              value={input.oobUnplanned}
+              onChange={(oobUnplanned) => setInput({ oobUnplanned })}
+            />
+          )}
+          <NumberInput
+            label="Unpaid Leave Days"
+            value={input.ul}
+            onChange={(ul) => setInput({ ul })}
+          />
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Special Leave</Text>
+          <NumberInput
+            label="Parental Leave Days"
+            value={input.parentalDays}
+            onChange={(parentalDays) => setInput({ parentalDays })}
+          />
+          <NumberInput
+            label="Law 104 Leave Days"
+            value={input.days104}
+            onChange={(days104) => setInput({ days104 })}
+          />
+        </View>
+
+        {isLTC && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>LTC Training</Text>
+            <NumberInput
+              label="Training Sectors"
+              value={input.trainingSectors}
+              onChange={(trainingSectors) => setInput({ trainingSectors })}
+            />
+          </View>
         )}
-      </View>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Presenze/Assenze</Text>
-        <NumberInput
-          label="Giorni Annual Leave"
-          value={input.al}
-          onChange={(al) => setInput({ al })}
-        />
-        {isPilot ? (
-          <NumberInput
-            label="Week Off"
-            value={input.woff}
-            onChange={(woff) => setInput({ woff })}
-          />
-        ) : (
-          <NumberInput
-            label="Festività bancarie"
-            value={input.bankHolydays}
-            onChange={(bankHolydays) => setInput({ bankHolydays })}
-          />
+        {isInstructor && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Instructor</Text>
+            <NumberInput
+              label="Simulator Days"
+              value={input.simDays}
+              onChange={(simDays) => setInput({ simDays })}
+            />
+          </View>
         )}
-        <NumberInput
-          label="Out Of Base"
-          value={input.oob}
-          onChange={(oob) => setInput({ oob })}
-        />
+
         {!isPilot && (
-          <NumberInput
-            label="OOB Unplanned"
-            value={input.oobUnplanned}
-            onChange={(oobUnplanned) => setInput({ oobUnplanned })}
-          />
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Cabin Crew</Text>
+            <NumberInput
+              label="CC Training Days"
+              value={input.ccTrainingDays}
+              onChange={(ccTrainingDays) => setInput({ ccTrainingDays })}
+            />
+          </View>
         )}
-        <NumberInput
-          label="Unpaid Leave"
-          value={input.ul}
-          onChange={(ul) => setInput({ ul })}
-        />
-      </View>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Congedi</Text>
-        <NumberInput
-          label="Congedo parentale (giorni)"
-          value={input.parentalDays}
-          onChange={(parentalDays) => setInput({ parentalDays })}
-        />
-        <NumberInput
-          label="Legge 104 (giorni)"
-          value={input.days104}
-          onChange={(days104) => setInput({ days104 })}
-        />
-      </View>
-
-      {isLTC && (
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Training LTC</Text>
+          <Text style={styles.sectionTitle}>Other</Text>
           <NumberInput
-            label="Settori training"
-            value={input.trainingSectors}
-            onChange={(trainingSectors) => setInput({ trainingSectors })}
+            label="ITUD Days"
+            value={input.itud}
+            onChange={(itud) => setInput({ itud })}
+          />
+          <NumberInput
+            label="Commissions"
+            value={input.commissions}
+            onChange={(commissions) => setInput({ commissions })}
           />
         </View>
-      )}
 
-      {isInstructor && (
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Istruttore</Text>
-          <NumberInput
-            label="Giorni simulatore"
-            value={input.simDays}
-            onChange={(simDays) => setInput({ simDays })}
+        <View style={styles.buttonContainer}>
+          <Button
+            title={isCalculating ? 'Calculating...' : 'Calculate Payslip'}
+            onPress={calculate}
+            loading={isCalculating}
+            disabled={isCalculating}
+            size="lg"
           />
         </View>
-      )}
 
-      {!isPilot && (
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Cabin Crew</Text>
-          <NumberInput
-            label="Giorni training CC"
-            value={input.ccTrainingDays}
-            onChange={(ccTrainingDays) => setInput({ ccTrainingDays })}
-          />
-        </View>
-      )}
-
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Altri</Text>
-        <NumberInput
-          label="ITUD (giorni)"
-          value={input.itud}
-          onChange={(itud) => setInput({ itud })}
-        />
-        <NumberInput
-          label="Provvigioni"
-          value={input.commissions}
-          onChange={(commissions) => setInput({ commissions })}
-        />
-      </View>
-
-      <View style={styles.buttonContainer}>
-        <Button
-          title={isCalculating ? 'Calcolo in corso...' : 'Calcola Busta Paga'}
-          onPress={calculate}
-          loading={isCalculating}
-          disabled={isCalculating}
-          size="lg"
-        />
-      </View>
-
-      <View style={styles.bottomSpace} />
-    </ScrollView>
+        <View style={styles.bottomSpace} />
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -173,6 +177,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  header: {
+    backgroundColor: colors.primary,
+    paddingTop: 50,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.textInverse,
+    textAlign: 'center',
+  },
+  content: {
+    flex: 1,
   },
   card: {
     backgroundColor: colors.surface,
