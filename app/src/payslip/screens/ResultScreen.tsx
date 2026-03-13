@@ -1,37 +1,62 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Menu } from 'lucide-react-native';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import { usePayslipStore } from '../store/usePayslipStore';
 import { PayslipItemRow } from '../components/results/PayslipItemRow';
 import { TotalCard } from '../components/results/TotalCard';
 import { formatCurrency, formatPercent } from '../utils/formatters';
 
-export const ResultScreen: React.FC = () => {
+interface ResultScreenProps {
+  navigation: any;
+}
+
+export const ResultScreen: React.FC<ResultScreenProps> = ({ navigation }) => {
   const { result } = usePayslipStore();
 
   if (!result) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Payslip Results</Text>
-        </View>
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+          <View style={styles.header}>
+            <TouchableOpacity 
+              onPress={() => navigation.openDrawer()}
+              style={styles.menuButton}
+            >
+              <Menu size={24} color={colors.textInverse} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Payslip Results</Text>
+            <View style={styles.placeholder} />
+          </View>
+        </SafeAreaView>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>
             Enter data and press "Calculate Payslip" to see the result
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   const { payslipItems, areaINPS, areaIRPEF } = result;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Payslip Results</Text>
-      </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            onPress={() => navigation.openDrawer()}
+            style={styles.menuButton}
+          >
+            <Menu size={24} color={colors.textInverse} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Payslip Results</Text>
+          <View style={styles.placeholder} />
+        </View>
+      </SafeAreaView>
       
       <ScrollView style={styles.content}>
         <TotalCard
@@ -146,7 +171,7 @@ export const ResultScreen: React.FC = () => {
 
         <View style={styles.bottomSpace} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -155,17 +180,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  safeArea: {
+    backgroundColor: colors.primary,
+  },
   header: {
     backgroundColor: colors.primary,
-    paddingTop: 50,
-    paddingBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  menuButton: {
+    padding: 8,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.textInverse,
-    textAlign: 'center',
+  },
+  placeholder: {
+    width: 40,
   },
   content: {
     flex: 1,

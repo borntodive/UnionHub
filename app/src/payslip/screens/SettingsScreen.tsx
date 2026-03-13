@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Menu } from 'lucide-react-native';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import { usePayslipStore } from '../store/usePayslipStore';
 import { NumberInput } from '../components/input/NumberInput';
@@ -8,16 +9,30 @@ import { NumberInput } from '../components/input/NumberInput';
 const RANKS_PILOT = ['tre', 'tri', 'ltc', 'lcc', 'cpt', 'sfi', 'fo', 'jfo', 'so'];
 const RANKS_CC = ['sepe', 'sepi', 'pu', 'jpu', 'ju'];
 
-export const SettingsScreen: React.FC = () => {
+interface SettingsScreenProps {
+  navigation: any;
+}
+
+export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
   const { settings, setSettings } = usePayslipStore();
 
   const ranks = settings.role === 'pil' ? RANKS_PILOT : RANKS_CC;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Settings</Text>
-      </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            onPress={() => navigation.openDrawer()}
+            style={styles.menuButton}
+          >
+            <Menu size={24} color={colors.textInverse} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Settings</Text>
+          <View style={styles.placeholder} />
+        </View>
+      </SafeAreaView>
       
       <ScrollView style={styles.content}>
         <View style={styles.card}>
@@ -133,7 +148,7 @@ export const SettingsScreen: React.FC = () => {
 
         <View style={styles.bottomSpace} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -142,17 +157,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  safeArea: {
+    backgroundColor: colors.primary,
+  },
   header: {
     backgroundColor: colors.primary,
-    paddingTop: 50,
-    paddingBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  menuButton: {
+    padding: 8,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.textInverse,
-    textAlign: 'center',
+  },
+  placeholder: {
+    width: 40,
   },
   content: {
     flex: 1,

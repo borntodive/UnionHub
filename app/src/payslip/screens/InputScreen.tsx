@@ -4,8 +4,11 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  TouchableOpacity,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Menu } from 'lucide-react-native';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import { Button } from '../../components/Button';
 import { usePayslipStore } from '../store/usePayslipStore';
@@ -13,7 +16,11 @@ import { MonthPicker } from '../components/input/MonthPicker';
 import { SbhPicker } from '../components/input/SbhPicker';
 import { NumberInput } from '../components/input/NumberInput';
 
-export const InputScreen: React.FC = () => {
+interface InputScreenProps {
+  navigation: any;
+}
+
+export const InputScreen: React.FC<InputScreenProps> = ({ navigation }) => {
   const { input, settings, setInput, calculate, isCalculating } = usePayslipStore();
 
   const isPilot = settings.role === 'pil';
@@ -21,10 +28,20 @@ export const InputScreen: React.FC = () => {
   const isInstructor = ['sfi', 'tri', 'tre'].includes(settings.rank);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Payslip Calculator</Text>
-      </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            onPress={() => navigation.openDrawer()}
+            style={styles.menuButton}
+          >
+            <Menu size={24} color={colors.textInverse} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Payslip Calculator</Text>
+          <View style={styles.placeholder} />
+        </View>
+      </SafeAreaView>
       
       <ScrollView style={styles.content}>
         <View style={styles.card}>
@@ -169,7 +186,7 @@ export const InputScreen: React.FC = () => {
 
         <View style={styles.bottomSpace} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -178,17 +195,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  safeArea: {
+    backgroundColor: colors.primary,
+  },
   header: {
     backgroundColor: colors.primary,
-    paddingTop: 50,
-    paddingBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  menuButton: {
+    padding: 8,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.textInverse,
-    textAlign: 'center',
+  },
+  placeholder: {
+    width: 40,
   },
   content: {
     flex: 1,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, StatusBar } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Calculator, Settings, FileText } from 'lucide-react-native';
 import { colors } from '../../theme';
@@ -18,6 +18,7 @@ const Tab = createBottomTabNavigator<PayslipTabParamList>();
 export const PayslipTabs: React.FC = () => {
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
@@ -40,7 +41,7 @@ export const PayslipTabs: React.FC = () => {
           name="Results"
           component={ResultScreen}
           options={{
-            tabBarLabel: 'Risultati',
+            tabBarLabel: 'Results',
             tabBarIcon: ({ color, size }: { color: string; size: number }) => (
               <Calculator size={size} color={color} />
             ),
@@ -50,7 +51,7 @@ export const PayslipTabs: React.FC = () => {
           name="Settings"
           component={SettingsScreen}
           options={{
-            tabBarLabel: 'Impostazioni',
+            tabBarLabel: 'Settings',
             tabBarIcon: ({ color, size }: { color: string; size: number }) => (
               <Settings size={size} color={color} />
             ),
