@@ -1,0 +1,160 @@
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  PayslipInput,
+  PayslipSettings,
+  Payroll,
+  SavedCalculation,
+} from '../types';
+import { calculatePayroll } from '../services/PayslipCalculator';
+
+interface PayslipState {
+  input: PayslipInput;
+  settings: PayslipSettings;
+  result: Payroll | null;
+  history: SavedCalculation[];
+  isCalculating: boolean;
+  error: string | null;
+
+  setInput: (input: Partial<PayslipInput>) => void;
+  setSettings: (settings: Partial<PayslipSettings>) => void;
+  calculate: () => Promise<void>;
+  saveCalculation: (name?: string) => void;
+  deleteCalculation: (id: string) => void;
+  loadCalculation: (id: string) => void;
+  reset: () => void;
+}
+
+const defaultInput: PayslipInput = {
+  date: new Date().toISOString().split('T')[0],
+  sbh: '00:00',
+  flyDiaria: 0,
+  noFlyDiaria: 0,
+  onlyNationalFly: 0,
+  al: 0,
+  woff: 0,
+  oob: 0,
+  ul: 0,
+  additional: [],
+  additionalDeductions: [],
+  parentalDays: 0,
+  days104: 0,
+  trainingSectors: 0,
+  simDays: 0,
+  itud: 0,
+  oobUnplanned: 0,
+  ccTrainingDays: 0,
+  pregressoIrpef: 0,
+  commissions: 0,
+  landingInOffDay: 0,
+  bankHolydays: 0,
+  inpsDays: 26,
+};
+
+const defaultSettings: PayslipSettings = {
+  company: 'RYR',
+  role: 'pil',
+  rank: 'fo',
+  union: 20,
+  parttime: false,
+  parttimePercentage: 1,
+  coniugeCarico: false,
+  prevMonthLeavePayment: false,
+  tfrContribution: 0,
+  addComunali: 0.8,
+  accontoAddComunali: 0,
+  addRegionali: 1.23,
+  legacy: false,
+  triAndLtc: false,
+  btc: false,
+  cu: false,
+  voluntaryPensionContribution: 0,
+};
+
+export const usePayslipStore = create<PayslipState>()(
+  persist(
+    (set, get) => ({
+      input: { ...defaultInput },
+      settings: { ...defaultSettings },
+      result: null,
+      history: [],
+      isCalculating: false,
+      error: null,
+
+      setInput: (input) => {
+        set((state) => ({ input: { ...state.input, ...input } }));
+      },
+
+      setSettings: (settings) => {
+        set((state) => ({ settings: { ...state.settings, ...settings } }));
+      },
+
+      calculate: async () => {
+        const { input, settings } = get();
+        set({ isCalculating: true, error: null });
+
+        try {
+          const result = await calculatePayroll(input, settings);
+          if (result) {
+            set({ result, isCalculating: false });
+          } else {
+            set({ error: 'Errore nel calcolo', isCalculating: false });
+          }
+        } catch (err) {
+          set({
+            error: err instanceof Error ? err.message : 'Errore sconosciuto',
+            isCalculating: false,
+          });
+        }
+      },
+
+      saveCalculation: (name) => {
+        const { input, settings, result, history } = get();
+        if (!result) return;
+
+        const calculation: SavedCalculation = {
+          id: Date.now().toString(),
+          name: name || `Calcolo ${new Date().toLocaleDateString('it-IT')}`,
+          date: input.date,
+          input: { ...input },
+          settings: { ...settings },
+          result,
+          createdAt: new Date().toISOString(),
+        };
+
+        set({ history: [calculation, ...history] });
+      },
+
+      deleteCalculation: (id) => {
+        set((state) => ({
+          history: state.history.filter((c) => c.id !== id),
+        }));
+      },
+
+      loadCalculation: (id) => {
+        const { history } = get();
+        const calculation = history.find((c) => c.id === id);
+        if (calculation) {
+          set({
+            input: calculation.input,
+            settings: calculation.settings,
+            result: calculation.result,
+          });
+        }
+      },
+
+      reset: () => {
+        set({ input: { ...defaultInput }, result: null, error: null });
+      },
+    }),
+    {
+      name: 'payslip-storage',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        settings: state.settings,
+        history: state.history,
+      }),
+    }
+  )
+);
