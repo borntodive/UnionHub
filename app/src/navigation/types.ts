@@ -15,6 +15,7 @@ export type RootStackParamList = {
   DeactivatedMembers: undefined;
   Statistics: undefined;
   BulkImport: undefined;
+  PayslipCalculator: undefined;
 };
 
 declare global {

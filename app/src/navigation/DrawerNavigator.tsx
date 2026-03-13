@@ -21,6 +21,7 @@ import {
   UserX,
   BarChart3,
   Upload,
+  Calculator,
 } from 'lucide-react-native';
 
 import { colors, spacing, typography, borderRadius } from '../theme';
@@ -140,6 +141,14 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
               label="Bulk Import"
               onPress={() => {
                 props.navigation.navigate('BulkImport');
+                props.navigation.closeDrawer();
+              }}
+            />
+            <MenuItem
+              icon={<Calculator size={22} color={colors.primary} />}
+              label="Calcolatore Busta Paga"
+              onPress={() => {
+                props.navigation.navigate('PayslipCalculator');
                 props.navigation.closeDrawer();
               }}
             />
