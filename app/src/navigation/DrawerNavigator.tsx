@@ -144,16 +144,19 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                 props.navigation.closeDrawer();
               }}
             />
-            <MenuItem
-              icon={<Calculator size={22} color={colors.primary} />}
-              label="Calcolatore Busta Paga"
-              onPress={() => {
-                props.navigation.navigate('PayslipCalculator');
-                props.navigation.closeDrawer();
-              }}
-            />
           </>
         )}
+
+        {/* Calcolatore Busta Paga - Visibile a tutti */}
+        <View style={styles.sectionDivider} />
+        <MenuItem
+          icon={<Calculator size={22} color={colors.primary} />}
+          label="Calcolatore Busta Paga"
+          onPress={() => {
+            props.navigation.navigate('PayslipCalculator');
+            props.navigation.closeDrawer();
+          }}
+        />
 
         {isSuperAdmin && (
           <>
