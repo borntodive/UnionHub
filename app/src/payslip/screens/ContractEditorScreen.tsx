@@ -86,6 +86,7 @@ export default function ContractEditorScreen() {
   );
   const [diaria, setDiaria] = useState(existingContract?.diaria?.toString() || '');
   const [rsa, setRsa] = useState(existingContract?.rsa?.toString() || '51.92');
+  const [itud, setItud] = useState(existingContract?.itud?.toString() || '120');
   const [isActive, setIsActive] = useState(existingContract?.isActive ?? true);
 
   // Update rank when role changes
@@ -113,6 +114,7 @@ export default function ContractEditorScreen() {
       setAllowance(existingContract.allowance ? (existingContract.allowance * 12).toString() : '');
       setDiaria(existingContract.diaria?.toString() || '');
       setRsa(existingContract.rsa?.toString() || '51.92');
+      setItud(existingContract.itud?.toString() || '120');
       setIsActive(existingContract.isActive ?? true);
     }
   }, [existingContract]);
@@ -152,6 +154,7 @@ export default function ContractEditorScreen() {
         allowance: parseFloat(allowance) / 12,
         diaria: parseFloat(diaria),
         rsa: parseFloat(rsa) || 51.92,
+        itud: parseFloat(itud) || 120,
         effectiveYear: parseInt(year),
         effectiveMonth: parseInt(month),
         isActive,
@@ -277,6 +280,7 @@ export default function ContractEditorScreen() {
           {role === 'pil' && renderInput('Working Day Off (WOFF)', woff, setWoff, '450.00')}
           {renderInput('Per Diem Rate (Diaria)', diaria, setDiaria, '46.48')}
           {renderInput('RSA Amount (monthly)', rsa, setRsa, '51.92')}
+          {renderInput('ITUD Daily Rate', itud, setItud, '120')}
         </View>
 
         {/* Active Status */}

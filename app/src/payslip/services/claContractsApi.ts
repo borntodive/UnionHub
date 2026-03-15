@@ -97,6 +97,7 @@ export interface CreateClaContractData {
   allowance: number;
   diaria: number;
   rsa?: number;
+  itud?: number;
   trainingConfig?: ClaContract['trainingConfig'];
   effectiveYear?: number;
   effectiveMonth?: number;
