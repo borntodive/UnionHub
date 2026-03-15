@@ -1,21 +1,27 @@
 import React from 'react';
 import { View, StyleSheet, StatusBar } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Calculator, Settings, FileText } from 'lucide-react-native';
+import { Calculator, Settings, FileText, Bug } from 'lucide-react-native';
 import { colors } from '../../theme';
+import { useAuthStore } from '../../store/authStore';
+import { UserRole } from '../../types';
 import { InputScreen } from '../screens/InputScreen';
 import { ResultScreen } from '../screens/ResultScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import DebugContractScreen from '../screens/DebugContractScreen';
 
 export type PayslipTabParamList = {
   Input: undefined;
   Results: undefined;
   Settings: undefined;
+  Debug: undefined;
 };
 
 const Tab = createBottomTabNavigator<PayslipTabParamList>();
 
 export const PayslipTabs: React.FC = () => {
+  const user = useAuthStore((state) => state.user);
+  const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
@@ -57,6 +63,18 @@ export const PayslipTabs: React.FC = () => {
             ),
           }}
         />
+        {isSuperAdmin && (
+          <Tab.Screen
+            name="Debug"
+            component={DebugContractScreen}
+            options={{
+              tabBarLabel: 'Debug',
+              tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+                <Bug size={size} color={color} />
+              ),
+            }}
+          />
+        )}
       </Tab.Navigator>
     </View>
   );
