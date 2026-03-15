@@ -146,15 +146,15 @@ export default function AdminContractsScreen() {
       <View style={styles.cardBody}>
         <View style={styles.row}>
           <Text style={styles.label}>Basic:</Text>
-          <Text style={styles.value}>€{contract.basic.toFixed(2)}</Text>
+          <Text style={styles.value}>€{Number(contract.basic || 0).toFixed(2)}</Text>
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>FFP:</Text>
-          <Text style={styles.value}>€{contract.ffp.toFixed(2)}</Text>
+          <Text style={styles.value}>€{Number(contract.ffp || 0).toFixed(2)}</Text>
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>Diaria:</Text>
-          <Text style={styles.value}>€{contract.diaria.toFixed(4)}</Text>
+          <Text style={styles.value}>€{Number(contract.diaria || 0).toFixed(4)}</Text>
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>Version:</Text>
