@@ -18,6 +18,7 @@ import {
   applyCorrections,
   getUnionFee,
   getUnpaidLeaveDays,
+  RYR_CONFIG,
   MAX_TAX_FREE_DIARIA,
   INPS_RATES,
   IRPEF_BRACKETS,
@@ -44,12 +45,18 @@ export class PayslipCalculator {
   private contractData: ReturnType<typeof getContractData>;
   private input: PayslipInput;
   private settings: PayslipSettings;
+  private userFlags: { itud?: boolean; rsa?: boolean };
   private year: number;
   private month: number;
 
-  constructor(input: PayslipInput, settings: PayslipSettings) {
+  constructor(
+    input: PayslipInput, 
+    settings: PayslipSettings,
+    userFlags: { itud?: boolean; rsa?: boolean } = {}
+  ) {
     this.input = input;
     this.settings = settings;
+    this.userFlags = userFlags;
     this.year = getYear(input.date);
     this.month = new Date(input.date).getMonth() + 1;
 
@@ -116,17 +123,25 @@ export class PayslipCalculator {
 
   private calculatePayslipItems(): Payslip {
     const cd = this.contractData!;
+    
+    // Part-time percentage (1 = full time, 0.5 = 50%, etc.)
+    const ptPct = this.settings.parttime ? this.settings.parttimePercentage : 1;
+    
+    // New Captain reduction (10% reduction on most items, except diaria/oob/allowances)
+    const cuPct = this.settings.cu ? 0.9 : 1;
 
-    // Basic
-    const basic = createPayslipItem(cd.basic, 100, cd.basicDays || 1);
+    // Basic (reduced by part-time AND New Captain if applicable)
+    const basicAmount = cd.basic * ptPct * cuPct;
+    const basic = createPayslipItem(basicAmount, 100, cd.basicDays || 1);
 
-    // 13th Month (only December)
+    // 13th Month (only December, also reduced by part-time and New Captain)
     const basic13th = isDecember(this.input.date)
-      ? createPayslipItem(cd.basic, 100)
+      ? createPayslipItem(basicAmount, 100)
       : createPayslipItem(0, 100);
 
-    // FFP
-    const ffp = createPayslipItem(this.calculateFFP(), 50);
+    // FFP (reduced by part-time and New Captain, but NOT allowances)
+    const ffpAmount = this.calculateFFP(ptPct, cuPct);
+    const ffp = createPayslipItem(ffpAmount, 50);
 
     // Diaria
     const flyDiariaData = calculateDiariaWithTaxFree(
@@ -150,19 +165,21 @@ export class PayslipCalculator {
       this.input.noFlyDiaria
     );
 
-    // AL
-    const al = createPayslipItem(this.input.al * cd.al, 50, this.input.al);
+    // AL (reduced by New Captain)
+    const al = createPayslipItem(this.input.al * cd.al * cuPct, 50, this.input.al);
 
-    // WOFF (pilots only)
+    // WOFF (pilots only, reduced by New Captain)
     const woff = cd.woff
-      ? createPayslipItem(cd.woff * this.input.woff, 50, this.input.woff)
+      ? createPayslipItem(cd.woff * this.input.woff * cuPct, 50, this.input.woff)
       : createPayslipItem(0, 50);
 
-    // OOB
+    // OOB (NOT reduced by New Captain)
     const oob = createPayslipItem(this.input.oob * cd.oob, 100, this.input.oob);
 
-    // RSA
-    const rsa = createPayslipItem(cd.rsa, 100);
+    // RSA (only if user has RSA flag enabled, NOT reduced by New Captain)
+    const rsa = this.userFlags.rsa 
+      ? createPayslipItem(cd.rsa, 100)
+      : createPayslipItem(0, 100);
 
     // OOB Unplanned (CC only)
     const oobUnplanned = cd.oob
@@ -177,12 +194,12 @@ export class PayslipCalculator {
       false
     );
 
-    // Sim Pay
-    const simPay = createPayslipItem(this.calculateSimPay(), 50, this.input.simDays);
+    // Sim Pay (reduced by New Captain)
+    const simPay = createPayslipItem(this.calculateSimPay() * cuPct, 50, this.input.simDays);
 
-    // Training Pay (LTC only)
+    // Training Pay (LTC only, reduced by New Captain)
     const trainingPay = createPayslipItem(
-      this.calculateTrainingPay(),
+      this.calculateTrainingPay() * cuPct,
       50,
       this.input.trainingSectors
     );
@@ -220,12 +237,13 @@ export class PayslipCalculator {
       createAdditionalItem(ded.amount, ded.tax, false, ded.isConguaglio)
     );
 
-    // Union Fee
+    // Union Fee (positive value, will be subtracted in tax calculation)
     const unionFee = getUnionFee(this.settings.rank, this.settings.role);
-    const union = createPayslipItem(-unionFee, 0, 1, true);
+    const union = createPayslipItem(unionFee, 0, 1, true);
 
     // Commissions
-    const commissions = createPayslipItem(this.input.commissions, 100);
+    // Commissions (reduced by New Captain)
+    const commissions = createPayslipItem(this.input.commissions * cuPct, 100);
 
     // Bank Holidays (CC only)
     const bankHolydays = createPayslipItem(
@@ -234,9 +252,9 @@ export class PayslipCalculator {
       this.input.bankHolydays
     );
 
-    // CC Training
+    // CC Training (reduced by New Captain)
     const ccTraining = createPayslipItem(
-      this.input.ccTrainingDays * (cd.training?.allowance || 0),
+      this.input.ccTrainingDays * (cd.training?.allowance || 0) * cuPct,
       50,
       this.input.ccTrainingDays
     );
@@ -268,22 +286,35 @@ export class PayslipCalculator {
     };
   }
 
-  private calculateFFP(): number {
+  private calculateFFP(partTimePct: number = 1, cuPct: number = 1): number {
     const cd = this.contractData!;
-    let ffp = cd.ffp + cd.allowance;
+    // FFP is reduced by part-time and New Captain, but allowances are NOT
+    let ffp = (cd.ffp * partTimePct * cuPct) + cd.allowance;
 
-    // Training allowance
+    // Training allowance (NOT reduced by part-time or New Captain)
     if (cd.training?.allowance) {
       ffp += cd.training.allowance;
     }
 
-    // Instructor allowance
+    // Instructor allowance (NOT reduced by part-time or New Captain)
     if (this.isInstructor() && cd.training) {
       const training = cd.training;
       if (this.settings.btc && training.btc) {
         ffp += training.btc.allowance;
       } else if (training.nonBtc) {
         ffp += training.nonBtc.allowance;
+      }
+    }
+    
+    // LTC additional allowance for TRI acting as LTC or TRE (always LTC)
+    // TRE is always considered LTC, TRI only when triAndLtc flag is set
+    const isLtc = this.settings.rank === 'tre' || this.settings.triAndLtc;
+    if (isLtc) {
+      // Get LTC contract data for the additional allowance
+      const ltcData = getContractData(this.settings.company, this.settings.role, 'ltc');
+      if (ltcData?.training?.allowance) {
+        // Add LTC training allowance (€14000/12 = €1166.67/month)
+        ffp += ltcData.training.allowance;
       }
     }
 
@@ -404,9 +435,11 @@ export class PayslipCalculator {
       taxFreeArea += total - taxable;
     }
 
-    // Subtract deductions
-    taxArea += payslip.ul.total.total;
-    taxArea += payslip.union.total;
+    // Subtract deductions (all deductions have positive totals and isDeduction=true)
+    taxArea -= payslip.ul.total.total;
+    taxArea -= payslip.parentalLeave.total.total;
+    taxArea -= payslip.leave104.total.total;
+    taxArea -= payslip.union.total;
     for (const ded of payslip.additionalDeductions) {
       taxArea -= ded.total;
     }
@@ -506,9 +539,9 @@ export class PayslipCalculator {
       trattamentoIntegrativo,
       taglioCuneoFiscale: taglioCuneo,
       fondoPensione: { totale: 0, volontaria: 0, aziendale: 0 }, // Will be set later
-      addizionaliComunali: (imponibile * this.settings.addComunali) / 100,
+      addizionaliComunali: this.settings.addComunali,
       accontoAddizionaliComunali: this.settings.accontoAddComunali,
-      addizionaliRegionali: (imponibile * this.settings.addRegionali) / 100,
+      addizionaliRegionali: this.settings.addRegionali,
       detrazioneConiuge: detrazioniConiuge,
       retribuzioneUtileTFR: 0, // Will be set later
       tfr: 0, // Will be set later
@@ -541,7 +574,8 @@ export class PayslipCalculator {
     const volontaria =
       (retribuzioneUtileTFR * this.settings.voluntaryPensionContribution) / 100;
 
-    const maxAziendale = this.contractData?.maxContributoAziendaleTfr || 0;
+    // Company contribution: 2% if voluntary >= 2%, otherwise 0
+    const maxAziendale = RYR_CONFIG.maxContributoAziendaleTfr; // 2%
     const percAziendale =
       this.settings.voluntaryPensionContribution >= maxAziendale ? maxAziendale : 0;
     const aziendale = (retribuzioneUtileTFR * percAziendale) / 100;
@@ -561,8 +595,9 @@ export class PayslipCalculator {
 // Factory function
 export async function calculatePayroll(
   input: PayslipInput,
-  settings: PayslipSettings
+  settings: PayslipSettings,
+  userFlags: { itud?: boolean; rsa?: boolean } = {}
 ): Promise<Payroll | null> {
-  const calculator = new PayslipCalculator(input, settings);
+  const calculator = new PayslipCalculator(input, settings, userFlags);
   return calculator.calculatePayroll();
 }

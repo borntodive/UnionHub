@@ -335,7 +335,8 @@ export const IRPEF_BRACKETS: Record<number, { limit: number; rate: number }[]> =
 export function getContractData(company: string, role: string, rank: string) {
   if (company !== 'RYR') return null;
   
-  const roleKey = role === 'pilot' ? 'pil' : 'cc';
+  // Support both 'pil' and 'pilot' formats
+  const roleKey = (role === 'pilot' || role === 'pil') ? 'pil' : 'cc';
   const companyData = RYR_CONFIG.claTables[roleKey as keyof typeof RYR_CONFIG.claTables];
   if (!companyData) return null;
   
@@ -349,7 +350,8 @@ export function getActiveCorrections(
 ): ClaCorrection[] {
   if (company !== 'RYR') return [];
   
-  const roleKey = role === 'pilot' ? 'pil' : 'cc';
+  // Support both 'pil' and 'pilot' formats
+  const roleKey = (role === 'pilot' || role === 'pil') ? 'pil' : 'cc';
   const corrections = RYR_CONFIG.claCorrection[roleKey as keyof typeof RYR_CONFIG.claCorrection];
   if (!corrections) return [];
   
@@ -383,11 +385,11 @@ export function applyCorrections(
 }
 
 export function getUnionFee(rank: string, role: string): number {
-  const key = role === 'pilot' ? (['cpt', 'tre', 'tri', 'ltc', 'lcc'].includes(rank) ? 'cpt' : 'fo') : 'cc';
+  const key = (role === 'pilot' || role === 'pil') ? (['cpt', 'tre', 'tri', 'ltc', 'lcc'].includes(rank) ? 'cpt' : 'fo') : 'cc';
   return RYR_CONFIG.unionFees[key as keyof typeof RYR_CONFIG.unionFees] || 0;
 }
 
 export function getUnpaidLeaveDays(role: string): number {
-  const key = role === 'pilot' ? 'pil' : 'cc';
+  const key = (role === 'pilot' || role === 'pil') ? 'pil' : 'cc';
   return RYR_CONFIG.unpayedLeaveDays[key as keyof typeof RYR_CONFIG.unpayedLeaveDays] || 17;
 }

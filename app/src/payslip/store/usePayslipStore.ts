@@ -19,7 +19,7 @@ interface PayslipState {
 
   setInput: (input: Partial<PayslipInput>) => void;
   setSettings: (settings: Partial<PayslipSettings>) => void;
-  calculate: () => Promise<void>;
+  calculate: (userFlags?: { itud?: boolean; rsa?: boolean }) => Promise<void>;
   saveCalculation: (name?: string) => void;
   deleteCalculation: (id: string) => void;
   loadCalculation: (id: string) => void;
@@ -56,15 +56,16 @@ const defaultSettings: PayslipSettings = {
   company: 'RYR',
   role: 'pil',
   rank: 'fo',
+  base: 'BGY',
   union: 20,
   parttime: false,
   parttimePercentage: 1,
   coniugeCarico: false,
   prevMonthLeavePayment: false,
   tfrContribution: 0,
-  addComunali: 0.8,
+  addComunali: 0,
   accontoAddComunali: 0,
-  addRegionali: 1.23,
+  addRegionali: 0,
   legacy: false,
   triAndLtc: false,
   btc: false,
@@ -90,12 +91,12 @@ export const usePayslipStore = create<PayslipState>()(
         set((state) => ({ settings: { ...state.settings, ...settings } }));
       },
 
-      calculate: async () => {
+      calculate: async (userFlags = {}) => {
         const { input, settings } = get();
         set({ isCalculating: true, error: null });
 
         try {
-          const result = await calculatePayroll(input, settings);
+          const result = await calculatePayroll(input, settings, userFlags);
           if (result) {
             set({ result, isCalculating: false });
           } else {

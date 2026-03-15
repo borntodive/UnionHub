@@ -169,6 +169,7 @@ export interface PayslipSettings {
   company: string;        // e.g., 'RYR'
   role: string;           // 'pil' | 'cc'
   rank: string;           // e.g., 'cpt', 'fo', 'sepe'
+  base: string;           // e.g., 'BGY', 'FCO'
   union: number;          // Union fee
   parttime: boolean;
   parttimePercentage: number;  // 0.5, 0.66, 0.75

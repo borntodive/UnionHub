@@ -7,16 +7,58 @@ interface TotalCardProps {
   totaleCompetenze: number;
   totaleTrattenute: number;
   netPayment: number;
+  grossPay?: number;
+  taxArea?: number;
+  taxFreeArea?: number;
+  esenzioneIVS?: number;
+  trattamentoIntegrativo?: number;
 }
 
 export const TotalCard: React.FC<TotalCardProps> = ({
   totaleCompetenze,
   totaleTrattenute,
   netPayment,
+  grossPay,
+  taxArea,
+  taxFreeArea,
+  esenzioneIVS,
+  trattamentoIntegrativo,
 }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Total</Text>
+
+      {grossPay !== undefined && (
+        <View style={styles.row}>
+          <Text style={styles.label}>Gross Pay</Text>
+          <Text style={styles.value}>{formatCurrency(grossPay)}</Text>
+        </View>
+      )}
+      {taxArea !== undefined && (
+        <View style={styles.row}>
+          <Text style={styles.labelSmall}>Taxable Area</Text>
+          <Text style={styles.valueSmall}>{formatCurrency(taxArea)}</Text>
+        </View>
+      )}
+      {taxFreeArea !== undefined && (
+        <View style={styles.row}>
+          <Text style={styles.labelSmall}>Tax Free Area</Text>
+          <Text style={styles.valueSmall}>{formatCurrency(taxFreeArea)}</Text>
+        </View>
+      )}
+      {esenzioneIVS !== undefined && esenzioneIVS > 0 && (
+        <View style={styles.row}>
+          <Text style={styles.labelSmall}>+ IVS Exemption</Text>
+          <Text style={styles.valueSmall}>{formatCurrency(esenzioneIVS)}</Text>
+        </View>
+      )}
+      {trattamentoIntegrativo !== undefined && trattamentoIntegrativo > 0 && (
+        <View style={styles.row}>
+          <Text style={styles.labelSmall}>+ Bonus (Tratt. Int.)</Text>
+          <Text style={styles.valueSmall}>{formatCurrency(trattamentoIntegrativo)}</Text>
+        </View>
+      )}
+      {(grossPay !== undefined || taxArea !== undefined) && <View style={styles.divider} />}
 
       <View style={styles.row}>
         <Text style={styles.label}>Total Earnings</Text>
@@ -36,7 +78,7 @@ export const TotalCard: React.FC<TotalCardProps> = ({
       </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -74,6 +116,19 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.medium,
     color: colors.error,
+  },
+  value: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.medium,
+    color: colors.text,
+  },
+  labelSmall: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+  },
+  valueSmall: {
+    fontSize: typography.sizes.sm,
+    color: colors.text,
   },
   divider: {
     height: 1,

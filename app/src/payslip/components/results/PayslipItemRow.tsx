@@ -30,7 +30,7 @@ export const PayslipItemRow: React.FC<PayslipItemRowProps> = ({
         </View>
         <View style={styles.valuesContainer}>
           <Text style={[styles.total, item.isDeduction && styles.deduction]}>
-            {formatCurrency(item.total)}
+            {item.isDeduction && item.total >= 0 ? '-' : ''}{formatCurrency(item.total)}
           </Text>
         </View>
       </View>

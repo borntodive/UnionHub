@@ -9,33 +9,37 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Menu } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, typography, borderRadius } from '../../theme';
-import { Button } from '../../components/Button';
+import { useAuthStore } from '../../store/authStore';
 import { usePayslipStore } from '../store/usePayslipStore';
 import { MonthPicker } from '../components/input/MonthPicker';
 import { SbhPicker } from '../components/input/SbhPicker';
 import { NumberInput } from '../components/input/NumberInput';
 
-interface InputScreenProps {
-  navigation: any;
-}
-
-export const InputScreen: React.FC<InputScreenProps> = ({ navigation }) => {
-  const { input, settings, setInput, calculate, isCalculating } = usePayslipStore();
+export const InputScreen: React.FC = () => {
+  const navigation = useNavigation();
+  const { user } = useAuthStore();
+  const { input, settings, setInput } = usePayslipStore();
 
   const isPilot = settings.role === 'pil';
   const isLTC = settings.rank === 'ltc';
   const isInstructor = ['sfi', 'tri', 'tre'].includes(settings.rank);
+
+  // Get ITUD flag from user profile
+  const hasItud = user?.itud ?? false;
+
+  const handleMenuPress = () => {
+    // @ts-ignore - Now inside DrawerNavigator
+    navigation.openDrawer?.();
+  };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={() => navigation.openDrawer()}
-            style={styles.menuButton}
-          >
+          <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Payslip Calculator</Text>
@@ -65,11 +69,16 @@ export const InputScreen: React.FC<InputScreenProps> = ({ navigation }) => {
             value={input.noFlyDiaria}
             onChange={(noFlyDiaria) => setInput({ noFlyDiaria })}
           />
+          <NumberInput
+            label="Out Of Base Nights"
+            value={input.oob}
+            onChange={(oob) => setInput({ oob })}
+          />
           {isPilot && (
             <NumberInput
-              label="Landings on Day Off"
-              value={input.landingInOffDay}
-              onChange={(landingInOffDay) => setInput({ landingInOffDay })}
+              label="Working Day Off"
+              value={input.woff}
+              onChange={(woff) => setInput({ woff })}
             />
           )}
         </View>
@@ -81,24 +90,13 @@ export const InputScreen: React.FC<InputScreenProps> = ({ navigation }) => {
             value={input.al}
             onChange={(al) => setInput({ al })}
           />
-          {isPilot ? (
-            <NumberInput
-              label="Week Off Days"
-              value={input.woff}
-              onChange={(woff) => setInput({ woff })}
-            />
-          ) : (
+          {!isPilot && (
             <NumberInput
               label="Bank Holidays"
               value={input.bankHolydays}
               onChange={(bankHolydays) => setInput({ bankHolydays })}
             />
           )}
-          <NumberInput
-            label="Out Of Base Nights"
-            value={input.oob}
-            onChange={(oob) => setInput({ oob })}
-          />
           {!isPilot && (
             <NumberInput
               label="OOB Unplanned"
@@ -111,10 +109,6 @@ export const InputScreen: React.FC<InputScreenProps> = ({ navigation }) => {
             value={input.ul}
             onChange={(ul) => setInput({ ul })}
           />
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Special Leave</Text>
           <NumberInput
             label="Parental Leave Days"
             value={input.parentalDays}
@@ -157,32 +151,29 @@ export const InputScreen: React.FC<InputScreenProps> = ({ navigation }) => {
               value={input.ccTrainingDays}
               onChange={(ccTrainingDays) => setInput({ ccTrainingDays })}
             />
+            <NumberInput
+              label="Landings on Day Off"
+              value={input.landingInOffDay}
+              onChange={(landingInOffDay) => setInput({ landingInOffDay })}
+            />
+            <NumberInput
+              label="Commissions"
+              value={input.commissions}
+              onChange={(commissions) => setInput({ commissions })}
+            />
           </View>
         )}
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Other</Text>
-          <NumberInput
-            label="ITUD Days"
-            value={input.itud}
-            onChange={(itud) => setInput({ itud })}
-          />
-          <NumberInput
-            label="Commissions"
-            value={input.commissions}
-            onChange={(commissions) => setInput({ commissions })}
-          />
-        </View>
-
-        <View style={styles.buttonContainer}>
-          <Button
-            title={isCalculating ? 'Calculating...' : 'Calculate Payslip'}
-            onPress={calculate}
-            loading={isCalculating}
-            disabled={isCalculating}
-            size="lg"
-          />
-        </View>
+        {hasItud && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Other</Text>
+            <NumberInput
+              label="ITUD Days"
+              value={input.itud}
+              onChange={(itud) => setInput({ itud })}
+            />
+          </View>
+        )}
 
         <View style={styles.bottomSpace} />
       </ScrollView>

@@ -25,7 +25,6 @@ import {
   StatisticsScreen,
   BulkImportScreen,
 } from "../screens/admin";
-import { PayslipTabs } from "../payslip/navigation/PayslipTabs";
 import { colors } from "../theme";
 import { useAuthStore } from "../store/authStore";
 import { SharedFileHandler } from "../components/SharedFileHandler";
@@ -156,11 +155,7 @@ export const AppNavigator: React.FC = () => {
               component={BulkImportScreen}
               options={{ headerShown: false }}
             />
-            <Stack.Screen
-              name="PayslipCalculator"
-              component={PayslipTabs}
-              options={{ headerShown: false }}
-            />
+
           </>
         )}
       </Stack.Navigator>

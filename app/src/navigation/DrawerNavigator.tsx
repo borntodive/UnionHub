@@ -28,6 +28,7 @@ import { colors, spacing, typography, borderRadius } from '../theme';
 import { useAuthStore } from '../store/authStore';
 import { authApi } from '../api/auth';
 import { MembersScreen } from '../screens/MembersScreen/MembersScreen';
+import { PayslipTabs } from '../payslip/navigation/PayslipTabs';
 import { UserRole } from '../types';
 const Drawer = createDrawerNavigator();
 
@@ -292,6 +293,15 @@ export const DrawerNavigator: React.FC = () => {
         options={{
           title: 'Settings',
           drawerIcon: ({ color }) => <Settings size={22} color={color} />,
+        }}
+      />
+      <Drawer.Screen 
+        name="PayslipCalculator" 
+        component={PayslipTabs}
+        options={{
+          title: 'Payslip Calculator',
+          drawerIcon: ({ color }) => <Calculator size={22} color={color} />,
+          headerShown: false,
         }}
       />
     </Drawer.Navigator>
