@@ -145,12 +145,16 @@ export default function AdminContractsScreen() {
 
       <View style={styles.cardBody}>
         <View style={styles.row}>
-          <Text style={styles.label}>Basic:</Text>
-          <Text style={styles.value}>€{Number(contract.basic || 0).toFixed(2)}</Text>
+          <Text style={styles.label}>Basic (annual):</Text>
+          <Text style={styles.value}>€{Number((contract.basic || 0) * 12).toFixed(2)}</Text>
         </View>
         <View style={styles.row}>
-          <Text style={styles.label}>FFP:</Text>
-          <Text style={styles.value}>€{Number(contract.ffp || 0).toFixed(2)}</Text>
+          <Text style={styles.label}>FFP (annual):</Text>
+          <Text style={styles.value}>€{Number((contract.ffp || 0) * 12).toFixed(2)}</Text>
+        </View>
+        <View style={styles.row}>
+          <Text style={styles.label}>Allowance (annual):</Text>
+          <Text style={styles.value}>€{Number((contract.allowance || 0) * 12).toFixed(2)}</Text>
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>Diaria:</Text>

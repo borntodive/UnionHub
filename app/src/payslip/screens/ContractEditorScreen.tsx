@@ -69,14 +69,20 @@ export default function ContractEditorScreen() {
     existingContract?.effectiveMonth?.toString() || '1'
   );
 
-  // Contract values
-  const [basic, setBasic] = useState(existingContract?.basic?.toString() || '');
-  const [ffp, setFfp] = useState(existingContract?.ffp?.toString() || '');
+  // Contract values (stored as monthly in DB, shown as annual in UI)
+  const [basic, setBasic] = useState(
+    existingContract?.basic ? (existingContract.basic * 12).toString() : ''
+  );
+  const [ffp, setFfp] = useState(
+    existingContract?.ffp ? (existingContract.ffp * 12).toString() : ''
+  );
   const [sbh, setSbh] = useState(existingContract?.sbh?.toString() || '');
   const [al, setAl] = useState(existingContract?.al?.toString() || '');
   const [oob, setOob] = useState(existingContract?.oob?.toString() || '');
   const [woff, setWoff] = useState(existingContract?.woff?.toString() || '');
-  const [allowance, setAllowance] = useState(existingContract?.allowance?.toString() || '');
+  const [allowance, setAllowance] = useState(
+    existingContract?.allowance ? (existingContract.allowance * 12).toString() : ''
+  );
   const [diaria, setDiaria] = useState(existingContract?.diaria?.toString() || '');
   const [rsa, setRsa] = useState(existingContract?.rsa?.toString() || '51.92');
   const [isActive, setIsActive] = useState(existingContract?.isActive ?? true);
@@ -114,13 +120,14 @@ export default function ContractEditorScreen() {
         company: 'RYR',
         role,
         rank,
-        basic: parseFloat(basic),
-        ffp: parseFloat(ffp),
+        // Divide annual values by 12 to store as monthly
+        basic: parseFloat(basic) / 12,
+        ffp: parseFloat(ffp) / 12,
         sbh: parseFloat(sbh) || 0,
         al: parseFloat(al) || 0,
         oob: parseFloat(oob) || 0,
         woff: parseFloat(woff) || 0,
-        allowance: parseFloat(allowance) || 0,
+        allowance: parseFloat(allowance) / 12,
         diaria: parseFloat(diaria),
         rsa: parseFloat(rsa) || 51.92,
         effectiveYear: parseInt(year),
@@ -234,9 +241,9 @@ export default function ContractEditorScreen() {
 
         {/* Contract Values */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Salary Components</Text>
-          {renderInput('Basic Salary (monthly)', basic, setBasic, '1153.85')}
-          {renderInput('FFP (Fixed Flight Pay)', ffp, setFfp, '3177.67')}
+          <Text style={styles.sectionTitle}>Salary Components (Annual)</Text>
+          {renderInput('Basic Salary (annual)', basic, setBasic, '15000')}
+          {renderInput('FFP - Fixed Flight Pay (annual)', ffp, setFfp, '82044')}
           {renderInput('Standby Hourly Rate (SBH)', sbh, setSbh, '18.21')}
           {renderInput('Annual Leave Daily Rate (AL)', al, setAl, '165.00')}
         </View>
@@ -245,9 +252,9 @@ export default function ContractEditorScreen() {
           <Text style={styles.sectionTitle}>Allowances</Text>
           {renderInput('Out of Base Daily (OOB)', oob, setOob, '155.00')}
           {role === 'pil' && renderInput('Weekly Off (WOFF)', woff, setWoff, '450.00')}
-          {renderInput('Monthly Allowance', allowance, setAllowance, '625.00')}
+          {renderInput('Allowance (annual)', allowance, setAllowance, '8000')}
           {renderInput('Per Diem Rate (Diaria)', diaria, setDiaria, '46.48')}
-          {renderInput('RSA Amount', rsa, setRsa, '51.92')}
+          {renderInput('RSA Amount (monthly)', rsa, setRsa, '51.92')}
         </View>
 
         {/* Active Status */}
