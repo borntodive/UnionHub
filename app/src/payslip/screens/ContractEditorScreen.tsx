@@ -230,22 +230,24 @@ export default function ContractEditorScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={styles.container}>
       <StatusBar backgroundColor={colors.primary} barStyle="light-content" />
       
       {/* Green Header with Back Button */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => navigation.goBack()}
-        >
-          <ChevronLeft size={24} color={colors.textInverse} />
-        </TouchableOpacity>
-        <Text style={styles.title}>
-          {isEditing ? 'Edit Contract' : 'New Contract'}
-        </Text>
-        <View style={{ width: 40 }} />{/* Spacer for alignment */}
-      </View>
+      <SafeAreaView style={styles.headerSafeArea} edges={['top', 'left', 'right']}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => navigation.navigate('ClaContracts')}
+          >
+            <ChevronLeft size={24} color={colors.textInverse} />
+          </TouchableOpacity>
+          <Text style={styles.title}>
+            {isEditing ? 'Edit Contract' : 'New Contract'}
+          </Text>
+          <View style={{ width: 40 }} />{/* Spacer for alignment */}
+        </View>
+      </SafeAreaView>
 
       <ScrollView style={styles.scrollView}>
         {/* Role Selection */}
@@ -312,13 +314,13 @@ export default function ContractEditorScreen() {
         {/* Cancel Button */}
         <TouchableOpacity
           style={styles.cancelBtn}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.navigate('ClaContracts')}
           disabled={loading}
         >
           <Text style={styles.cancelBtnText}>Cancel</Text>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -326,6 +328,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  headerSafeArea: {
+    backgroundColor: colors.primary,
   },
   header: {
     flexDirection: 'row',
