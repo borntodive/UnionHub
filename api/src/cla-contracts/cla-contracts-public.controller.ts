@@ -26,6 +26,11 @@ export class ClaContractsPublicController {
     @Query('year', new ParseIntPipe({ optional: true })) year?: number,
     @Query('month', new ParseIntPipe({ optional: true })) month?: number,
   ) {
+    // Validate required params
+    if (!company || !role || !rank) {
+      return null;
+    }
+
     // Build date from year/month or use current date
     let date: Date | undefined;
     if (year && month) {
