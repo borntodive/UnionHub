@@ -20,6 +20,7 @@ const bases_module_1 = require("./bases/bases.module");
 const contracts_module_1 = require("./contracts/contracts.module");
 const cla_contracts_module_1 = require("./cla-contracts/cla-contracts.module");
 const grades_module_1 = require("./grades/grades.module");
+const documents_module_1 = require("./documents/documents.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -43,6 +44,7 @@ exports.AppModule = AppModule = __decorate([
             contracts_module_1.ContractsModule,
             cla_contracts_module_1.ClaContractsModule,
             grades_module_1.GradesModule,
+            documents_module_1.DocumentsModule,
         ],
     })
 ], AppModule);

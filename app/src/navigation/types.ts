@@ -19,6 +19,9 @@ export type RootStackParamList = {
   // CLA Contract Admin
   ClaContracts: undefined;
   ContractEditor: { contract?: any } | undefined;
+  // Documents / Communications
+  Documents: undefined;
+  DocumentEditor: { documentId?: string } | undefined;
 };
 
 declare global {

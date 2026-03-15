@@ -22,6 +22,7 @@ import {
   BarChart3,
   Upload,
   Calculator,
+  FileText,
 } from 'lucide-react-native';
 
 import { colors, spacing, typography, borderRadius } from '../theme';
@@ -33,6 +34,8 @@ import AdminContractsScreen from '../payslip/screens/AdminContractsScreen';
 import ContractEditorScreen from '../payslip/screens/ContractEditorScreen';
 import { ContractsScreen } from '../screens/admin/ContractsScreen';
 import { ContractFormScreen } from '../screens/admin/ContractFormScreen';
+import { DocumentsScreen } from '../screens/admin/DocumentsScreen';
+import { DocumentEditorScreen } from '../screens/admin/DocumentEditorScreen';
 import { UserRole } from '../types';
 const Drawer = createDrawerNavigator();
 
@@ -202,6 +205,14 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
               }}
             />
             <MenuItem
+              icon={<FileText size={22} color={colors.primary} />}
+              label="Comunicati"
+              onPress={() => {
+                props.navigation.navigate('Documents');
+                props.navigation.closeDrawer();
+              }}
+            />
+            <MenuItem
               icon={<Calculator size={22} color={colors.primary} />}
               label="CLA Contracts"
               onPress={() => {
@@ -336,6 +347,28 @@ export const DrawerNavigator: React.FC = () => {
           headerShown: false,
         }}
       />
+      {isAdmin && (
+        <>
+          <Drawer.Screen 
+            name="Documents" 
+            component={DocumentsScreen}
+            options={{
+              title: 'Comunicati',
+              drawerItemStyle: { display: 'none' },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen 
+            name="DocumentEditor" 
+            component={DocumentEditorScreen}
+            options={{
+              title: 'Edit Document',
+              drawerItemStyle: { display: 'none' },
+              headerShown: false,
+            }}
+          />
+        </>
+      )}
       {isSuperAdmin && (
         <>
           <Drawer.Screen 
@@ -352,7 +385,7 @@ export const DrawerNavigator: React.FC = () => {
             component={ContractEditorScreen}
             options={{
               title: 'Edit Contract',
-              drawerItemStyle: { display: 'none' }, // Hide from drawer menu
+              drawerItemStyle: { display: 'none' },
               headerShown: false,
             }}
           />
