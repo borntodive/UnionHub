@@ -9,9 +9,11 @@ import {
   Alert,
   ActivityIndicator,
   Switch,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, DrawerActions } from '@react-navigation/native';
+import { Menu, ChevronLeft } from 'lucide-react-native';
 import {
   createClaContract,
   updateClaContract,
@@ -196,11 +198,21 @@ export default function ContractEditorScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <StatusBar backgroundColor={colors.primary} barStyle="light-content" />
+      
+      {/* Green Header with Back Button */}
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => navigation.goBack()}
+        >
+          <ChevronLeft size={24} color={colors.textInverse} />
+        </TouchableOpacity>
         <Text style={styles.title}>
           {isEditing ? 'Edit Contract' : 'New Contract'}
         </Text>
+        <View style={{ width: 40 }} />{/* Spacer for alignment */}
       </View>
 
       <ScrollView style={styles.scrollView}>
@@ -283,8 +295,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    padding: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     backgroundColor: colors.primary,
+  },
+  backBtn: {
+    padding: spacing.sm,
   },
   title: {
     fontSize: typography.sizes.xl,

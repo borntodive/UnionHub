@@ -8,10 +8,12 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Menu } from 'lucide-react-native';
 import {
   fetchAllClaContracts,
   deactivateClaContract,
@@ -207,8 +209,17 @@ export default function AdminContractsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <StatusBar backgroundColor={colors.primary} barStyle="light-content" />
+      
+      {/* Green Header with Hamburger */}
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.menuBtn}
+          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+        >
+          <Menu size={24} color={colors.textInverse} />
+        </TouchableOpacity>
         <Text style={styles.title}>CLA Contracts</Text>
         <View style={styles.yearSelector}>
           <TouchableOpacity
@@ -275,8 +286,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     backgroundColor: colors.primary,
+  },
+  menuBtn: {
+    padding: spacing.sm,
+    marginRight: spacing.sm,
   },
   title: {
     fontSize: typography.sizes.xl,
