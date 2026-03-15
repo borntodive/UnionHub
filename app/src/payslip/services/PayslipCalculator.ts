@@ -224,8 +224,9 @@ export class PayslipCalculator {
     const sbhDecimal = parseSbh(this.input.sbh);
     const sbh = createPayslipItem(sbhDecimal * cd.sbh, 50, sbhDecimal);
 
-    // ITUD
-    const itud = createPayslipItem(this.input.itud * 120, 50, this.input.itud);
+    // ITUD - use contract value or default 120
+    const itudRate = cd.itud || 120;
+    const itud = createPayslipItem(this.input.itud * itudRate, 50, this.input.itud);
 
     // Additional Payments
     const additionalPayments = this.input.additional.map((add) =>

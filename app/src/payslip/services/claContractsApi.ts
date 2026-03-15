@@ -14,6 +14,7 @@ export interface ClaContract {
   allowance: number;
   diaria: number;
   rsa: number;
+  itud: number;
   trainingConfig?: {
     allowance?: number;
     nonBtc?: {

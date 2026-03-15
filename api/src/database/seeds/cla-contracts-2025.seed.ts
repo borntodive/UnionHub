@@ -19,6 +19,7 @@ const CONTRACTS_2025 = [
     allowance: Math.round((8000 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
+    itud: 120,
     trainingConfig: null,
     effectiveYear: 2025,
     effectiveMonth: 4,
@@ -39,6 +40,7 @@ const CONTRACTS_2025 = [
     allowance: Math.round((7500 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
+    itud: 120,
     trainingConfig: null,
     effectiveYear: 2025,
     effectiveMonth: 4,
@@ -59,6 +61,7 @@ const CONTRACTS_2025 = [
     allowance: Math.round((7500 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
+    itud: 120,
     trainingConfig: null,
     effectiveYear: 2025,
     effectiveMonth: 4,
@@ -79,6 +82,7 @@ const CONTRACTS_2025 = [
     allowance: Math.round((7500 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
+    itud: 120,
     trainingConfig: null,
     effectiveYear: 2025,
     effectiveMonth: 4,
@@ -100,6 +104,7 @@ const CONTRACTS_2025 = [
     allowance: Math.round((8000 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
+    itud: 120,
     trainingConfig: {
       nonBtc: {
         allowance: Math.round((6500 / 12) * 100) / 100,
@@ -126,6 +131,7 @@ const CONTRACTS_2025 = [
     allowance: Math.round((8000 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
+    itud: 120,
     trainingConfig: {
       nonBtc: {
         allowance: Math.round((6079 / 12) * 100) / 100,
@@ -152,6 +158,7 @@ const CONTRACTS_2025 = [
     allowance: Math.round((8000 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
+    itud: 120,
     trainingConfig: {
       allowance: Math.round((14000 / 12) * 100) / 100,
       bonus: {
@@ -182,6 +189,7 @@ const CONTRACTS_2025 = [
     allowance: Math.round((8000 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
+    itud: 120,
     trainingConfig: {
       allowance: Math.round((5000 / 12) * 100) / 100,
     },
@@ -204,6 +212,7 @@ const CONTRACTS_2025 = [
     allowance: Math.round((7500 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
+    itud: 120,
     trainingConfig: {
       nonBtc: {
         allowance: Math.round((6000 / 12) * 100) / 100,

@@ -117,6 +117,11 @@ export class CreateClaContractDto {
   rsa?: number;
 
   @IsOptional()
+  @IsNumber()
+  @Min(0)
+  itud?: number;
+
+  @IsOptional()
   @IsObject()
   @ValidateNested()
   @Type(() => TrainingConfigDto)

@@ -33,6 +33,7 @@ export const RYR_CONFIG: CompanyConfig = {
         allowance: 8000 / 12,
         diaria: 8831 / 190,
         rsa: 51.92,
+        itud: 120,
         training: {
           nonBtc: {
             allowance: 6500 / 12,
@@ -61,6 +62,7 @@ export const RYR_CONFIG: CompanyConfig = {
         allowance: 8000 / 12,
         diaria: 8831 / 190,
         rsa: 51.92,
+        itud: 120,
         training: {
           nonBtc: {
             allowance: 5079 / 12,
@@ -89,6 +91,7 @@ export const RYR_CONFIG: CompanyConfig = {
         allowance: 8000 / 12,
         diaria: 8831 / 190,
         rsa: 51.92,
+        itud: 120,
         training: {
           allowance: 14000 / 12,
           bonus: {
@@ -111,6 +114,7 @@ export const RYR_CONFIG: CompanyConfig = {
         allowance: 8000 / 12,
         diaria: 8831 / 190,
         rsa: 51.92,
+        itud: 120,
         training: {
           allowance: 5000 / 12,
         },
@@ -125,6 +129,7 @@ export const RYR_CONFIG: CompanyConfig = {
         allowance: 8000 / 12,
         diaria: 8831 / 190,
         rsa: 51.92,
+        itud: 120,
         training: null,
       },
       sfi: {
@@ -137,6 +142,7 @@ export const RYR_CONFIG: CompanyConfig = {
         allowance: 7500 / 12,
         diaria: 8831 / 190,
         rsa: 51.92,
+        itud: 120,
         training: {
           nonBtc: {
             allowance: 6000 / 12,
@@ -163,6 +169,7 @@ export const RYR_CONFIG: CompanyConfig = {
         allowance: 7500 / 12,
         diaria: 8831 / 190,
         rsa: 51.92,
+        itud: 120,
         training: null,
       },
       jfo: {
@@ -175,6 +182,7 @@ export const RYR_CONFIG: CompanyConfig = {
         allowance: 7500 / 12,
         diaria: 8831 / 190,
         rsa: 51.92,
+        itud: 120,
         training: null,
       },
       so: {
@@ -187,6 +195,7 @@ export const RYR_CONFIG: CompanyConfig = {
         allowance: 7500 / 12,
         diaria: 8831 / 190,
         rsa: 51.92,
+        itud: 120,
         training: null,
       },
     },
@@ -201,6 +210,7 @@ export const RYR_CONFIG: CompanyConfig = {
         allowance: (730 + 2500) / 12,
         diaria: 72.29,
         rsa: 51.92,
+        itud: 120,
         training: {
           allowance: 2905 / 12,
           simDiaria: [],
@@ -216,6 +226,7 @@ export const RYR_CONFIG: CompanyConfig = {
         allowance: (730 + 2500) / 12,
         diaria: 72.29,
         rsa: 52.92,
+        itud: 120,
         training: {
           allowance: 1905 / 12,
           simDiaria: [],
@@ -231,6 +242,7 @@ export const RYR_CONFIG: CompanyConfig = {
         allowance: 60.84 + 208.34,
         diaria: 40,
         rsa: 52.92,
+        itud: 120,
         training: null,
       },
       jpu: {
@@ -243,6 +255,7 @@ export const RYR_CONFIG: CompanyConfig = {
         allowance: 60.84,
         diaria: 40,
         rsa: 52.92,
+        itud: 120,
         training: null,
       },
       ju: {
@@ -255,6 +268,7 @@ export const RYR_CONFIG: CompanyConfig = {
         allowance: 60.84,
         diaria: 40,
         rsa: 52.92,
+        itud: 120,
         training: null,
       },
     },

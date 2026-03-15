@@ -62,6 +62,10 @@ export class ClaContract {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 51.92 })
   rsa: number;
 
+  // ITUD - Daily rate for injury days (€120 default)
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 120 })
+  itud: number;
+
   // Training configuration (JSON for flexibility)
   @Column({ type: 'jsonb', nullable: true })
   trainingConfig: {

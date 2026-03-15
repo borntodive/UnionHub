@@ -46,7 +46,8 @@ const cla_contract_history_entity_1 = require("../../cla-contracts/entities/cla-
 const user_role_enum_1 = require("../../common/enums/user-role.enum");
 const ruolo_enum_1 = require("../../common/enums/ruolo.enum");
 const bcrypt = __importStar(require("bcrypt"));
-const cla_contracts_seed_1 = require("./cla-contracts.seed");
+const cla_contracts_2025_seed_1 = require("./cla-contracts-2025.seed");
+const cla_contracts_2026_seed_1 = require("./cla-contracts-2026.seed");
 (0, dotenv_1.config)();
 const dataSource = new typeorm_1.DataSource({
     type: "postgres",
@@ -183,7 +184,8 @@ async function runSeed() {
             where: { crewcode: adminCrewcode },
         });
         if (superAdmin) {
-            await (0, cla_contracts_seed_1.seedClaContracts)(dataSource, superAdmin.id);
+            await (0, cla_contracts_2025_seed_1.seedClaContracts2025)(dataSource, superAdmin.id);
+            await (0, cla_contracts_2026_seed_1.seedClaContracts2026)(dataSource, superAdmin.id);
         }
         console.log("Seeding Role Admins...");
         const existingPilotAdmin = await usersRepository.findOne({

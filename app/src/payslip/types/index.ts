@@ -229,6 +229,7 @@ export interface RankContract {
   diaria: number;          // Per day rate
   training: TrainingConfig | null;
   rsa: number;             // Monthly
+  itud: number;            // Daily rate for injury days
   basicDays?: number;      // Days for basic calculation
   maxContributoAziendaleTfr?: number; // Max company TFR contribution
 }
