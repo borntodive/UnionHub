@@ -12,6 +12,8 @@ import { UserRole } from "../../common/enums/user-role.enum";
 import { Ruolo } from "../../common/enums/ruolo.enum";
 import * as bcrypt from "bcrypt";
 import { seedClaContracts } from "./cla-contracts.seed";
+import { seedClaContracts2025 } from "./cla-contracts-2025.seed";
+import { seedClaContracts2026 } from "./cla-contracts-2026.seed";
 
 config();
 
@@ -165,12 +167,20 @@ async function runSeed() {
       console.log(`  SuperAdmin ${adminCrewcode} already exists`);
     }
 
-    // Seed CLA Contracts
+    // Seed CLA Contracts - choose which version to seed
     const superAdmin = await usersRepository.findOne({
       where: { crewcode: adminCrewcode },
     });
     if (superAdmin) {
-      await seedClaContracts(dataSource, superAdmin.id);
+      // Option 1: Seed both 2025 and 2026 contracts (for historical data)
+      // await seedClaContracts2025(dataSource, superAdmin.id);
+      // await seedClaContracts2026(dataSource, superAdmin.id);
+      
+      // Option 2: Seed only 2026 contracts (current active period)
+      await seedClaContracts2026(dataSource, superAdmin.id);
+      
+      // Option 3: Use legacy seeder (mixed data)
+      // await seedClaContracts(dataSource, superAdmin.id);
     }
 
     // Seed Role Admins
