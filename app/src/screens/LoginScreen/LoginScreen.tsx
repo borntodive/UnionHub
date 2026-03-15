@@ -9,10 +9,11 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMutation } from '@tanstack/react-query';
-import { Lock, User } from 'lucide-react-native';
+import { Lock, User, ChevronDown } from 'lucide-react-native';
 
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import { Button } from '../../components/Button';
@@ -20,11 +21,23 @@ import { Input } from '../../components/Input';
 import { authApi } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
 
+// Dev quick login options
+const DEV_USERS = [
+  { label: 'Manual Entry', crewcode: '', password: '' },
+  { label: 'SuperAdmin', crewcode: 'SUPERADMIN', password: 'changeme' },
+  { label: 'Admin Piloti', crewcode: 'ADMINPILOT', password: 'password' },
+  { label: 'Admin CC', crewcode: 'ADMINCC', password: 'password' },
+  { label: 'PIL0001', crewcode: 'PIL0001', password: 'password' },
+  { label: 'CC0001', crewcode: 'CC0001', password: 'password' },
+];
+
 export const LoginScreen: React.FC = () => {
   const setAuth = useAuthStore((state) => state.setAuth);
   
   const [crewcode, setCrewcode] = useState('');
   const [password, setPassword] = useState('');
+  const [selectedDevUser, setSelectedDevUser] = useState(DEV_USERS[0]);
+  const [showDevSelect, setShowDevSelect] = useState(false);
 
   const loginMutation = useMutation({
     mutationFn: authApi.login,
@@ -45,6 +58,20 @@ export const LoginScreen: React.FC = () => {
     
     loginMutation.mutate({ crewcode: crewcode.trim(), password });
   }, [crewcode, password, loginMutation]);
+
+  const handleDevUserSelect = useCallback((user: typeof DEV_USERS[0]) => {
+    setSelectedDevUser(user);
+    setCrewcode(user.crewcode);
+    setPassword(user.password);
+    setShowDevSelect(false);
+    
+    // Auto login if credentials are provided
+    if (user.crewcode && user.password) {
+      setTimeout(() => {
+        loginMutation.mutate({ crewcode: user.crewcode, password: user.password });
+      }, 100);
+    }
+  }, [loginMutation]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -69,6 +96,34 @@ export const LoginScreen: React.FC = () => {
             {/* Form Section */}
             <View style={styles.formContainer}>
               <Text style={styles.formTitle}>Sign In</Text>
+
+              {/* Dev Quick Login Select */}
+              {__DEV__ && (
+                <View style={styles.devSelectContainer}>
+                  <Text style={styles.devSelectLabel}>Quick Login (Dev Only):</Text>
+                  <TouchableOpacity
+                    style={styles.devSelectButton}
+                    onPress={() => setShowDevSelect(!showDevSelect)}
+                  >
+                    <Text style={styles.devSelectText}>{selectedDevUser.label}</Text>
+                    <ChevronDown size={20} color={colors.primary} />
+                  </TouchableOpacity>
+                  
+                  {showDevSelect && (
+                    <View style={styles.devSelectDropdown}>
+                      {DEV_USERS.map((user, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          style={styles.devSelectOption}
+                          onPress={() => handleDevUserSelect(user)}
+                        >
+                          <Text style={styles.devSelectOptionText}>{user.label}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              )}
               
               <Input
                 label="Crewcode"
@@ -203,5 +258,46 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: typography.sizes.xs,
     color: colors.textTertiary,
+  },
+  // Dev select styles
+  devSelectContainer: {
+    marginBottom: spacing.md,
+  },
+  devSelectLabel: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  devSelectButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surfaceVariant,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+  },
+  devSelectText: {
+    fontSize: typography.sizes.base,
+    color: colors.text,
+    fontWeight: typography.weights.medium,
+  },
+  devSelectDropdown: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.xs,
+    overflow: 'hidden',
+  },
+  devSelectOption: {
+    padding: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  devSelectOptionText: {
+    fontSize: typography.sizes.base,
+    color: colors.text,
   },
 });
