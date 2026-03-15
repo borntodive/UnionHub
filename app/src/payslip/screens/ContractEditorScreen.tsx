@@ -264,7 +264,7 @@ export default function ContractEditorScreen() {
           <Text style={styles.sectionTitle}>Salary Components (Annual)</Text>
           {renderInput('Basic Salary (annual)', basic, setBasic, '15000')}
           {renderInput('FFP - Fixed Flight Pay (annual)', ffp, setFfp, '82044')}
-          {renderInput('Standby Hourly Rate (SBH)', sbh, setSbh, '18.21')}
+          {renderInput('Scheduled Block Hours Rate (SBH)', sbh, setSbh, '18.21')}
           {renderInput('Annual Leave Daily Rate (AL)', al, setAl, '165.00')}
         </View>
 
