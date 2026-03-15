@@ -146,7 +146,8 @@ export default function AdminContractsScreen() {
       <View style={styles.cardBody}>
         <View style={styles.row}>
           <Text style={styles.label}>Basic (annual):</Text>
-          <Text style={styles.value}>€{Number((contract.basic || 0) * 12).toFixed(2)}</Text>
+          {/* Basic is stored monthly, multiply by 13 for annual (includes 13th) */}
+          <Text style={styles.value}>€{Number((contract.basic || 0) * 13).toFixed(2)}</Text>
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>FFP (annual):</Text>

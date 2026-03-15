@@ -70,8 +70,9 @@ export default function ContractEditorScreen() {
   );
 
   // Contract values (stored as monthly in DB, shown as annual in UI)
+  // Note: Basic is divided by 13 (includes 13th month), others by 12
   const [basic, setBasic] = useState(
-    existingContract?.basic ? (existingContract.basic * 12).toString() : ''
+    existingContract?.basic ? (existingContract.basic * 13).toString() : ''
   );
   const [ffp, setFfp] = useState(
     existingContract?.ffp ? (existingContract.ffp * 12).toString() : ''
@@ -102,7 +103,8 @@ export default function ContractEditorScreen() {
       setRank(existingContract.rank || 'cpt');
       setYear(existingContract.effectiveYear?.toString() || new Date().getFullYear().toString());
       setMonth(existingContract.effectiveMonth?.toString() || '1');
-      setBasic(existingContract.basic ? (existingContract.basic * 12).toString() : '');
+      // Basic is divided by 13 (includes 13th month), others by 12
+      setBasic(existingContract.basic ? (existingContract.basic * 13).toString() : '');
       setFfp(existingContract.ffp ? (existingContract.ffp * 12).toString() : '');
       setSbh(existingContract.sbh?.toString() || '');
       setAl(existingContract.al?.toString() || '');
@@ -140,8 +142,8 @@ export default function ContractEditorScreen() {
         company: 'RYR',
         role,
         rank,
-        // Divide annual values by 12 to store as monthly
-        basic: parseFloat(basic) / 12,
+        // Basic is divided by 13 (includes 13th month), others by 12
+        basic: parseFloat(basic) / 13,
         ffp: parseFloat(ffp) / 12,
         sbh: parseFloat(sbh) || 0,
         al: parseFloat(al) || 0,
