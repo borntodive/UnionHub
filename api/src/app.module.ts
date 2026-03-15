@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { BasesModule } from './bases/bases.module';
 import { ContractsModule } from './contracts/contracts.module';
+import { ClaContractsModule } from './cla-contracts/cla-contracts.module';
 import { GradesModule } from './grades/grades.module';
 
 @Module({
@@ -26,6 +27,7 @@ import { GradesModule } from './grades/grades.module';
     UsersModule,
     BasesModule,
     ContractsModule,
+    ClaContractsModule,
     GradesModule,
   ],
 })

@@ -183,9 +183,9 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             />
             <MenuItem
               icon={<Briefcase size={22} color={colors.primary} />}
-              label="Contracts"
+              label="CLA Contracts"
               onPress={() => {
-                props.navigation.navigate('Contracts');
+                props.navigation.navigate('ClaContracts');
                 props.navigation.closeDrawer();
               }}
             />

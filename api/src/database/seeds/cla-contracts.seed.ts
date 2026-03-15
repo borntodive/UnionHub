@@ -19,6 +19,9 @@ const INITIAL_CONTRACTS = [
     rsa: 51.92,
     trainingConfig: null,
     effectiveYear: 2026,
+    effectiveMonth: 1,
+    endYear: 2026,
+    endMonth: 3,  // Ends March 2026, new correction starts April
     isActive: true,
   },
   // Pilots - FO

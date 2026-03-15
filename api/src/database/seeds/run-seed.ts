@@ -4,9 +4,14 @@ import { User } from "../../users/entities/user.entity";
 import { Base } from "../../bases/entities/base.entity";
 import { Contract } from "../../contracts/entities/contract.entity";
 import { Grade } from "../../grades/entities/grade.entity";
+import { RefreshToken } from "../../refresh-tokens/entities/refresh-token.entity";
+import { UserStatusHistory } from "../../users/entities/user-status-history.entity";
+import { ClaContract } from "../../cla-contracts/entities/cla-contract.entity";
+import { ClaContractHistory } from "../../cla-contracts/entities/cla-contract-history.entity";
 import { UserRole } from "../../common/enums/user-role.enum";
 import { Ruolo } from "../../common/enums/ruolo.enum";
 import * as bcrypt from "bcrypt";
+import { seedClaContracts } from "./cla-contracts.seed";
 
 config();
 
@@ -17,7 +22,7 @@ const dataSource = new DataSource({
   username: process.env.DB_USERNAME || "postgres",
   password: process.env.DB_PASSWORD || "password",
   database: process.env.DB_DATABASE || "unionconnect",
-  entities: [User, Base, Contract, Grade],
+  entities: [User, Base, Contract, Grade, RefreshToken, UserStatusHistory, ClaContract, ClaContractHistory],
   synchronize: false,
 });
 
@@ -158,6 +163,14 @@ async function runSeed() {
       );
     } else {
       console.log(`  SuperAdmin ${adminCrewcode} already exists`);
+    }
+
+    // Seed CLA Contracts
+    const superAdmin = await usersRepository.findOne({
+      where: { crewcode: adminCrewcode },
+    });
+    if (superAdmin) {
+      await seedClaContracts(dataSource, superAdmin.id);
     }
 
     // Seed Role Admins

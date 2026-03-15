@@ -16,6 +16,9 @@ export type RootStackParamList = {
   Statistics: undefined;
   BulkImport: undefined;
   PayslipCalculator: undefined;
+  // CLA Contract Admin
+  ClaContracts: undefined;
+  ContractEditor: { contract?: any } | undefined;
 };
 
 declare global {

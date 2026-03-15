@@ -18,6 +18,7 @@ const auth_module_1 = require("./auth/auth.module");
 const users_module_1 = require("./users/users.module");
 const bases_module_1 = require("./bases/bases.module");
 const contracts_module_1 = require("./contracts/contracts.module");
+const cla_contracts_module_1 = require("./cla-contracts/cla-contracts.module");
 const grades_module_1 = require("./grades/grades.module");
 let AppModule = class AppModule {
 };
@@ -40,6 +41,7 @@ exports.AppModule = AppModule = __decorate([
             users_module_1.UsersModule,
             bases_module_1.BasesModule,
             contracts_module_1.ContractsModule,
+            cla_contracts_module_1.ClaContractsModule,
             grades_module_1.GradesModule,
         ],
     })

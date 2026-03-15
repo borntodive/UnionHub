@@ -39,9 +39,14 @@ const user_entity_1 = require("../../users/entities/user.entity");
 const base_entity_1 = require("../../bases/entities/base.entity");
 const contract_entity_1 = require("../../contracts/entities/contract.entity");
 const grade_entity_1 = require("../../grades/entities/grade.entity");
+const refresh_token_entity_1 = require("../../refresh-tokens/entities/refresh-token.entity");
+const user_status_history_entity_1 = require("../../users/entities/user-status-history.entity");
+const cla_contract_entity_1 = require("../../cla-contracts/entities/cla-contract.entity");
+const cla_contract_history_entity_1 = require("../../cla-contracts/entities/cla-contract-history.entity");
 const user_role_enum_1 = require("../../common/enums/user-role.enum");
 const ruolo_enum_1 = require("../../common/enums/ruolo.enum");
 const bcrypt = __importStar(require("bcrypt"));
+const cla_contracts_seed_1 = require("./cla-contracts.seed");
 (0, dotenv_1.config)();
 const dataSource = new typeorm_1.DataSource({
     type: "postgres",
@@ -50,7 +55,7 @@ const dataSource = new typeorm_1.DataSource({
     username: process.env.DB_USERNAME || "postgres",
     password: process.env.DB_PASSWORD || "password",
     database: process.env.DB_DATABASE || "unionconnect",
-    entities: [user_entity_1.User, base_entity_1.Base, contract_entity_1.Contract, grade_entity_1.Grade],
+    entities: [user_entity_1.User, base_entity_1.Base, contract_entity_1.Contract, grade_entity_1.Grade, refresh_token_entity_1.RefreshToken, user_status_history_entity_1.UserStatusHistory, cla_contract_entity_1.ClaContract, cla_contract_history_entity_1.ClaContractHistory],
     synchronize: false,
 });
 async function runSeed() {
@@ -173,6 +178,12 @@ async function runSeed() {
         }
         else {
             console.log(`  SuperAdmin ${adminCrewcode} already exists`);
+        }
+        const superAdmin = await usersRepository.findOne({
+            where: { crewcode: adminCrewcode },
+        });
+        if (superAdmin) {
+            await (0, cla_contracts_seed_1.seedClaContracts)(dataSource, superAdmin.id);
         }
         console.log("Seeding Role Admins...");
         const existingPilotAdmin = await usersRepository.findOne({
