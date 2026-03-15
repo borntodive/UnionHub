@@ -95,6 +95,26 @@ export default function ContractEditorScreen() {
     }
   }, [role]);
 
+  // Update form values when contract changes (for when navigating between contracts)
+  useEffect(() => {
+    if (existingContract) {
+      setRole(existingContract.role || 'pil');
+      setRank(existingContract.rank || 'cpt');
+      setYear(existingContract.effectiveYear?.toString() || new Date().getFullYear().toString());
+      setMonth(existingContract.effectiveMonth?.toString() || '1');
+      setBasic(existingContract.basic ? (existingContract.basic * 12).toString() : '');
+      setFfp(existingContract.ffp ? (existingContract.ffp * 12).toString() : '');
+      setSbh(existingContract.sbh?.toString() || '');
+      setAl(existingContract.al?.toString() || '');
+      setOob(existingContract.oob?.toString() || '');
+      setWoff(existingContract.woff?.toString() || '');
+      setAllowance(existingContract.allowance ? (existingContract.allowance * 12).toString() : '');
+      setDiaria(existingContract.diaria?.toString() || '');
+      setRsa(existingContract.rsa?.toString() || '51.92');
+      setIsActive(existingContract.isActive ?? true);
+    }
+  }, [existingContract]);
+
   const validateForm = (): boolean => {
     if (!basic || parseFloat(basic) < 0) {
       Alert.alert('Error', 'Basic salary is required');
