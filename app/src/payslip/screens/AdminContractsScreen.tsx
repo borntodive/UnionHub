@@ -200,20 +200,35 @@ export default function AdminContractsScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
+        <SafeAreaView style={styles.headerSafeArea} edges={['top', 'left', 'right']}>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.menuBtn}
+              onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+            >
+              <Menu size={24} color={colors.textInverse} />
+            </TouchableOpacity>
+            <Text style={styles.title}>CLA Contracts</Text>
+            <View style={styles.yearSelector}>
+              <Text style={styles.yearText}>{selectedYear}</Text>
+            </View>
+          </View>
+        </SafeAreaView>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={styles.container}>
       <StatusBar backgroundColor={colors.primary} barStyle="light-content" />
       
-      {/* Green Header with Hamburger */}
-      <View style={styles.header}>
+      {/* Green Header with Hamburger - includes notch area */}
+      <SafeAreaView style={styles.headerSafeArea} edges={['top', 'left', 'right']}>
+        <View style={styles.header}>
         <TouchableOpacity
           style={styles.menuBtn}
           onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
@@ -236,7 +251,8 @@ export default function AdminContractsScreen() {
             <Text style={styles.yearBtnText}>→</Text>
           </TouchableOpacity>
         </View>
-      </View>
+        </View>
+      </SafeAreaView>
 
       <TouchableOpacity
         style={styles.addBtn}
@@ -268,7 +284,7 @@ export default function AdminContractsScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -276,6 +292,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  headerSafeArea: {
+    backgroundColor: colors.primary,
   },
   centered: {
     flex: 1,
