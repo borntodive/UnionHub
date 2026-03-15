@@ -329,6 +329,11 @@ export const IRPEF_BRACKETS: Record<number, { limit: number; rate: number }[]> =
     { limit: 50000, rate: 0.35 },
     { limit: Infinity, rate: 0.43 },
   ],
+  2026: [
+    { limit: 28000, rate: 0.23 },
+    { limit: 50000, rate: 0.33 },  // Reduced from 35% to 33% in 2026
+    { limit: Infinity, rate: 0.43 },
+  ],
 };
 
 // Helper functions
