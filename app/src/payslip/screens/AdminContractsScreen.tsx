@@ -11,9 +11,9 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Menu } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import {
   fetchAllClaContracts,
   deactivateClaContract,
@@ -212,13 +212,13 @@ export default function AdminContractsScreen() {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar backgroundColor={colors.primary} barStyle="light-content" />
       
-      {/* Green Header with Hamburger */}
+      {/* Green Header with Back Button */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.menuBtn}
-          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          onPress={() => navigation.goBack()}
         >
-          <Menu size={24} color={colors.textInverse} />
+          <ChevronLeft size={24} color={colors.textInverse} />
         </TouchableOpacity>
         <Text style={styles.title}>CLA Contracts</Text>
         <View style={styles.yearSelector}>
