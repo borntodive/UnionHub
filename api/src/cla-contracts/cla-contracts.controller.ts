@@ -108,9 +108,36 @@ export class ClaContractsController {
   async cloneForYear(
     @Param('id', ParseUUIDPipe) id: string,
     @Body('year', ParseIntPipe) year: number,
-    @Request() req: RequestWithUser,
+    @Body('isActive') isActive?: boolean,
+    @Body('effectiveMonth', new ParseIntPipe({ optional: true })) effectiveMonth?: number,
+    @Request() req?: RequestWithUser,
   ) {
     return this.claContractsService.cloneForYear(id, year, {
+      userId: req!.user.userId,
+      crewcode: req!.user.crewcode,
+    }, isActive ?? true, effectiveMonth ?? 1);
+  }
+
+  @Post(':id/close')
+  async close(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('endYear', ParseIntPipe) endYear: number,
+    @Body('endMonth', ParseIntPipe) endMonth: number,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.claContractsService.close(id, endYear, endMonth, {
+      userId: req.user.userId,
+      crewcode: req.user.crewcode,
+    });
+  }
+
+  @Delete('year/:year')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteAllForYear(
+    @Param('year', ParseIntPipe) year: number,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.claContractsService.deleteAllForYear(year, {
       userId: req.user.userId,
       crewcode: req.user.crewcode,
     });

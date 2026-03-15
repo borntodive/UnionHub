@@ -9,11 +9,11 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowLeft,
+  Menu,
   Plus,
   Briefcase,
   Trash2,
@@ -117,11 +117,11 @@ export const ContractsScreen: React.FC = () => {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
+            onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+            style={styles.menuButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <ArrowLeft size={24} color={colors.textInverse} />
+            <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Manage Contracts</Text>
           <TouchableOpacity
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     minHeight: 56,
   },
-  backButton: {
+  menuButton: {
     width: 40,
     height: 40,
     justifyContent: 'center',

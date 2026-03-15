@@ -128,7 +128,26 @@ export async function activateClaContract(id: string): Promise<ClaContract> {
   return response.data;
 }
 
-export async function cloneClaContract(id: string, year: number): Promise<ClaContract> {
-  const response = await apiClient.post(`/admin/cla-contracts/${id}/clone`, { year });
+export async function cloneClaContract(
+  id: string, 
+  year: number, 
+  isActive: boolean = true,
+  effectiveMonth: number = 1,
+): Promise<ClaContract> {
+  const response = await apiClient.post(`/admin/cla-contracts/${id}/clone`, { 
+    year, 
+    isActive,
+    effectiveMonth,
+  });
+  return response.data;
+}
+
+export async function closeClaContract(id: string, endYear: number, endMonth: number): Promise<ClaContract> {
+  const response = await apiClient.post(`/admin/cla-contracts/${id}/close`, { endYear, endMonth });
+  return response.data;
+}
+
+export async function deleteAllClaContractsForYear(year: number): Promise<{ deleted: number }> {
+  const response = await apiClient.delete(`/admin/cla-contracts/year/${year}`);
   return response.data;
 }

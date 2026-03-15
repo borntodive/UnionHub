@@ -31,6 +31,8 @@ import { MembersScreen } from '../screens/MembersScreen/MembersScreen';
 import { PayslipTabs } from '../payslip/navigation/PayslipTabs';
 import AdminContractsScreen from '../payslip/screens/AdminContractsScreen';
 import ContractEditorScreen from '../payslip/screens/ContractEditorScreen';
+import { ContractsScreen } from '../screens/admin/ContractsScreen';
+import { ContractFormScreen } from '../screens/admin/ContractFormScreen';
 import { UserRole } from '../types';
 const Drawer = createDrawerNavigator();
 
@@ -185,9 +187,9 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             />
             <MenuItem
               icon={<Briefcase size={22} color={colors.primary} />}
-              label="CLA Contracts"
+              label="Contracts"
               onPress={() => {
-                props.navigation.navigate('ClaContracts');
+                props.navigation.navigate('Contracts');
                 props.navigation.closeDrawer();
               }}
             />
@@ -196,6 +198,14 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
               label="Grades"
               onPress={() => {
                 props.navigation.navigate('Grades');
+                props.navigation.closeDrawer();
+              }}
+            />
+            <MenuItem
+              icon={<Calculator size={22} color={colors.primary} />}
+              label="CLA Contracts"
+              onPress={() => {
+                props.navigation.navigate('ClaContracts');
                 props.navigation.closeDrawer();
               }}
             />
@@ -270,14 +280,34 @@ export const DrawerNavigator: React.FC = () => {
       />
 
       {isAdmin && (
-        <Drawer.Screen 
-          name="Members" 
-          component={MembersScreen}
-          options={{
-            title: 'Members',
-            drawerIcon: ({ color }) => <Users size={22} color={color} />,
-          }}
-        />
+        <>
+          <Drawer.Screen 
+            name="Members" 
+            component={MembersScreen}
+            options={{
+              title: 'Members',
+              drawerIcon: ({ color }) => <Users size={22} color={color} />,
+            }}
+          />
+          <Drawer.Screen 
+            name="Contracts" 
+            component={ContractsScreen}
+            options={{
+              title: 'Contracts',
+              drawerIcon: ({ color }) => <Briefcase size={22} color={color} />,
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen 
+            name="ContractForm" 
+            component={ContractFormScreen}
+            options={{
+              title: 'Edit Contract',
+              drawerItemStyle: { display: 'none' },
+              headerShown: false,
+            }}
+          />
+        </>
       )}
       {isSuperAdmin && (
         <Drawer.Screen 

@@ -180,6 +180,8 @@ export class ClaContractsService {
     id: string,
     targetYear: number,
     user: UserInfo,
+    isActive: boolean = true,
+    effectiveMonth: number = 1,
   ): Promise<ClaContract> {
     const source = await this.findById(id);
 
@@ -215,14 +217,74 @@ export class ClaContractsService {
       rsa: source.rsa,
       trainingConfig: source.trainingConfig,
       effectiveYear: targetYear,
-      isActive: true,
+      effectiveMonth,
+      isActive,
       createdBy: user.userId,
     });
 
     const saved = await this.claContractRepository.save(clone);
-    await this.logHistory(saved, 'CREATE', user, undefined, `Cloned from ${source.id}`);
+    const statusNote = isActive ? '' : ' (INACTIVE - pending review)';
+    await this.logHistory(saved, 'CREATE', user, undefined, `Cloned from ${source.id}${statusNote} [Starts: ${effectiveMonth}/${targetYear}]`);
 
     return saved;
+  }
+
+  // Close a contract by setting end date and deactivating
+  async close(
+    id: string,
+    endYear: number,
+    endMonth: number,
+    user: UserInfo,
+  ): Promise<ClaContract> {
+    const contract = await this.findById(id);
+
+    // Validate end date is after effective date
+    if (endYear < contract.effectiveYear || 
+        (endYear === contract.effectiveYear && endMonth < contract.effectiveMonth)) {
+      throw new ConflictException('End date must be after effective date');
+    }
+
+    const oldValues = {
+      endYear: contract.endYear,
+      endMonth: contract.endMonth,
+      isActive: contract.isActive,
+    };
+
+    contract.endYear = endYear;
+    contract.endMonth = endMonth;
+    contract.isActive = false;
+
+    const saved = await this.claContractRepository.save(contract);
+
+    await this.logHistory(saved, 'UPDATE', user, [
+      { field: 'endYear', oldValue: oldValues.endYear, newValue: endYear },
+      { field: 'endMonth', oldValue: oldValues.endMonth, newValue: endMonth },
+      { field: 'isActive', oldValue: oldValues.isActive, newValue: false },
+    ], 'Contract closed');
+
+    return saved;
+  }
+
+  // Delete all contracts for a specific year
+  async deleteAllForYear(year: number, user: UserInfo): Promise<{ deleted: number }> {
+    // Find all contracts for the year
+    const contracts = await this.claContractRepository.find({
+      where: { effectiveYear: year },
+    });
+
+    if (contracts.length === 0) {
+      throw new NotFoundException(`No contracts found for year ${year}`);
+    }
+
+    // Log deletion for each contract before removing
+    for (const contract of contracts) {
+      await this.logHistory(contract, 'DELETE', user, undefined, `Bulk delete for year ${year}`);
+    }
+
+    // Delete all contracts
+    const result = await this.claContractRepository.delete({ effectiveYear: year });
+
+    return { deleted: result.affected || 0 };
   }
 
   // Private: Log to history

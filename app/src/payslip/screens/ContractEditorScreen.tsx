@@ -17,6 +17,7 @@ import { Menu, ChevronLeft } from 'lucide-react-native';
 import {
   createClaContract,
   updateClaContract,
+  closeClaContract,
   CreateClaContractData,
   ClaContract,
 } from '../services/claContractsApi';
@@ -89,6 +90,39 @@ export default function ContractEditorScreen() {
   const [itud, setItud] = useState(existingContract?.itud?.toString() || '120');
   const [isActive, setIsActive] = useState(existingContract?.isActive ?? true);
 
+  // Training config states
+  const [hasTraining, setHasTraining] = useState(!!existingContract?.trainingConfig);
+  const [trainingAllowance, setTrainingAllowance] = useState(
+    existingContract?.trainingConfig?.allowance 
+      ? (existingContract.trainingConfig.allowance * 12).toString() 
+      : ''
+  );
+  const [hasNonBtc, setHasNonBtc] = useState(!!existingContract?.trainingConfig?.nonBtc);
+  const [nonBtcAllowance, setNonBtcAllowance] = useState(
+    existingContract?.trainingConfig?.nonBtc?.allowance 
+      ? (existingContract.trainingConfig.nonBtc.allowance * 12).toString() 
+      : ''
+  );
+  const [nonBtcSimRate, setNonBtcSimRate] = useState(
+    existingContract?.trainingConfig?.nonBtc?.simDiaria?.[0]?.pay?.sectorPay?.toString() || ''
+  );
+  const [hasBtc, setHasBtc] = useState(!!existingContract?.trainingConfig?.btc);
+  const [btcAllowance, setBtcAllowance] = useState(
+    existingContract?.trainingConfig?.btc?.allowance 
+      ? (existingContract.trainingConfig.btc.allowance * 12).toString() 
+      : ''
+  );
+  const [btcSimRate1, setBtcSimRate1] = useState(
+    existingContract?.trainingConfig?.btc?.simDiaria?.[0]?.pay?.sectorPay?.toString() || ''
+  );
+  const [btcSimRate2, setBtcSimRate2] = useState(
+    existingContract?.trainingConfig?.btc?.simDiaria?.[1]?.pay?.sectorPay?.toString() || ''
+  );
+  const [hasLtcBonus, setHasLtcBonus] = useState(!!existingContract?.trainingConfig?.bonus);
+  const [ltcMinSectors, setLtcMinSectors] = useState(
+    existingContract?.trainingConfig?.bonus?.minSectors?.toString() || '21'
+  );
+
   // Update rank when role changes
   useEffect(() => {
     const availableRanks = RANKS[role as keyof typeof RANKS];
@@ -116,6 +150,20 @@ export default function ContractEditorScreen() {
       setRsa(existingContract.rsa?.toString() || '51.92');
       setItud(existingContract.itud?.toString() || '120');
       setIsActive(existingContract.isActive ?? true);
+      
+      // Training config
+      const tc = existingContract.trainingConfig;
+      setHasTraining(!!tc);
+      setTrainingAllowance(tc?.allowance ? (tc.allowance * 12).toString() : '');
+      setHasNonBtc(!!tc?.nonBtc);
+      setNonBtcAllowance(tc?.nonBtc?.allowance ? (tc.nonBtc.allowance * 12).toString() : '');
+      setNonBtcSimRate(tc?.nonBtc?.simDiaria?.[0]?.pay?.sectorPay?.toString() || '');
+      setHasBtc(!!tc?.btc);
+      setBtcAllowance(tc?.btc?.allowance ? (tc.btc.allowance * 12).toString() : '');
+      setBtcSimRate1(tc?.btc?.simDiaria?.[0]?.pay?.sectorPay?.toString() || '');
+      setBtcSimRate2(tc?.btc?.simDiaria?.[1]?.pay?.sectorPay?.toString() || '');
+      setHasLtcBonus(!!tc?.bonus);
+      setLtcMinSectors(tc?.bonus?.minSectors?.toString() || '21');
     }
   }, [existingContract]);
 
@@ -158,6 +206,36 @@ export default function ContractEditorScreen() {
         effectiveYear: parseInt(year),
         effectiveMonth: parseInt(month),
         isActive,
+        trainingConfig: hasTraining ? {
+          allowance: trainingAllowance ? parseFloat(trainingAllowance) / 12 : undefined,
+          nonBtc: hasNonBtc ? {
+            allowance: nonBtcAllowance ? parseFloat(nonBtcAllowance) / 12 : 0,
+            simDiaria: nonBtcSimRate ? [{
+              min: 1,
+              max: 999,
+              pay: { ffp: 0, sectorPay: parseFloat(nonBtcSimRate) || 0 }
+            }] : [],
+          } : undefined,
+          btc: hasBtc ? {
+            allowance: btcAllowance ? parseFloat(btcAllowance) / 12 : 0,
+            simDiaria: [
+              ...(btcSimRate1 ? [{
+                min: 1,
+                max: 10,
+                pay: { ffp: 0, sectorPay: parseFloat(btcSimRate1) || 0 }
+              }] : []),
+              ...(btcSimRate2 ? [{
+                min: 11,
+                max: 999,
+                pay: { ffp: 0, sectorPay: parseFloat(btcSimRate2) || 0 }
+              }] : []),
+            ],
+          } : undefined,
+          bonus: hasLtcBonus ? {
+            minSectors: parseInt(ltcMinSectors) || 21,
+            pay: [],
+          } : undefined,
+        } : undefined,
       };
 
       if (isEditing) {
@@ -178,6 +256,100 @@ export default function ContractEditorScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleClonePeriod = async () => {
+    if (!isEditing || !existingContract) return;
+    
+    Alert.alert(
+      'Clone for New Period',
+      'This will:\n1. Close the current contract at the end of last month\n2. Create a new contract starting this month\n\nContinue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clone',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const now = new Date();
+              const currentYear = now.getFullYear();
+              const currentMonth = now.getMonth() + 1;
+              
+              // Close old contract at end of previous month
+              const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+              const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+              
+              await closeClaContract(existingContract.id, prevYear, prevMonth);
+              
+              // Create new contract with same values but new period
+              const data: CreateClaContractData = {
+                role: existingContract.role,
+                rank: existingContract.rank,
+                basic: parseFloat(basic) / 13,
+                ffp: parseFloat(ffp) / 12,
+                sbh: parseFloat(sbh) || 0,
+                al: parseFloat(al) || 0,
+                oob: parseFloat(oob) || 0,
+                woff: parseFloat(woff) || 0,
+                allowance: parseFloat(allowance) / 12,
+                diaria: parseFloat(diaria),
+                rsa: parseFloat(rsa) || 51.92,
+                itud: parseFloat(itud) || 120,
+                effectiveYear: currentYear,
+                effectiveMonth: currentMonth,
+                isActive: true,
+                trainingConfig: hasTraining ? {
+                  allowance: trainingAllowance ? parseFloat(trainingAllowance) / 12 : undefined,
+                  nonBtc: hasNonBtc ? {
+                    allowance: nonBtcAllowance ? parseFloat(nonBtcAllowance) / 12 : 0,
+                    simDiaria: nonBtcSimRate ? [{
+                      min: 1,
+                      max: 999,
+                      pay: { ffp: 0, sectorPay: parseFloat(nonBtcSimRate) || 0 }
+                    }] : [],
+                  } : undefined,
+                  btc: hasBtc ? {
+                    allowance: btcAllowance ? parseFloat(btcAllowance) / 12 : 0,
+                    simDiaria: [
+                      ...(btcSimRate1 ? [{
+                        min: 1,
+                        max: 10,
+                        pay: { ffp: 0, sectorPay: parseFloat(btcSimRate1) || 0 }
+                      }] : []),
+                      ...(btcSimRate2 ? [{
+                        min: 11,
+                        max: 999,
+                        pay: { ffp: 0, sectorPay: parseFloat(btcSimRate2) || 0 }
+                      }] : []),
+                    ],
+                  } : undefined,
+                  bonus: hasLtcBonus ? {
+                    minSectors: parseInt(ltcMinSectors) || 21,
+                    pay: [],
+                  } : undefined,
+                } : undefined,
+              };
+              
+              await createClaContract(data);
+              await clearContractCache();
+              
+              Alert.alert(
+                'Success',
+                'New contract period created. The old contract has been closed.',
+                [{ text: 'OK', onPress: () => navigation.goBack() }]
+              );
+            } catch (error: any) {
+              Alert.alert(
+                'Error',
+                error.response?.data?.message || 'Failed to clone contract'
+              );
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const renderInput = (
@@ -285,6 +457,86 @@ export default function ContractEditorScreen() {
           {renderInput('ITUD Daily Rate', itud, setItud, '120')}
         </View>
 
+        {/* Training Configuration */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Training Configuration</Text>
+          
+          <View style={styles.switchContainer}>
+            <Text style={styles.label}>Enable Training Pay</Text>
+            <Switch
+              value={hasTraining}
+              onValueChange={setHasTraining}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={colors.textInverse}
+            />
+          </View>
+          
+          {hasTraining && (
+            <>
+              {renderInput('Training Allowance (annual)', trainingAllowance, setTrainingAllowance, '4000')}
+              
+              {/* Non-BTC Section */}
+              <View style={styles.subSection}>
+                <View style={styles.switchContainer}>
+                  <Text style={styles.subSectionTitle}>Non-BTC Training</Text>
+                  <Switch
+                    value={hasNonBtc}
+                    onValueChange={setHasNonBtc}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={colors.textInverse}
+                  />
+                </View>
+                {hasNonBtc && (
+                  <>
+                    {renderInput('Non-BTC Allowance (annual)', nonBtcAllowance, setNonBtcAllowance, '3000')}
+                    {renderInput('Non-BTC Sim Rate (per day)', nonBtcSimRate, setNonBtcSimRate, '15.00')}
+                  </>
+                )}
+              </View>
+              
+              {/* BTC Section */}
+              <View style={styles.subSection}>
+                <View style={styles.switchContainer}>
+                  <Text style={styles.subSectionTitle}>BTC Training</Text>
+                  <Switch
+                    value={hasBtc}
+                    onValueChange={setHasBtc}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={colors.textInverse}
+                  />
+                </View>
+                {hasBtc && (
+                  <>
+                    {renderInput('BTC Allowance (annual)', btcAllowance, setBtcAllowance, '2500')}
+                    <Text style={styles.tierLabel}>Tier 1 (Days 1-10)</Text>
+                    {renderInput('BTC Sim Rate Tier 1', btcSimRate1, setBtcSimRate1, '12.00')}
+                    <Text style={styles.tierLabel}>Tier 2 (Days 11+)</Text>
+                    {renderInput('BTC Sim Rate Tier 2', btcSimRate2, setBtcSimRate2, '6.00')}
+                  </>
+                )}
+              </View>
+              
+              {/* LTC Bonus Section */}
+              <View style={styles.subSection}>
+                <View style={styles.switchContainer}>
+                  <Text style={styles.subSectionTitle}>LTC Sector Bonus</Text>
+                  <Switch
+                    value={hasLtcBonus}
+                    onValueChange={setHasLtcBonus}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={colors.textInverse}
+                  />
+                </View>
+                {hasLtcBonus && (
+                  <>
+                    {renderInput('Min Sectors for Bonus', ltcMinSectors, setLtcMinSectors, '21', 'numeric')}
+                  </>
+                )}
+              </View>
+            </>
+          )}
+        </View>
+
         {/* Active Status */}
         <View style={styles.switchContainer}>
           <Text style={styles.label}>Active</Text>
@@ -295,6 +547,17 @@ export default function ContractEditorScreen() {
             thumbColor={colors.textInverse}
           />
         </View>
+
+        {/* Clone for New Period Button (only when editing) */}
+        {isEditing && (
+          <TouchableOpacity
+            style={[styles.cloneBtn, loading && styles.saveBtnDisabled]}
+            onPress={handleClonePeriod}
+            disabled={loading}
+          >
+            <Text style={styles.cloneBtnText}>Clone for New Period</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Save Button */}
         <TouchableOpacity
@@ -439,5 +702,35 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 16,
     fontWeight: '600',
+  },
+  cloneBtn: {
+    backgroundColor: colors.secondary,
+    padding: spacing.md,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  cloneBtnText: {
+    color: colors.textInverse,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  subSection: {
+    marginTop: spacing.md,
+    marginLeft: spacing.md,
+    paddingLeft: spacing.md,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.border,
+  },
+  subSectionTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  tierLabel: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
   },
 });
