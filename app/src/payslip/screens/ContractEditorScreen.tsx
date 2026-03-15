@@ -264,6 +264,7 @@ export default function ContractEditorScreen() {
           <Text style={styles.sectionTitle}>Salary Components (Annual)</Text>
           {renderInput('Basic Salary (annual)', basic, setBasic, '15000')}
           {renderInput('FFP - Fixed Flight Pay (annual)', ffp, setFfp, '82044')}
+          {renderInput('Allowance (annual)', allowance, setAllowance, '8000')}
           {renderInput('Scheduled Block Hours Rate (SBH)', sbh, setSbh, '18.21')}
           {renderInput('Annual Leave Daily Rate (AL)', al, setAl, '165.00')}
         </View>
@@ -271,8 +272,7 @@ export default function ContractEditorScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Allowances</Text>
           {renderInput('Out of Base Daily (OOB)', oob, setOob, '155.00')}
-          {role === 'pil' && renderInput('Weekly Off (WOFF)', woff, setWoff, '450.00')}
-          {renderInput('Allowance (annual)', allowance, setAllowance, '8000')}
+          {role === 'pil' && renderInput('Working Day Off (WOFF)', woff, setWoff, '450.00')}
           {renderInput('Per Diem Rate (Diaria)', diaria, setDiaria, '46.48')}
           {renderInput('RSA Amount (monthly)', rsa, setRsa, '51.92')}
         </View>
