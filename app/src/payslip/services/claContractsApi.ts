@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:3000/api/v1';
+import apiClient from '../../api/client';
 
 export interface ClaContract {
   id: string;
@@ -67,21 +65,21 @@ export async function fetchClaContract(
   if (year) params.append('year', year.toString());
   if (month) params.append('month', month.toString());
 
-  const response = await axios.get(`${API_BASE_URL}/cla-contracts?${params}`);
+  const response = await apiClient.get(`/cla-contracts?${params}`);
   return response.data;
 }
 
 // Admin endpoints - SuperAdmin only
 export async function fetchAllClaContracts(year?: number): Promise<ClaContract[]> {
   const url = year 
-    ? `${API_BASE_URL}/admin/cla-contracts?year=${year}`
-    : `${API_BASE_URL}/admin/cla-contracts`;
-  const response = await axios.get(url);
+    ? `/admin/cla-contracts?year=${year}`
+    : `/admin/cla-contracts`;
+  const response = await apiClient.get(url);
   return response.data;
 }
 
 export async function fetchClaContractHistory(contractId: string): Promise<ClaContractHistory[]> {
-  const response = await axios.get(`${API_BASE_URL}/admin/cla-contracts/${contractId}/history`);
+  const response = await apiClient.get(`/admin/cla-contracts/${contractId}/history`);
   return response.data;
 }
 
@@ -107,7 +105,7 @@ export interface CreateClaContractData {
 }
 
 export async function createClaContract(data: CreateClaContractData): Promise<ClaContract> {
-  const response = await axios.post(`${API_BASE_URL}/admin/cla-contracts`, data);
+  const response = await apiClient.post(`/admin/cla-contracts`, data);
   return response.data;
 }
 
@@ -115,20 +113,20 @@ export async function updateClaContract(
   id: string,
   data: Partial<CreateClaContractData>
 ): Promise<ClaContract> {
-  const response = await axios.put(`${API_BASE_URL}/admin/cla-contracts/${id}`, data);
+  const response = await apiClient.put(`/admin/cla-contracts/${id}`, data);
   return response.data;
 }
 
 export async function deactivateClaContract(id: string): Promise<void> {
-  await axios.delete(`${API_BASE_URL}/admin/cla-contracts/${id}`);
+  await apiClient.delete(`/admin/cla-contracts/${id}`);
 }
 
 export async function activateClaContract(id: string): Promise<ClaContract> {
-  const response = await axios.post(`${API_BASE_URL}/admin/cla-contracts/${id}/activate`);
+  const response = await apiClient.post(`/admin/cla-contracts/${id}/activate`);
   return response.data;
 }
 
 export async function cloneClaContract(id: string, year: number): Promise<ClaContract> {
-  const response = await axios.post(`${API_BASE_URL}/admin/cla-contracts/${id}/clone`, { year });
+  const response = await apiClient.post(`/admin/cla-contracts/${id}/clone`, { year });
   return response.data;
 }
