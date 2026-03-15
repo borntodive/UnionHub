@@ -25,9 +25,7 @@ import {
   StatisticsScreen,
   BulkImportScreen,
 } from "../screens/admin";
-// CLA Contract Admin screens
-import AdminContractsScreen from "../payslip/screens/AdminContractsScreen";
-import ContractEditorScreen from "../payslip/screens/ContractEditorScreen";
+// Note: CLA Contract screens are now in DrawerNavigator
 import { colors } from "../theme";
 import { useAuthStore } from "../store/authStore";
 import { SharedFileHandler } from "../components/SharedFileHandler";
@@ -158,17 +156,7 @@ export const AppNavigator: React.FC = () => {
               component={BulkImportScreen}
               options={{ headerShown: false }}
             />
-            {/* CLA Contract Admin */}
-            <Stack.Screen
-              name="ClaContracts"
-              component={AdminContractsScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="ContractEditor"
-              component={ContractEditorScreen}
-              options={{ headerShown: false }}
-            />
+            {/* Note: CLA Contract screens moved to DrawerNavigator */}
           </>
         )}
       </Stack.Navigator>

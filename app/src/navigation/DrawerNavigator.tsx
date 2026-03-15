@@ -29,6 +29,8 @@ import { useAuthStore } from '../store/authStore';
 import { authApi } from '../api/auth';
 import { MembersScreen } from '../screens/MembersScreen/MembersScreen';
 import { PayslipTabs } from '../payslip/navigation/PayslipTabs';
+import AdminContractsScreen from '../payslip/screens/AdminContractsScreen';
+import ContractEditorScreen from '../payslip/screens/ContractEditorScreen';
 import { UserRole } from '../types';
 const Drawer = createDrawerNavigator();
 
@@ -304,6 +306,28 @@ export const DrawerNavigator: React.FC = () => {
           headerShown: false,
         }}
       />
+      {isSuperAdmin && (
+        <>
+          <Drawer.Screen 
+            name="ClaContracts" 
+            component={AdminContractsScreen}
+            options={{
+              title: 'CLA Contracts',
+              drawerIcon: ({ color }) => <Briefcase size={22} color={color} />,
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen 
+            name="ContractEditor" 
+            component={ContractEditorScreen}
+            options={{
+              title: 'Edit Contract',
+              drawerItemStyle: { display: 'none' }, // Hide from drawer menu
+              headerShown: false,
+            }}
+          />
+        </>
+      )}
     </Drawer.Navigator>
   );
 };
