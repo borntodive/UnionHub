@@ -167,20 +167,13 @@ async function runSeed() {
       console.log(`  SuperAdmin ${adminCrewcode} already exists`);
     }
 
-    // Seed CLA Contracts - choose which version to seed
+    // Seed CLA Contracts - seed both 2025 and 2026
     const superAdmin = await usersRepository.findOne({
       where: { crewcode: adminCrewcode },
     });
     if (superAdmin) {
-      // Option 1: Seed both 2025 and 2026 contracts (for historical data)
-      // await seedClaContracts2025(dataSource, superAdmin.id);
-      // await seedClaContracts2026(dataSource, superAdmin.id);
-      
-      // Option 2: Seed only 2026 contracts (current active period)
+      await seedClaContracts2025(dataSource, superAdmin.id);
       await seedClaContracts2026(dataSource, superAdmin.id);
-      
-      // Option 3: Use legacy seeder (mixed data)
-      // await seedClaContracts(dataSource, superAdmin.id);
     }
 
     // Seed Role Admins
