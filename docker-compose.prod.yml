@@ -56,7 +56,7 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: api/Dockerfile.prod
+      dockerfile: Dockerfile.prod
     environment:
       NODE_ENV: production
       PORT: 3000
