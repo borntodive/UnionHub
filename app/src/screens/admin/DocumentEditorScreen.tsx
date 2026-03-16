@@ -137,11 +137,15 @@ export const DocumentEditorScreen: React.FC = () => {
 
   const publishMutation = useMutation({
     mutationFn: documentsApi.publishDocument,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
-      Alert.alert('Success', 'Document published!', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      queryClient.invalidateQueries({ queryKey: ['document', documentId] });
+      // Update local state with published data
+      if (data) {
+        setAiReviewedContent(data.aiReviewedContent || '');
+        setEnglishTranslation(data.englishTranslation || '');
+      }
+      Alert.alert('Success', 'Document published! You can now download the PDF.');
     },
     onError: (error: any) => {
       Alert.alert('Error', error.response?.data?.message || 'Publish failed');
