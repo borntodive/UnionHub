@@ -7,15 +7,15 @@ services:
     container_name: unionhub-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_USERNAME:-unionconnect}
+      POSTGRES_USER: ${DB_USERNAME:-unionhub}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
-      POSTGRES_DB: ${DB_NAME:-unionconnect}
+      POSTGRES_DB: ${DB_NAME:-unionhub}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "127.0.0.1:5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-unionconnect}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-unionhub}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -34,7 +34,6 @@ services:
     environment:
       - OLLAMA_ORIGINS=*
       - OLLAMA_HOST=0.0.0.0
-    # CPU-only mode (no GPU required)
     deploy:
       resources:
         limits:
@@ -56,16 +55,16 @@ services:
     container_name: unionhub-api
     restart: unless-stopped
     build:
-      context: ./api
-      dockerfile: Dockerfile.prod
+      context: .
+      dockerfile: api/Dockerfile.prod
     environment:
       NODE_ENV: production
       PORT: 3000
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_USERNAME: ${DB_USERNAME:-unionconnect}
+      DB_USERNAME: ${DB_USERNAME:-unionhub}
       DB_PASSWORD: ${DB_PASSWORD:-changeme}
-      DB_NAME: ${DB_NAME:-unionconnect}
+      DB_NAME: ${DB_NAME:-unionhub}
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-this}
       JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-15m}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-30d}
