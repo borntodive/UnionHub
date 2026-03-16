@@ -15,6 +15,8 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useRoute, RouteProp, DrawerActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import {
   Menu,
   Save,
@@ -153,10 +155,39 @@ export const DocumentEditorScreen: React.FC = () => {
   });
 
   const downloadMutation = useMutation({
-    mutationFn: ({ id, title }: { id: string; title: string }) =>
-      documentsApi.downloadPdf(id, title),
+    mutationFn: async ({ id, title }: { id: string; title: string }) => {
+      // Get base64 PDF from API
+      const base64Pdf = await documentsApi.getPdfBase64(id);
+      if (!base64Pdf) {
+        throw new Error('PDF not found');
+      }
+      
+      // Save to file using new expo-file-system API
+      const fileName = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+      const file = new FileSystem.File(FileSystem.Paths.document, fileName);
+      
+      // Convert base64 to bytes and write
+      const binaryString = atob(base64Pdf);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      await file.write(bytes);
+      
+      // Share the file
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(file.uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: title,
+        });
+      } else {
+        Alert.alert('Success', `PDF saved to: ${file.uri}`);
+      }
+      
+      return file.uri;
+    },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'Download failed');
+      Alert.alert('Error', error.message || 'Download failed');
     },
   });
 

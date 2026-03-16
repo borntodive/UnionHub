@@ -77,20 +77,15 @@ export const documentsApi = {
     return response.data;
   },
 
-  downloadPdf: async (id: string, title: string): Promise<void> => {
-    const response = await apiClient.get(`/documents/${id}/download`, {
-      responseType: 'blob',
-    });
+  getPdfBase64: async (id: string): Promise<string | null> => {
+    const response = await apiClient.get(`/documents/${id}`);
+    const document = response.data as Document;
     
-    // Create download link
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `${title}.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
+    // Extract base64 from data URL
+    if (document.finalPdfUrl?.startsWith('data:application/pdf;base64,')) {
+      return document.finalPdfUrl.replace('data:application/pdf;base64,', '');
+    }
+    return null;
   },
 
   deleteDocument: async (id: string): Promise<void> => {
