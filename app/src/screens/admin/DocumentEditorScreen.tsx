@@ -50,6 +50,19 @@ export const DocumentEditorScreen: React.FC = () => {
   const [content, setContent] = useState('');
   const [aiReviewedContent, setAiReviewedContent] = useState('');
   const [englishTranslation, setEnglishTranslation] = useState('');
+  const [showCloseModal, setShowCloseModal] = useState(false);
+
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = () => {
+    if (!isEditing) {
+      // New document: check if anything was entered
+      return title.trim() !== '' || content.trim() !== '';
+    }
+    // Existing document: compare with loaded data
+    return title !== existingDoc?.title || 
+           content !== existingDoc?.originalContent ||
+           aiReviewedContent !== (existingDoc?.aiReviewedContent || '');
+  };
 
   // Fetch existing document
   const { data: existingDoc, isLoading: isLoadingDoc } = useQuery({
@@ -70,8 +83,15 @@ export const DocumentEditorScreen: React.FC = () => {
       else if (existingDoc.status === 'approved') setStep('publish');
       else if (existingDoc.status === 'reviewing') setStep('approve');
       else setStep('edit');
+    } else if (!isEditing) {
+      // Reset state for new document
+      setStep('edit');
+      setTitle('');
+      setContent('');
+      setAiReviewedContent('');
+      setEnglishTranslation('');
     }
-  }, [existingDoc]);
+  }, [existingDoc, isEditing, documentId]);
 
   // Mutations
   const createMutation = useMutation({
@@ -135,6 +155,37 @@ export const DocumentEditorScreen: React.FC = () => {
 
     if (!isEditing) {
       createMutation.mutate({ title, content });
+    }
+  };
+
+  const handleClose = () => {
+    if (hasUnsavedChanges()) {
+      setShowCloseModal(true);
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  const handleCloseAction = (action: 'cancel' | 'save' | 'discard') => {
+    setShowCloseModal(false);
+    
+    if (action === 'cancel') {
+      return;
+    } else if (action === 'save') {
+      if (!title.trim() || !content.trim()) {
+        Alert.alert('Error', 'Title and content are required to save');
+        return;
+      }
+      if (!isEditing) {
+        createMutation.mutate({ title, content }, {
+          onSuccess: () => navigation.goBack(),
+        });
+      } else {
+        // For existing docs, just go back (auto-saved)
+        navigation.goBack();
+      }
+    } else if (action === 'discard') {
+      navigation.goBack();
     }
   };
 
@@ -387,7 +438,7 @@ export const DocumentEditorScreen: React.FC = () => {
             {isEditing ? 'Modifica Comunicato' : 'Nuovo Comunicato'}
           </Text>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={handleClose}
             style={styles.closeButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
@@ -405,6 +456,41 @@ export const DocumentEditorScreen: React.FC = () => {
             {renderStepContent()}
           </ScrollView>
         </KeyboardAvoidingView>
+
+        {/* Close Confirmation Modal */}
+        {showCloseModal && (
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Chiudi Comunicato</Text>
+              <Text style={styles.modalText}>
+                Hai delle modifiche non salvate. Cosa vuoi fare?
+              </Text>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                onPress={() => handleCloseAction('save')}
+              >
+                <Save size={20} color={colors.textInverse} />
+                <Text style={styles.modalButtonPrimaryText}>Salva come Bozza</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={() => handleCloseAction('discard')}
+              >
+                <X size={20} color={colors.error} />
+                <Text style={styles.modalButtonSecondaryText}>Elimina Modifiche</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => handleCloseAction('cancel')}
+              >
+                <Text style={styles.modalButtonCancelText}>Annulla, Continua a Modificare</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </SafeAreaView>
     </View>
   );
@@ -627,6 +713,71 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     marginTop: spacing.lg,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+  },
+  modalText: {
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  modalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
+  },
+  modalButtonPrimary: {
+    backgroundColor: colors.primary,
+  },
+  modalButtonPrimaryText: {
+    color: colors.textInverse,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+  },
+  modalButtonSecondary: {
+    backgroundColor: colors.error + '10',
+    borderWidth: 1,
+    borderColor: colors.error,
+  },
+  modalButtonSecondaryText: {
+    color: colors.error,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+  },
+  modalButtonCancel: {
+    backgroundColor: 'transparent',
+  },
+  modalButtonCancelText: {
+    color: colors.textSecondary,
+    fontSize: typography.sizes.md,
   },
 });
 
