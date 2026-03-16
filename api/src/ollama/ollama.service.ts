@@ -103,13 +103,15 @@ Traduci mantenendo:
 - Tono formale e professionale
 - Terminologia sindacale appropriata
 - Chiarezza e precisione
-- Formato adatto a comunicati ufficiali`;
+- Formato adatto a comunicati ufficiali
+
+IMPORTANTE: Rispondi SOLO con la traduzione. Non aggiungere note, spiegazioni, commenti o alternative. Non usare frasi come "Ecco la traduzione" o "Traduzione:".`;
 
     const prompt = `Traduci il seguente comunicato sindacale in inglese:
 
 """${text}"""
 
-Traduzione in inglese:`;
+Traduzione (solo il testo tradotto, nient'altro):`;
 
     return this.generate(prompt, systemPrompt);
   }

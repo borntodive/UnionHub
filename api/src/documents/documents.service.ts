@@ -112,8 +112,16 @@ export class DocumentsService {
       try {
         const isOllamaReady = await this.ollamaService.healthCheck();
         if (isOllamaReady) {
-          const systemPrompt = `Sei un traduttore professionale. Traduci il titolo dal italiano all'inglese mantenendo il tono formale e professionale.`;
-          const prompt = `Traduci questo titolo in inglese:\n\n"${document.title}"\n\nTraduzione:`;
+          const systemPrompt = `Sei un traduttore professionale. Traduci il titolo dal italiano all'inglese mantenendo il tono formale e professionale. Usa il contesto del comunicato per una traduzione più accurata. Rispondi SOLO con la traduzione, senza note o spiegazioni.`;
+          const content = document.aiReviewedContent || document.originalContent;
+          const prompt = `Traduci questo titolo in inglese usando il contesto del comunicato:
+
+TITOLO: "${document.title}"
+
+CONTESTO (primi 500 caratteri del comunicato):
+"${content.substring(0, 500)}..."
+
+Traduzione del titolo (solo il titolo tradotto, nient'altro):`;
           document.englishTitle = await this.ollamaService.generate(prompt, systemPrompt);
         }
       } catch (error) {
