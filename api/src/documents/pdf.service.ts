@@ -73,8 +73,8 @@ export class PdfService {
         color: rgb(0.4, 0.4, 0.4),
       });
       
-      // Add title
-      const title = document.title;
+      // Add title (remove newlines for PDF rendering)
+      const title = document.title.replace(/\n/g, ' ');
       const titleWidth = boldFont.widthOfTextAtSize(title, 16);
       firstPage.drawText(title, {
         x: (width - titleWidth) / 2,
@@ -127,8 +127,8 @@ export class PdfService {
           color: rgb(0.85, 0.05, 0.2), // CISL red
         });
         
-        // English title (use translated title or fallback to Italian)
-        const engTitle = document.englishTitle || document.title;
+        // English title (use translated title or fallback to Italian, remove newlines)
+        const engTitle = (document.englishTitle || document.title).replace(/\n/g, ' ');
         const engTitleWidth = boldFont.widthOfTextAtSize(engTitle, 16);
         engPage.drawText(engTitle, {
           x: (width - engTitleWidth) / 2,
