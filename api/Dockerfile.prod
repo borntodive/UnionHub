@@ -6,7 +6,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 COPY tsconfig*.json ./
-COPY nest-cli.json ./
+# nest-cli.json is optional, create if not exists
 
 # Install dependencies
 RUN npm ci
