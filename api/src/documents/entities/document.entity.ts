@@ -23,10 +23,10 @@ export class Document {
   originalContent: string;
 
   @Column({ type: 'text', nullable: true })
-  aiReviewedContent: string;
+  aiReviewedContent: string | null;
 
   @Column({ type: 'text', nullable: true })
-  englishTranslation: string;
+  englishTranslation: string | null;
 
   @Column({ type: 'text', nullable: true })
   finalPdfUrl: string;

@@ -71,23 +71,26 @@ export class DocumentsService {
     return this.documentRepository.save(document);
   }
 
-  // Approve and generate translations using Ollama
+  // Approve and generate translations (AI optional)
   async approve(id: string, dto: ApproveDocumentDto, user: UserInfo): Promise<Document> {
     const document = await this.findById(id);
 
-    const finalContent = dto.reviewedContent || document.aiReviewedContent;
+    const finalContent = dto.reviewedContent || document.aiReviewedContent || document.originalContent;
     if (!finalContent) {
       throw new Error('No content to approve');
     }
 
-    // Check if Ollama is available
-    const isOllamaReady = await this.ollamaService.healthCheck();
-    if (!isOllamaReady) {
-      throw new BadRequestException('Ollama service is not available. Please ensure Ollama is running.');
+    // Try to use Ollama for translation, but don't fail if it's not available
+    let englishTranslation: string | null = null;
+    try {
+      const isOllamaReady = await this.ollamaService.healthCheck();
+      if (isOllamaReady) {
+        englishTranslation = await this.ollamaService.translateToEnglish(finalContent);
+      }
+    } catch (error) {
+      // Log but don't fail - translation is optional
+      console.log('Ollama translation skipped:', error.message);
     }
-
-    // Use Ollama to translate to English
-    const englishTranslation = await this.ollamaService.translateToEnglish(finalContent);
 
     document.aiReviewedContent = finalContent;
     document.englishTranslation = englishTranslation;

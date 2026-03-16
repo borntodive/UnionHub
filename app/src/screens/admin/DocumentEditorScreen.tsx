@@ -217,33 +217,46 @@ export const DocumentEditorScreen: React.FC = () => {
                 )}
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity
-                style={[styles.actionButton, styles.aiButton]}
-                onPress={handleRequestReview}
-                disabled={reviewMutation.isPending}
-              >
-                {reviewMutation.isPending ? (
-                  <>
-                    <ActivityIndicator color={colors.primary} />
-                    <Text style={styles.aiButtonText}>AI sta revisionando...</Text>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={20} color={colors.primary} />
-                    <Text style={styles.aiButtonText}>Richiedi Revisione AI</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.aiButton]}
+                  onPress={handleRequestReview}
+                  disabled={reviewMutation.isPending}
+                >
+                  {reviewMutation.isPending ? (
+                    <>
+                      <ActivityIndicator color={colors.primary} />
+                      <Text style={styles.aiButtonText}>AI sta revisionando...</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={20} color={colors.primary} />
+                      <Text style={styles.aiButtonText}>Richiedi Revisione AI</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.secondaryButton]}
+                  onPress={() => setStep('approve')}
+                >
+                  <ArrowRight size={20} color={colors.text} />
+                  <Text style={styles.secondaryButtonText}>Avanti senza AI</Text>
+                </TouchableOpacity>
+              </>
             )}
           </View>
         );
 
       case 'approve':
+        const hasAIReview = !!aiReviewedContent;
         return (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>2. Revisione AI</Text>
+            <Text style={styles.stepTitle}>2. Revisione {hasAIReview ? 'AI' : 'Manuale'}</Text>
             <Text style={styles.stepDescription}>
-              L'AI ha riscritto il testo come comunicato sindacale. Puoi modificarlo prima di approvarlo.
+              {hasAIReview 
+                ? "L'AI ha riscritto il testo come comunicato sindacale. Puoi modificarlo prima di approvarlo."
+                : "Revisione manuale del comunicato. Puoi modificare il testo prima di approvarlo."}
             </Text>
 
             <Text style={styles.label}>Testo Originale</Text>
@@ -251,10 +264,10 @@ export const DocumentEditorScreen: React.FC = () => {
               <Text style={styles.originalText}>{content}</Text>
             </View>
 
-            <Text style={styles.label}>Versione Rivista dall'AI</Text>
+            <Text style={styles.label}>{hasAIReview ? 'Versione Rivista dall\'AI' : 'Versione da Approvare'}</Text>
             <TextInput
               style={styles.reviewInput}
-              value={aiReviewedContent}
+              value={aiReviewedContent || content}
               onChangeText={setAiReviewedContent}
               multiline
               textAlignVertical="top"
@@ -288,22 +301,29 @@ export const DocumentEditorScreen: React.FC = () => {
         );
 
       case 'publish':
+        const hasTranslation = !!englishTranslation;
         return (
           <View style={styles.stepContent}>
             <Text style={styles.stepTitle}>3. Pubblicazione</Text>
             <Text style={styles.stepDescription}>
-              Il documento è stato approvato e tradotto. Genera il PDF finale con carta intestata.
+              {hasTranslation 
+                ? "Il documento è stato approvato e tradotto. Genera il PDF finale con carta intestata."
+                : "Il documento è stato approvato. Genera il PDF finale con carta intestata."}
             </Text>
 
             <Text style={styles.label}>Versione Italiana (Finale)</Text>
             <View style={styles.finalBox}>
-              <Text style={styles.finalText}>{aiReviewedContent}</Text>
+              <Text style={styles.finalText}>{aiReviewedContent || content}</Text>
             </View>
 
-            <Text style={styles.label}>Versione Inglese (Allegato)</Text>
-            <View style={styles.englishBox}>
-              <Text style={styles.englishText}>{englishTranslation}</Text>
-            </View>
+            {hasTranslation && (
+              <>
+                <Text style={styles.label}>Versione Inglese (Allegato)</Text>
+                <View style={styles.englishBox}>
+                  <Text style={styles.englishText}>{englishTranslation}</Text>
+                </View>
+              </>
+            )}
 
             <View style={styles.buttonRow}>
               <TouchableOpacity
