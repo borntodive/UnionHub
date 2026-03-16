@@ -116,29 +116,31 @@ export class PdfService {
         const [templatePage] = await pdfDoc.copyPages(templatePdf, [0]);
         const engPage = pdfDoc.addPage(templatePage);
         
-        // English header
-        engPage.drawText('English Translation / Traduzione Inglese', {
-          x: 60,
-          y: height - 80,
+        // English header (right aligned)
+        const headerText = 'English Translation / Traduzione Inglese';
+        const headerWidth = boldFont.widthOfTextAtSize(headerText, 12);
+        engPage.drawText(headerText, {
+          x: width - headerWidth - 60,
+          y: height - 100,
           size: 12,
           font: boldFont,
           color: rgb(0.85, 0.05, 0.2), // CISL red
         });
         
-        // English title (with English Version label)
-        const engTitle = `${document.title} (English Version)`;
-        const engTitleWidth = boldFont.widthOfTextAtSize(engTitle, 14);
+        // English title (same margin as Italian version)
+        const engTitle = document.title; // TODO: Add englishTitle field to Document entity
+        const engTitleWidth = boldFont.widthOfTextAtSize(engTitle, 16);
         engPage.drawText(engTitle, {
           x: (width - engTitleWidth) / 2,
-          y: height - 120,
-          size: 14,
+          y: height - 180,
+          size: 16,
           font: boldFont,
           color: rgb(0.09, 0.45, 0.27),
         });
         
-        // English content
+        // English content (same margin as Italian)
         const engLines = this.wrapText(document.englishTranslation, 70);
-        let engYPosition = height - 160;
+        let engYPosition = height - 220;
         let currentEngPage = engPage;
         
         for (const line of engLines) {
