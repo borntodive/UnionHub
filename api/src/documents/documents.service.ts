@@ -106,6 +106,23 @@ export class DocumentsService {
     }
   }
 
+  // Translate title if not already translated
+  private async translateTitleIfNeeded(document: Document): Promise<void> {
+    if (!document.englishTitle && document.title) {
+      try {
+        const isOllamaReady = await this.ollamaService.healthCheck();
+        if (isOllamaReady) {
+          const systemPrompt = `Sei un traduttore professionale. Traduci il titolo dal italiano all'inglese mantenendo il tono formale e professionale.`;
+          const prompt = `Traduci questo titolo in inglese:\n\n"${document.title}"\n\nTraduzione:`;
+          document.englishTitle = await this.ollamaService.generate(prompt, systemPrompt);
+        }
+      } catch (error) {
+        console.log('Title translation failed:', error.message);
+        // Don't fail if translation doesn't work
+      }
+    }
+  }
+
   // Generate final PDF with letterhead and publish
   async publish(id: string, user: UserInfo): Promise<Document> {
     const document = await this.findById(id);
@@ -113,6 +130,9 @@ export class DocumentsService {
     if (document.status !== 'approved') {
       throw new Error('Document must be approved before publishing');
     }
+
+    // Translate title if needed
+    await this.translateTitleIfNeeded(document);
 
     // Generate PDF
     try {
@@ -140,6 +160,9 @@ export class DocumentsService {
     if (document.status !== 'published') {
       throw new Error('Document must be published to regenerate PDF');
     }
+
+    // Translate title if needed (in case it was empty before)
+    await this.translateTitleIfNeeded(document);
 
     try {
       const pdfBuffer = await this.pdfService.generateDocumentPdf(document);

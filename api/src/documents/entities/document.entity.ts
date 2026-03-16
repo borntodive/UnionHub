@@ -29,6 +29,9 @@ export class Document {
   englishTranslation: string | null;
 
   @Column({ type: 'text', nullable: true })
+  englishTitle: string | null;
+
+  @Column({ type: 'text', nullable: true })
   finalPdfUrl: string;
 
   @Column({

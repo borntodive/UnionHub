@@ -127,8 +127,8 @@ export class PdfService {
           color: rgb(0.85, 0.05, 0.2), // CISL red
         });
         
-        // English title (same margin as Italian version)
-        const engTitle = document.title; // TODO: Add englishTitle field to Document entity
+        // English title (use translated title or fallback to Italian)
+        const engTitle = document.englishTitle || document.title;
         const engTitleWidth = boldFont.widthOfTextAtSize(engTitle, 16);
         engPage.drawText(engTitle, {
           x: (width - engTitleWidth) / 2,

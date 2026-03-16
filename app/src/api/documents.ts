@@ -8,6 +8,7 @@ export interface Document {
   originalContent: string;
   aiReviewedContent: string | null;
   englishTranslation: string | null;
+  englishTitle: string | null;
   finalPdfUrl: string | null;
   status: DocumentStatus;
   createdBy: string;
