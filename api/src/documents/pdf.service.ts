@@ -161,7 +161,13 @@ export class PdfService {
           });
           engYPosition -= 14;
         }
+        
+        // Add English footer
+        await this.addFooter(currentEngPage, width, height, true, boldFont, font);
       }
+      
+      // Add Italian footer to last Italian page
+      await this.addFooter(currentPage, width, height, false, boldFont, font);
       
       // Save PDF
       const pdfBytes = await pdfDoc.save();
@@ -172,6 +178,89 @@ export class PdfService {
       // Fallback to HTML generation
       return this.generateWithHtml(document);
     }
+  }
+
+  /**
+   * Add footer to page
+   */
+  private async addFooter(
+    page: any,
+    width: number,
+    height: number,
+    isEnglish: boolean,
+    boldFont: any,
+    font: any,
+  ): Promise<void> {
+    const footerText = isEnglish
+      ? "As always, your FIT-CISL representatives remain available for any questions or clarifications."
+      : "Come sempre, i vostri rappresentanti FIT-CISL restano a disposizione per qualsiasi dubbio o chiarimento.";
+    
+    // Check if there's enough space, if not add new page
+    let yPos = 150;
+    
+    // Footer text
+    page.drawText(footerText, {
+      x: 60,
+      y: yPos,
+      size: 9,
+      font,
+      color: rgb(0.3, 0.3, 0.3),
+    });
+    
+    yPos -= 30;
+    
+    // RSA FIT-CISL PILOTI MALTA AIR
+    const rsaText = "RSA FIT-CISL PILOTI MALTA AIR";
+    const rsaWidth = boldFont.widthOfTextAtSize(rsaText, 12);
+    page.drawText(rsaText, {
+      x: (width - rsaWidth) / 2,
+      y: yPos,
+      size: 12,
+      font: boldFont,
+      color: rgb(0, 0, 0),
+    });
+    
+    yPos -= 20;
+    
+    // READY2B FIT-CISL (in green)
+    const readyText = "READY2B FIT-CISL";
+    const readyWidth = boldFont.widthOfTextAtSize(readyText, 11);
+    page.drawText(readyText, {
+      x: (width - readyWidth) / 2,
+      y: yPos,
+      size: 11,
+      font: boldFont,
+      color: rgb(0.09, 0.45, 0.27), // CISL green
+    });
+    
+    yPos -= 25;
+    
+    // Stay updated / Resta aggiornato
+    const stayUpdated = isEnglish ? "Stay updated:" : "Resta aggiornato:";
+    const stayWidth = font.widthOfTextAtSize(stayUpdated, 10);
+    page.drawText(stayUpdated, {
+      x: (width - stayWidth) / 2,
+      y: yPos,
+      size: 10,
+      font,
+      color: rgb(0.4, 0.4, 0.4),
+    });
+    
+    yPos -= 18;
+    
+    // enter Whatsapp group / entra nel gruppo Whatsapp
+    const whatsappText = isEnglish ? "enter Whatsapp group" : "entra nel gruppo Whatsapp";
+    const whatsappWidth = font.widthOfTextAtSize(whatsappText, 9);
+    page.drawText(whatsappText, {
+      x: (width - whatsappWidth) / 2,
+      y: yPos,
+      size: 9,
+      font,
+      color: rgb(0.09, 0.45, 0.27),
+    });
+    
+    // Note: QR code would require embedding an image
+    // For now, we just add the text
   }
 
   /**
