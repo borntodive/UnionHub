@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Document, DocumentStatus } from './entities/document.entity';
 import { CreateDocumentDto, ReviewDocumentDto, ApproveDocumentDto } from './dto/create-document.dto';
 import { OllamaService } from '../ollama/ollama.service';
+import { PdfService } from './pdf.service';
 
 interface UserInfo {
   userId: string;
@@ -16,6 +17,7 @@ export class DocumentsService {
     @InjectRepository(Document)
     private documentRepository: Repository<Document>,
     private ollamaService: OllamaService,
+    private pdfService: PdfService,
   ) {}
 
   // Get all documents
@@ -104,7 +106,7 @@ export class DocumentsService {
     }
   }
 
-  // Generate final PDF with letterhead
+  // Generate final PDF with letterhead and publish
   async publish(id: string, user: UserInfo): Promise<Document> {
     const document = await this.findById(id);
 
@@ -112,13 +114,23 @@ export class DocumentsService {
       throw new Error('Document must be approved before publishing');
     }
 
-    // TODO: Generate PDF with letterhead
-    // For now, just mark as published
-    document.status = 'published';
-    document.publishedAt = new Date();
-    document.finalPdfUrl = `/documents/${id}/download`; // Placeholder
+    // Generate PDF
+    try {
+      const pdfBuffer = await this.pdfService.generateDocumentPdf(document);
+      
+      // Store PDF (in a real app, you'd upload to S3 or similar)
+      // For now, we'll store base64 in the URL field (not ideal but works for demo)
+      const base64Pdf = pdfBuffer.toString('base64');
+      
+      document.status = 'published';
+      document.publishedAt = new Date();
+      document.finalPdfUrl = `data:application/pdf;base64,${base64Pdf}`;
 
-    return this.documentRepository.save(document);
+      return this.documentRepository.save(document);
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      throw new Error('Failed to generate PDF: ' + error.message);
+    }
   }
 
   // Delete document

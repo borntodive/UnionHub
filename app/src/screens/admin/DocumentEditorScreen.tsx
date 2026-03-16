@@ -23,6 +23,7 @@ import {
   CheckCircle,
   Eye,
   ArrowRight,
+  Download,
   ArrowLeft,
   X,
 } from 'lucide-react-native';
@@ -147,6 +148,14 @@ export const DocumentEditorScreen: React.FC = () => {
     },
   });
 
+  const downloadMutation = useMutation({
+    mutationFn: ({ id, title }: { id: string; title: string }) =>
+      documentsApi.downloadPdf(id, title),
+    onError: (error: any) => {
+      Alert.alert('Error', error.response?.data?.message || 'Download failed');
+    },
+  });
+
   const handleSave = async () => {
     if (!title.trim() || !content.trim()) {
       Alert.alert('Error', 'Title and content are required');
@@ -207,6 +216,11 @@ export const DocumentEditorScreen: React.FC = () => {
   const handlePublish = () => {
     if (!documentId) return;
     publishMutation.mutate(documentId);
+  };
+
+  const handleDownload = () => {
+    if (!documentId || !existingDoc) return;
+    downloadMutation.mutate({ id: documentId, title: existingDoc.title });
   };
 
   const renderStepIndicator = () => (
@@ -355,13 +369,16 @@ export const DocumentEditorScreen: React.FC = () => {
 
       case 'publish':
         const hasTranslation = !!englishTranslation;
+        const isPublished = existingDoc?.status === 'published';
         return (
           <View style={styles.stepContent}>
             <Text style={styles.stepTitle}>3. Pubblicazione</Text>
             <Text style={styles.stepDescription}>
-              {hasTranslation 
-                ? "Il documento è stato approvato e tradotto. Genera il PDF finale con carta intestata."
-                : "Il documento è stato approvato. Genera il PDF finale con carta intestata."}
+              {isPublished
+                ? "Il documento è stato pubblicato. Scarica il PDF finale con carta intestata."
+                : hasTranslation 
+                  ? "Il documento è stato approvato e tradotto. Genera il PDF finale con carta intestata."
+                  : "Il documento è stato approvato. Genera il PDF finale con carta intestata."}
             </Text>
 
             <Text style={styles.label}>Versione Italiana (Finale)</Text>
@@ -379,28 +396,47 @@ export const DocumentEditorScreen: React.FC = () => {
             )}
 
             <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.secondaryButton]}
-                onPress={() => setStep('approve')}
-              >
-                <ArrowLeft size={20} color={colors.text} />
-                <Text style={styles.secondaryButtonText}>Indietro</Text>
-              </TouchableOpacity>
+              {!isPublished && (
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.secondaryButton]}
+                  onPress={() => setStep('approve')}
+                >
+                  <ArrowLeft size={20} color={colors.text} />
+                  <Text style={styles.secondaryButtonText}>Indietro</Text>
+                </TouchableOpacity>
+              )}
 
-              <TouchableOpacity
-                style={[styles.actionButton, styles.publishButton]}
-                onPress={handlePublish}
-                disabled={publishMutation.isPending}
-              >
-                {publishMutation.isPending ? (
-                  <ActivityIndicator color={colors.textInverse} />
-                ) : (
-                  <>
-                    <Eye size={20} color={colors.textInverse} />
-                    <Text style={styles.primaryButtonText}>Genera PDF & Pubblica</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+              {isPublished ? (
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.publishButton, { flex: 1 }]}
+                  onPress={handleDownload}
+                  disabled={downloadMutation.isPending}
+                >
+                  {downloadMutation.isPending ? (
+                    <ActivityIndicator color={colors.textInverse} />
+                  ) : (
+                    <>
+                      <Download size={20} color={colors.textInverse} />
+                      <Text style={styles.primaryButtonText}>Scarica PDF</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.publishButton]}
+                  onPress={handlePublish}
+                  disabled={publishMutation.isPending}
+                >
+                  {publishMutation.isPending ? (
+                    <ActivityIndicator color={colors.textInverse} />
+                  ) : (
+                    <>
+                      <Eye size={20} color={colors.textInverse} />
+                      <Text style={styles.primaryButtonText}>Genera PDF & Pubblica</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         );
