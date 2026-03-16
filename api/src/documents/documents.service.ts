@@ -73,30 +73,35 @@ export class DocumentsService {
 
   // Approve and generate translations (AI optional)
   async approve(id: string, dto: ApproveDocumentDto, user: UserInfo): Promise<Document> {
-    const document = await this.findById(id);
-
-    const finalContent = dto.reviewedContent || document.aiReviewedContent || document.originalContent;
-    if (!finalContent) {
-      throw new Error('No content to approve');
-    }
-
-    // Try to use Ollama for translation, but don't fail if it's not available
-    let englishTranslation: string | null = null;
     try {
-      const isOllamaReady = await this.ollamaService.healthCheck();
-      if (isOllamaReady) {
-        englishTranslation = await this.ollamaService.translateToEnglish(finalContent);
+      const document = await this.findById(id);
+
+      const finalContent = dto.reviewedContent || document.aiReviewedContent || document.originalContent;
+      if (!finalContent) {
+        throw new Error('No content to approve');
       }
+
+      // Try to use Ollama for translation, but don't fail if it's not available
+      let englishTranslation: string | null = null;
+      try {
+        const isOllamaReady = await this.ollamaService.healthCheck();
+        if (isOllamaReady) {
+          englishTranslation = await this.ollamaService.translateToEnglish(finalContent);
+        }
+      } catch (error) {
+        // Log but don't fail - translation is optional
+        console.log('Ollama translation skipped:', error.message);
+      }
+
+      document.aiReviewedContent = finalContent;
+      document.englishTranslation = englishTranslation;
+      document.status = 'approved';
+
+      return await this.documentRepository.save(document);
     } catch (error) {
-      // Log but don't fail - translation is optional
-      console.log('Ollama translation skipped:', error.message);
+      console.error('Approve failed:', error);
+      throw error;
     }
-
-    document.aiReviewedContent = finalContent;
-    document.englishTranslation = englishTranslation;
-    document.status = 'approved';
-
-    return this.documentRepository.save(document);
   }
 
   // Generate final PDF with letterhead

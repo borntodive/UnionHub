@@ -199,7 +199,9 @@ export const DocumentEditorScreen: React.FC = () => {
 
   const handleApprove = () => {
     if (!documentId) return;
-    approveMutation.mutate({ id: documentId, reviewedContent: aiReviewedContent });
+    // Use AI reviewed content if available, otherwise use content (which may have been edited)
+    const contentToApprove = aiReviewedContent || content;
+    approveMutation.mutate({ id: documentId, reviewedContent: contentToApprove });
   };
 
   const handlePublish = () => {
