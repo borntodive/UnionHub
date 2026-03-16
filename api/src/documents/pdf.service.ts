@@ -26,9 +26,14 @@ export class PdfService {
    * Generate PDF with custom letterhead template
    */
   async generateDocumentPdf(document: Document): Promise<Buffer> {
+    this.logger.log(`Template path: ${this.templatePath}`);
+    this.logger.log(`Template exists: ${this.hasCustomTemplate()}`);
+    
     if (this.hasCustomTemplate()) {
+      this.logger.log('Using custom template');
       return this.generateWithTemplate(document);
     } else {
+      this.logger.log('Using HTML fallback');
       return this.generateWithHtml(document);
     }
   }
@@ -84,35 +89,32 @@ export class PdfService {
       const lines = this.wrapText(content, 70);
       let yPosition = height - 220;
       
+      let currentPage = firstPage;
       for (const line of lines) {
         if (yPosition < 100) {
-          // Add new page if running out of space
-          const newPage = pdfDoc.addPage([width, height]);
+          // Add new page from template
+          const templatePdf = await PDFDocument.load(templateBytes);
+          const [templatePage] = await pdfDoc.copyPages(templatePdf, [0]);
+          currentPage = pdfDoc.addPage(templatePage);
           yPosition = height - 100;
-          
-          // Continue on new page
-          newPage.drawText(line, {
-            x: 60,
-            y: yPosition,
-            size: 11,
-            font,
-            color: rgb(0.2, 0.2, 0.2),
-          });
-        } else {
-          firstPage.drawText(line, {
-            x: 60,
-            y: yPosition,
-            size: 11,
-            font,
-            color: rgb(0.2, 0.2, 0.2),
-          });
         }
+        
+        currentPage.drawText(line, {
+          x: 60,
+          y: yPosition,
+          size: 11,
+          font,
+          color: rgb(0.2, 0.2, 0.2),
+        });
         yPosition -= 16;
       }
       
-      // Add English translation if available (on new page)
+      // Add English translation if available (on new page with template)
       if (document.englishTranslation) {
-        const engPage = pdfDoc.addPage([width, height]);
+        // Add new page from template for English
+        const templatePdf = await PDFDocument.load(templateBytes);
+        const [templatePage] = await pdfDoc.copyPages(templatePdf, [0]);
+        const engPage = pdfDoc.addPage(templatePage);
         
         // English header
         engPage.drawText('English Translation / Traduzione Inglese', {
@@ -123,9 +125,10 @@ export class PdfService {
           color: rgb(0.85, 0.05, 0.2), // CISL red
         });
         
-        // English title
-        const engTitleWidth = boldFont.widthOfTextAtSize(document.title, 14);
-        engPage.drawText(document.title, {
+        // English title (with English Version label)
+        const engTitle = `${document.title} (English Version)`;
+        const engTitleWidth = boldFont.widthOfTextAtSize(engTitle, 14);
+        engPage.drawText(engTitle, {
           x: (width - engTitleWidth) / 2,
           y: height - 120,
           size: 14,
@@ -136,28 +139,24 @@ export class PdfService {
         // English content
         const engLines = this.wrapText(document.englishTranslation, 70);
         let engYPosition = height - 160;
+        let currentEngPage = engPage;
         
         for (const line of engLines) {
           if (engYPosition < 100) {
-            const newEngPage = pdfDoc.addPage([width, height]);
+            // Add new page from template
+            const templatePdf2 = await PDFDocument.load(templateBytes);
+            const [newTemplatePage] = await pdfDoc.copyPages(templatePdf2, [0]);
+            currentEngPage = pdfDoc.addPage(newTemplatePage);
             engYPosition = height - 100;
-            
-            newEngPage.drawText(line, {
-              x: 60,
-              y: engYPosition,
-              size: 10,
-              font,
-              color: rgb(0.3, 0.3, 0.3),
-            });
-          } else {
-            engPage.drawText(line, {
-              x: 60,
-              y: engYPosition,
-              size: 10,
-              font,
-              color: rgb(0.3, 0.3, 0.3),
-            });
           }
+          
+          currentEngPage.drawText(line, {
+            x: 60,
+            y: engYPosition,
+            size: 10,
+            font,
+            color: rgb(0.3, 0.3, 0.3),
+          });
           engYPosition -= 14;
         }
       }
