@@ -26,14 +26,14 @@ export class PdfService {
    * Generate PDF with custom letterhead template
    */
   async generateDocumentPdf(document: Document): Promise<Buffer> {
-    this.logger.log(`Template path: ${this.templatePath}`);
-    this.logger.log(`Template exists: ${this.hasCustomTemplate()}`);
+    this.logger.debug(`Template path: ${this.templatePath}`);
+    this.logger.debug(`Template exists: ${this.hasCustomTemplate()}`);
     
     if (this.hasCustomTemplate()) {
-      this.logger.log('Using custom template');
+      this.logger.debug('Using custom template');
       return this.generateWithTemplate(document);
     } else {
-      this.logger.log('Using HTML fallback');
+      this.logger.debug('Using HTML fallback');
       return this.generateWithHtml(document);
     }
   }
