@@ -1,7 +1,7 @@
 {
   "name": "unionconnect-api",
   "version": "1.0.0",
-  "description": "UnionConnect Backend API - NestJS + TypeORM + PostgreSQL",
+  "description": "UnionHub Backend API - NestJS + TypeORM + PostgreSQL",
   "author": "CISL",
   "private": true,
   "license": "MIT",

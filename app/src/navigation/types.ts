@@ -5,6 +5,8 @@ export type RootStackParamList = {
   MemberDetail: { memberId: string };
   MemberEdit: { memberId: string };
   MemberCreate: { sharedPdfUri?: string; extractedData?: any } | undefined;
+  // Public routes
+  PublicDocuments: undefined;
   // Admin routes
   Bases: undefined;
   BaseForm: { baseId?: string };

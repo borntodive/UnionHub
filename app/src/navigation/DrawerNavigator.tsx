@@ -5,9 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  SafeAreaView,
 } from 'react-native';
 import { createDrawerNavigator, DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import {
   Home,
   User,
@@ -23,6 +25,7 @@ import {
   Upload,
   Calculator,
   FileText,
+  Bell,
 } from 'lucide-react-native';
 
 import { colors, spacing, typography, borderRadius } from '../theme';
@@ -32,40 +35,41 @@ import { MembersScreen } from '../screens/MembersScreen/MembersScreen';
 import { PayslipTabs } from '../payslip/navigation/PayslipTabs';
 import AdminContractsScreen from '../payslip/screens/AdminContractsScreen';
 import ContractEditorScreen from '../payslip/screens/ContractEditorScreen';
+import { SettingsScreen } from '../screens/SettingsScreen/SettingsScreen';
 import { ContractsScreen } from '../screens/admin/ContractsScreen';
 import { ContractFormScreen } from '../screens/admin/ContractFormScreen';
 import { DocumentsScreen } from '../screens/admin/DocumentsScreen';
 import { DocumentEditorScreen } from '../screens/admin/DocumentEditorScreen';
+import { PublicDocumentsScreen } from '../screens/PublicDocumentsScreen';
 import { UserRole } from '../types';
 const Drawer = createDrawerNavigator();
 
 // Placeholder Screens
-const HomeScreen = () => (
-  <View style={styles.screenContainer}>
-    <Home size={64} color={colors.primary} />
-    <Text style={styles.screenTitle}>Welcome to UnionConnect</Text>
-    <Text style={styles.screenSubtitle}>Home Screen - Under Construction</Text>
-  </View>
-);
+const HomeScreen = () => {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.screenContainer}>
+      <Home size={64} color={colors.primary} />
+      <Text style={styles.screenTitle}>{t('common.appName')}</Text>
+      <Text style={styles.screenSubtitle}>{t('navigation.home')}</Text>
+    </View>
+  );
+};
 
-const SettingsScreen = () => (
-  <View style={styles.screenContainer}>
-    <Settings size={64} color={colors.primary} />
-    <Text style={styles.screenTitle}>Settings</Text>
-    <Text style={styles.screenSubtitle}>App Settings - Under Construction</Text>
-  </View>
-);
-
-const AdminScreen = () => (
-  <View style={styles.screenContainer}>
-    <Shield size={64} color={colors.primary} />
-    <Text style={styles.screenTitle}>Administration</Text>
-    <Text style={styles.screenSubtitle}>Admin Panel - Under Construction</Text>
-  </View>
-);
+const AdminScreen = () => {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.screenContainer}>
+      <Shield size={64} color={colors.primary} />
+      <Text style={styles.screenTitle}>{t('navigation.admin')}</Text>
+      <Text style={styles.screenSubtitle}>Admin Panel - Under Construction</Text>
+    </View>
+  );
+};
 
 // Custom Drawer Content
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const refreshToken = useAuthStore((state) => state.refreshToken);
@@ -92,6 +96,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
     <View style={styles.drawerContainer}>
       {/* Header with User Info */}
       <View style={styles.drawerHeader}>
@@ -104,23 +109,31 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
         <Text style={styles.userCrewcode}>{user?.crewcode}</Text>
         <View style={styles.roleBadge}>
           <Text style={styles.roleText}>
-            {user?.role === UserRole.SUPERADMIN ? 'Super Admin' : 
-             user?.role === UserRole.ADMIN ? 'Administrator' : 'User'}
+            {user?.role === UserRole.SUPERADMIN ? t('navigation.superAdmin') : 
+             user?.role === UserRole.ADMIN ? t('navigation.admin') : t('members.active')}
           </Text>
         </View>
+
+        {/* Notification Bell */}
+        <TouchableOpacity style={styles.notificationButton}>
+          <Bell size={24} color={colors.textInverse} />
+          <View style={styles.notificationBadge}>
+            <Text style={styles.notificationBadgeText}>3</Text>
+          </View>
+        </TouchableOpacity>
       </View>
 
       {/* Menu Items */}
       <ScrollView style={styles.menuContainer}>
         <MenuItem
           icon={<Home size={22} color={colors.primary} />}
-          label="Home"
+          label={t('navigation.home')}
           onPress={() => navigateToScreen('Home')}
         />
         
         <MenuItem
           icon={<User size={22} color={colors.primary} />}
-          label="Profile"
+          label={t('navigation.profile')}
           onPress={() => {
             if (user?.id) {
               props.navigation.navigate('MemberDetail', { memberId: user.id });
@@ -133,12 +146,12 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           <>
             <MenuItem
               icon={<Users size={22} color={colors.primary} />}
-              label="Members"
+              label={t('navigation.members')}
               onPress={() => navigateToScreen('Members')}
             />
             <MenuItem
               icon={<BarChart3 size={22} color={colors.primary} />}
-              label="Statistics"
+              label={t('navigation.statistics')}
               onPress={() => {
                 props.navigation.navigate('Statistics');
                 props.navigation.closeDrawer();
@@ -146,20 +159,38 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             />
             <MenuItem
               icon={<Upload size={22} color={colors.primary} />}
-              label="Bulk Import"
+              label={t('navigation.bulkImport')}
               onPress={() => {
                 props.navigation.navigate('BulkImport');
+                props.navigation.closeDrawer();
+              }}
+            />
+            <MenuItem
+              icon={<FileText size={22} color={colors.primary} />}
+              label={t('documents.title')}
+              onPress={() => {
+                props.navigation.navigate('Documents');
                 props.navigation.closeDrawer();
               }}
             />
           </>
         )}
 
-        {/* Payslip Calculator - Visible to all */}
+        {/* Public Documents - Visible to all */}
         <View style={styles.sectionDivider} />
         <MenuItem
+          icon={<FileText size={22} color={colors.primary} />}
+          label={t('documents.publicDocuments')}
+          onPress={() => {
+            props.navigation.navigate('PublicDocuments');
+            props.navigation.closeDrawer();
+          }}
+        />
+
+        {/* Payslip Calculator - Visible to all */}
+        <MenuItem
           icon={<Calculator size={22} color={colors.primary} />}
-          label="Payslip Calculator"
+          label={t('navigation.payslipCalculator')}
           onPress={() => {
             props.navigation.navigate('PayslipCalculator');
             props.navigation.closeDrawer();
@@ -169,20 +200,20 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
         {isSuperAdmin && (
           <>
             <View style={styles.sectionDivider} />
-            <Text style={styles.sectionTitle}>SuperAdmin</Text>
+            <Text style={styles.sectionTitle}>{t('navigation.superAdmin')}</Text>
             <MenuItem
               icon={<UserX size={22} color={colors.primary} />}
-              label="Deactivated Members"
+              label={t('navigation.deactivatedMembers')}
               onPress={() => {
                 props.navigation.navigate('DeactivatedMembers');
                 props.navigation.closeDrawer();
               }}
             />
             <View style={styles.sectionDivider} />
-            <Text style={styles.sectionTitle}>Configuration</Text>
+            <Text style={styles.sectionTitle}>{t('navigation.configuration')}</Text>
             <MenuItem
               icon={<Building2 size={22} color={colors.primary} />}
-              label="Bases"
+              label={t('navigation.bases')}
               onPress={() => {
                 props.navigation.navigate('Bases');
                 props.navigation.closeDrawer();
@@ -190,7 +221,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             />
             <MenuItem
               icon={<Briefcase size={22} color={colors.primary} />}
-              label="Contracts"
+              label={t('navigation.contracts')}
               onPress={() => {
                 props.navigation.navigate('Contracts');
                 props.navigation.closeDrawer();
@@ -198,23 +229,15 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             />
             <MenuItem
               icon={<Award size={22} color={colors.primary} />}
-              label="Grades"
+              label={t('navigation.grades')}
               onPress={() => {
                 props.navigation.navigate('Grades');
                 props.navigation.closeDrawer();
               }}
             />
             <MenuItem
-              icon={<FileText size={22} color={colors.primary} />}
-              label="Comunicati"
-              onPress={() => {
-                props.navigation.navigate('Documents');
-                props.navigation.closeDrawer();
-              }}
-            />
-            <MenuItem
               icon={<Calculator size={22} color={colors.primary} />}
-              label="CLA Contracts"
+              label={t('navigation.claContracts')}
               onPress={() => {
                 props.navigation.navigate('ClaContracts');
                 props.navigation.closeDrawer();
@@ -225,7 +248,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
         <MenuItem
           icon={<Settings size={22} color={colors.primary} />}
-          label="Settings"
+          label={t('navigation.settings')}
           onPress={() => navigateToScreen('Settings')}
         />
       </ScrollView>
@@ -234,12 +257,13 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       <View style={styles.drawerFooter}>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <LogOut size={22} color={colors.error} />
-          <Text style={styles.logoutText}>Logout</Text>
+          <Text style={styles.logoutText}>{t('auth.logout')}</Text>
         </TouchableOpacity>
         
-        <Text style={styles.versionText}>Version 1.0.0</Text>
+        <Text style={styles.versionText}>{t('settings.version')} 1.0.0</Text>
       </View>
     </View>
+    </SafeAreaView>
   );
 };
 
@@ -258,6 +282,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress }) => (
 );
 
 export const DrawerNavigator: React.FC = () => {
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
@@ -285,7 +310,7 @@ export const DrawerNavigator: React.FC = () => {
         name="Home" 
         component={HomeScreen}
         options={{
-          title: 'Home',
+          title: t('navigation.home'),
           drawerIcon: ({ color }) => <Home size={22} color={color} />,
         }}
       />
@@ -296,7 +321,7 @@ export const DrawerNavigator: React.FC = () => {
             name="Members" 
             component={MembersScreen}
             options={{
-              title: 'Members',
+              title: t('navigation.members'),
               drawerIcon: ({ color }) => <Users size={22} color={color} />,
             }}
           />
@@ -304,7 +329,7 @@ export const DrawerNavigator: React.FC = () => {
             name="Contracts" 
             component={ContractsScreen}
             options={{
-              title: 'Contracts',
+              title: t('navigation.contracts'),
               drawerIcon: ({ color }) => <Briefcase size={22} color={color} />,
               headerShown: false,
             }}
@@ -313,7 +338,7 @@ export const DrawerNavigator: React.FC = () => {
             name="ContractForm" 
             component={ContractFormScreen}
             options={{
-              title: 'Edit Contract',
+              title: t('navigation.contracts'),
               drawerItemStyle: { display: 'none' },
               headerShown: false,
             }}
@@ -325,7 +350,7 @@ export const DrawerNavigator: React.FC = () => {
           name="Admin" 
           component={AdminScreen}
           options={{
-            title: 'Administration',
+            title: t('navigation.admin'),
             drawerIcon: ({ color }) => <Shield size={22} color={color} />,
           }}
         />
@@ -334,15 +359,24 @@ export const DrawerNavigator: React.FC = () => {
         name="Settings" 
         component={SettingsScreen}
         options={{
-          title: 'Settings',
+          title: t('navigation.settings'),
           drawerIcon: ({ color }) => <Settings size={22} color={color} />,
+        }}
+      />
+      <Drawer.Screen 
+        name="PublicDocuments" 
+        component={PublicDocumentsScreen}
+        options={{
+          title: t('documents.publicDocuments'),
+          drawerIcon: ({ color }) => <FileText size={22} color={color} />,
+          headerShown: false,
         }}
       />
       <Drawer.Screen 
         name="PayslipCalculator" 
         component={PayslipTabs}
         options={{
-          title: 'Payslip Calculator',
+          title: t('navigation.payslipCalculator'),
           drawerIcon: ({ color }) => <Calculator size={22} color={color} />,
           headerShown: false,
         }}
@@ -353,7 +387,7 @@ export const DrawerNavigator: React.FC = () => {
             name="Documents" 
             component={DocumentsScreen}
             options={{
-              title: 'Comunicati',
+              title: t('documents.title'),
               drawerItemStyle: { display: 'none' },
               headerShown: false,
             }}
@@ -362,7 +396,7 @@ export const DrawerNavigator: React.FC = () => {
             name="DocumentEditor" 
             component={DocumentEditorScreen}
             options={{
-              title: 'Edit Document',
+              title: t('documents.editDocument'),
               drawerItemStyle: { display: 'none' },
               headerShown: false,
             }}
@@ -375,7 +409,7 @@ export const DrawerNavigator: React.FC = () => {
             name="ClaContracts" 
             component={AdminContractsScreen}
             options={{
-              title: 'CLA Contracts',
+              title: t('navigation.claContracts'),
               drawerIcon: ({ color }) => <Briefcase size={22} color={color} />,
               headerShown: false,
             }}
@@ -384,7 +418,7 @@ export const DrawerNavigator: React.FC = () => {
             name="ContractEditor" 
             component={ContractEditorScreen}
             options={{
-              title: 'Edit Contract',
+              title: t('navigation.contracts'),
               drawerItemStyle: { display: 'none' },
               headerShown: false,
             }}
@@ -396,6 +430,10 @@ export const DrawerNavigator: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.primary,
+  },
   drawerContainer: {
     flex: 1,
     backgroundColor: colors.surface,
@@ -403,7 +441,6 @@ const styles = StyleSheet.create({
   drawerHeader: {
     backgroundColor: colors.primary,
     padding: spacing.lg,
-    paddingTop: spacing.xl,
     alignItems: 'center',
   },
   avatar: {
@@ -442,6 +479,34 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.medium,
     color: colors.textInverse,
+  },
+  notificationButton: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: colors.secondary,
+    borderRadius: borderRadius.full,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  notificationBadgeText: {
+    fontSize: typography.sizes.xs,
+    color: colors.textInverse,
+    fontWeight: typography.weights.bold,
   },
   menuContainer: {
     flex: 1,

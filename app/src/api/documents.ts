@@ -1,6 +1,8 @@
 import apiClient from './client';
 
-export type DocumentStatus = 'draft' | 'reviewing' | 'approved' | 'published';
+export type DocumentStatus = 'draft' | 'reviewing' | 'approved' | 'verified' | 'published';
+export type UnionType = 'fit-cisl' | 'joint';
+export type DocumentRuolo = 'pilot' | 'cabin_crew';
 
 export interface Document {
   id: string;
@@ -11,6 +13,8 @@ export interface Document {
   englishTitle: string | null;
   finalPdfUrl: string | null;
   status: DocumentStatus;
+  union: UnionType;
+  ruolo: DocumentRuolo;
   createdBy: string;
   author?: {
     id: string;
@@ -26,6 +30,8 @@ export interface Document {
 export interface CreateDocumentRequest {
   title: string;
   content: string;
+  union?: UnionType;
+  ruolo?: DocumentRuolo;
 }
 
 export interface ReviewDocumentRequest {
@@ -70,6 +76,11 @@ export const documentsApi = {
 
   approveDocument: async (id: string, data: ApproveDocumentRequest): Promise<Document> => {
     const response = await apiClient.post(`/documents/${id}/approve`, data);
+    return response.data;
+  },
+
+  verifyDocument: async (id: string): Promise<Document> => {
+    const response = await apiClient.post(`/documents/${id}/verify`);
     return response.data;
   },
 

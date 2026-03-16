@@ -81,6 +81,17 @@ export class DocumentsController {
     });
   }
 
+  @Post(':id/verify')
+  async verify(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.documentsService.verify(id, {
+      userId: req.user.userId,
+      crewcode: req.user.crewcode,
+    });
+  }
+
   @Post(':id/publish')
   async publish(
     @Param('id', ParseUUIDPipe) id: string,

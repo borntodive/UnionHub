@@ -145,6 +145,23 @@ export const ResultScreen: React.FC = () => {
             <PayslipItemRow label="Commissions" item={payslipItems.commissions} />
           )}
           
+          {/* Additional Payments */}
+          {payslipItems.additionalPayments.length > 0 && (
+            <>
+              <View style={styles.divider} />
+              <Text style={styles.subsectionTitle}>Additional Payments</Text>
+              {payslipItems.additionalPayments.map((ap, index) => (
+                <View key={index} style={styles.row}>
+                  <Text style={styles.label}>
+                    {ap.isSLR ? 'Statutory Leave Refund' : 'Additional Payment'}
+                    {ap.isConguaglio && ' (Conguaglio)'}
+                  </Text>
+                  <Text style={styles.value}>{formatCurrency(ap.total)}</Text>
+                </View>
+              ))}
+            </>
+          )}
+          
           {/* Deductions */}
           {(payslipItems.union.total !== 0 || 
             payslipItems.ul.total.total !== 0 ||
@@ -165,6 +182,23 @@ export const ResultScreen: React.FC = () => {
               {payslipItems.leave104.total.total !== 0 && (
                 <PayslipItemRow label="Law 104 Leave" item={payslipItems.leave104.total} />
               )}
+            </>
+          )}
+          
+          {/* Additional Deductions */}
+          {payslipItems.additionalDeductions.length > 0 && (
+            <>
+              <View style={styles.divider} />
+              <Text style={styles.subsectionTitle}>Additional Deductions</Text>
+              {payslipItems.additionalDeductions.map((ded, index) => (
+                <View key={index} style={styles.row}>
+                  <Text style={styles.label}>
+                    Additional Deduction
+                    {ded.isConguaglio && ' (Conguaglio)'}
+                  </Text>
+                  <Text style={styles.valueNegative}>-{formatCurrency(ded.total)}</Text>
+                </View>
+              ))}
             </>
           )}
           
@@ -227,6 +261,143 @@ export const ResultScreen: React.FC = () => {
             <Text style={styles.valueBold}>{formatCurrency(areaINPS.contribuzioneTotale)}</Text>
           </View>
         </View>
+
+        {__DEV__ && (
+          <View style={[styles.card, styles.devCard]}>
+            <Text style={[styles.cardTitle, styles.devTitle]}>DEV: INPS Imponibile Breakdown</Text>
+            <Text style={styles.devSubtitle}>Voci incluse nel calcolo:</Text>
+            
+            <View style={styles.row}>
+              <Text style={styles.label}>Basic Pay (taxable)</Text>
+              <Text style={styles.value}>{formatCurrency(payslipItems.basic.taxable)}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>13th Month (taxable)</Text>
+              <Text style={styles.value}>{formatCurrency(payslipItems.basic13th.taxable)}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>FFP (taxable)</Text>
+              <Text style={styles.value}>{formatCurrency(payslipItems.ffp.taxable)}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>SBH (taxable)</Text>
+              <Text style={styles.value}>{formatCurrency(payslipItems.sbh.taxable)}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Flying Diaria (taxable)</Text>
+              <Text style={styles.value}>{formatCurrency(payslipItems.flyDiaria.taxable)}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Non-Flying Diaria (taxable)</Text>
+              <Text style={styles.value}>{formatCurrency(payslipItems.noFlyDiaria.taxable)}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Annual Leave (taxable)</Text>
+              <Text style={styles.value}>{formatCurrency(payslipItems.al.taxable)}</Text>
+            </View>
+            {payslipItems.woff.total > 0 && (
+              <View style={styles.row}>
+                <Text style={styles.label}>Working Day Off (taxable)</Text>
+                <Text style={styles.value}>{formatCurrency(payslipItems.woff.taxable)}</Text>
+              </View>
+            )}
+            <View style={styles.row}>
+              <Text style={styles.label}>Out Of Base (taxable)</Text>
+              <Text style={styles.value}>{formatCurrency(payslipItems.oob.taxable)}</Text>
+            </View>
+            {payslipItems.rsa.total > 0 && (
+              <View style={styles.row}>
+                <Text style={styles.label}>RSA (taxable)</Text>
+                <Text style={styles.value}>{formatCurrency(payslipItems.rsa.taxable)}</Text>
+              </View>
+            )}
+            {payslipItems.simPay.total > 0 && (
+              <View style={styles.row}>
+                <Text style={styles.label}>Simulator Pay (taxable)</Text>
+                <Text style={styles.value}>{formatCurrency(payslipItems.simPay.taxable)}</Text>
+              </View>
+            )}
+            {payslipItems.trainingPay.total > 0 && (
+              <View style={styles.row}>
+                <Text style={styles.label}>Training Pay (taxable)</Text>
+                <Text style={styles.value}>{formatCurrency(payslipItems.trainingPay.taxable)}</Text>
+              </View>
+            )}
+            {payslipItems.ccTraining.total > 0 && (
+              <View style={styles.row}>
+                <Text style={styles.label}>CC Training (taxable)</Text>
+                <Text style={styles.value}>{formatCurrency(payslipItems.ccTraining.taxable)}</Text>
+              </View>
+            )}
+            {payslipItems.commissions.total > 0 && (
+              <View style={styles.row}>
+                <Text style={styles.label}>Commissions (taxable)</Text>
+                <Text style={styles.value}>{formatCurrency(payslipItems.commissions.taxable)}</Text>
+              </View>
+            )}
+            
+            {/* Additional Payments taxable */}
+            {payslipItems.additionalPayments.map((ap, index) => (
+              <View key={`ap-${index}`} style={styles.row}>
+                <Text style={styles.label}>
+                  Additional Payment #{index + 1} ({ap.taxable > 0 ? `${Math.round((ap.taxable/ap.total)*100)}%` : '0%'} taxable)
+                </Text>
+                <Text style={styles.value}>{formatCurrency(ap.taxable)}</Text>
+              </View>
+            ))}
+            
+            <View style={styles.divider} />
+            
+            {/* Deductions */}
+            <Text style={styles.devSubtitle}>Voci sottratte:</Text>
+            {payslipItems.ul.total.total !== 0 && (
+              <View style={styles.row}>
+                <Text style={styles.label}>Unpaid Leave</Text>
+                <Text style={styles.valueNegative}>-{formatCurrency(payslipItems.ul.total.total)}</Text>
+              </View>
+            )}
+            {payslipItems.parentalLeave.total.total !== 0 && (
+              <View style={styles.row}>
+                <Text style={styles.label}>Parental Leave</Text>
+                <Text style={styles.valueNegative}>-{formatCurrency(payslipItems.parentalLeave.total.total)}</Text>
+              </View>
+            )}
+            {payslipItems.leave104.total.total !== 0 && (
+              <View style={styles.row}>
+                <Text style={styles.label}>Law 104 Leave</Text>
+                <Text style={styles.valueNegative}>-{formatCurrency(payslipItems.leave104.total.total)}</Text>
+              </View>
+            )}
+            {payslipItems.union.total !== 0 && (
+              <View style={styles.row}>
+                <Text style={styles.label}>Union Fee</Text>
+                <Text style={styles.valueNegative}>-{formatCurrency(payslipItems.union.total)}</Text>
+              </View>
+            )}
+            
+            {/* Additional Deductions */}
+            {payslipItems.additionalDeductions.map((ded, index) => (
+              <View key={`ded-${index}`} style={styles.row}>
+                <Text style={styles.label}>
+                  Additional Deduction #{index + 1}
+                </Text>
+                <Text style={styles.valueNegative}>-{formatCurrency(ded.total)}</Text>
+              </View>
+            ))}
+            
+            <View style={styles.divider} />
+            
+            <View style={styles.row}>
+              <Text style={styles.label}>Min Imponibile INPS ({result.areaINPS.imponibile > 0 ? Math.round(result.areaINPS.imponibile / (result.areaINPS.imponibile / 26)) : 26} gg × €{formatCurrency((result.areaINPS.imponibile / 26) || 56.87).replace('€', '')})</Text>
+              <Text style={styles.value}>{formatCurrency(result.areaINPS.imponibile)}</Text>
+            </View>
+            
+            <View style={styles.row}>
+              <Text style={[styles.labelBold, styles.devHighlight]}>Imponibile Finale INPS</Text>
+              <Text style={[styles.valueBold, styles.devHighlight]}>{formatCurrency(result.areaINPS.imponibile)}</Text>
+            </View>
+          </View>
+        )}
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>IRPEF (Income Tax)</Text>
@@ -451,5 +622,23 @@ const styles = StyleSheet.create({
   },
   bottomSpace: {
     height: spacing.xl,
+  },
+  devCard: {
+    backgroundColor: '#fff8e1', // Light yellow for dev mode
+    borderColor: '#ffc107',
+    borderWidth: 2,
+  },
+  devTitle: {
+    color: '#f57c00',
+  },
+  devSubtitle: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+    color: '#f57c00',
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  devHighlight: {
+    color: '#e65100',
   },
 });

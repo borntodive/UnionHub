@@ -1,6 +1,6 @@
-# UnionConnect Backend API
+# UnionHub Backend API
 
-Backend API for UnionConnect - CISL Aviation Union Member Management System.
+Backend API for UnionHub - CISL Aviation Union Member Management System.
 
 ## Stack
 

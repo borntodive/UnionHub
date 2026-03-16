@@ -9,20 +9,26 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  biometricEnabled: boolean;
+  biometricCredentials: { crewcode: string; password: string } | null; // Stored for biometric login
   setAuth: (data: Partial<AuthResponse>) => void;
   logout: () => void;
   setUser: (user: User) => void;
   setLoading: (loading: boolean) => void;
+  enableBiometric: (crewcode: string, password: string) => void;
+  disableBiometric: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
       isLoading: true,
+      biometricEnabled: false,
+      biometricRefreshToken: null,
 
       setAuth: (data) =>
         set({
@@ -34,20 +40,31 @@ export const useAuthStore = create<AuthState>()(
         }),
 
       logout: async () => {
-        // Clear AsyncStorage first
-        await AsyncStorage.removeItem('auth-storage');
+        // Clear main auth data but keep biometric credentials if enabled
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
           isLoading: false,
+          // Keep biometricEnabled and biometricCredentials for biometric login
         });
         console.log('[AuthStore] Logout complete');
       },
 
       setUser: (user) => set({ user }),
       setLoading: (isLoading) => set({ isLoading }),
+      enableBiometric: (crewcode: string, password: string) => {
+        console.log('[AuthStore] Enabling biometric for:', crewcode);
+        set({ 
+          biometricEnabled: true,
+          biometricCredentials: { crewcode, password }
+        });
+      },
+      disableBiometric: () => set({ 
+        biometricEnabled: false,
+        biometricCredentials: null 
+      }),
     }),
     {
       name: 'auth-storage',
@@ -57,6 +74,8 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        biometricEnabled: state.biometricEnabled,
+        biometricCredentials: state.biometricCredentials,
       }),
     }
   )

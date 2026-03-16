@@ -9,29 +9,44 @@ import { Document } from './entities/document.entity';
 @Injectable()
 export class PdfService {
   private readonly logger = new Logger(PdfService.name);
-  private readonly templatePath: string;
+  private readonly fitCislTemplatePath: string;
+  private readonly jointTemplatePath: string;
+  private readonly qrImagePath: string;
 
   constructor(private configService: ConfigService) {
-    this.templatePath = path.join(process.cwd(), 'templates', 'letterhead.pdf');
+    this.fitCislTemplatePath = path.join(process.cwd(), 'templates', 'letterhead.pdf');
+    this.jointTemplatePath = path.join(process.cwd(), 'templates', 'letterhead-joint.pdf');
+    this.qrImagePath = path.join(process.cwd(), 'templates', 'whatsapp-qr.png');
   }
 
   /**
-   * Check if custom template exists
+   * Get template path based on union type
    */
-  hasCustomTemplate(): boolean {
-    return fs.existsSync(this.templatePath);
+  private getTemplatePath(union: string): string {
+    return union === 'joint' ? this.jointTemplatePath : this.fitCislTemplatePath;
+  }
+
+  /**
+   * Check if custom template exists for union
+   */
+  hasCustomTemplate(union: string = 'fit-cisl'): boolean {
+    const templatePath = this.getTemplatePath(union);
+    return fs.existsSync(templatePath);
   }
 
   /**
    * Generate PDF with custom letterhead template
    */
   async generateDocumentPdf(document: Document): Promise<Buffer> {
-    this.logger.debug(`Template path: ${this.templatePath}`);
-    this.logger.debug(`Template exists: ${this.hasCustomTemplate()}`);
+    const union = document.union || 'fit-cisl';
+    const templatePath = this.getTemplatePath(union);
     
-    if (this.hasCustomTemplate()) {
+    this.logger.debug(`Union: ${union}, Template path: ${templatePath}`);
+    this.logger.debug(`Template exists: ${this.hasCustomTemplate(union)}`);
+    
+    if (this.hasCustomTemplate(union)) {
       this.logger.debug('Using custom template');
-      return this.generateWithTemplate(document);
+      return this.generateWithTemplate(document, templatePath);
     } else {
       this.logger.debug('Using HTML fallback');
       return this.generateWithHtml(document);
@@ -41,10 +56,10 @@ export class PdfService {
   /**
    * Generate PDF using custom template PDF
    */
-  private async generateWithTemplate(document: Document): Promise<Buffer> {
+  private async generateWithTemplate(document: Document, templatePath: string): Promise<Buffer> {
     try {
       // Load template
-      const templateBytes = fs.readFileSync(this.templatePath);
+      const templateBytes = fs.readFileSync(templatePath);
       const pdfDoc = await PDFDocument.load(templateBytes);
       
       // Get first page
@@ -163,11 +178,11 @@ export class PdfService {
         }
         
         // Add English closing text
-        await this.addClosingText(currentEngPage, width, engYPosition - 30, true, boldFont, font);
+        await this.addClosingText(currentEngPage, pdfDoc, width, engYPosition - 15, true, boldFont, font, document.union);
       }
       
       // Add Italian closing text
-      await this.addClosingText(currentPage, width, yPosition - 30, false, boldFont, font);
+      await this.addClosingText(currentPage, pdfDoc, width, yPosition - 15, false, boldFont, font, document.union);
       
       // Save PDF
       const pdfBytes = await pdfDoc.save();
@@ -185,15 +200,15 @@ export class PdfService {
    */
   private async addClosingText(
     page: any,
+    pdfDoc: any,
     width: number,
     startY: number,
     isEnglish: boolean,
     boldFont: any,
     font: any,
+    union: string = 'fit-cisl',
   ): Promise<void> {
-    const closingText = isEnglish
-      ? "As always, your FIT-CISL representatives remain available for any questions or clarifications."
-      : "Come sempre, i vostri rappresentanti FIT-CISL restano a disposizione per qualsiasi dubbio o chiarimento.";
+    const isJoint = union === 'joint';
     
     let yPos = startY;
     
@@ -203,69 +218,122 @@ export class PdfService {
       return;
     }
     
-    // Closing text
-    page.drawText(closingText, {
-      x: 60,
-      y: yPos,
-      size: 9,
-      font,
-      color: rgb(0.3, 0.3, 0.3),
-    });
-    
-    yPos -= 30;
-    
-    // RSA FIT-CISL PILOTI MALTA AIR
-    const rsaText = "RSA FIT-CISL PILOTI MALTA AIR";
-    const rsaWidth = boldFont.widthOfTextAtSize(rsaText, 12);
-    page.drawText(rsaText, {
-      x: (width - rsaWidth) / 2,
-      y: yPos,
-      size: 12,
-      font: boldFont,
-      color: rgb(0, 0, 0),
-    });
-    
-    yPos -= 20;
-    
-    // READY2B FIT-CISL (in green)
-    const readyText = "READY2B FIT-CISL";
-    const readyWidth = boldFont.widthOfTextAtSize(readyText, 11);
-    page.drawText(readyText, {
-      x: (width - readyWidth) / 2,
-      y: yPos,
-      size: 11,
-      font: boldFont,
-      color: rgb(0.09, 0.45, 0.27), // CISL green
-    });
-    
-    yPos -= 25;
-    
-    // Stay updated / Resta aggiornato
-    const stayUpdated = isEnglish ? "Stay updated:" : "Resta aggiornato:";
-    const stayWidth = font.widthOfTextAtSize(stayUpdated, 10);
-    page.drawText(stayUpdated, {
-      x: (width - stayWidth) / 2,
-      y: yPos,
-      size: 10,
-      font,
-      color: rgb(0.4, 0.4, 0.4),
-    });
-    
-    yPos -= 18;
-    
-    // enter Whatsapp group / entra nel gruppo Whatsapp
-    const whatsappText = isEnglish ? "enter Whatsapp group" : "entra nel gruppo Whatsapp";
-    const whatsappWidth = font.widthOfTextAtSize(whatsappText, 9);
-    page.drawText(whatsappText, {
-      x: (width - whatsappWidth) / 2,
-      y: yPos,
-      size: 9,
-      font,
-      color: rgb(0.09, 0.45, 0.27),
-    });
-    
-    // Note: QR code would require embedding an image
-    // For now, we just add the text
+    if (isJoint) {
+      // For joint communications - only show the two boards side by side
+      const leftText = "FIT-CISL Malta Air Pilot Board";
+      const rightText = "ANPAC Malta Air Company Council";
+      
+      const leftWidth = boldFont.widthOfTextAtSize(leftText, 10);
+      const rightWidth = boldFont.widthOfTextAtSize(rightText, 10);
+      
+      // Position them side by side with some spacing
+      const spacing = 60;
+      const totalWidth = leftWidth + spacing + rightWidth;
+      const startX = (width - totalWidth) / 2;
+      
+      page.drawText(leftText, {
+        x: startX,
+        y: yPos,
+        size: 10,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      
+      page.drawText(rightText, {
+        x: startX + leftWidth + spacing,
+        y: yPos,
+        size: 10,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+    } else {
+      // Single union - FIT-CISL only - full closing section
+      
+      // Closing text
+      const closingText = isEnglish
+        ? "As always, your FIT-CISL representatives remain available for any questions or clarifications."
+        : "Come sempre, i vostri rappresentanti FIT-CISL restano a disposizione per qualsiasi dubbio o chiarimento.";
+      
+      page.drawText(closingText, {
+        x: 60,
+        y: yPos,
+        size: 9,
+        font,
+        color: rgb(0.3, 0.3, 0.3),
+      });
+      
+      yPos -= 30;
+      
+      // RSA FIT-CISL PILOTI MALTA AIR
+      const rsaText = "RSA FIT-CISL PILOTI MALTA AIR";
+      const rsaWidth = boldFont.widthOfTextAtSize(rsaText, 12);
+      page.drawText(rsaText, {
+        x: (width - rsaWidth) / 2,
+        y: yPos,
+        size: 12,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      
+      yPos -= 20;
+      
+      // READY2B FIT-CISL (in green)
+      const readyText = "READY2B FIT-CISL";
+      const readyWidth = boldFont.widthOfTextAtSize(readyText, 11);
+      page.drawText(readyText, {
+        x: (width - readyWidth) / 2,
+        y: yPos,
+        size: 11,
+        font: boldFont,
+        color: rgb(0.09, 0.45, 0.27), // CISL green
+      });
+      
+      yPos -= 25;
+      
+      // Stay updated / Resta aggiornato
+      const stayUpdated = isEnglish ? "Stay updated:" : "Resta aggiornato:";
+      const stayWidth = font.widthOfTextAtSize(stayUpdated, 10);
+      page.drawText(stayUpdated, {
+        x: (width - stayWidth) / 2,
+        y: yPos,
+        size: 10,
+        font,
+        color: rgb(0.4, 0.4, 0.4),
+      });
+      
+      yPos -= 18;
+      
+      // enter Whatsapp group / entra nel gruppo Whatsapp
+      const whatsappText = isEnglish ? "enter Whatsapp group" : "entra nel gruppo Whatsapp";
+      const whatsappWidth = font.widthOfTextAtSize(whatsappText, 9);
+      page.drawText(whatsappText, {
+        x: (width - whatsappWidth) / 2,
+        y: yPos,
+        size: 9,
+        font,
+        color: rgb(0.09, 0.45, 0.27),
+      });
+      
+      // Add QR code image if available
+      try {
+        if (fs.existsSync(this.qrImagePath)) {
+          this.logger.debug(`Embedding QR code from ${this.qrImagePath}`);
+          const qrImageBytes = fs.readFileSync(this.qrImagePath);
+          const qrImage = await pdfDoc.embedPng(qrImageBytes);
+          const qrSize = 80;
+          page.drawImage(qrImage, {
+            x: (width - qrSize) / 2,
+            y: yPos - qrSize - 10,
+            width: qrSize,
+            height: qrSize,
+          });
+        } else {
+          this.logger.debug(`QR code not found at ${this.qrImagePath}`);
+        }
+      } catch (error) {
+        this.logger.warn(`Failed to embed QR code: ${error.message}`);
+      }
+    }
   }
 
   /**

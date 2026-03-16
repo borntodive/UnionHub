@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>UnionConnect</string>
+    <string>UnionHub</string>
     <key>CFBundleDocumentTypes</key>
     <array>
       <dict>
@@ -42,7 +42,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>it.unionconnect.app</string>
+          <string>it.unionhub.app</string>
         </array>
       </dict>
     </array>

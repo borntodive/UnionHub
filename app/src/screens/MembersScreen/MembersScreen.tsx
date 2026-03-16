@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   Search,
   Users,
@@ -41,6 +42,7 @@ const ITEMS_PER_PAGE = 20;
 type MembersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const MembersScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<MembersScreenNavigationProp>();
   const currentUser = useAuthStore((state) => state.user);
   const isSuperAdmin = currentUser?.role === UserRole.SUPERADMIN;
@@ -143,11 +145,11 @@ export const MembersScreen: React.FC = () => {
   const getRuoloLabel = (ruolo: Ruolo | null) => {
     switch (ruolo) {
       case Ruolo.PILOT:
-        return 'Pilot';
+        return t('members.pilots');
       case Ruolo.CABIN_CREW:
-        return 'Cabin Crew';
+        return t('members.cabinCrew');
       default:
-        return 'Not specified';
+        return t('common.none');
     }
   };
 
@@ -220,7 +222,7 @@ export const MembersScreen: React.FC = () => {
     return (
       <View style={styles.footerLoader}>
         <ActivityIndicator size="small" color={colors.primary} />
-        <Text style={styles.footerText}>Loading...</Text>
+        <Text style={styles.footerText}>{t('common.loading')}</Text>
       </View>
     );
   };
@@ -258,7 +260,7 @@ export const MembersScreen: React.FC = () => {
           <Users size={24} color={colors.primary} />
           <View style={styles.statInfo}>
             <Text style={styles.statNumber}>{total}</Text>
-            <Text style={styles.statLabel}>Total Members</Text>
+            <Text style={styles.statLabel}>{t('members.title')}</Text>
           </View>
         </Card>
       </View>
@@ -269,7 +271,7 @@ export const MembersScreen: React.FC = () => {
           <Search size={20} color={colors.textTertiary} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search by name, surname, crewcode..."
+            placeholder={t('members.searchPlaceholder')}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor={colors.textTertiary}
@@ -313,7 +315,7 @@ export const MembersScreen: React.FC = () => {
             </View>
           ))}
           <TouchableOpacity onPress={clearFilters}>
-            <Text style={styles.clearAllText}>Reset</Text>
+            <Text style={styles.clearAllText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -321,7 +323,7 @@ export const MembersScreen: React.FC = () => {
       {/* Results Count */}
       <View style={styles.resultsHeader}>
         <Text style={styles.resultsText}>
-          {isLoading ? 'Loading...' : `${total} members found`}
+          {isLoading ? t('common.loading') : `${total} ${t('members.title').toLowerCase()}`}
         </Text>
       </View>
 
@@ -346,8 +348,8 @@ export const MembersScreen: React.FC = () => {
                 <Users size={48} color={colors.textTertiary} />
                 <Text style={styles.emptyText}>
                   {hasActiveFilters || searchQuery
-                    ? 'No members found with these filters'
-                    : 'No members available'}
+                    ? t('errors.notFound')
+                    : t('errors.notFound')}
                 </Text>
               </>
             )}

@@ -6,6 +6,8 @@ import {
   PayslipSettings,
   Payroll,
   SavedCalculation,
+  AdditionalInput,
+  AdditionalDeductionInput,
 } from '../types';
 import { calculatePayroll } from '../services/PayslipCalculator';
 
@@ -24,6 +26,14 @@ interface PayslipState {
   deleteCalculation: (id: string) => void;
   loadCalculation: (id: string) => void;
   reset: () => void;
+  // Additional payments
+  addAdditionalPayment: (item: AdditionalInput) => void;
+  updateAdditionalPayment: (index: number, item: AdditionalInput) => void;
+  removeAdditionalPayment: (index: number) => void;
+  // Additional deductions
+  addAdditionalDeduction: (item: AdditionalDeductionInput) => void;
+  updateAdditionalDeduction: (index: number, item: AdditionalDeductionInput) => void;
+  removeAdditionalDeduction: (index: number) => void;
 }
 
 const defaultInput: PayslipInput = {
@@ -147,6 +157,62 @@ export const usePayslipStore = create<PayslipState>()(
 
       reset: () => {
         set({ input: { ...defaultInput }, result: null, error: null });
+      },
+
+      // Additional payments
+      addAdditionalPayment: (item) => {
+        set((state) => ({
+          input: {
+            ...state.input,
+            additional: [...state.input.additional, item],
+          },
+        }));
+      },
+
+      updateAdditionalPayment: (index, item) => {
+        set((state) => ({
+          input: {
+            ...state.input,
+            additional: state.input.additional.map((a, i) => (i === index ? item : a)),
+          },
+        }));
+      },
+
+      removeAdditionalPayment: (index) => {
+        set((state) => ({
+          input: {
+            ...state.input,
+            additional: state.input.additional.filter((_, i) => i !== index),
+          },
+        }));
+      },
+
+      // Additional deductions
+      addAdditionalDeduction: (item) => {
+        set((state) => ({
+          input: {
+            ...state.input,
+            additionalDeductions: [...state.input.additionalDeductions, item],
+          },
+        }));
+      },
+
+      updateAdditionalDeduction: (index, item) => {
+        set((state) => ({
+          input: {
+            ...state.input,
+            additionalDeductions: state.input.additionalDeductions.map((a, i) => (i === index ? item : a)),
+          },
+        }));
+      },
+
+      removeAdditionalDeduction: (index) => {
+        set((state) => ({
+          input: {
+            ...state.input,
+            additionalDeductions: state.input.additionalDeductions.filter((_, i) => i !== index),
+          },
+        }));
       },
     }),
     {

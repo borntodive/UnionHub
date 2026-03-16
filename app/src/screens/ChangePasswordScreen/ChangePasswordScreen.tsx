@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMutation } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Lock, Shield, AlertTriangle } from 'lucide-react-native';
 
 import { colors, spacing, typography, borderRadius } from '../../theme';
@@ -21,6 +22,7 @@ import { authApi } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
 
 export const ChangePasswordScreen: React.FC = () => {
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   
@@ -28,22 +30,20 @@ export const ChangePasswordScreen: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // Store mustChangePassword value before the mutation clears it
   const wasMandatoryChange = user?.mustChangePassword ?? false;
 
   const changePasswordMutation = useMutation({
     mutationFn: authApi.changePassword,
     onSuccess: () => {
-      // Use setTimeout to delay the alert and avoid re-render issues
       setTimeout(() => {
         Alert.alert(
-          'Password Updated',
+          t('auth.passwordChanged'),
           wasMandatoryChange
-            ? 'Your password has been changed successfully. Please sign in again.'
-            : 'Your password has been changed successfully.',
+            ? t('auth.sessionExpired')
+            : t('auth.passwordChanged'),
           [
             {
-              text: 'OK',
+              text: t('common.ok'),
               onPress: async () => {
                 if (wasMandatoryChange) {
                   await logout();
@@ -57,35 +57,34 @@ export const ChangePasswordScreen: React.FC = () => {
     onError: (error: any) => {
       const message = error.response?.data?.message || 
         error.response?.data?.error || 
-        'Error changing password. Please ensure the password meets all requirements.';
-      Alert.alert('Error', Array.isArray(message) ? message.join('\n') : message);
+        t('errors.generic');
+      Alert.alert(t('common.error'), Array.isArray(message) ? message.join('\n') : message);
     },
   });
 
   const handleChangePassword = useCallback(() => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert(t('common.error'), t('errors.requiredField'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match');
+      Alert.alert(t('common.error'), t('errors.passwordMismatch'));
       return;
     }
 
     if (newPassword.length < 12) {
-      Alert.alert('Error', 'Password must be at least 12 characters');
+      Alert.alert(t('common.error'), 'Password must be at least 12 characters');
       return;
     }
 
-    // Check password meets all requirements
     const hasLowercase = /[a-z]/.test(newPassword);
     const hasUppercase = /[A-Z]/.test(newPassword);
     const hasNumber = /[0-9]/.test(newPassword);
     const hasSpecial = /[@$!%*?&]/.test(newPassword);
     
     if (!hasLowercase || !hasUppercase || !hasNumber || !hasSpecial) {
-      Alert.alert('Error', 'Password must contain at least one lowercase, one uppercase, one number, and one special character (@ $ ! % * ? &)');
+      Alert.alert(t('common.error'), 'Password must contain at least one lowercase, one uppercase, one number, and one special character (@ $ ! % * ? &)');
       return;
     }
 
@@ -93,7 +92,7 @@ export const ChangePasswordScreen: React.FC = () => {
       currentPassword,
       newPassword,
     });
-  }, [currentPassword, newPassword, confirmPassword, changePasswordMutation]);
+  }, [currentPassword, newPassword, confirmPassword, changePasswordMutation, t]);
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
@@ -111,11 +110,11 @@ export const ChangePasswordScreen: React.FC = () => {
               <View style={styles.iconContainer}>
                 <Shield size={48} color={colors.secondary} />
               </View>
-              <Text style={styles.title}>Change Password</Text>
+              <Text style={styles.title}>{t('auth.changePassword')}</Text>
               <Text style={styles.subtitle}>
                 {user?.mustChangePassword 
-                  ? 'Password change is required on first login'
-                  : 'Update your password for enhanced security'}
+                  ? t('auth.firstLoginRequired')
+                  : t('settings.security')}
               </Text>
             </View>
 
@@ -124,7 +123,7 @@ export const ChangePasswordScreen: React.FC = () => {
               <View style={styles.alertBox}>
                 <AlertTriangle size={20} color={colors.secondary} />
                 <Text style={styles.alertText}>
-                  For security reasons, you must change your password before proceeding.
+                  {t('auth.firstLoginRequired')}
                 </Text>
               </View>
             )}
@@ -132,8 +131,8 @@ export const ChangePasswordScreen: React.FC = () => {
             {/* Form */}
             <View style={styles.formContainer}>
               <Input
-                label="Current Password"
-                placeholder="Enter your current password"
+                label={t('auth.currentPassword')}
+                placeholder={t('auth.enterPassword')}
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
                 secureTextEntry
@@ -142,8 +141,8 @@ export const ChangePasswordScreen: React.FC = () => {
               />
 
               <Input
-                label="New Password"
-                placeholder="Enter your new password"
+                label={t('auth.newPassword')}
+                placeholder={t('auth.enterPassword')}
                 value={newPassword}
                 onChangeText={setNewPassword}
                 secureTextEntry
@@ -152,14 +151,14 @@ export const ChangePasswordScreen: React.FC = () => {
               />
 
               <Input
-                label="Confirm New Password"
-                placeholder="Confirm your new password"
+                label={t('auth.confirmPassword')}
+                placeholder={t('auth.enterPassword')}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
                 leftIcon={<Lock size={20} color={colors.textTertiary} />}
                 containerStyle={styles.inputContainer}
-                error={confirmPassword && newPassword !== confirmPassword ? 'Passwords do not match' : undefined}
+                error={confirmPassword && newPassword !== confirmPassword ? t('errors.passwordMismatch') : undefined}
               />
 
               <View style={styles.passwordHints}>
@@ -197,7 +196,7 @@ export const ChangePasswordScreen: React.FC = () => {
               </View>
 
               <Button
-                title="Change Password"
+                title={t('auth.changePassword')}
                 onPress={handleChangePassword}
                 loading={changePasswordMutation.isPending}
                 disabled={!currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword}

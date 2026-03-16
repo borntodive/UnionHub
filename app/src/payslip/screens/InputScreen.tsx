@@ -16,11 +16,23 @@ import { usePayslipStore } from '../store/usePayslipStore';
 import { MonthPicker } from '../components/input/MonthPicker';
 import { SbhPicker } from '../components/input/SbhPicker';
 import { NumberInput } from '../components/input/NumberInput';
+import { AdditionalPaymentsSection } from '../components/input/AdditionalPaymentsSection';
+import { AdditionalDeductionsSection } from '../components/input/AdditionalDeductionsSection';
 
 export const InputScreen: React.FC = () => {
   const navigation = useNavigation();
   const { user } = useAuthStore();
-  const { input, settings, setInput } = usePayslipStore();
+  const { 
+    input, 
+    settings, 
+    setInput,
+    addAdditionalPayment,
+    updateAdditionalPayment,
+    removeAdditionalPayment,
+    addAdditionalDeduction,
+    updateAdditionalDeduction,
+    removeAdditionalDeduction,
+  } = usePayslipStore();
 
   const isPilot = settings.role === 'pil';
   const isLTC = settings.rank === 'ltc';
@@ -174,6 +186,24 @@ export const InputScreen: React.FC = () => {
             />
           </View>
         )}
+
+        <View style={styles.card}>
+          <AdditionalPaymentsSection
+            items={input.additional}
+            onAdd={() => addAdditionalPayment({ amount: 0, tax: 100, isSLR: false, isConguaglio: false })}
+            onUpdate={updateAdditionalPayment}
+            onRemove={removeAdditionalPayment}
+          />
+        </View>
+
+        <View style={styles.card}>
+          <AdditionalDeductionsSection
+            items={input.additionalDeductions}
+            onAdd={() => addAdditionalDeduction({ amount: 0, tax: 100, isConguaglio: false })}
+            onUpdate={updateAdditionalDeduction}
+            onRemove={removeAdditionalDeduction}
+          />
+        </View>
 
         <View style={styles.bottomSpace} />
       </ScrollView>

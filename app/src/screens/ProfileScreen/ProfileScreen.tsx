@@ -13,6 +13,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   Mail,
   Phone,
@@ -32,31 +33,32 @@ import { Ruolo, UserRole } from '../../types';
 
 type ProfileScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const getRoleLabel = (role: UserRole) => {
+const getRoleLabel = (role: UserRole, t: any) => {
   switch (role) {
     case UserRole.SUPERADMIN:
-      return 'Super Admin';
+      return t('navigation.superAdmin');
     case UserRole.ADMIN:
-      return 'Administrator';
+      return t('navigation.admin');
     case UserRole.USER:
-      return 'User';
+      return t('members.active');
     default:
       return role;
   }
 };
 
-const getRuoloLabel = (ruolo: Ruolo | null) => {
+const getRuoloLabel = (ruolo: Ruolo | null, t: any) => {
   switch (ruolo) {
     case Ruolo.PILOT:
-      return 'Pilot';
+      return t('members.pilots');
     case Ruolo.CABIN_CREW:
-      return 'Cabin Crew';
+      return t('members.cabinCrew');
     default:
-      return 'Not specified';
+      return t('common.none');
   }
 };
 
 export const ProfileScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
@@ -108,63 +110,63 @@ export const ProfileScreen: React.FC = () => {
           </Text>
           <Text style={styles.crewcode}>{currentUser?.crewcode}</Text>
           <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>{getRoleLabel(currentUser?.role as UserRole)}</Text>
+            <Text style={styles.roleText}>{getRoleLabel(currentUser?.role as UserRole, t)}</Text>
           </View>
         </Card>
 
         {/* Info Card */}
         <Card style={styles.infoCard}>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
+          <Text style={styles.sectionTitle}>{t('members.personalInfo')}</Text>
           
           <InfoRow
             icon={<Mail size={20} color={colors.primary} />}
-            label="Email"
+            label={t('members.email')}
             value={currentUser?.email}
           />
           
           <InfoRow
             icon={<Phone size={20} color={colors.primary} />}
-            label="Phone"
-            value={currentUser?.telefono || 'Not specified'}
+            label={t('members.phone')}
+            value={currentUser?.telefono || t('common.none')}
           />
 
           <View style={styles.divider} />
 
-          <Text style={styles.sectionTitle}>Professional Information</Text>
+          <Text style={styles.sectionTitle}>{t('members.unionInfo')}</Text>
           
           <InfoRow
             icon={<Briefcase size={20} color={colors.primary} />}
-            label="Role"
-            value={getRuoloLabel(currentUser?.ruolo as Ruolo)}
+            label={t('members.role')}
+            value={getRuoloLabel(currentUser?.ruolo as Ruolo, t)}
           />
           
           <InfoRow
             icon={<Award size={20} color={colors.primary} />}
-            label="Grade"
-            value={currentUser?.grade?.nome || 'Not specified'}
+            label={t('members.grade')}
+            value={currentUser?.grade?.nome || t('common.none')}
           />
           
           <InfoRow
             icon={<Briefcase size={20} color={colors.primary} />}
-            label="Contract"
+            label={t('members.contract')}
             value={currentUser?.contratto ? 
               (currentUser.role === UserRole.SUPERADMIN ? currentUser.contratto.codice : currentUser.contratto.codice.replace(/-(PI|CC)$/, '')) 
-              : 'Not specified'}
+              : t('common.none')}
           />
           
           <InfoRow
             icon={<MapPin size={20} color={colors.primary} />}
-            label="Base"
-            value={currentUser?.base?.nome || 'Not specified'}
+            label={t('members.base')}
+            value={currentUser?.base?.nome || t('common.none')}
           />
         </Card>
 
         {/* Actions Card */}
         <Card style={styles.actionsCard}>
-          <Text style={styles.sectionTitle}>Actions</Text>
+          <Text style={styles.sectionTitle}>{t('common.actions')}</Text>
           
           <Button
-            title="Change Password"
+            title={t('auth.changePassword')}
             onPress={handleChangePassword}
             variant="outline"
             size="md"
@@ -172,7 +174,7 @@ export const ProfileScreen: React.FC = () => {
           />
         </Card>
 
-        <Text style={styles.version}>Version 1.0.0</Text>
+        <Text style={styles.version}>{t('settings.version')} 1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );

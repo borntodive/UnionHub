@@ -15,6 +15,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useRoute, RouteProp, DrawerActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import {
@@ -35,6 +36,8 @@ import {
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import { documentsApi, Document } from '../../api/documents';
 import { RootStackParamList } from '../../navigation/types';
+import { useAuthStore } from '../../store/authStore';
+import { UserRole } from '../../types';
 
 type DocumentEditorRouteProp = RouteProp<RootStackParamList, 'DocumentEditor'>;
 type DocumentEditorNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -42,6 +45,7 @@ type DocumentEditorNavigationProp = NativeStackNavigationProp<RootStackParamList
 type Step = 'edit' | 'review' | 'approve' | 'publish';
 
 export const DocumentEditorScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<DocumentEditorNavigationProp>();
   const route = useRoute<DocumentEditorRouteProp>();
   const queryClient = useQueryClient();
@@ -50,9 +54,14 @@ export const DocumentEditorScreen: React.FC = () => {
   const documentId = route.params?.documentId;
   const isEditing = !!documentId;
 
+  const { user } = useAuthStore();
+  const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
+
   const [step, setStep] = useState<Step>('edit');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [union, setUnion] = useState<'fit-cisl' | 'joint'>('fit-cisl');
+  const [ruolo, setRuolo] = useState<'pilot' | 'cabin_crew'>('pilot');
   const [aiReviewedContent, setAiReviewedContent] = useState('');
   const [englishTranslation, setEnglishTranslation] = useState('');
   const [showCloseModal, setShowCloseModal] = useState(false);
@@ -60,10 +69,8 @@ export const DocumentEditorScreen: React.FC = () => {
   // Check if there are unsaved changes
   const hasUnsavedChanges = () => {
     if (!isEditing) {
-      // New document: check if anything was entered
       return title.trim() !== '' || content.trim() !== '';
     }
-    // Existing document: compare with loaded data
     return title !== existingDoc?.title || 
            content !== existingDoc?.originalContent ||
            aiReviewedContent !== (existingDoc?.aiReviewedContent || '');
@@ -80,19 +87,21 @@ export const DocumentEditorScreen: React.FC = () => {
     if (existingDoc) {
       setTitle(existingDoc.title);
       setContent(existingDoc.originalContent);
+      setUnion(existingDoc.union || 'fit-cisl');
+      setRuolo(existingDoc.ruolo || 'pilot');
       setAiReviewedContent(existingDoc.aiReviewedContent || '');
       setEnglishTranslation(existingDoc.englishTranslation || '');
       
-      // Set step based on status
       if (existingDoc.status === 'published') setStep('publish');
+      else if (existingDoc.status === 'verified') setStep('publish');
       else if (existingDoc.status === 'approved') setStep('publish');
       else if (existingDoc.status === 'reviewing') setStep('approve');
       else setStep('edit');
     } else if (!isEditing) {
-      // Reset state for new document
       setStep('edit');
       setTitle('');
       setContent('');
+      setUnion('fit-cisl');
       setAiReviewedContent('');
       setEnglishTranslation('');
     }
@@ -104,10 +113,10 @@ export const DocumentEditorScreen: React.FC = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       navigation.setParams({ documentId: data.id });
-      Alert.alert('Success', 'Document created');
+      Alert.alert(t('common.success'), t('documents.createDocument'));
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to create');
+      Alert.alert(t('common.error'), error.response?.data?.message || t('errors.generic'));
     },
   });
 
@@ -121,7 +130,7 @@ export const DocumentEditorScreen: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['document', documentId] });
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'AI review failed');
+      Alert.alert(t('common.error'), error.response?.data?.message || t('errors.generic'));
     },
   });
 
@@ -135,40 +144,36 @@ export const DocumentEditorScreen: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['document', documentId] });
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'Approval failed');
+      Alert.alert(t('common.error'), error.response?.data?.message || t('errors.generic'));
     },
   });
 
-  const publishMutation = useMutation({
-    mutationFn: documentsApi.publishDocument,
+  const verifyMutation = useMutation({
+    mutationFn: documentsApi.verifyDocument,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       queryClient.invalidateQueries({ queryKey: ['document', documentId] });
-      // Update local state with published data
       if (data) {
         setAiReviewedContent(data.aiReviewedContent || '');
         setEnglishTranslation(data.englishTranslation || '');
       }
-      Alert.alert('Success', 'Document published! You can now download the PDF.');
+      Alert.alert(t('common.success'), t('documents.documentVerified'));
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'Publish failed');
+      Alert.alert(t('common.error'), error.response?.data?.message || t('errors.generic'));
     },
   });
 
   const downloadMutation = useMutation({
     mutationFn: async ({ id, title }: { id: string; title: string }) => {
-      // Get base64 PDF from API
       const base64Pdf = await documentsApi.getPdfBase64(id);
       if (!base64Pdf) {
         throw new Error('PDF not found');
       }
       
-      // Save to file using new expo-file-system API
       const fileName = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
       const file = new FileSystem.File(FileSystem.Paths.document, fileName);
       
-      // Convert base64 to bytes and write
       const binaryString = atob(base64Pdf);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
@@ -176,20 +181,19 @@ export const DocumentEditorScreen: React.FC = () => {
       }
       await file.write(bytes);
       
-      // Share the file
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(file.uri, {
           mimeType: 'application/pdf',
           dialogTitle: title,
         });
       } else {
-        Alert.alert('Success', `PDF saved to: ${file.uri}`);
+        Alert.alert(t('common.success'), `PDF saved to: ${file.uri}`);
       }
       
       return file.uri;
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.message || 'Download failed');
+      Alert.alert(t('common.error'), error.message || t('errors.generic'));
     },
   });
 
@@ -198,10 +202,10 @@ export const DocumentEditorScreen: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       queryClient.invalidateQueries({ queryKey: ['document', documentId] });
-      Alert.alert('Success', 'PDF regenerated successfully!');
+      Alert.alert(t('common.success'), 'PDF regenerated successfully!');
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'Regeneration failed');
+      Alert.alert(t('common.error'), error.response?.data?.message || t('errors.generic'));
     },
   });
 
@@ -211,21 +215,21 @@ export const DocumentEditorScreen: React.FC = () => {
       setEnglishTranslation(data.englishTranslation || '');
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       queryClient.invalidateQueries({ queryKey: ['document', documentId] });
-      Alert.alert('Success', 'Translations regenerated successfully!');
+      Alert.alert(t('common.success'), 'Translations regenerated successfully!');
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'Translation regeneration failed');
+      Alert.alert(t('common.error'), error.response?.data?.message || t('errors.generic'));
     },
   });
 
   const handleSave = async () => {
     if (!title.trim() || !content.trim()) {
-      Alert.alert('Error', 'Title and content are required');
+      Alert.alert(t('common.error'), t('errors.requiredField'));
       return;
     }
 
     if (!isEditing) {
-      createMutation.mutate({ title, content });
+      createMutation.mutate({ title, content, union, ruolo });
     }
   };
 
@@ -244,15 +248,14 @@ export const DocumentEditorScreen: React.FC = () => {
       return;
     } else if (action === 'save') {
       if (!title.trim() || !content.trim()) {
-        Alert.alert('Error', 'Title and content are required to save');
+        Alert.alert(t('common.error'), t('errors.requiredField'));
         return;
       }
       if (!isEditing) {
-        createMutation.mutate({ title, content }, {
+        createMutation.mutate({ title, content, union, ruolo }, {
           onSuccess: () => navigation.goBack(),
         });
       } else {
-        // For existing docs, just go back (auto-saved)
         navigation.goBack();
       }
     } else if (action === 'discard') {
@@ -262,7 +265,7 @@ export const DocumentEditorScreen: React.FC = () => {
 
   const handleRequestReview = () => {
     if (!documentId) {
-      Alert.alert('Error', 'Save the document first');
+      Alert.alert(t('common.error'), 'Save the document first');
       return;
     }
     reviewMutation.mutate({ id: documentId, content });
@@ -270,14 +273,13 @@ export const DocumentEditorScreen: React.FC = () => {
 
   const handleApprove = () => {
     if (!documentId) return;
-    // Use AI reviewed content if available, otherwise use content (which may have been edited)
     const contentToApprove = aiReviewedContent || content;
     approveMutation.mutate({ id: documentId, reviewedContent: contentToApprove });
   };
 
-  const handlePublish = () => {
+  const handleVerify = () => {
     if (!documentId) return;
-    publishMutation.mutate(documentId);
+    verifyMutation.mutate(documentId);
   };
 
   const handleDownload = () => {
@@ -315,26 +317,75 @@ export const DocumentEditorScreen: React.FC = () => {
       case 'edit':
         return (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>1. Scrivi il Comunicato</Text>
+            <Text style={styles.stepTitle}>{t('documents.stepWrite')}</Text>
             <Text style={styles.stepDescription}>
-              Inserisci il titolo e il testo del comunicato sindacale.
+              {t('documents.enterContent')}
             </Text>
             
-            <Text style={styles.label}>Titolo</Text>
+            <Text style={styles.label}>{t('documents.unionType')}</Text>
+            <View style={styles.unionSelector}>
+              <TouchableOpacity
+                style={[styles.unionOption, union === 'fit-cisl' && styles.unionOptionActive]}
+                onPress={() => setUnion('fit-cisl')}
+              >
+                <View style={[styles.unionDot, { backgroundColor: colors.primary }]} />
+                <Text style={[styles.unionText, union === 'fit-cisl' && styles.unionTextActive]}>
+                  {t('documents.fitCislOnly')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.unionOption, union === 'joint' && styles.unionOptionActive]}
+                onPress={() => setUnion('joint')}
+              >
+                <View style={styles.unionDotJoint}>
+                  <View style={[styles.unionDotHalf, { backgroundColor: colors.primary }]} />
+                  <View style={[styles.unionDotHalf, { backgroundColor: '#003399' }]} />
+                </View>
+                <Text style={[styles.unionText, union === 'joint' && styles.unionTextActive]}>
+                  {t('documents.joint')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {isSuperAdmin && !isEditing && (
+              <>
+                <Text style={styles.label}>{t('documents.recipients')}</Text>
+                <View style={styles.unionSelector}>
+                  <TouchableOpacity
+                    style={[styles.unionOption, ruolo === 'pilot' && styles.unionOptionActive]}
+                    onPress={() => setRuolo('pilot')}
+                  >
+                    <Text style={[styles.unionText, ruolo === 'pilot' && styles.unionTextActive]}>
+                      {t('documents.pilots')}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.unionOption, ruolo === 'cabin_crew' && styles.unionOptionActive]}
+                    onPress={() => setRuolo('cabin_crew')}
+                  >
+                    <Text style={[styles.unionText, ruolo === 'cabin_crew' && styles.unionTextActive]}>
+                      {t('documents.cabinCrew')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+
+            <Text style={styles.label}>{t('documents.documentTitle')}</Text>
             <TextInput
               style={styles.titleInput}
               value={title}
               onChangeText={setTitle}
-              placeholder="Titolo del comunicato..."
+              placeholder={t('documents.enterTitle')}
               placeholderTextColor={colors.textSecondary}
             />
 
-            <Text style={styles.label}>Contenuto</Text>
+            <Text style={styles.label}>{t('documents.documentContent')}</Text>
             <TextInput
               style={styles.contentInput}
               value={content}
               onChangeText={setContent}
-              placeholder="Scrivi qui il testo del comunicato..."
+              placeholder={t('documents.enterContent')}
               placeholderTextColor={colors.textSecondary}
               multiline
               textAlignVertical="top"
@@ -351,7 +402,7 @@ export const DocumentEditorScreen: React.FC = () => {
                 ) : (
                   <>
                     <Save size={20} color={colors.textInverse} />
-                    <Text style={styles.primaryButtonText}>Salva Bozza</Text>
+                    <Text style={styles.primaryButtonText}>{t('documents.saveDraft')}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -365,12 +416,12 @@ export const DocumentEditorScreen: React.FC = () => {
                   {reviewMutation.isPending ? (
                     <>
                       <ActivityIndicator color={colors.primary} />
-                      <Text style={styles.aiButtonText}>AI sta revisionando...</Text>
+                      <Text style={styles.aiButtonText}>{t('documents.aiReviewing')}</Text>
                     </>
                   ) : (
                     <>
                       <Sparkles size={20} color={colors.primary} />
-                      <Text style={styles.aiButtonText}>Richiedi Revisione AI</Text>
+                      <Text style={styles.aiButtonText}>{t('documents.requestReview')}</Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -380,7 +431,7 @@ export const DocumentEditorScreen: React.FC = () => {
                   onPress={() => setStep('approve')}
                 >
                   <ArrowRight size={20} color={colors.text} />
-                  <Text style={styles.secondaryButtonText}>Avanti senza AI</Text>
+                  <Text style={styles.secondaryButtonText}>{t('common.next')}</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -391,19 +442,19 @@ export const DocumentEditorScreen: React.FC = () => {
         const hasAIReview = !!aiReviewedContent;
         return (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>2. Revisione {hasAIReview ? 'AI' : 'Manuale'}</Text>
+            <Text style={styles.stepTitle}>{t('documents.stepReview')}</Text>
             <Text style={styles.stepDescription}>
               {hasAIReview 
-                ? "L'AI ha riscritto il testo come comunicato sindacale. Puoi modificarlo prima di approvarlo."
-                : "Revisione manuale del comunicato. Puoi modificare il testo prima di approvarlo."}
+                ? t('documents.aiReviewDescription')
+                : t('documents.manualReviewDescription')}
             </Text>
 
-            <Text style={styles.label}>Testo Originale</Text>
+            <Text style={styles.label}>{t('documents.originalText')}</Text>
             <View style={styles.originalBox}>
               <Text style={styles.originalText}>{content}</Text>
             </View>
 
-            <Text style={styles.label}>{hasAIReview ? 'Versione Rivista dall\'AI' : 'Versione da Approvare'}</Text>
+            <Text style={styles.label}>{hasAIReview ? t('documents.aiReviewedVersion') : t('documents.versionToApprove')}</Text>
             <TextInput
               style={styles.reviewInput}
               value={aiReviewedContent || content}
@@ -418,7 +469,7 @@ export const DocumentEditorScreen: React.FC = () => {
                 onPress={() => setStep('edit')}
               >
                 <ArrowLeft size={20} color={colors.text} />
-                <Text style={styles.secondaryButtonText}>Indietro</Text>
+                <Text style={styles.secondaryButtonText}>{t('common.back')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -431,7 +482,7 @@ export const DocumentEditorScreen: React.FC = () => {
                 ) : (
                   <>
                     <CheckCircle size={20} color={colors.textInverse} />
-                    <Text style={styles.primaryButtonText}>Approva & Traduci</Text>
+                    <Text style={styles.primaryButtonText}>{t('documents.approveDocument')}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -442,46 +493,49 @@ export const DocumentEditorScreen: React.FC = () => {
       case 'publish':
         const hasTranslation = !!englishTranslation;
         const isPublished = existingDoc?.status === 'published';
+        const isVerified = existingDoc?.status === 'verified';
         return (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>3. Pubblicazione</Text>
+            <Text style={styles.stepTitle}>{t('documents.stepPublish')}</Text>
             <Text style={styles.stepDescription}>
               {isPublished
-                ? "Il documento è stato pubblicato. Scarica il PDF finale con carta intestata."
-                : hasTranslation 
-                  ? "Il documento è stato approvato e tradotto. Genera il PDF finale con carta intestata."
-                  : "Il documento è stato approvato. Genera il PDF finale con carta intestata."}
+                ? t('documents.publishedDescription')
+                : isVerified
+                  ? t('documents.verifiedDescription')
+                  : hasTranslation 
+                    ? t('documents.approvedWithTranslationDescription')
+                    : t('documents.approvedDescription')}
             </Text>
 
-            <Text style={styles.label}>Versione Italiana (Finale)</Text>
+            <Text style={styles.label}>{t('documents.italianVersion')}</Text>
             <View style={styles.finalBox}>
               <Text style={styles.finalText}>{aiReviewedContent || content}</Text>
             </View>
 
             {hasTranslation && (
               <>
-                <Text style={styles.label}>Versione Inglese (Allegato)</Text>
+                <Text style={styles.label}>{t('documents.englishVersion')}</Text>
                 <View style={styles.englishBox}>
                   <Text style={styles.englishText}>{englishTranslation}</Text>
                 </View>
               </>
             )}
 
-            <View style={styles.buttonRow}>
+            <View style={styles.buttonColumn}>
               {!isPublished && (
                 <TouchableOpacity
-                  style={[styles.actionButton, styles.secondaryButton]}
+                  style={[styles.actionButton, styles.secondaryButton, styles.fullWidthButton]}
                   onPress={() => setStep('approve')}
                 >
                   <ArrowLeft size={20} color={colors.text} />
-                  <Text style={styles.secondaryButtonText}>Indietro</Text>
+                  <Text style={styles.secondaryButtonText}>{t('common.back')}</Text>
                 </TouchableOpacity>
               )}
 
-              {isPublished ? (
+              {isPublished || isVerified ? (
                 <>
                   <TouchableOpacity
-                    style={[styles.actionButton, styles.publishButton, { flex: 1 }]}
+                    style={[styles.actionButton, styles.publishButton, styles.fullWidthButton]}
                     onPress={handleDownload}
                     disabled={downloadMutation.isPending}
                   >
@@ -490,14 +544,13 @@ export const DocumentEditorScreen: React.FC = () => {
                     ) : (
                       <>
                         <Download size={20} color={colors.textInverse} />
-                        <Text style={styles.primaryButtonText}>Scarica PDF</Text>
+                        <Text style={styles.primaryButtonText}>{t('documents.downloadDocument')}</Text>
                       </>
                     )}
                   </TouchableOpacity>
                   
-                  {/* Dev only: Regenerate PDF button */}
                   <TouchableOpacity
-                    style={[styles.actionButton, styles.devButton]}
+                    style={[styles.actionButton, styles.devButton, styles.fullWidthButton]}
                     onPress={handleRegenerate}
                     disabled={regenerateMutation.isPending}
                   >
@@ -511,9 +564,8 @@ export const DocumentEditorScreen: React.FC = () => {
                     )}
                   </TouchableOpacity>
                   
-                  {/* Dev only: Regenerate Translations button */}
                   <TouchableOpacity
-                    style={[styles.actionButton, styles.devButton]}
+                    style={[styles.actionButton, styles.devButton, styles.fullWidthButton]}
                     onPress={handleRegenerateTranslations}
                     disabled={regenerateTranslationsMutation.isPending}
                   >
@@ -529,16 +581,16 @@ export const DocumentEditorScreen: React.FC = () => {
                 </>
               ) : (
                 <TouchableOpacity
-                  style={[styles.actionButton, styles.publishButton]}
-                  onPress={handlePublish}
-                  disabled={publishMutation.isPending}
+                  style={[styles.actionButton, styles.publishButton, styles.fullWidthButton]}
+                  onPress={handleVerify}
+                  disabled={verifyMutation.isPending}
                 >
-                  {publishMutation.isPending ? (
+                  {verifyMutation.isPending ? (
                     <ActivityIndicator color={colors.textInverse} />
                   ) : (
                     <>
-                      <Eye size={20} color={colors.textInverse} />
-                      <Text style={styles.primaryButtonText}>Genera PDF & Pubblica</Text>
+                      <CheckCircle size={20} color={colors.textInverse} />
+                      <Text style={styles.primaryButtonText}>{t('documents.generatePDF')}</Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -579,7 +631,7 @@ export const DocumentEditorScreen: React.FC = () => {
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>
-            {isEditing ? 'Modifica Comunicato' : 'Nuovo Comunicato'}
+            {isEditing ? t('documents.editDocument') : t('documents.createDocument')}
           </Text>
           <TouchableOpacity
             onPress={handleClose}
@@ -605,9 +657,9 @@ export const DocumentEditorScreen: React.FC = () => {
         {showCloseModal && (
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Chiudi Comunicato</Text>
+              <Text style={styles.modalTitle}>{t('common.close')}</Text>
               <Text style={styles.modalText}>
-                Hai delle modifiche non salvate. Cosa vuoi fare?
+                {t('documents.unsavedChanges')}
               </Text>
               
               <TouchableOpacity
@@ -615,7 +667,7 @@ export const DocumentEditorScreen: React.FC = () => {
                 onPress={() => handleCloseAction('save')}
               >
                 <Save size={20} color={colors.textInverse} />
-                <Text style={styles.modalButtonPrimaryText}>Salva come Bozza</Text>
+                <Text style={styles.modalButtonPrimaryText}>{t('documents.saveDraft')}</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
@@ -623,14 +675,14 @@ export const DocumentEditorScreen: React.FC = () => {
                 onPress={() => handleCloseAction('discard')}
               >
                 <X size={20} color={colors.error} />
-                <Text style={styles.modalButtonSecondaryText}>Elimina Modifiche</Text>
+                <Text style={styles.modalButtonSecondaryText}>{t('common.delete')}</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel]}
                 onPress={() => handleCloseAction('cancel')}
               >
-                <Text style={styles.modalButtonCancelText}>Annulla, Continua a Modificare</Text>
+                <Text style={styles.modalButtonCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -756,6 +808,51 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.md,
     color: colors.text,
   },
+  unionSelector: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  unionOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  unionOptionActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '10',
+  },
+  unionDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+  },
+  unionDotJoint: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    flexDirection: 'row',
+    overflow: 'hidden',
+  },
+  unionDotHalf: {
+    width: 8,
+    height: 16,
+  },
+  unionText: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  unionTextActive: {
+    color: colors.text,
+    fontWeight: typography.weights.semibold,
+  },
   contentInput: {
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -868,6 +965,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     marginTop: spacing.lg,
+  },
+  buttonColumn: {
+    flexDirection: 'column',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+  },
+  fullWidthButton: {
+    width: '100%',
+    justifyContent: 'center',
   },
   modalOverlay: {
     position: 'absolute',

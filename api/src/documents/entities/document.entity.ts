@@ -9,7 +9,9 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
-export type DocumentStatus = 'draft' | 'reviewing' | 'approved' | 'published';
+export type DocumentStatus = 'draft' | 'reviewing' | 'approved' | 'verified' | 'published';
+export type UnionType = 'fit-cisl' | 'joint';
+export type DocumentRuolo = 'pilot' | 'cabin_crew';
 
 @Entity('documents')
 export class Document {
@@ -36,7 +38,7 @@ export class Document {
 
   @Column({
     type: 'enum',
-    enum: ['draft', 'reviewing', 'approved', 'published'],
+    enum: ['draft', 'reviewing', 'approved', 'verified', 'published'],
     default: 'draft',
   })
   status: DocumentStatus;
@@ -56,4 +58,18 @@ export class Document {
 
   @Column({ type: 'timestamp', nullable: true })
   publishedAt: Date;
+
+  @Column({
+    type: 'enum',
+    enum: ['fit-cisl', 'joint'],
+    default: 'fit-cisl',
+  })
+  union: UnionType;
+
+  @Column({
+    type: 'enum',
+    enum: ['pilot', 'cabin_crew'],
+    default: 'pilot',
+  })
+  ruolo: DocumentRuolo;
 }

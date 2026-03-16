@@ -5,6 +5,7 @@ import { Document, DocumentStatus } from './entities/document.entity';
 import { CreateDocumentDto, ReviewDocumentDto, ApproveDocumentDto } from './dto/create-document.dto';
 import { OllamaService } from '../ollama/ollama.service';
 import { PdfService } from './pdf.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 interface UserInfo {
   userId: string;
@@ -18,6 +19,7 @@ export class DocumentsService {
     private documentRepository: Repository<Document>,
     private ollamaService: OllamaService,
     private pdfService: PdfService,
+    private notificationsService: NotificationsService,
   ) {}
 
   // Get all documents
@@ -25,6 +27,39 @@ export class DocumentsService {
     return this.documentRepository.find({
       relations: ['author'],
       order: { createdAt: 'DESC' },
+    });
+  }
+
+  // Get verified documents (for admin verification)
+  async findVerified(): Promise<Document[]> {
+    return this.documentRepository.find({
+      where: { status: 'verified' },
+      relations: ['author'],
+      order: { updatedAt: 'DESC' },
+    });
+  }
+
+  // Get published documents (public access)
+  async findPublished(): Promise<Document[]> {
+    return this.documentRepository.find({
+      where: { status: 'published' },
+      relations: ['author'],
+      order: { publishedAt: 'DESC' },
+      select: {
+        id: true,
+        title: true,
+        englishTitle: true,
+        status: true,
+        union: true,
+        publishedAt: true,
+        createdAt: true,
+        author: {
+          id: true,
+          nome: true,
+          cognome: true,
+          crewcode: true,
+        },
+      },
     });
   }
 
@@ -49,6 +84,8 @@ export class DocumentsService {
       originalContent: dto.content,
       status: 'draft',
       createdBy: user.userId,
+      union: dto.union || 'fit-cisl',
+      ruolo: dto.ruolo || 'pilot',
     });
 
     return this.documentRepository.save(document);
@@ -131,12 +168,38 @@ Traduzione del titolo (solo il titolo tradotto, nient'altro):`;
     }
   }
 
-  // Generate final PDF with letterhead and publish
-  async publish(id: string, user: UserInfo): Promise<Document> {
+  // Verify document - admin verification before publishing
+  async verify(id: string, user: UserInfo): Promise<Document> {
     const document = await this.findById(id);
 
     if (document.status !== 'approved') {
-      throw new Error('Document must be approved before publishing');
+      throw new Error('Document must be approved before verification');
+    }
+
+    // Translate title if needed
+    await this.translateTitleIfNeeded(document);
+
+    // Generate PDF for verification
+    try {
+      const pdfBuffer = await this.pdfService.generateDocumentPdf(document);
+      const base64Pdf = pdfBuffer.toString('base64');
+      
+      document.status = 'verified';
+      document.finalPdfUrl = `data:application/pdf;base64,${base64Pdf}`;
+
+      return this.documentRepository.save(document);
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      throw new Error('Failed to generate PDF: ' + error.message);
+    }
+  }
+
+  // Final publish - make document publicly available
+  async publish(id: string, user: UserInfo): Promise<Document> {
+    const document = await this.findById(id);
+
+    if (document.status !== 'verified') {
+      throw new Error('Document must be verified before publishing');
     }
 
     // Translate title if needed
@@ -154,7 +217,19 @@ Traduzione del titolo (solo il titolo tradotto, nient'altro):`;
       document.publishedAt = new Date();
       document.finalPdfUrl = `data:application/pdf;base64,${base64Pdf}`;
 
-      return this.documentRepository.save(document);
+      const savedDocument = await this.documentRepository.save(document);
+
+      // Send push notification to all users
+      await this.notificationsService.broadcastNotification(
+        '📢 Nuovo Comunicato Sindacale',
+        `"${document.title}" è stato pubblicato. Tocca per leggere.`,
+        {
+          documentId: document.id,
+          type: 'new_document',
+        }
+      );
+
+      return savedDocument;
     } catch (error) {
       console.error('PDF generation failed:', error);
       throw new Error('Failed to generate PDF: ' + error.message);

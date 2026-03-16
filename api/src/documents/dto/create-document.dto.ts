@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum } from 'class-validator';
 
 export class CreateDocumentDto {
   @IsString()
@@ -8,6 +8,14 @@ export class CreateDocumentDto {
   @IsString()
   @IsNotEmpty()
   content: string;
+
+  @IsEnum(['fit-cisl', 'joint'])
+  @IsOptional()
+  union?: 'fit-cisl' | 'joint';
+
+  @IsEnum(['pilot', 'cabin_crew'])
+  @IsOptional()
+  ruolo?: 'pilot' | 'cabin_crew';
 }
 
 export class ReviewDocumentDto {

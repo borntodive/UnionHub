@@ -10,6 +10,7 @@ import { ContractsModule } from './contracts/contracts.module';
 import { ClaContractsModule } from './cla-contracts/cla-contracts.module';
 import { GradesModule } from './grades/grades.module';
 import { DocumentsModule } from './documents/documents.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { DocumentsModule } from './documents/documents.module';
     ClaContractsModule,
     GradesModule,
     DocumentsModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}
