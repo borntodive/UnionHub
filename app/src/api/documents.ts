@@ -83,6 +83,11 @@ export const documentsApi = {
     return response.data;
   },
 
+  regenerateTranslations: async (id: string): Promise<Document> => {
+    const response = await apiClient.post(`/documents/${id}/regenerate-translations`);
+    return response.data;
+  },
+
   getPdfBase64: async (id: string): Promise<string | null> => {
     const response = await apiClient.get(`/documents/${id}`);
     const document = response.data as Document;

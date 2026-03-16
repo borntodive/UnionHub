@@ -29,6 +29,7 @@ import {
   ArrowLeft,
   X,
   RefreshCw,
+  Languages,
 } from 'lucide-react-native';
 
 import { colors, spacing, typography, borderRadius } from '../../theme';
@@ -204,6 +205,19 @@ export const DocumentEditorScreen: React.FC = () => {
     },
   });
 
+  const regenerateTranslationsMutation = useMutation({
+    mutationFn: documentsApi.regenerateTranslations,
+    onSuccess: (data) => {
+      setEnglishTranslation(data.englishTranslation || '');
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['document', documentId] });
+      Alert.alert('Success', 'Translations regenerated successfully!');
+    },
+    onError: (error: any) => {
+      Alert.alert('Error', error.response?.data?.message || 'Translation regeneration failed');
+    },
+  });
+
   const handleSave = async () => {
     if (!title.trim() || !content.trim()) {
       Alert.alert('Error', 'Title and content are required');
@@ -274,6 +288,11 @@ export const DocumentEditorScreen: React.FC = () => {
   const handleRegenerate = () => {
     if (!documentId) return;
     regenerateMutation.mutate(documentId);
+  };
+
+  const handleRegenerateTranslations = () => {
+    if (!documentId) return;
+    regenerateTranslationsMutation.mutate(documentId);
   };
 
   const renderStepIndicator = () => (
@@ -488,6 +507,22 @@ export const DocumentEditorScreen: React.FC = () => {
                       <>
                         <RefreshCw size={20} color={colors.primary} />
                         <Text style={styles.devButtonText}>Rigenera PDF</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                  
+                  {/* Dev only: Regenerate Translations button */}
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.devButton]}
+                    onPress={handleRegenerateTranslations}
+                    disabled={regenerateTranslationsMutation.isPending}
+                  >
+                    {regenerateTranslationsMutation.isPending ? (
+                      <ActivityIndicator color={colors.primary} />
+                    ) : (
+                      <>
+                        <Languages size={20} color={colors.primary} />
+                        <Text style={styles.devButtonText}>Rigenera Traduzioni</Text>
                       </>
                     )}
                   </TouchableOpacity>

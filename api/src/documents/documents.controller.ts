@@ -109,6 +109,17 @@ export class DocumentsController {
     });
   }
 
+  @Post(':id/regenerate-translations')
+  async regenerateTranslations(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.documentsService.regenerateTranslations(id, {
+      userId: req.user.userId,
+      crewcode: req.user.crewcode,
+    });
+  }
+
   @Get('health/ollama')
   async checkOllamaHealth() {
     return this.documentsService.checkOllamaHealth();

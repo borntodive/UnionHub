@@ -185,6 +185,35 @@ Traduzione del titolo (solo il titolo tradotto, nient'altro):`;
     }
   }
 
+  // Regenerate translations (dev only)
+  async regenerateTranslations(id: string, user: UserInfo): Promise<Document> {
+    const document = await this.findById(id);
+
+    // Clear existing translations
+    document.englishTitle = null;
+    document.englishTranslation = null;
+
+    // Regenerate translations
+    try {
+      const isOllamaReady = await this.ollamaService.healthCheck();
+      if (!isOllamaReady) {
+        throw new Error('Ollama service is not available');
+      }
+
+      // Translate content
+      const finalContent = document.aiReviewedContent || document.originalContent;
+      document.englishTranslation = await this.ollamaService.translateToEnglish(finalContent);
+
+      // Translate title
+      await this.translateTitleIfNeeded(document);
+
+      return this.documentRepository.save(document);
+    } catch (error) {
+      console.error('Translation regeneration failed:', error);
+      throw new Error('Failed to regenerate translations: ' + error.message);
+    }
+  }
+
   // Delete document
   async delete(id: string): Promise<void> {
     const document = await this.findById(id);
