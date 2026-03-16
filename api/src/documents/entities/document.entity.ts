@@ -31,9 +31,6 @@ export class Document {
   @Column({ type: 'text', nullable: true })
   finalPdfUrl: string;
 
-  @Column({ type: 'text', nullable: true })
-  letterheadImageBase64: string | null;
-
   @Column({
     type: 'enum',
     enum: ['draft', 'reviewing', 'approved', 'published'],
