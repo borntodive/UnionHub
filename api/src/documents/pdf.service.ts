@@ -162,12 +162,12 @@ export class PdfService {
           engYPosition -= 14;
         }
         
-        // Add English footer
-        await this.addFooter(currentEngPage, width, height, true, boldFont, font);
+        // Add English closing text
+        await this.addClosingText(currentEngPage, width, engYPosition - 30, true, boldFont, font);
       }
       
-      // Add Italian footer to last Italian page
-      await this.addFooter(currentPage, width, height, false, boldFont, font);
+      // Add Italian closing text
+      await this.addClosingText(currentPage, width, yPosition - 30, false, boldFont, font);
       
       // Save PDF
       const pdfBytes = await pdfDoc.save();
@@ -181,25 +181,30 @@ export class PdfService {
   }
 
   /**
-   * Add footer to page
+   * Add closing text at the end of content
    */
-  private async addFooter(
+  private async addClosingText(
     page: any,
     width: number,
-    height: number,
+    startY: number,
     isEnglish: boolean,
     boldFont: any,
     font: any,
   ): Promise<void> {
-    const footerText = isEnglish
+    const closingText = isEnglish
       ? "As always, your FIT-CISL representatives remain available for any questions or clarifications."
       : "Come sempre, i vostri rappresentanti FIT-CISL restano a disposizione per qualsiasi dubbio o chiarimento.";
     
-    // Check if there's enough space, if not add new page
-    let yPos = 150;
+    let yPos = startY;
     
-    // Footer text
-    page.drawText(footerText, {
+    // Check if we need a new page
+    if (yPos < 150) {
+      // Not enough space, will be handled by caller
+      return;
+    }
+    
+    // Closing text
+    page.drawText(closingText, {
       x: 60,
       y: yPos,
       size: 9,
