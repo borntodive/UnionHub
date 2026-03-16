@@ -1,18 +1,182 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as puppeteer from 'puppeteer-core';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import * as fs from 'fs';
+import * as path from 'path';
 import { Document } from './entities/document.entity';
 
 @Injectable()
 export class PdfService {
   private readonly logger = new Logger(PdfService.name);
+  private readonly templatePath: string;
 
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService) {
+    this.templatePath = path.join(process.cwd(), 'templates', 'letterhead.pdf');
+  }
 
   /**
-   * Generate PDF with CISL letterhead
+   * Check if custom template exists
+   */
+  hasCustomTemplate(): boolean {
+    return fs.existsSync(this.templatePath);
+  }
+
+  /**
+   * Generate PDF with custom letterhead template
    */
   async generateDocumentPdf(document: Document): Promise<Buffer> {
+    if (this.hasCustomTemplate()) {
+      return this.generateWithTemplate(document);
+    } else {
+      return this.generateWithHtml(document);
+    }
+  }
+
+  /**
+   * Generate PDF using custom template PDF
+   */
+  private async generateWithTemplate(document: Document): Promise<Buffer> {
+    try {
+      // Load template
+      const templateBytes = fs.readFileSync(this.templatePath);
+      const pdfDoc = await PDFDocument.load(templateBytes);
+      
+      // Get first page
+      const pages = pdfDoc.getPages();
+      const firstPage = pages[0];
+      
+      // Add text to the page
+      const { width, height } = firstPage.getSize();
+      
+      // Embed font
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      
+      // Add date (top right)
+      const today = new Date().toLocaleDateString('it-IT', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+      
+      firstPage.drawText(today, {
+        x: width - 150,
+        y: height - 100,
+        size: 10,
+        font,
+        color: rgb(0.4, 0.4, 0.4),
+      });
+      
+      // Add title
+      const title = document.title;
+      const titleWidth = boldFont.widthOfTextAtSize(title, 16);
+      firstPage.drawText(title, {
+        x: (width - titleWidth) / 2,
+        y: height - 180,
+        size: 16,
+        font: boldFont,
+        color: rgb(0.09, 0.45, 0.27), // CISL green
+      });
+      
+      // Add content (wrapped text)
+      const content = document.aiReviewedContent || document.originalContent;
+      const lines = this.wrapText(content, 70);
+      let yPosition = height - 220;
+      
+      for (const line of lines) {
+        if (yPosition < 100) {
+          // Add new page if running out of space
+          const newPage = pdfDoc.addPage([width, height]);
+          yPosition = height - 100;
+          
+          // Continue on new page
+          newPage.drawText(line, {
+            x: 60,
+            y: yPosition,
+            size: 11,
+            font,
+            color: rgb(0.2, 0.2, 0.2),
+          });
+        } else {
+          firstPage.drawText(line, {
+            x: 60,
+            y: yPosition,
+            size: 11,
+            font,
+            color: rgb(0.2, 0.2, 0.2),
+          });
+        }
+        yPosition -= 16;
+      }
+      
+      // Add English translation if available (on new page)
+      if (document.englishTranslation) {
+        const engPage = pdfDoc.addPage([width, height]);
+        
+        // English header
+        engPage.drawText('English Translation / Traduzione Inglese', {
+          x: 60,
+          y: height - 80,
+          size: 12,
+          font: boldFont,
+          color: rgb(0.85, 0.05, 0.2), // CISL red
+        });
+        
+        // English title
+        const engTitleWidth = boldFont.widthOfTextAtSize(document.title, 14);
+        engPage.drawText(document.title, {
+          x: (width - engTitleWidth) / 2,
+          y: height - 120,
+          size: 14,
+          font: boldFont,
+          color: rgb(0.09, 0.45, 0.27),
+        });
+        
+        // English content
+        const engLines = this.wrapText(document.englishTranslation, 70);
+        let engYPosition = height - 160;
+        
+        for (const line of engLines) {
+          if (engYPosition < 100) {
+            const newEngPage = pdfDoc.addPage([width, height]);
+            engYPosition = height - 100;
+            
+            newEngPage.drawText(line, {
+              x: 60,
+              y: engYPosition,
+              size: 10,
+              font,
+              color: rgb(0.3, 0.3, 0.3),
+            });
+          } else {
+            engPage.drawText(line, {
+              x: 60,
+              y: engYPosition,
+              size: 10,
+              font,
+              color: rgb(0.3, 0.3, 0.3),
+            });
+          }
+          engYPosition -= 14;
+        }
+      }
+      
+      // Save PDF
+      const pdfBytes = await pdfDoc.save();
+      return Buffer.from(pdfBytes);
+      
+    } catch (error) {
+      this.logger.error('Failed to generate PDF with template:', error);
+      // Fallback to HTML generation
+      return this.generateWithHtml(document);
+    }
+  }
+
+  /**
+   * Generate PDF using HTML (fallback)
+   */
+  private async generateWithHtml(document: Document): Promise<Buffer> {
     const browser = await this.launchBrowser();
     
     try {
@@ -38,7 +202,6 @@ export class PdfService {
    * Launch browser
    */
   private async launchBrowser(): Promise<puppeteer.Browser> {
-    // Try to find Chrome/Chromium
     const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || 
       '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
     
@@ -50,7 +213,38 @@ export class PdfService {
   }
 
   /**
-   * Generate HTML with CISL letterhead
+   * Wrap text to fit within max width
+   */
+  private wrapText(text: string, maxChars: number): string[] {
+    const lines: string[] = [];
+    const paragraphs = text.split('\n');
+    
+    for (const paragraph of paragraphs) {
+      const words = paragraph.split(' ');
+      let currentLine = '';
+      
+      for (const word of words) {
+        if ((currentLine + word).length > maxChars) {
+          lines.push(currentLine.trim());
+          currentLine = word + ' ';
+        } else {
+          currentLine += word + ' ';
+        }
+      }
+      
+      if (currentLine.trim()) {
+        lines.push(currentLine.trim());
+      }
+      
+      // Add empty line between paragraphs
+      lines.push('');
+    }
+    
+    return lines;
+  }
+
+  /**
+   * Generate HTML with CISL letterhead (fallback)
    */
   private generateHtml(document: Document): string {
     const today = new Date().toLocaleDateString('it-IT', {
