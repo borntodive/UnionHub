@@ -133,6 +133,27 @@ export class DocumentsService {
     }
   }
 
+  // Regenerate PDF for published document (dev only)
+  async regeneratePdf(id: string, user: UserInfo): Promise<Document> {
+    const document = await this.findById(id);
+
+    if (document.status !== 'published') {
+      throw new Error('Document must be published to regenerate PDF');
+    }
+
+    try {
+      const pdfBuffer = await this.pdfService.generateDocumentPdf(document);
+      const base64Pdf = pdfBuffer.toString('base64');
+      
+      document.finalPdfUrl = `data:application/pdf;base64,${base64Pdf}`;
+
+      return this.documentRepository.save(document);
+    } catch (error) {
+      console.error('PDF regeneration failed:', error);
+      throw new Error('Failed to regenerate PDF: ' + error.message);
+    }
+  }
+
   // Delete document
   async delete(id: string): Promise<void> {
     const document = await this.findById(id);

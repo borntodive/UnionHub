@@ -98,6 +98,17 @@ export class DocumentsController {
     await this.documentsService.delete(id);
   }
 
+  @Post(':id/regenerate')
+  async regeneratePdf(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.documentsService.regeneratePdf(id, {
+      userId: req.user.userId,
+      crewcode: req.user.crewcode,
+    });
+  }
+
   @Get('health/ollama')
   async checkOllamaHealth() {
     return this.documentsService.checkOllamaHealth();

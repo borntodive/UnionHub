@@ -28,6 +28,7 @@ import {
   Download,
   ArrowLeft,
   X,
+  RefreshCw,
 } from 'lucide-react-native';
 
 import { colors, spacing, typography, borderRadius } from '../../theme';
@@ -191,6 +192,18 @@ export const DocumentEditorScreen: React.FC = () => {
     },
   });
 
+  const regenerateMutation = useMutation({
+    mutationFn: documentsApi.regeneratePdf,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['document', documentId] });
+      Alert.alert('Success', 'PDF regenerated successfully!');
+    },
+    onError: (error: any) => {
+      Alert.alert('Error', error.response?.data?.message || 'Regeneration failed');
+    },
+  });
+
   const handleSave = async () => {
     if (!title.trim() || !content.trim()) {
       Alert.alert('Error', 'Title and content are required');
@@ -256,6 +269,11 @@ export const DocumentEditorScreen: React.FC = () => {
   const handleDownload = () => {
     if (!documentId || !existingDoc) return;
     downloadMutation.mutate({ id: documentId, title: existingDoc.title });
+  };
+
+  const handleRegenerate = () => {
+    if (!documentId) return;
+    regenerateMutation.mutate(documentId);
   };
 
   const renderStepIndicator = () => (
@@ -442,20 +460,38 @@ export const DocumentEditorScreen: React.FC = () => {
               )}
 
               {isPublished ? (
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.publishButton, { flex: 1 }]}
-                  onPress={handleDownload}
-                  disabled={downloadMutation.isPending}
-                >
-                  {downloadMutation.isPending ? (
-                    <ActivityIndicator color={colors.textInverse} />
-                  ) : (
-                    <>
-                      <Download size={20} color={colors.textInverse} />
-                      <Text style={styles.primaryButtonText}>Scarica PDF</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                <>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.publishButton, { flex: 1 }]}
+                    onPress={handleDownload}
+                    disabled={downloadMutation.isPending}
+                  >
+                    {downloadMutation.isPending ? (
+                      <ActivityIndicator color={colors.textInverse} />
+                    ) : (
+                      <>
+                        <Download size={20} color={colors.textInverse} />
+                        <Text style={styles.primaryButtonText}>Scarica PDF</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                  
+                  {/* Dev only: Regenerate PDF button */}
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.devButton]}
+                    onPress={handleRegenerate}
+                    disabled={regenerateMutation.isPending}
+                  >
+                    {regenerateMutation.isPending ? (
+                      <ActivityIndicator color={colors.primary} />
+                    ) : (
+                      <>
+                        <RefreshCw size={20} color={colors.primary} />
+                        <Text style={styles.devButtonText}>Rigenera PDF</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </>
               ) : (
                 <TouchableOpacity
                   style={[styles.actionButton, styles.publishButton]}
@@ -781,6 +817,17 @@ const styles = StyleSheet.create({
   publishButton: {
     backgroundColor: colors.success,
     flex: 1,
+  },
+  devButton: {
+    backgroundColor: colors.warning + '20',
+    borderWidth: 1,
+    borderColor: colors.warning,
+    borderStyle: 'dashed',
+  },
+  devButtonText: {
+    color: colors.warning,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
   },
   buttonRow: {
     flexDirection: 'row',

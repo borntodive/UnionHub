@@ -77,6 +77,11 @@ export const documentsApi = {
     return response.data;
   },
 
+  regeneratePdf: async (id: string): Promise<Document> => {
+    const response = await apiClient.post(`/documents/${id}/regenerate`);
+    return response.data;
+  },
+
   getPdfBase64: async (id: string): Promise<string | null> => {
     const response = await apiClient.get(`/documents/${id}`);
     const document = response.data as Document;
