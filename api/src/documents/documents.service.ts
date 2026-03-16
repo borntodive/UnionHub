@@ -120,11 +120,13 @@ export class DocumentsService {
   }
 
   // Check Ollama health
-  async checkOllamaHealth(): Promise<{ available: boolean; model: string }> {
+  async checkOllamaHealth(): Promise<{ available: boolean; model: string; isCloud: boolean }> {
     const isHealthy = await this.ollamaService.healthCheck();
+    const config = this.ollamaService.getConfig();
     return {
       available: isHealthy,
-      model: 'llama3.2',
+      model: config.model,
+      isCloud: config.isCloud,
     };
   }
 }

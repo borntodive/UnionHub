@@ -38,6 +38,7 @@ export interface ApproveDocumentRequest {
 export interface OllamaHealth {
   available: boolean;
   model: string;
+  isCloud: boolean;
 }
 
 export const documentsApi = {

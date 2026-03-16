@@ -20,10 +20,25 @@ export class OllamaService {
   private readonly logger = new Logger(OllamaService.name);
   private readonly baseUrl: string;
   private readonly model: string;
+  private readonly apiKey: string | undefined;
+  private readonly isCloud: boolean;
 
   constructor(private configService: ConfigService) {
     this.baseUrl = this.configService.get<string>('OLLAMA_URL') || 'http://localhost:11434';
     this.model = this.configService.get<string>('OLLAMA_MODEL') || 'llama3.2';
+    this.apiKey = this.configService.get<string>('OLLAMA_API_KEY');
+    this.isCloud = this.configService.get<boolean>('OLLAMA_CLOUD') || false;
+  }
+
+  /**
+   * Get headers for API requests
+   */
+  private getHeaders(): Record<string, string> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (this.apiKey) {
+      headers['Authorization'] = `Bearer ${this.apiKey}`;
+    }
+    return headers;
   }
 
   /**
@@ -33,7 +48,7 @@ export class OllamaService {
     try {
       const response = await fetch(`${this.baseUrl}/api/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: this.getHeaders(),
         body: JSON.stringify({
           model: this.model,
           prompt,
@@ -104,12 +119,29 @@ Traduzione in inglese:`;
    */
   async healthCheck(): Promise<boolean> {
     try {
+      const headers: Record<string, string> = {};
+      if (this.apiKey) {
+        headers['Authorization'] = `Bearer ${this.apiKey}`;
+      }
       const response = await fetch(`${this.baseUrl}/api/tags`, {
         method: 'GET',
+        headers,
       });
       return response.ok;
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Get configuration info (for debugging)
+   */
+  getConfig(): { baseUrl: string; model: string; isCloud: boolean; hasApiKey: boolean } {
+    return {
+      baseUrl: this.baseUrl,
+      model: this.model,
+      isCloud: this.isCloud,
+      hasApiKey: !!this.apiKey,
+    };
   }
 }

@@ -202,7 +202,7 @@ export const DocumentsScreen: React.FC = () => {
           <View style={[styles.ollamaBar, { backgroundColor: ollamaHealth.available ? '#22c55e' : colors.error }]}>
             <Cpu size={16} color={colors.textInverse} />
             <Text style={styles.ollamaText}>
-              Ollama {ollamaHealth.available ? 'Online' : 'Offline'} 
+              Ollama {ollamaHealth.isCloud && 'Cloud'} {ollamaHealth.available ? 'Online' : 'Offline'} 
               {ollamaHealth.available && ` • ${ollamaHealth.model}`}
             </Text>
           </View>
