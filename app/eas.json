@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 5.0.0"
+    "version": ">= 5.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -8,18 +9,21 @@
       "distribution": "internal",
       "env": {
         "NODE_ENV": "development"
-      }
+      },
+      "node": "18.20.0"
     },
     "preview": {
       "distribution": "internal",
       "env": {
         "NODE_ENV": "production"
-      }
+      },
+      "node": "18.20.0"
     },
     "production": {
       "env": {
         "NODE_ENV": "production"
-      }
+      },
+      "node": "18.20.0"
     }
   },
   "submit": {
