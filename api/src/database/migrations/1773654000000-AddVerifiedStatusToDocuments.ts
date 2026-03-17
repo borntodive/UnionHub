@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddVerifiedStatusToDocuments1742121000000 implements MigrationInterface {
-  name = 'AddVerifiedStatusToDocuments1742121000000';
+export class AddVerifiedStatusToDocuments1773654000000 implements MigrationInterface {
+  name = 'AddVerifiedStatusToDocuments1773654000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Add 'verified' value to the enum

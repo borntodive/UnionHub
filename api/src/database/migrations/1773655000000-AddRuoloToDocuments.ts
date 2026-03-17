@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddRuoloToDocuments1742122000000 implements MigrationInterface {
-  name = 'AddRuoloToDocuments1742122000000';
+export class AddRuoloToDocuments1773655000000 implements MigrationInterface {
+  name = 'AddRuoloToDocuments1773655000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create enum type for ruolo

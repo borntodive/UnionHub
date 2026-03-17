@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddUnionToDocuments1742120000000 implements MigrationInterface {
-  name = 'AddUnionToDocuments1742120000000';
+export class AddUnionToDocuments1773653000000 implements MigrationInterface {
+  name = 'AddUnionToDocuments1773653000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create enum type
