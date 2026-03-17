@@ -38,6 +38,7 @@ module.exports = {
       bundleIdentifier: "it.unionhub.app",
       infoPlist: {
         UIViewControllerBasedStatusBarAppearance: false,
+        UISupportsOpeningDocumentsInPlace: true,
         CFBundleDocumentTypes: [
           {
             CFBundleTypeName: "PDF Document",
