@@ -23,7 +23,7 @@ const dataSource = new DataSource({
   port: parseInt(process.env.DB_PORT || "5432", 10),
   username: process.env.DB_USERNAME || "postgres",
   password: process.env.DB_PASSWORD || "password",
-  database: process.env.DB_DATABASE || "unionconnect",
+  database: process.env.DB_DATABASE || "unionhub",
   entities: [User, Base, Contract, Grade, RefreshToken, UserStatusHistory, ClaContract, ClaContractHistory],
   synchronize: false,
 });
@@ -154,7 +154,7 @@ async function runSeed() {
         isActive: true,
         nome: "Super",
         cognome: "Admin",
-        email: "admin@unionconnect.it",
+        email: "admin@unionhub.app",
         ruolo: null,
       });
       await usersRepository.save(admin);
@@ -194,7 +194,7 @@ async function runSeed() {
         isActive: true,
         nome: "Admin",
         cognome: "Piloti",
-        email: "admin.piloti@unionconnect.it",
+        email: "admin.piloti@unionhub.app",
       }));
       console.log("  Created Admin Piloti: ADMINPILOT / password");
     } else {
@@ -216,7 +216,7 @@ async function runSeed() {
         isActive: true,
         nome: "Admin",
         cognome: "CabinCrew",
-        email: "admin.cc@unionconnect.it",
+        email: "admin.cc@unionhub.app",
       }));
       console.log("  Created Admin Cabin Crew: ADMINCC / password");
     } else {

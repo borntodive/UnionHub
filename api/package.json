@@ -1,5 +1,5 @@
 {
-  "name": "unionconnect-api",
+  "name": "unionhub-api",
   "version": "1.0.0",
   "description": "UnionHub Backend API - NestJS + TypeORM + PostgreSQL",
   "author": "CISL",

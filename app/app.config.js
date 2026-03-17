@@ -11,7 +11,7 @@ dotenv.config({ path: path.resolve(__dirname, envFile) });
 module.exports = {
   expo: {
     name: "UnionHub",
-    slug: "unionconnect",
+    slug: "unionhub",
     newArchEnabled: true,
     version: "1.0.0",
     orientation: "portrait",
@@ -27,7 +27,7 @@ module.exports = {
     ],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "it.unionconnect.app",
+      bundleIdentifier: "it.unionhub.app",
       infoPlist: {
         UIViewControllerBasedStatusBarAppearance: false,
         CFBundleDocumentTypes: [
@@ -64,7 +64,7 @@ module.exports = {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#177246"
       },
-      package: "it.unionconnect.app",
+      package: "it.unionhub.app",
       intentFilters: [
         {
           action: "VIEW",
