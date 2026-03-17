@@ -3,10 +3,11 @@ import { useAuthStore } from '../store/authStore';
 import Constants from 'expo-constants';
 
 // Get API URL from environment or fallback
-const API_BASE_URL = 
-  Constants.expoConfig?.extra?.apiUrl || 
-  process.env.API_URL || 
-  'http://localhost:3000/api/v1';
+// In production builds, always use production API
+const isProduction = Constants.expoConfig?.extra?.environment === 'production';
+const API_BASE_URL = isProduction 
+  ? 'https://api.unionhub.app/api/v1'
+  : (Constants.expoConfig?.extra?.apiUrl || 'http://localhost:3000/api/v1');
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
