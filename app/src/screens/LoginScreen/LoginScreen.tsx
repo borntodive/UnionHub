@@ -22,6 +22,8 @@ import { Input } from '../../components/Input';
 import { authApi } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
 import { useBiometricAuth } from '../../hooks/useBiometricAuth';
+import Constants from 'expo-constants';
+import * as Updates from 'expo-updates';
 
 // Dev quick login options
 const DEV_USERS = [
@@ -282,6 +284,19 @@ export const LoginScreen: React.FC = () => {
               </Text>
             </View>
 
+            {/* Debug Info */}
+            <View style={styles.debugContainer}>
+              <Text style={styles.debugText}>
+                API: {Constants.expoConfig?.extra?.apiUrl || 'not set'}{'
+'}
+                Env: {Constants.expoConfig?.extra?.environment || 'unknown'}{'
+'}
+                Update ID: {Updates.updateId || 'embedded'}{'
+'}
+                Runtime: {Updates.runtimeVersion || 'unknown'}
+              </Text>
+            </View>
+
             {/* Footer */}
             <View style={styles.footer}>
               <Text style={styles.footerText}>
@@ -393,6 +408,19 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: typography.sizes.xs,
     color: colors.textTertiary,
+  },
+  debugContainer: {
+    marginTop: spacing.md,
+    padding: spacing.sm,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: borderRadius.sm,
+    alignItems: 'center',
+  },
+  debugText: {
+    fontSize: typography.sizes.xs,
+    color: colors.textTertiary,
+    textAlign: 'center',
+    fontFamily: 'monospace',
   },
   // Dev select styles
   devSelectContainer: {
