@@ -49,9 +49,25 @@ async function bootstrap() {
         forbidNonWhitelisted: true,
         transform: true,
     }));
+    const corsOrigins = configService.get('CORS_ORIGIN', '*')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter((origin) => origin.length > 0);
     app.enableCors({
-        origin: configService.get('CORS_ORIGIN', '*'),
+        origin: (origin, callback) => {
+            if (!origin)
+                return callback(null, true);
+            if (corsOrigins.includes('*')) {
+                return callback(null, true);
+            }
+            if (corsOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+            callback(new Error(`Origin ${origin} not allowed by CORS`));
+        },
         credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     });
     app.setGlobalPrefix('api/v1');
     app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));

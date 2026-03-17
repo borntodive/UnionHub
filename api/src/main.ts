@@ -24,13 +24,13 @@ async function bootstrap() {
   );
 
   // Enable CORS
-  const corsOrigins = configService.get('CORS_ORIGIN', '*')
+  const corsOrigins = configService.get<string>('CORS_ORIGIN', '*')
     .split(',')
-    .map(origin => origin.trim())
-    .filter(origin => origin.length > 0);
+    .map((origin: string) => origin.trim())
+    .filter((origin: string) => origin.length > 0);
 
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // Allow requests with no origin (mobile apps, Postman, etc.)
       if (!origin) return callback(null, true);
       
