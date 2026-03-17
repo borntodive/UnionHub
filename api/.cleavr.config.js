@@ -5,6 +5,7 @@ module.exports = {
     {
       name: "api.unionhub.app",
       script: path.join(__dirname, "dist/main.js"),
+      cwd: "/home/cleavr/api.unionhub.app/current",
       instances: 1,
       exec_mode: "fork",
       env: {
