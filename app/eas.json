@@ -10,20 +10,20 @@
       "env": {
         "NODE_ENV": "development"
       },
-      "node": "18.20.0"
+      "node": "20.19.0"
     },
     "preview": {
       "distribution": "internal",
       "env": {
         "NODE_ENV": "production"
       },
-      "node": "18.20.0"
+      "node": "20.19.0"
     },
     "production": {
       "env": {
         "NODE_ENV": "production"
       },
-      "node": "18.20.0",
+      "node": "20.19.0",
       "channel": "production"
     }
   },
