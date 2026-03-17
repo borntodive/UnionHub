@@ -1,7 +1,12 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '../store/authStore';
+import Constants from 'expo-constants';
 
-const API_BASE_URL = 'http://localhost:3000/api/v1';
+// Get API URL from environment or fallback
+const API_BASE_URL = 
+  Constants.expoConfig?.extra?.apiUrl || 
+  process.env.API_URL || 
+  'http://localhost:3000/api/v1';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
