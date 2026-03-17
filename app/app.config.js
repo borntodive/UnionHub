@@ -1,12 +1,14 @@
 const dotenv = require('dotenv');
 const path = require('path');
 
-// Load the correct .env file based on NODE_ENV
-const envFile = process.env.NODE_ENV === 'production' 
-  ? '.env.production' 
-  : '.env.development';
+// Load the correct .env file
+// For EAS builds, always use .env.production
+// For local development, use .env.development
+const isEASBuild = process.env.EAS_BUILD || process.env.NODE_ENV === 'production';
+const envFile = isEASBuild ? '.env.production' : '.env.development';
 
 dotenv.config({ path: path.resolve(__dirname, envFile) });
+console.log('Loading env from:', envFile, 'API_URL:', process.env.API_URL);
 
 module.exports = {
   expo: {

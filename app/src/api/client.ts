@@ -2,8 +2,8 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '../store/authStore';
 import Constants from 'expo-constants';
 
-// API URL - sempre produzione per build di release
-const API_BASE_URL = 'https://api.unionhub.app/api/v1';
+// API URL from expo config (set in app.config.js from .env files)
+const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'https://api.unionhub.app/api/v1';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
