@@ -12,8 +12,18 @@ module.exports = {
   expo: {
     name: "UnionHub",
     slug: "unionhub",
+    owner: "acovelli",
     newArchEnabled: true,
     version: "1.0.0",
+    runtimeVersion: {
+      policy: "appVersion"
+    },
+    updates: {
+      url: "https://u.expo.dev/505f6694-7b00-484d-94cd-fcebdb0ee8e9",
+      enabled: true,
+      checkAutomatically: "ON_LOAD",
+      fallbackToCacheTimeout: 0
+    },
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
@@ -102,6 +112,9 @@ module.exports = {
     extra: {
       apiUrl: process.env.API_URL,
       environment: process.env.NODE_ENV || 'development',
+      eas: {
+        projectId: "505f6694-7b00-484d-94cd-fcebdb0ee8e9"
+      }
     }
   }
 };
