@@ -31,6 +31,7 @@ import {
 import { colors, spacing, typography, borderRadius } from '../theme';
 import { useAuthStore } from '../store/authStore';
 import { authApi } from '../api/auth';
+import * as Updates from 'expo-updates';
 import { MembersScreen } from '../screens/MembersScreen/MembersScreen';
 import { PayslipTabs } from '../payslip/navigation/PayslipTabs';
 import AdminContractsScreen from '../payslip/screens/AdminContractsScreen';
@@ -260,7 +261,9 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           <Text style={styles.logoutText}>{t('auth.logout')}</Text>
         </TouchableOpacity>
         
-        <Text style={styles.versionText}>{t('settings.version')} 1.0.0</Text>
+        <Text style={styles.versionText}>
+          {t('settings.version')} {Updates.updateId ? Updates.updateId.slice(0, 8) : '1.0.0'}
+        </Text>
       </View>
     </View>
     </SafeAreaView>
