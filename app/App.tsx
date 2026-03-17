@@ -7,6 +7,7 @@ import './src/i18n';
 import { AuthProvider } from './src/providers/AuthProvider';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { useNotifications } from './src/hooks/useNotifications';
+import { useOTAUpdate } from './src/hooks/useOTAUpdate';
 
 
 // Create a client
@@ -22,6 +23,9 @@ const queryClient = new QueryClient({
 function AppContent() {
   // Initialize push notifications
   useNotifications();
+  
+  // Check for OTA updates
+  useOTAUpdate();
 
   return (
     <AuthProvider>
