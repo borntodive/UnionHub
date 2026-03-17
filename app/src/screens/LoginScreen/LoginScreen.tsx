@@ -22,8 +22,7 @@ import { Input } from '../../components/Input';
 import { authApi } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
 import { useBiometricAuth } from '../../hooks/useBiometricAuth';
-import Constants from 'expo-constants';
-import * as Updates from 'expo-updates';
+
 
 // Dev quick login options
 const DEV_USERS = [
@@ -48,38 +47,6 @@ export const LoginScreen: React.FC = () => {
   const [showDevSelect, setShowDevSelect] = useState(false);
   
   const { isAvailable, biometricType, authenticate, getBiometricLabel, checkAvailability } = useBiometricAuth();
-
-  // Check for updates on mount
-  const [updateAvailable, setUpdateAvailable] = useState(false);
-  
-  useEffect(() => {
-    const checkForUpdates = async () => {
-      try {
-        if (Updates.isEnabled) {
-          const update = await Updates.checkForUpdateAsync();
-          if (update.isAvailable) {
-            await Updates.fetchUpdateAsync();
-            setUpdateAvailable(true);
-            Alert.alert(
-              'Aggiornamento disponibile',
-              'Un nuovo aggiornamento è stato scaricato. Riavvia l\'app per applicarlo.',
-              [
-                { text: 'Più tardi', style: 'cancel' },
-                { 
-                  text: 'Riavvia ora', 
-                  onPress: () => Updates.reloadAsync()
-                }
-              ]
-            );
-          }
-        }
-      } catch (error) {
-        console.log('Update check failed:', error);
-      }
-    };
-    
-    checkForUpdates();
-  }, []);
 
   // Check if biometric is available on mount
   useEffect(() => {
@@ -316,20 +283,10 @@ export const LoginScreen: React.FC = () => {
               </Text>
             </View>
 
-            {/* Debug Info */}
-            <View style={styles.debugContainer}>
-              <Text style={styles.debugText}>
-                {`API: ${Constants.expoConfig?.extra?.apiUrl || 'not set'}\nEnv: ${Constants.expoConfig?.extra?.environment || 'unknown'}\nUpdate: ${Updates.updateId?.slice(0, 8) || 'embedded'}\nRuntime: ${Updates.runtimeVersion || 'unknown'}`}
-              </Text>
-            </View>
-
             {/* Footer */}
             <View style={styles.footer}>
               <Text style={styles.footerText}>
-                © 2025 UnionHub - v{Constants.expoConfig?.version || '1.0.0'}
-              </Text>
-              <Text style={styles.footerSubText}>
-                {updateAvailable ? '⚡ Aggiornamento pronto' : '✓ Aggiornato'}
+                © 2025 UnionHub
               </Text>
             </View>
           </ScrollView>
@@ -438,24 +395,8 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xs,
     color: colors.textTertiary,
   },
-  footerSubText: {
-    fontSize: typography.sizes.xs,
-    color: colors.primary,
-    marginTop: spacing.xs,
-  },
-  debugContainer: {
-    marginTop: spacing.md,
-    padding: spacing.sm,
-    backgroundColor: colors.surfaceVariant,
-    borderRadius: borderRadius.sm,
-    alignItems: 'center',
-  },
-  debugText: {
-    fontSize: typography.sizes.xs,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    fontFamily: 'monospace',
-  },
+
+
   // Dev select styles
   devSelectContainer: {
     marginBottom: spacing.md,
