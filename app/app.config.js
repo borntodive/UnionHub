@@ -104,7 +104,11 @@ module.exports = {
     },
     plugins: [
       "expo-secure-store",
-      "expo-asset"
+      "expo-asset",
+      "expo-build-properties",
+      "expo-localization",
+      "expo-sharing",
+      "expo-web-browser"
     ],
     // Extra config accessible via Constants.expoConfig.extra
     extra: {
