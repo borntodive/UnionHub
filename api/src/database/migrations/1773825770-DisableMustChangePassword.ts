@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class DisableMustChangePassword$(date +%s) implements MigrationInterface {
-  name = 'DisableMustChangePassword$(date +%s)';
+export class DisableMustChangePassword1773825770 implements MigrationInterface {
+  name = 'DisableMustChangePassword1773825770';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
