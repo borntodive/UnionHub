@@ -4,15 +4,21 @@ export class AddUnionToDocuments1773653000000 implements MigrationInterface {
   name = 'AddUnionToDocuments1773653000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Create enum type
+    // Create enum type if not exists
     await queryRunner.query(`
-      CREATE TYPE "documents_union_enum" AS ENUM ('fit-cisl', 'joint')
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'documents_union_enum') THEN
+          CREATE TYPE "documents_union_enum" AS ENUM ('fit-cisl', 'joint');
+        END IF;
+      END
+      $$;
     `);
     
-    // Add column
+    // Add column if not exists
     await queryRunner.query(`
       ALTER TABLE "documents" 
-      ADD COLUMN "union" "documents_union_enum" NOT NULL DEFAULT 'fit-cisl'
+      ADD COLUMN IF NOT EXISTS "union" "documents_union_enum" NOT NULL DEFAULT 'fit-cisl'
     `);
   }
 
