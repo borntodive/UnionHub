@@ -13,12 +13,14 @@ node_modules/
 web-build/
 
 # iOS
+ios/
 ios/Pods/
 ios/build/
 *.xcworkspace
 *.xcodeproj
 
 # Android
+android/
 android/build/
 android/app/build/
 *.gradle
@@ -54,6 +56,15 @@ coverage/
 dist/
 build/
 *.tsbuildinfo
+
+# Expo
+app/.expo/
+app/web-build/
+app/ios/
+app/android/
+
+# EAS
+app/eas.json
 
 # Temporary files
 *.tmp
