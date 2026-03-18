@@ -66,6 +66,22 @@ app/android/
 # EAS
 app/eas.json
 
+# Config files
+*.config_old.js
+.cleavr*
+
+# Data files
+*.xlsx
+*.xls
+*.csv
+
+# Temp images
+untitled.*.png
+untitled.*.jpg
+
+# API env
+api/.env
+
 # Temporary files
 *.tmp
 *.temp
