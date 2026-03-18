@@ -82,6 +82,9 @@ untitled.*.jpg
 # API env
 api/.env
 
+# API uploads (user generated content)
+api/uploads/
+
 # Temporary files
 *.tmp
 *.temp
