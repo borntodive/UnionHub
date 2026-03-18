@@ -2,8 +2,11 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '../store/authStore';
 import Constants from 'expo-constants';
 
-// API URL from expo config (set in app.config.js from .env files)
-const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'https://api.unionhub.app/api/v1';
+// API URL - usa ngrok per sviluppo su device fisico
+const DEV_API_URL = 'https://seagull-pleased-nationally.ngrok-free.app/api/v1';
+const API_BASE_URL = __DEV__ 
+  ? DEV_API_URL
+  : (Constants.expoConfig?.extra?.apiUrl || 'https://api.unionhub.app/api/v1');
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
