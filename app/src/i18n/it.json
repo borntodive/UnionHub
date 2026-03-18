@@ -149,7 +149,10 @@
     "contracts": "Contratti",
     "grades": "Qualifiche",
     "claContracts": "Contratti CLA",
-    "deactivatedMembers": "Membri Disattivati"
+    "deactivatedMembers": "Membri Disattivati",
+    "membersSection": "Membri",
+    "documentsSection": "Comunicati",
+    "documentsManagement": "Gestione comunicati"
   },
   "members": {
     "title": "Membri",

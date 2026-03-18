@@ -147,7 +147,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           <>
             {/* Sezione Membri */}
             <View style={styles.sectionDivider} />
-            <Text style={styles.sectionTitle}>{t('navigation.membersSection') || 'Membri'}</Text>
+            <Text style={styles.sectionTitle}>{t('navigation.membersSection')}</Text>
             <MenuItem
               icon={<Users size={22} color={colors.primary} />}
               label={t('navigation.members')}
@@ -172,10 +172,10 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
             {/* Sezione Comunicati */}
             <View style={styles.sectionDivider} />
-            <Text style={styles.sectionTitle}>{t('navigation.documentsSection') || 'Comunicati'}</Text>
+            <Text style={styles.sectionTitle}>{t('navigation.documentsSection')}</Text>
             <MenuItem
               icon={<FileText size={22} color={colors.primary} />}
-              label={t('documents.management') || 'Gestione comunicati'}
+              label={t('navigation.documentsManagement')}
               onPress={() => {
                 props.navigation.navigate('Documents');
                 props.navigation.closeDrawer();

@@ -149,7 +149,10 @@
     "contracts": "Contracts",
     "grades": "Grades",
     "claContracts": "CLA Contracts",
-    "deactivatedMembers": "Deactivated Members"
+    "deactivatedMembers": "Deactivated Members",
+    "membersSection": "Members",
+    "documentsSection": "Communications",
+    "documentsManagement": "Manage communications"
   },
   "members": {
     "title": "Members",
