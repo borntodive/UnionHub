@@ -145,6 +145,9 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
         {isAdmin && (
           <>
+            {/* Sezione Membri */}
+            <View style={styles.sectionDivider} />
+            <Text style={styles.sectionTitle}>{t('navigation.membersSection') || 'Membri'}</Text>
             <MenuItem
               icon={<Users size={22} color={colors.primary} />}
               label={t('navigation.members')}
@@ -166,27 +169,43 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                 props.navigation.closeDrawer();
               }}
             />
+
+            {/* Sezione Comunicati */}
+            <View style={styles.sectionDivider} />
+            <Text style={styles.sectionTitle}>{t('navigation.documentsSection') || 'Comunicati'}</Text>
             <MenuItem
               icon={<FileText size={22} color={colors.primary} />}
-              label={t('documents.title')}
+              label={t('documents.management') || 'Gestione comunicati'}
               onPress={() => {
                 props.navigation.navigate('Documents');
+                props.navigation.closeDrawer();
+              }}
+            />
+            <MenuItem
+              icon={<FileText size={22} color={colors.primary} />}
+              label={t('documents.publicDocuments')}
+              onPress={() => {
+                props.navigation.navigate('PublicDocuments');
                 props.navigation.closeDrawer();
               }}
             />
           </>
         )}
 
-        {/* Public Documents - Visible to all */}
-        <View style={styles.sectionDivider} />
-        <MenuItem
-          icon={<FileText size={22} color={colors.primary} />}
-          label={t('documents.publicDocuments')}
-          onPress={() => {
-            props.navigation.navigate('PublicDocuments');
-            props.navigation.closeDrawer();
-          }}
-        />
+        {/* Public Documents - Visible to non-admin users */}
+        {!isAdmin && (
+          <>
+            <View style={styles.sectionDivider} />
+            <MenuItem
+              icon={<FileText size={22} color={colors.primary} />}
+              label={t('documents.publicDocuments')}
+              onPress={() => {
+                props.navigation.navigate('PublicDocuments');
+                props.navigation.closeDrawer();
+              }}
+            />
+          </>
+        )}
 
         {/* Payslip Calculator - Visible to all */}
         <MenuItem
@@ -247,6 +266,8 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           </>
         )}
 
+        {/* Sezione Impostazioni (senza titolo) */}
+        <View style={styles.sectionDivider} />
         <MenuItem
           icon={<Settings size={22} color={colors.primary} />}
           label={t('navigation.settings')}
