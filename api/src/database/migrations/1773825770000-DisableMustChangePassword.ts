@@ -1,7 +1,6 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class DisableMustChangePassword1773825770 implements MigrationInterface {
-
+export class DisableMustChangePassword1773825770000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       UPDATE users 
