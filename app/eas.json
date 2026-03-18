@@ -7,33 +7,44 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "channel": "development",
       "env": {
         "NODE_ENV": "development"
       },
       "node": "20.19.0"
     },
     "preview": {
-      "distribution": "internal",
+      "distribution": "store",
+      "channel": "staging",
       "env": {
         "NODE_ENV": "production"
       },
       "node": "20.19.0"
     },
     "production": {
+      "distribution": "store",
+      "channel": "production",
       "env": {
         "NODE_ENV": "production"
       },
-      "node": "20.19.0",
-      "channel": "production"
+      "node": "20.19.0"
     }
   },
   "submit": {
     "production": {
       "ios": {
-        "ascAppId": "YOUR_APP_STORE_CONNECT_APP_ID",
-        "ascApiKeyPath": "path/to/your/AuthKey.p8",
-        "ascApiKeyIssuerId": "YOUR_ISSUER_ID",
-        "ascApiKeyId": "YOUR_KEY_ID"
+        "ascApiKeyId": "83MCXVF2V3",
+        "ascApiKeyIssuerId": "17de2fec-ab61-40cf-989d-d31a0da26372",
+        "ascApiKeyPath": "./AuthKey_83MCXVF2V3.p8",
+        "ascAppId": "6760706091"
+      }
+    },
+    "preview": {
+      "ios": {
+        "ascApiKeyId": "83MCXVF2V3",
+        "ascApiKeyIssuerId": "17de2fec-ab61-40cf-989d-d31a0da26372",
+        "ascApiKeyPath": "./AuthKey_83MCXVF2V3.p8",
+        "ascAppId": "6760706091"
       }
     }
   }

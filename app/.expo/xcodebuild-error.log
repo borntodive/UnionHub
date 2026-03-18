@@ -1,3 +1,10 @@
 --- xcodebuild: WARNING: Using the first of multiple matching destinations:
 { platform:iOS Simulator, arch:arm64, id:C59A21C3-2D08-479E-9526-57A7F4D72079, OS:18.2, name:iPhone 16 Pro }
 { platform:iOS Simulator, arch:x86_64, id:C59A21C3-2D08-479E-9526-57A7F4D72079, OS:18.2, name:iPhone 16 Pro }
+** BUILD FAILED **
+
+
+The following build commands failed:
+	PhaseScriptExecution [CP]\ Copy\ XCFrameworks /Users/andreacovelli/Library/Developer/Xcode/DerivedData/UnionHub-bqsahjpfulkvkkclosesdwabxdud/Build/Intermediates.noindex/Pods.build/Release-iphonesimulator/React-Core-prebuilt.build/Script-46EB2E000251C0.sh (in target 'React-Core-prebuilt' from project 'Pods')
+	Building workspace UnionHub with scheme UnionHub and configuration Release
+(2 failures)
