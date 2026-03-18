@@ -85,3 +85,7 @@ api/.env
 # Temporary files
 *.tmp
 *.temp
+
+# PDF documents in root
+/*.pdf
+/*.PDF
