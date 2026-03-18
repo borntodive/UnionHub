@@ -57,6 +57,10 @@ dist/
 build/
 *.tsbuildinfo
 
+# API build
+api/dist/
+api/build/
+
 # Expo
 app/.expo/
 app/web-build/
