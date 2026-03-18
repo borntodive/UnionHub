@@ -143,6 +143,16 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           }}
         />
 
+        {/* Payslip Calculator - Visible to all */}
+        <MenuItem
+          icon={<Calculator size={22} color={colors.primary} />}
+          label={t('navigation.payslipCalculator')}
+          onPress={() => {
+            props.navigation.navigate('PayslipCalculator');
+            props.navigation.closeDrawer();
+          }}
+        />
+
         {isAdmin && (
           <>
             {/* Sezione Membri */}
@@ -206,16 +216,6 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             />
           </>
         )}
-
-        {/* Payslip Calculator - Visible to all */}
-        <MenuItem
-          icon={<Calculator size={22} color={colors.primary} />}
-          label={t('navigation.payslipCalculator')}
-          onPress={() => {
-            props.navigation.navigate('PayslipCalculator');
-            props.navigation.closeDrawer();
-          }}
-        />
 
         {isSuperAdmin && (
           <>
