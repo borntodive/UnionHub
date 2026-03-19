@@ -228,7 +228,12 @@
     "contract": "Contract",
     "grade": "Grade",
     "role": "Role",
-    "notes": "Notes"
+    "notes": "Notes",
+    "professionalDates": "Professional Dates",
+    "dateOfEntry": "Date of Entry",
+    "dateOfCaptaincy": "Date of Captaincy",
+    "dateOfEntryRequired": "Date of entry is required",
+    "dateOfCaptaincyRequired": "Date of captaincy is required for your grade"
   },
   "payslip": {
     "title": "Payslip Calculator",

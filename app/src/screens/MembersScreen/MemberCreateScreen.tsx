@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -13,15 +13,18 @@ import {
   Linking,
   Modal,
   Image,
-} from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system/legacy';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { useActionSheet } from '@expo/react-native-action-sheet';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+} from "react-native";
+import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system/legacy";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { useActionSheet } from "@expo/react-native-action-sheet";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Save,
@@ -41,22 +44,24 @@ import {
   X,
   Eye,
   Calendar,
-} from 'lucide-react-native';
+} from "lucide-react-native";
 
-import { colors, spacing, typography, borderRadius } from '../../theme';
-import { Button } from '../../components/Button';
-import { Card } from '../../components/Card';
-import { Select } from '../../components/Select';
-import { usersApi, CreateUserData, ExtractedPdfData } from '../../api/users';
-import { useAuthStore } from '../../store/authStore';
-import { RootStackParamList } from '../../navigation/types';
-import { Ruolo, UserRole } from '../../types';
-import { basesApi } from '../../api/bases';
-import { contractsApi } from '../../api/contracts';
-import { gradesApi } from '../../api/grades';
+import { colors, spacing, typography, borderRadius } from "../../theme";
+import { Button } from "../../components/Button";
+import { Card } from "../../components/Card";
+import { Select } from "../../components/Select";
+import { usersApi, CreateUserData, ExtractedPdfData } from "../../api/users";
+import { useAuthStore } from "../../store/authStore";
+import { RootStackParamList } from "../../navigation/types";
+import { Ruolo, UserRole } from "../../types";
+import { basesApi } from "../../api/bases";
+import { contractsApi } from "../../api/contracts";
+import { gradesApi } from "../../api/grades";
 
 type MemberCreateNavigationProp = NativeStackNavigationProp<RootStackParamList>;
-type MemberCreateRouteProp = RouteProp<RootStackParamList, 'MemberCreate'>;
+type MemberCreateRouteProp = RouteProp<RootStackParamList, "MemberCreate">;
+
+const CAPTAIN_GRADES_CREATE = ["CPT", "LTC", "LCC", "TRI", "TRE"];
 
 export const MemberCreateScreen: React.FC = () => {
   const navigation = useNavigation<MemberCreateNavigationProp>();
@@ -64,44 +69,46 @@ export const MemberCreateScreen: React.FC = () => {
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const { showActionSheetWithOptions } = useActionSheet();
-  
+
   // Get shared file params
   const { sharedPdfUri, extractedData } = route.params || {};
-  
+
   const currentUser = useAuthStore((state) => state.user);
   const isSuperAdmin = currentUser?.role === UserRole.SUPERADMIN;
   const isAdmin = currentUser?.role === UserRole.ADMIN || isSuperAdmin;
 
   // Fetch filter options
   const { data: bases } = useQuery({
-    queryKey: ['bases'],
+    queryKey: ["bases"],
     queryFn: basesApi.getBases,
   });
 
   const { data: contracts } = useQuery({
-    queryKey: ['contracts'],
+    queryKey: ["contracts"],
     queryFn: contractsApi.getContracts,
   });
 
   const { data: grades } = useQuery({
-    queryKey: ['grades'],
+    queryKey: ["grades"],
     queryFn: gradesApi.getGrades,
   });
 
   // Form state
   const [formData, setFormData] = useState<CreateUserData>({
-    crewcode: '',
-    nome: '',
-    cognome: '',
-    email: '',
-    telefono: '',
-    baseId: '',
-    contrattoId: '',
-    gradeId: '',
-    note: '',
+    crewcode: "",
+    nome: "",
+    cognome: "",
+    email: "",
+    telefono: "",
+    baseId: "",
+    contrattoId: "",
+    gradeId: "",
+    note: "",
     itud: false,
     rsa: false,
-    dataIscrizione: '',
+    dataIscrizione: "",
+    dateOfEntry: "",
+    dateOfCaptaincy: "",
     role: UserRole.USER,
     ruolo: isSuperAdmin ? undefined : currentUser?.ruolo || undefined,
   });
@@ -110,15 +117,17 @@ export const MemberCreateScreen: React.FC = () => {
   const filteredContracts = useMemo(() => {
     if (!contracts) return [];
     if (isSuperAdmin) return contracts;
-    
+
     const userRuolo = currentUser?.ruolo;
-    return contracts.filter(c => {
+    return contracts.filter((c) => {
       if (userRuolo === Ruolo.PILOT) {
-        return c.codice.includes('PI') || 
-               ['AFA', 'Contractor', 'DAC'].includes(c.codice);
+        return (
+          c.codice.includes("PI") ||
+          ["AFA", "Contractor", "DAC"].includes(c.codice)
+        );
       }
       if (userRuolo === Ruolo.CABIN_CREW) {
-        return c.codice.includes('CC') || c.codice === 'CrewLink';
+        return c.codice.includes("CC") || c.codice === "CrewLink";
       }
       return true;
     });
@@ -127,31 +136,46 @@ export const MemberCreateScreen: React.FC = () => {
   const filteredGrades = useMemo(() => {
     if (!grades) return [];
     if (isSuperAdmin) return grades;
-    
+
     const userRuolo = currentUser?.ruolo;
-    return grades.filter(g => g.ruolo === userRuolo);
+    return grades.filter((g) => g.ruolo === userRuolo);
   }, [grades, isSuperAdmin, currentUser?.ruolo]);
 
   // PDF extraction state
-  const [selectedPdf, setSelectedPdf] = useState<{ name: string; uri: string } | null>(null);
-  const [extractionStatus, setExtractionStatus] = useState<'idle' | 'extracting' | 'success' | 'error'>('idle');
+  const [selectedPdf, setSelectedPdf] = useState<{
+    name: string;
+    uri: string;
+  } | null>(null);
+  const [extractionStatus, setExtractionStatus] = useState<
+    "idle" | "extracting" | "success" | "error"
+  >("idle");
   const [isUploadingPdf, setIsUploadingPdf] = useState(false);
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [pdfPreviewBase64, setPdfPreviewBase64] = useState<string | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [activePicker, setActivePicker] = useState<
+    "dataIscrizione" | "dateOfEntry" | "dateOfCaptaincy" | null
+  >(null);
+
+  const isSelectedGradeCaptain = useMemo(() => {
+    if (formData.gradeId && grades) {
+      const g = grades.find((gr) => gr.id === formData.gradeId);
+      return g ? CAPTAIN_GRADES_CREATE.includes(g.codice) : false;
+    }
+    return false;
+  }, [formData.gradeId, grades]);
 
   // Handle shared PDF on mount
   React.useEffect(() => {
     if (sharedPdfUri) {
       // Set the selected PDF
-      const fileName = sharedPdfUri.split('/').pop() || 'shared-document.pdf';
+      const fileName = sharedPdfUri.split("/").pop() || "shared-document.pdf";
       setSelectedPdf({ name: fileName, uri: sharedPdfUri });
-      
+
       // If we have extracted data from the shared file, pre-populate the form
       if (extractedData) {
-        setExtractionStatus('success');
-        setFormData(prev => ({
+        setExtractionStatus("success");
+        setFormData((prev) => ({
           ...prev,
           crewcode: extractedData.crewcode || prev.crewcode,
           nome: extractedData.nome || prev.nome,
@@ -164,19 +188,19 @@ export const MemberCreateScreen: React.FC = () => {
           dataIscrizione: extractedData.dataIscrizione || prev.dataIscrizione,
           ruolo: extractedData.ruolo || prev.ruolo,
         }));
-        
+
         Alert.alert(
-          'PDF Imported',
+          "PDF Imported",
           `Data extracted from shared PDF. Please verify and correct any errors before saving.`,
-          [{ text: 'OK' }]
+          [{ text: "OK" }],
         );
       } else {
         // No extracted data, just set the PDF for upload
-        setExtractionStatus('idle');
+        setExtractionStatus("idle");
         Alert.alert(
-          'PDF Imported',
-          'PDF received. Please fill in the member details manually.',
-          [{ text: 'OK' }]
+          "PDF Imported",
+          "PDF received. Please fill in the member details manually.",
+          [{ text: "OK" }],
         );
       }
     }
@@ -185,7 +209,7 @@ export const MemberCreateScreen: React.FC = () => {
   // Helper to parse DD/MM/YYYY string to Date
   const parseDate = (dateStr: string | undefined): Date | null => {
     if (!dateStr) return null;
-    const parts = dateStr.split('/');
+    const parts = dateStr.split("/");
     if (parts.length !== 3) return null;
     const day = parseInt(parts[0], 10);
     const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
@@ -196,20 +220,20 @@ export const MemberCreateScreen: React.FC = () => {
 
   // Helper to format Date to DD/MM/YYYY
   const formatDate = (date: Date): string => {
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
 
   // Extract PDF mutation
   const extractPdfMutation = useMutation({
-    mutationFn: ({ fileUri, role }: { fileUri: string; role: Ruolo }) => 
+    mutationFn: ({ fileUri, role }: { fileUri: string; role: Ruolo }) =>
       usersApi.extractPdf(fileUri, role),
     onSuccess: (data: ExtractedPdfData) => {
-      setExtractionStatus('success');
+      setExtractionStatus("success");
       // Prepopulate form with extracted data
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         crewcode: data.crewcode || prev.crewcode,
         nome: data.nome || prev.nome,
@@ -222,14 +246,17 @@ export const MemberCreateScreen: React.FC = () => {
         dataIscrizione: data.dataIscrizione || prev.dataIscrizione,
       }));
       Alert.alert(
-        'PDF Processed',
+        "PDF Processed",
         `Data extracted with ${Math.round(data.confidence * 100)}% confidence. Please verify and correct any errors.`,
-        [{ text: 'OK' }]
+        [{ text: "OK" }],
       );
     },
     onError: () => {
-      setExtractionStatus('error');
-      Alert.alert('Extraction Failed', 'Could not extract data from PDF. Please fill in the form manually.');
+      setExtractionStatus("error");
+      Alert.alert(
+        "Extraction Failed",
+        "Could not extract data from PDF. Please fill in the form manually.",
+      );
     },
   });
 
@@ -238,83 +265,89 @@ export const MemberCreateScreen: React.FC = () => {
     mutationFn: async (data: CreateUserData) => {
       // First create the user
       const newUser = await usersApi.createUser(data);
-      
+
       // Then upload the PDF if selected
       if (selectedPdf?.uri) {
         setIsUploadingPdf(true);
         try {
           await usersApi.uploadRegistrationForm(newUser.id, selectedPdf.uri);
         } catch (error) {
-          console.warn('Failed to upload PDF:', error);
+          console.warn("Failed to upload PDF:", error);
           // Don't fail the whole operation if PDF upload fails
         } finally {
           setIsUploadingPdf(false);
         }
       }
-      
+
       return newUser;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      Alert.alert('Success', 'Member created successfully');
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      Alert.alert("Success", "Member created successfully");
       navigation.goBack();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to create member');
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to create member",
+      );
     },
   });
 
   const handlePdfUpload = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: 'application/pdf',
+        type: "application/pdf",
         copyToCacheDirectory: true,
       });
 
       if (!result.canceled && result.assets && result.assets[0]) {
         const file = result.assets[0];
         setSelectedPdf({ name: file.name, uri: file.uri });
-        setExtractionStatus('extracting');
-        
+        setExtractionStatus("extracting");
+
         // Use current user's role for extraction (or selected role if SuperAdmin)
         const extractionRole = formData.ruolo || currentUser?.ruolo;
         if (extractionRole) {
-          extractPdfMutation.mutate({ 
-            fileUri: file.uri, 
-            role: extractionRole 
+          extractPdfMutation.mutate({
+            fileUri: file.uri,
+            role: extractionRole,
           });
         } else {
-          Alert.alert('Role Required', 'Please select a crew role (Pilot/Cabin Crew) before uploading PDF.');
-          setExtractionStatus('idle');
+          Alert.alert(
+            "Role Required",
+            "Please select a crew role (Pilot/Cabin Crew) before uploading PDF.",
+          );
+          setExtractionStatus("idle");
         }
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick PDF file');
-      setExtractionStatus('idle');
+      Alert.alert("Error", "Failed to pick PDF file");
+      setExtractionStatus("idle");
     }
   };
 
   const validateForm = (): boolean => {
     if (!formData.crewcode.trim()) {
-      Alert.alert('Error', 'Crewcode is required');
+      Alert.alert("Error", "Crewcode is required");
       return false;
     }
     if (!formData.nome.trim()) {
-      Alert.alert('Error', 'First name is required');
+      Alert.alert("Error", "First name is required");
       return false;
     }
     if (!formData.cognome.trim()) {
-      Alert.alert('Error', 'Last name is required');
+      Alert.alert("Error", "Last name is required");
       return false;
     }
     if (!formData.email.trim()) {
-      Alert.alert('Error', 'Email is required');
+      Alert.alert("Error", "Email is required");
       return false;
     }
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      Alert.alert("Error", "Please enter a valid email address");
       return false;
     }
     return true;
@@ -338,6 +371,8 @@ export const MemberCreateScreen: React.FC = () => {
       rsa: formData.rsa,
       role: formData.role,
       ruolo: formData.ruolo,
+      dateOfEntry: formData.dateOfEntry || undefined,
+      dateOfCaptaincy: formData.dateOfCaptaincy || undefined,
     };
 
     createMutation.mutate(createData);
@@ -350,10 +385,13 @@ export const MemberCreateScreen: React.FC = () => {
   return (
     <View style={styles.wrapper}>
       <View style={[styles.statusBarHack, { height: insets.top }]} />
-      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <SafeAreaView
+        style={styles.container}
+        edges={["bottom", "left", "right"]}
+      >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleCancel}
             style={styles.backButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -361,7 +399,7 @@ export const MemberCreateScreen: React.FC = () => {
             <ArrowLeft size={24} color={colors.textInverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>New Member</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleSave}
             style={styles.saveButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -382,16 +420,17 @@ export const MemberCreateScreen: React.FC = () => {
             <Text style={styles.pdfDescription}>
               Upload the signed membership form (PDF) to auto-fill the fields
             </Text>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={[
                 styles.pdfUploadButton,
-                extractionStatus === 'extracting' && styles.pdfUploadButtonDisabled
+                extractionStatus === "extracting" &&
+                  styles.pdfUploadButtonDisabled,
               ]}
               onPress={handlePdfUpload}
-              disabled={extractionStatus === 'extracting'}
+              disabled={extractionStatus === "extracting"}
             >
-              {extractionStatus === 'extracting' ? (
+              {extractionStatus === "extracting" ? (
                 <>
                   <ActivityIndicator size="small" color={colors.primary} />
                   <Text style={styles.pdfUploadText}>Extracting...</Text>
@@ -400,44 +439,48 @@ export const MemberCreateScreen: React.FC = () => {
                 <>
                   <Upload size={24} color={colors.primary} />
                   <Text style={styles.pdfUploadText}>
-                    {selectedPdf ? 'Change PDF' : 'Select PDF Form'}
+                    {selectedPdf ? "Change PDF" : "Select PDF Form"}
                   </Text>
                 </>
               )}
             </TouchableOpacity>
-            
+
             {selectedPdf && (
               <View style={styles.pdfInfo}>
                 <FileText size={16} color={colors.textSecondary} />
                 <Text style={styles.pdfName} numberOfLines={1}>
                   {selectedPdf.name}
                 </Text>
-                {extractionStatus === 'success' && (
+                {extractionStatus === "success" && (
                   <View style={styles.extractionBadge}>
                     <ScanLine size={14} color={colors.success} />
                     <Text style={styles.extractionText}>Extracted</Text>
                   </View>
                 )}
                 <View style={styles.pdfActions}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={async () => {
                       // Generate preview from PDF
                       if (!selectedPdf) return;
-                      
+
                       setIsLoadingPreview(true);
                       try {
                         // Read PDF as base64 using legacy API
-                        const base64 = await FileSystem.readAsStringAsync(selectedPdf.uri, {
-                          encoding: FileSystem.EncodingType.Base64,
-                        });
-                        
+                        const base64 = await FileSystem.readAsStringAsync(
+                          selectedPdf.uri,
+                          {
+                            encoding: FileSystem.EncodingType.Base64,
+                          },
+                        );
+
                         // Send to backend for conversion
-                        const response = await usersApi.convertPdfToImage(base64);
+                        const response =
+                          await usersApi.convertPdfToImage(base64);
                         setPdfPreviewBase64(response.imageBase64);
                         setShowPdfModal(true);
                       } catch (error) {
-                        console.error('Error generating preview:', error);
-                        Alert.alert('Error', 'Could not generate PDF preview');
+                        console.error("Error generating preview:", error);
+                        Alert.alert("Error", "Could not generate PDF preview");
                       } finally {
                         setIsLoadingPreview(false);
                       }
@@ -452,10 +495,10 @@ export const MemberCreateScreen: React.FC = () => {
                       <Eye size={18} color={colors.primary} />
                     )}
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={() => {
                       setSelectedPdf(null);
-                      setExtractionStatus('idle');
+                      setExtractionStatus("idle");
                     }}
                     style={styles.pdfActionButton}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -471,10 +514,10 @@ export const MemberCreateScreen: React.FC = () => {
           {(formData.dataIscrizione || isAdmin) && (
             <Card style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>Membership Information</Text>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={styles.datePickerButton}
-                onPress={() => setShowDatePicker(true)}
+                onPress={() => setActivePicker("dataIscrizione")}
               >
                 <View style={styles.datePickerIcon}>
                   <Calendar size={20} color={colors.primary} />
@@ -482,11 +525,11 @@ export const MemberCreateScreen: React.FC = () => {
                 <View style={styles.datePickerContent}>
                   <Text style={styles.datePickerLabel}>Subscription Date</Text>
                   <Text style={styles.datePickerValue}>
-                    {formData.dataIscrizione || 'Select date'}
+                    {formData.dataIscrizione || "Select date"}
                   </Text>
                 </View>
               </TouchableOpacity>
-              
+
               {formData.dataIscrizione && (
                 <Text style={styles.hintText}>
                   Date extracted from PDF signature
@@ -495,31 +538,85 @@ export const MemberCreateScreen: React.FC = () => {
             </Card>
           )}
 
+          {/* Professional Dates - optional for admins */}
+          {isAdmin && (
+            <Card style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Professional Dates</Text>
+
+              <Text style={styles.datePickerLabel}>Date of Entry</Text>
+              <TouchableOpacity
+                style={styles.datePickerButton}
+                onPress={() => setActivePicker("dateOfEntry")}
+              >
+                <View style={styles.datePickerIcon}>
+                  <Calendar size={20} color={colors.primary} />
+                </View>
+                <View style={styles.datePickerContent}>
+                  <Text style={styles.datePickerValue}>
+                    {formData.dateOfEntry || "Select date (optional)"}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              {isSelectedGradeCaptain && (
+                <>
+                  <Text
+                    style={[styles.datePickerLabel, { marginTop: spacing.md }]}
+                  >
+                    Date of Captaincy
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.datePickerButton}
+                    onPress={() => setActivePicker("dateOfCaptaincy")}
+                  >
+                    <View style={styles.datePickerIcon}>
+                      <Calendar size={20} color={colors.primary} />
+                    </View>
+                    <View style={styles.datePickerContent}>
+                      <Text style={styles.datePickerValue}>
+                        {formData.dateOfCaptaincy || "Select date (optional)"}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </>
+              )}
+            </Card>
+          )}
+
           {/* Date Picker Action Sheet Modal */}
           <Modal
-            visible={showDatePicker}
+            visible={activePicker !== null}
             transparent={true}
             animationType="slide"
-            onRequestClose={() => setShowDatePicker(false)}
+            onRequestClose={() => setActivePicker(null)}
           >
             <View style={styles.actionSheetOverlay}>
               <View style={styles.actionSheetContainer}>
                 <View style={styles.actionSheetHeader}>
                   <Text style={styles.actionSheetTitle}>Select Date</Text>
-                  <TouchableOpacity 
-                    onPress={() => setShowDatePicker(false)}
+                  <TouchableOpacity
+                    onPress={() => setActivePicker(null)}
                     style={styles.actionSheetDoneButton}
                   >
                     <Text style={styles.actionSheetDoneText}>Done</Text>
                   </TouchableOpacity>
                 </View>
                 <DateTimePicker
-                  value={parseDate(formData.dataIscrizione) || new Date()}
+                  value={
+                    parseDate(
+                      activePicker
+                        ? (formData as any)[activePicker]
+                        : undefined,
+                    ) || new Date()
+                  }
                   mode="date"
                   display="spinner"
                   onChange={(event, selectedDate) => {
-                    if (selectedDate) {
-                      setFormData({ ...formData, dataIscrizione: formatDate(selectedDate) });
+                    if (selectedDate && activePicker) {
+                      setFormData({
+                        ...formData,
+                        [activePicker]: formatDate(selectedDate),
+                      });
                     }
                   }}
                 />
@@ -530,17 +627,19 @@ export const MemberCreateScreen: React.FC = () => {
           {/* Personal Info Section */}
           <Card style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Personal Information</Text>
-            
+
             <InputField
               label="Crewcode"
               value={formData.crewcode}
-              onChangeText={(text) => setFormData({ ...formData, crewcode: text.toUpperCase() })}
+              onChangeText={(text) =>
+                setFormData({ ...formData, crewcode: text.toUpperCase() })
+              }
               icon={<Hash size={20} color={colors.primary} />}
               autoCapitalize="characters"
               required
               placeholder="e.g. PIL0001"
             />
-            
+
             <InputField
               label="First Name"
               value={formData.nome}
@@ -548,15 +647,17 @@ export const MemberCreateScreen: React.FC = () => {
               icon={<User size={20} color={colors.primary} />}
               required
             />
-            
+
             <InputField
               label="Last Name"
               value={formData.cognome}
-              onChangeText={(text) => setFormData({ ...formData, cognome: text })}
+              onChangeText={(text) =>
+                setFormData({ ...formData, cognome: text })
+              }
               icon={<User size={20} color={colors.primary} />}
               required
             />
-            
+
             <InputField
               label="Email"
               value={formData.email}
@@ -566,11 +667,13 @@ export const MemberCreateScreen: React.FC = () => {
               autoCapitalize="none"
               required
             />
-            
+
             <InputField
               label="Phone"
-              value={formData.telefono || ''}
-              onChangeText={(text) => setFormData({ ...formData, telefono: text })}
+              value={formData.telefono || ""}
+              onChangeText={(text) =>
+                setFormData({ ...formData, telefono: text })
+              }
               icon={<Phone size={20} color={colors.primary} />}
               keyboardType="phone-pad"
             />
@@ -579,32 +682,44 @@ export const MemberCreateScreen: React.FC = () => {
           {/* Professional Info Section */}
           <Card style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Professional Information</Text>
-            
+
             <SelectField
               label="Base"
-              value={formData.baseId || ''}
-              options={bases?.map(b => ({ label: `${b.codice} - ${b.nome}`, value: b.id })) || []}
+              value={formData.baseId || ""}
+              options={
+                bases?.map((b) => ({
+                  label: `${b.codice} - ${b.nome}`,
+                  value: b.id,
+                })) || []
+              }
               onChange={(value) => setFormData({ ...formData, baseId: value })}
               icon={<MapPin size={20} color={colors.primary} />}
               placeholder="Select base"
             />
-            
+
             <SelectField
               label="Contract"
-              value={formData.contrattoId || ''}
-              options={filteredContracts.map(c => ({ 
-                label: isSuperAdmin ? c.codice : c.codice.replace(/-(PI|CC)$/, ''), 
-                value: c.id 
+              value={formData.contrattoId || ""}
+              options={filteredContracts.map((c) => ({
+                label: isSuperAdmin
+                  ? c.codice
+                  : c.codice.replace(/-(PI|CC)$/, ""),
+                value: c.id,
               }))}
-              onChange={(value) => setFormData({ ...formData, contrattoId: value })}
+              onChange={(value) =>
+                setFormData({ ...formData, contrattoId: value })
+              }
               icon={<Briefcase size={20} color={colors.primary} />}
               placeholder="Select contract"
             />
-            
+
             <SelectField
               label="Grade"
-              value={formData.gradeId || ''}
-              options={filteredGrades.map(g => ({ label: g.codice, value: g.id }))}
+              value={formData.gradeId || ""}
+              options={filteredGrades.map((g) => ({
+                label: g.codice,
+                value: g.id,
+              }))}
               onChange={(value) => setFormData({ ...formData, gradeId: value })}
               icon={<Award size={20} color={colors.primary} />}
               placeholder="Select grade"
@@ -615,28 +730,40 @@ export const MemberCreateScreen: React.FC = () => {
           {isAdmin && (
             <Card style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>Administrative</Text>
-              
+
               <View style={styles.switchRow}>
                 <View style={styles.switchLabelContainer}>
-                  <Building2 size={20} color={colors.primary} style={styles.switchIcon} />
+                  <Building2
+                    size={20}
+                    color={colors.primary}
+                    style={styles.switchIcon}
+                  />
                   <Text style={styles.switchLabel}>ITUD</Text>
                 </View>
                 <Switch
                   value={formData.itud}
-                  onValueChange={(value) => setFormData({ ...formData, itud: value })}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, itud: value })
+                  }
                   trackColor={{ false: colors.border, true: colors.primary }}
                   thumbColor={colors.background}
                 />
               </View>
-              
+
               <View style={styles.switchRow}>
                 <View style={styles.switchLabelContainer}>
-                  <Shield size={20} color={colors.primary} style={styles.switchIcon} />
+                  <Shield
+                    size={20}
+                    color={colors.primary}
+                    style={styles.switchIcon}
+                  />
                   <Text style={styles.switchLabel}>RSA</Text>
                 </View>
                 <Switch
                   value={formData.rsa}
-                  onValueChange={(value) => setFormData({ ...formData, rsa: value })}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, rsa: value })
+                  }
                   trackColor={{ false: colors.border, true: colors.primary }}
                   thumbColor={colors.background}
                 />
@@ -648,28 +775,32 @@ export const MemberCreateScreen: React.FC = () => {
           {isSuperAdmin && (
             <Card style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>Role Management</Text>
-              
+
               <SelectField
                 label="System Role"
                 value={formData.role || UserRole.USER}
                 options={[
-                  { label: 'User', value: UserRole.USER },
-                  { label: 'Admin', value: UserRole.ADMIN },
-                  { label: 'Super Admin', value: UserRole.SUPERADMIN },
+                  { label: "User", value: UserRole.USER },
+                  { label: "Admin", value: UserRole.ADMIN },
+                  { label: "Super Admin", value: UserRole.SUPERADMIN },
                 ]}
-                onChange={(value) => setFormData({ ...formData, role: value as UserRole })}
+                onChange={(value) =>
+                  setFormData({ ...formData, role: value as UserRole })
+                }
                 icon={<Shield size={20} color={colors.primary} />}
                 placeholder="Select role"
               />
-              
+
               <SelectField
                 label="Crew Role"
-                value={formData.ruolo || ''}
+                value={formData.ruolo || ""}
                 options={[
-                  { label: 'Pilot', value: Ruolo.PILOT },
-                  { label: 'Cabin Crew', value: Ruolo.CABIN_CREW },
+                  { label: "Pilot", value: Ruolo.PILOT },
+                  { label: "Cabin Crew", value: Ruolo.CABIN_CREW },
                 ]}
-                onChange={(value) => setFormData({ ...formData, ruolo: value as Ruolo })}
+                onChange={(value) =>
+                  setFormData({ ...formData, ruolo: value as Ruolo })
+                }
                 icon={<User size={20} color={colors.primary} />}
                 placeholder="Select crew role"
               />
@@ -680,13 +811,19 @@ export const MemberCreateScreen: React.FC = () => {
           {isAdmin && (
             <Card style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>Notes</Text>
-              
+
               <View style={styles.textAreaContainer}>
-                <FileText size={20} color={colors.primary} style={styles.textAreaIcon} />
+                <FileText
+                  size={20}
+                  color={colors.primary}
+                  style={styles.textAreaIcon}
+                />
                 <TextInput
                   style={styles.textArea}
                   value={formData.note}
-                  onChangeText={(text) => setFormData({ ...formData, note: text })}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, note: text })
+                  }
                   placeholder="Add notes..."
                   placeholderTextColor={colors.textTertiary}
                   multiline
@@ -726,9 +863,12 @@ export const MemberCreateScreen: React.FC = () => {
       >
         <View style={styles.modalWrapper}>
           <View style={[styles.modalStatusBarHack, { height: insets.top }]} />
-          <SafeAreaView style={styles.modalContainer} edges={['bottom', 'left', 'right']}>
+          <SafeAreaView
+            style={styles.modalContainer}
+            edges={["bottom", "left", "right"]}
+          >
             <View style={styles.modalHeader}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setShowPdfModal(false)}
                 style={styles.modalCloseButton}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -738,11 +878,11 @@ export const MemberCreateScreen: React.FC = () => {
               <Text style={styles.modalTitle}>Registration Form Preview</Text>
               <View style={styles.modalSpacer} />
             </View>
-            
+
             <View style={styles.modalContent}>
               {pdfPreviewBase64 ? (
-                <ZoomableImage 
-                  base64={pdfPreviewBase64} 
+                <ZoomableImage
+                  base64={pdfPreviewBase64}
                   onClose={() => setShowPdfModal(false)}
                 />
               ) : (
@@ -778,8 +918,11 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({ base64, onClose }) => {
 
   const handleTouchStart = (e: any) => {
     const touches = e.nativeEvent.touches;
-    startTouches.current = touches.map((t: any) => ({ x: t.pageX, y: t.pageY }));
-    
+    startTouches.current = touches.map((t: any) => ({
+      x: t.pageX,
+      y: t.pageY,
+    }));
+
     if (touches.length === 2) {
       // Pinch start - calculate initial distance
       const dx = touches[0].pageX - touches[1].pageX;
@@ -793,25 +936,25 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({ base64, onClose }) => {
 
   const handleTouchMove = (e: any) => {
     const touches = e.nativeEvent.touches;
-    
+
     if (touches.length === 2 && startTouches.current.length === 2) {
       // Pinch zoom
       const dx = touches[0].pageX - touches[1].pageX;
       const dy = touches[0].pageY - touches[1].pageY;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      
+
       if (startDistance.current > 0) {
-        const newScale = Math.min(Math.max(
-          lastScale * (distance / startDistance.current),
-          1
-        ), 4);
+        const newScale = Math.min(
+          Math.max(lastScale * (distance / startDistance.current), 1),
+          4,
+        );
         setScale(newScale);
       }
     } else if (touches.length === 1 && isDragging && scale > 1) {
       // Pan when zoomed
       const dx = touches[0].pageX - startTouches.current[0].x;
       const dy = touches[0].pageY - startTouches.current[0].y;
-      
+
       setOffsetX(lastOffsetX + dx);
       setOffsetY(lastOffsetY + dy);
     }
@@ -823,7 +966,7 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({ base64, onClose }) => {
     setLastOffsetY(offsetY);
     setIsDragging(false);
     startTouches.current = [];
-    
+
     // Reset if zoomed out too much
     if (scale < 1) {
       setScale(1);
@@ -852,13 +995,13 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({ base64, onClose }) => {
   };
 
   return (
-    <View 
+    <View
       style={styles.zoomableContainer}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <TouchableOpacity 
+      <TouchableOpacity
         activeOpacity={1}
         onPress={handleDoubleTap}
         style={styles.zoomableTouchable}
@@ -882,10 +1025,10 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({ base64, onClose }) => {
           />
         </View>
       </TouchableOpacity>
-      
+
       {/* Zoom controls */}
       <View style={styles.zoomControls}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.zoomButton}
           onPress={() => {
             const newScale = Math.min(scale * 1.5, 4);
@@ -895,7 +1038,7 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({ base64, onClose }) => {
         >
           <Text style={styles.zoomButtonText}>+</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.zoomButton}
           onPress={() => {
             const newScale = Math.max(scale / 1.5, 1);
@@ -911,14 +1054,11 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({ base64, onClose }) => {
         >
           <Text style={styles.zoomButtonText}>-</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.zoomButton}
-          onPress={handleDoubleTap}
-        >
+        <TouchableOpacity style={styles.zoomButton} onPress={handleDoubleTap}>
           <Text style={styles.zoomButtonText}>⟲</Text>
         </TouchableOpacity>
       </View>
-      
+
       {/* Instructions */}
       <View style={styles.zoomInstructions}>
         <Text style={styles.zoomInstructionsText}>
@@ -935,8 +1075,8 @@ interface InputFieldProps {
   value: string;
   onChangeText: (text: string) => void;
   icon: React.ReactNode;
-  keyboardType?: 'default' | 'email-address' | 'phone-pad';
-  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  keyboardType?: "default" | "email-address" | "phone-pad";
+  autoCapitalize?: "none" | "sentences" | "words" | "characters";
   required?: boolean;
   placeholder?: string;
 }
@@ -946,8 +1086,8 @@ const InputField: React.FC<InputFieldProps> = ({
   value,
   onChangeText,
   icon,
-  keyboardType = 'default',
-  autoCapitalize = 'sentences',
+  keyboardType = "default",
+  autoCapitalize = "sentences",
   required = false,
   placeholder,
 }) => (
@@ -987,7 +1127,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
   options,
   onChange,
   icon,
-  placeholder = 'Select...',
+  placeholder = "Select...",
 }) => {
   return (
     <View style={styles.fieldContainer}>
@@ -998,7 +1138,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
           <Select
             label=""
             value={value || undefined}
-            onValueChange={(val) => onChange(val || '')}
+            onValueChange={(val) => onChange(val || "")}
             options={options}
             placeholder={placeholder}
           />
@@ -1021,9 +1161,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     backgroundColor: colors.primary,
@@ -1032,21 +1172,21 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
     color: colors.textInverse,
     flex: 1,
-    textAlign: 'center',
+    textAlign: "center",
   },
   saveButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   content: {
     flex: 1,
@@ -1063,9 +1203,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   pdfCard: {
-    backgroundColor: colors.primary + '08',
+    backgroundColor: colors.primary + "08",
     borderWidth: 1,
-    borderColor: colors.primary + '20',
+    borderColor: colors.primary + "20",
   },
   pdfDescription: {
     fontSize: typography.sizes.sm,
@@ -1076,11 +1216,11 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     color: colors.textSecondary,
     marginTop: spacing.xs,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   datePickerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
@@ -1108,13 +1248,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderRadius: borderRadius.md,
     marginTop: spacing.sm,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   // Action Sheet styles
   actionSheetOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
   },
   actionSheetContainer: {
     backgroundColor: colors.surface,
@@ -1123,9 +1263,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   actionSheetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
@@ -1145,16 +1285,16 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   pdfUploadButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     backgroundColor: colors.background,
     borderRadius: borderRadius.md,
     borderWidth: 2,
     borderColor: colors.primary,
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
     gap: spacing.sm,
   },
   pdfUploadButtonDisabled: {
@@ -1167,8 +1307,8 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   pdfInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: spacing.md,
     paddingTop: spacing.md,
     borderTopWidth: 1,
@@ -1181,10 +1321,10 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   extractionBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
-    backgroundColor: colors.success + '15',
+    backgroundColor: colors.success + "15",
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
@@ -1195,8 +1335,8 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.medium,
   },
   pdfActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
   },
   pdfActionButton: {
@@ -1215,8 +1355,8 @@ const styles = StyleSheet.create({
     color: colors.error,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
@@ -1233,8 +1373,8 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   selectWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
@@ -1245,16 +1385,16 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   switchLabelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   switchIcon: {
     marginRight: spacing.sm,
@@ -1264,8 +1404,8 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   textAreaContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
@@ -1281,10 +1421,10 @@ const styles = StyleSheet.create({
     height: 100,
     fontSize: typography.sizes.base,
     color: colors.text,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   actionsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.md,
     margin: spacing.md,
     marginTop: spacing.lg,
@@ -1296,11 +1436,10 @@ const styles = StyleSheet.create({
     height: spacing.xl,
   },
 
-
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     gap: spacing.md,
   },
   loadingText: {
@@ -1320,9 +1459,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     backgroundColor: colors.primary,
@@ -1331,15 +1470,15 @@ const styles = StyleSheet.create({
   modalCloseButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalTitle: {
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
     color: colors.textInverse,
     flex: 1,
-    textAlign: 'center',
+    textAlign: "center",
   },
   modalSpacer: {
     width: 40,
@@ -1349,10 +1488,10 @@ const styles = StyleSheet.create({
   },
   previewContainer: {
     padding: spacing.md,
-    alignItems: 'center',
+    alignItems: "center",
   },
   previewImage: {
-    width: '100%',
+    width: "100%",
     height: 800,
     borderRadius: borderRadius.md,
   },
@@ -1360,28 +1499,28 @@ const styles = StyleSheet.create({
   zoomableContainer: {
     flex: 1,
     backgroundColor: colors.background,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   zoomableTouchable: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   zoomableImageContainer: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
   },
   zoomableImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   zoomControls: {
-    position: 'absolute',
+    position: "absolute",
     right: spacing.md,
     bottom: spacing.xl,
-    flexDirection: 'column',
+    flexDirection: "column",
     gap: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
@@ -1397,8 +1536,8 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: borderRadius.md,
     backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   zoomButtonText: {
     fontSize: 24,
@@ -1406,16 +1545,16 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
   },
   zoomInstructions: {
-    position: 'absolute',
+    position: "absolute",
     bottom: spacing.md,
     left: 0,
     right: 0,
-    alignItems: 'center',
+    alignItems: "center",
   },
   zoomInstructionsText: {
     fontSize: typography.sizes.sm,
     color: colors.textSecondary,
-    backgroundColor: colors.surface + 'CC',
+    backgroundColor: colors.surface + "CC",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,

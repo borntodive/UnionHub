@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -8,12 +8,15 @@ import {
   Alert,
   TouchableOpacity,
   StatusBar,
-} from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   Mail,
   Phone,
@@ -21,26 +24,28 @@ import {
   Briefcase,
   Award,
   Edit3,
-} from 'lucide-react-native';
+  Calendar,
+} from "lucide-react-native";
 
-import { colors, spacing, typography, borderRadius } from '../../theme';
-import { Button } from '../../components/Button';
-import { Card } from '../../components/Card';
-import { usersApi } from '../../api/users';
-import { useAuthStore } from '../../store/authStore';
-import { RootStackParamList } from '../../navigation/types';
-import { Ruolo, UserRole } from '../../types';
+import { colors, spacing, typography, borderRadius } from "../../theme";
+import { Button } from "../../components/Button";
+import { Card } from "../../components/Card";
+import { usersApi } from "../../api/users";
+import { useAuthStore } from "../../store/authStore";
+import { RootStackParamList } from "../../navigation/types";
+import { Ruolo, UserRole } from "../../types";
 
-type ProfileScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type ProfileScreenNavigationProp =
+  NativeStackNavigationProp<RootStackParamList>;
 
 const getRoleLabel = (role: UserRole, t: any) => {
   switch (role) {
     case UserRole.SUPERADMIN:
-      return t('navigation.superAdmin');
+      return t("navigation.superAdmin");
     case UserRole.ADMIN:
-      return t('navigation.admin');
+      return t("navigation.admin");
     case UserRole.USER:
-      return t('members.active');
+      return t("members.active");
     default:
       return role;
   }
@@ -49,11 +54,11 @@ const getRoleLabel = (role: UserRole, t: any) => {
 const getRuoloLabel = (ruolo: Ruolo | null, t: any) => {
   switch (ruolo) {
     case Ruolo.PILOT:
-      return t('members.pilots');
+      return t("members.pilots");
     case Ruolo.CABIN_CREW:
-      return t('members.cabinCrew');
+      return t("members.cabinCrew");
     default:
-      return t('common.none');
+      return t("common.none");
   }
 };
 
@@ -64,25 +69,29 @@ export const ProfileScreen: React.FC = () => {
   const user = useAuthStore((state) => state.user);
   const insets = useSafeAreaInsets();
 
-  const { data: userData, isLoading, refetch } = useQuery({
-    queryKey: ['me'],
+  const {
+    data: userData,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["me"],
     queryFn: usersApi.getMe,
   });
 
   const handleChangePassword = () => {
-    navigation.navigate('ChangePassword');
+    navigation.navigate("ChangePassword");
   };
 
   const handleEdit = () => {
     if (user?.id) {
-      navigation.navigate('MemberEdit', { memberId: user.id });
+      navigation.navigate("MemberEdit", { memberId: user.id });
     }
   };
 
   const currentUser = userData || user;
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
@@ -91,7 +100,7 @@ export const ProfileScreen: React.FC = () => {
       >
         {/* Header Card */}
         <Card style={styles.headerCard}>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleEdit}
             style={styles.editButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -101,7 +110,8 @@ export const ProfileScreen: React.FC = () => {
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {currentUser?.nome?.[0]}{currentUser?.cognome?.[0]}
+                {currentUser?.nome?.[0]}
+                {currentUser?.cognome?.[0]}
               </Text>
             </View>
           </View>
@@ -110,63 +120,90 @@ export const ProfileScreen: React.FC = () => {
           </Text>
           <Text style={styles.crewcode}>{currentUser?.crewcode}</Text>
           <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>{getRoleLabel(currentUser?.role as UserRole, t)}</Text>
+            <Text style={styles.roleText}>
+              {getRoleLabel(currentUser?.role as UserRole, t)}
+            </Text>
           </View>
         </Card>
 
         {/* Info Card */}
         <Card style={styles.infoCard}>
-          <Text style={styles.sectionTitle}>{t('members.personalInfo')}</Text>
-          
+          <Text style={styles.sectionTitle}>{t("members.personalInfo")}</Text>
+
           <InfoRow
             icon={<Mail size={20} color={colors.primary} />}
-            label={t('members.email')}
+            label={t("members.email")}
             value={currentUser?.email}
           />
-          
+
           <InfoRow
             icon={<Phone size={20} color={colors.primary} />}
-            label={t('members.phone')}
-            value={currentUser?.telefono || t('common.none')}
+            label={t("members.phone")}
+            value={currentUser?.telefono || t("common.none")}
           />
 
           <View style={styles.divider} />
 
-          <Text style={styles.sectionTitle}>{t('members.unionInfo')}</Text>
-          
+          <Text style={styles.sectionTitle}>{t("members.unionInfo")}</Text>
+
           <InfoRow
             icon={<Briefcase size={20} color={colors.primary} />}
-            label={t('members.role')}
+            label={t("members.role")}
             value={getRuoloLabel(currentUser?.ruolo as Ruolo, t)}
           />
-          
+
           <InfoRow
             icon={<Award size={20} color={colors.primary} />}
-            label={t('members.grade')}
-            value={currentUser?.grade?.nome || t('common.none')}
+            label={t("members.grade")}
+            value={currentUser?.grade?.nome || t("common.none")}
           />
-          
+
           <InfoRow
             icon={<Briefcase size={20} color={colors.primary} />}
-            label={t('members.contract')}
-            value={currentUser?.contratto ? 
-              (currentUser.role === UserRole.SUPERADMIN ? currentUser.contratto.codice : currentUser.contratto.codice.replace(/-(PI|CC)$/, '')) 
-              : t('common.none')}
+            label={t("members.contract")}
+            value={
+              currentUser?.contratto
+                ? currentUser.role === UserRole.SUPERADMIN
+                  ? currentUser.contratto.codice
+                  : currentUser.contratto.codice.replace(/-(PI|CC)$/, "")
+                : t("common.none")
+            }
           />
-          
+
           <InfoRow
             icon={<MapPin size={20} color={colors.primary} />}
-            label={t('members.base')}
-            value={currentUser?.base?.nome || t('common.none')}
+            label={t("members.base")}
+            value={currentUser?.base?.nome || t("common.none")}
           />
+
+          {currentUser?.dateOfEntry && (
+            <>
+              <View style={styles.divider} />
+              <Text style={styles.sectionTitle}>
+                {t("members.professionalDates")}
+              </Text>
+              <InfoRow
+                icon={<Calendar size={20} color={colors.primary} />}
+                label={t("members.dateOfEntry")}
+                value={currentUser.dateOfEntry}
+              />
+              {currentUser.dateOfCaptaincy && (
+                <InfoRow
+                  icon={<Calendar size={20} color={colors.primary} />}
+                  label={t("members.dateOfCaptaincy")}
+                  value={currentUser.dateOfCaptaincy}
+                />
+              )}
+            </>
+          )}
         </Card>
 
         {/* Actions Card */}
         <Card style={styles.actionsCard}>
-          <Text style={styles.sectionTitle}>{t('common.actions')}</Text>
-          
+          <Text style={styles.sectionTitle}>{t("common.actions")}</Text>
+
           <Button
-            title={t('auth.changePassword')}
+            title={t("auth.changePassword")}
             onPress={handleChangePassword}
             variant="outline"
             size="md"
@@ -174,7 +211,7 @@ export const ProfileScreen: React.FC = () => {
           />
         </Card>
 
-        <Text style={styles.version}>{t('settings.version')} 1.0.0</Text>
+        <Text style={styles.version}>{t("settings.version")} 1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -205,19 +242,19 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   headerCard: {
-    alignItems: 'center',
+    alignItems: "center",
     padding: spacing.lg,
     marginBottom: spacing.md,
-    position: 'relative',
+    position: "relative",
   },
   editButton: {
-    position: 'absolute',
+    position: "absolute",
     top: spacing.md,
     right: spacing.md,
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarContainer: {
     marginBottom: spacing.md,
@@ -227,8 +264,8 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: borderRadius.full,
     backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarText: {
     fontSize: typography.sizes.xl,
@@ -247,7 +284,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   roleBadge: {
-    backgroundColor: colors.primary + '20',
+    backgroundColor: colors.primary + "20",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
@@ -267,17 +304,17 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: spacing.md,
   },
   infoIcon: {
     width: 40,
     height: 40,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.primary + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: colors.primary + "15",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: spacing.md,
   },
   infoContent: {
@@ -305,7 +342,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   version: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: typography.sizes.sm,
     color: colors.textTertiary,
     marginBottom: spacing.md,

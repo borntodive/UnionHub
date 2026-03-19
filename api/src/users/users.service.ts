@@ -244,11 +244,29 @@ export class UsersService {
       }
     }
 
+    let dateOfEntry = createUserDto.dateOfEntry;
+    if (dateOfEntry) {
+      const parts = dateOfEntry.split("/");
+      if (parts.length === 3) {
+        dateOfEntry = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+    }
+
+    let dateOfCaptaincy = createUserDto.dateOfCaptaincy;
+    if (dateOfCaptaincy) {
+      const parts = dateOfCaptaincy.split("/");
+      if (parts.length === 3) {
+        dateOfCaptaincy = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+    }
+
     const user = this.usersRepository.create({
       ...createUserDto,
       crewcode: createUserDto.crewcode.toUpperCase(),
       email: createUserDto.email.toLowerCase(),
       dataIscrizione,
+      dateOfEntry,
+      dateOfCaptaincy,
       password: hashedPassword,
       mustChangePassword: true,
       isActive: true,
@@ -289,12 +307,30 @@ export class UsersService {
       }
     }
 
+    let dateOfEntry = createUserDto.dateOfEntry;
+    if (dateOfEntry) {
+      const parts = dateOfEntry.split("/");
+      if (parts.length === 3) {
+        dateOfEntry = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+    }
+
+    let dateOfCaptaincy = createUserDto.dateOfCaptaincy;
+    if (dateOfCaptaincy) {
+      const parts = dateOfCaptaincy.split("/");
+      if (parts.length === 3) {
+        dateOfCaptaincy = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+    }
+
     // Update user with new data
     Object.assign(existingUser, {
       ...createUserDto,
       crewcode: createUserDto.crewcode.toUpperCase(),
       email: createUserDto.email.toLowerCase(),
       dataIscrizione,
+      dateOfEntry,
+      dateOfCaptaincy,
       password: hashedPassword,
       mustChangePassword: true,
       isActive: true,
@@ -386,6 +422,20 @@ export class UsersService {
       if (parts.length === 3) {
         // DD/MM/YYYY -> YYYY-MM-DD
         updateUserDto.dataIscrizione = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+    }
+
+    if (updateUserDto.dateOfEntry) {
+      const parts = updateUserDto.dateOfEntry.split("/");
+      if (parts.length === 3) {
+        updateUserDto.dateOfEntry = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+    }
+
+    if (updateUserDto.dateOfCaptaincy) {
+      const parts = updateUserDto.dateOfCaptaincy.split("/");
+      if (parts.length === 3) {
+        updateUserDto.dateOfCaptaincy = `${parts[2]}-${parts[1]}-${parts[0]}`;
       }
     }
 
@@ -671,25 +721,25 @@ export class UsersService {
 
     const users = await this.usersRepository.find({
       where,
-      relations: ['base', 'contratto', 'grade'],
-      order: { cognome: 'ASC', nome: 'ASC' },
+      relations: ["base", "contratto", "grade"],
+      order: { cognome: "ASC", nome: "ASC" },
     });
 
     // CSV Header
     const headers = [
-      'Crewcode',
-      'Nome',
-      'Cognome',
-      'Email',
-      'Telefono',
-      'Ruolo',
-      'Base',
-      'Contratto',
-      'Qualifica',
-      'Data Iscrizione',
-      'ITUD',
-      'RSA',
-      'Note',
+      "Crewcode",
+      "Nome",
+      "Cognome",
+      "Email",
+      "Telefono",
+      "Ruolo",
+      "Base",
+      "Contratto",
+      "Qualifica",
+      "Data Iscrizione",
+      "ITUD",
+      "RSA",
+      "Note",
     ];
 
     // CSV Rows
@@ -698,32 +748,32 @@ export class UsersService {
       user.nome,
       user.cognome,
       user.email,
-      user.telefono || '',
-      user.ruolo || '',
-      user.base?.nome || '',
-      user.contratto?.nome || '',
-      user.grade?.nome || '',
-      user.dataIscrizione || '',
-      user.itud ? 'Sì' : 'No',
-      user.rsa ? 'Sì' : 'No',
-      user.note || '',
+      user.telefono || "",
+      user.ruolo || "",
+      user.base?.nome || "",
+      user.contratto?.nome || "",
+      user.grade?.nome || "",
+      user.dataIscrizione || "",
+      user.itud ? "Sì" : "No",
+      user.rsa ? "Sì" : "No",
+      user.note || "",
     ]);
 
     // Escape and format
     const escapeCsv = (value: string) => {
       const str = String(value);
-      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      if (str.includes(",") || str.includes('"') || str.includes("\n")) {
         return `"${str.replace(/"/g, '""')}"`;
       }
       return str;
     };
 
     const csvContent = [
-      headers.join(','),
-      ...rows.map((row) => row.map(escapeCsv).join(',')),
-    ].join('\n');
+      headers.join(","),
+      ...rows.map((row) => row.map(escapeCsv).join(",")),
+    ].join("\n");
 
-    const timestamp = new Date().toISOString().split('T')[0];
+    const timestamp = new Date().toISOString().split("T")[0];
     const filename = `iscritti_${timestamp}.csv`;
 
     return { csv: csvContent, filename };
@@ -739,54 +789,63 @@ export class UsersService {
     rsaCount: number;
   }> {
     // Build base query conditions
-    const baseConditions: string[] = ['user.isActive = :isActive', 'user.deactivatedAt IS NULL'];
+    const baseConditions: string[] = [
+      "user.isActive = :isActive",
+      "user.deactivatedAt IS NULL",
+    ];
     const parameters: any = { isActive: true };
 
     // Admin scoping
     if (requestingUser.role === UserRole.ADMIN && requestingUser.ruolo) {
-      baseConditions.push('user.ruolo = :ruolo');
+      baseConditions.push("user.ruolo = :ruolo");
       parameters.ruolo = requestingUser.ruolo;
     }
 
-    const whereClause = baseConditions.join(' AND ');
+    const whereClause = baseConditions.join(" AND ");
 
     // Total users
     const totalUsers = await this.usersRepository
-      .createQueryBuilder('user')
+      .createQueryBuilder("user")
       .where(whereClause, parameters)
       .getCount();
 
     // By role
     const pilotCount = await this.usersRepository
-      .createQueryBuilder('user')
-      .where(whereClause + ' AND user.ruolo = :pilotRole', { ...parameters, pilotRole: Ruolo.PILOT })
+      .createQueryBuilder("user")
+      .where(whereClause + " AND user.ruolo = :pilotRole", {
+        ...parameters,
+        pilotRole: Ruolo.PILOT,
+      })
       .getCount();
     const ccCount = await this.usersRepository
-      .createQueryBuilder('user')
-      .where(whereClause + ' AND user.ruolo = :ccRole', { ...parameters, ccRole: Ruolo.CABIN_CREW })
+      .createQueryBuilder("user")
+      .where(whereClause + " AND user.ruolo = :ccRole", {
+        ...parameters,
+        ccRole: Ruolo.CABIN_CREW,
+      })
       .getCount();
 
     // By base (top 10)
     const byBase = await this.usersRepository
-      .createQueryBuilder('user')
-      .select('base.nome', 'base')
-      .addSelect('COUNT(user.id)', 'count')
-      .leftJoin('user.base', 'base')
+      .createQueryBuilder("user")
+      .select("base.nome", "base")
+      .addSelect("COUNT(user.id)", "count")
+      .leftJoin("user.base", "base")
       .where(whereClause, parameters)
-      .groupBy('base.nome')
-      .orderBy('count', 'DESC')
+      .groupBy("base.nome")
+      .orderBy("count", "DESC")
       .limit(10)
       .getRawMany();
 
     // By contract (top 10)
     const byContract = await this.usersRepository
-      .createQueryBuilder('user')
-      .select('contratto.nome', 'contract')
-      .addSelect('COUNT(user.id)', 'count')
-      .leftJoin('user.contratto', 'contratto')
+      .createQueryBuilder("user")
+      .select("contratto.nome", "contract")
+      .addSelect("COUNT(user.id)", "count")
+      .leftJoin("user.contratto", "contratto")
       .where(whereClause, parameters)
-      .groupBy('contratto.nome')
-      .orderBy('count', 'DESC')
+      .groupBy("contratto.nome")
+      .orderBy("count", "DESC")
       .limit(10)
       .getRawMany();
 
@@ -794,28 +853,37 @@ export class UsersService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const recentRegistrations = await this.usersRepository
-      .createQueryBuilder('user')
-      .where(whereClause + ' AND user.createdAt >= :thirtyDaysAgo', { 
-        ...parameters, 
-        thirtyDaysAgo 
+      .createQueryBuilder("user")
+      .where(whereClause + " AND user.createdAt >= :thirtyDaysAgo", {
+        ...parameters,
+        thirtyDaysAgo,
       })
       .getCount();
 
     // ITUD and RSA counts
     const itudCount = await this.usersRepository
-      .createQueryBuilder('user')
-      .where(whereClause + ' AND user.itud = :itud', { ...parameters, itud: true })
+      .createQueryBuilder("user")
+      .where(whereClause + " AND user.itud = :itud", {
+        ...parameters,
+        itud: true,
+      })
       .getCount();
     const rsaCount = await this.usersRepository
-      .createQueryBuilder('user')
-      .where(whereClause + ' AND user.rsa = :rsa', { ...parameters, rsa: true })
+      .createQueryBuilder("user")
+      .where(whereClause + " AND user.rsa = :rsa", { ...parameters, rsa: true })
       .getCount();
 
     return {
       totalUsers,
       byRole: { pilot: pilotCount, cabin_crew: ccCount },
-      byBase: byBase.map((b) => ({ base: b.base || 'N/A', count: parseInt(b.count) })),
-      byContract: byContract.map((c) => ({ contract: c.contract || 'N/A', count: parseInt(c.count) })),
+      byBase: byBase.map((b) => ({
+        base: b.base || "N/A",
+        count: parseInt(b.count),
+      })),
+      byContract: byContract.map((c) => ({
+        contract: c.contract || "N/A",
+        count: parseInt(c.count),
+      })),
       recentRegistrations,
       itudCount,
       rsaCount,
@@ -835,30 +903,34 @@ export class UsersService {
     let records: Record<string, string>[] = [];
 
     // Parse file based on extension
-    if (fileExtension === '.csv') {
+    if (fileExtension === ".csv") {
       records = parse(fileBuffer.toString(), {
         columns: true,
         skip_empty_lines: true,
       }) as Record<string, string>[];
-    } else if (fileExtension === '.xlsx' || fileExtension === '.xls') {
-      const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
+    } else if (fileExtension === ".xlsx" || fileExtension === ".xls") {
+      const workbook = xlsx.read(fileBuffer, { type: "buffer" });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      const rawData = xlsx.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
-      
+      const rawData = xlsx.utils.sheet_to_json(worksheet, {
+        header: 1,
+      }) as any[][];
+
       // Convert array to object format (first row is headers)
       if (rawData.length > 0) {
         const headers = rawData[0] as string[];
         records = rawData.slice(1).map((row: any[]) => {
           const obj: Record<string, string> = {};
           headers.forEach((header, index) => {
-            obj[header] = String(row[index] || '');
+            obj[header] = String(row[index] || "");
           });
           return obj;
         });
       }
     } else {
-      throw new Error('Unsupported file format. Use CSV or Excel (.xlsx, .xls)');
+      throw new Error(
+        "Unsupported file format. Use CSV or Excel (.xlsx, .xls)",
+      );
     }
 
     const results = {
@@ -869,15 +941,18 @@ export class UsersService {
 
     // Get all bases, contracts, grades for matching by CODE
     const [bases, contracts, grades] = await Promise.all([
-      this.usersRepository.manager.find('Base'),
-      this.usersRepository.manager.find('Contract'),
-      this.usersRepository.manager.find('Grade'),
+      this.usersRepository.manager.find("Base"),
+      this.usersRepository.manager.find("Contract"),
+      this.usersRepository.manager.find("Grade"),
     ]);
 
     // Determine default values based on admin role or override (for SuperAdmin)
     const adminRuolo = overrideRuolo || requestingUser.ruolo;
-    const defaultContractCode = adminRuolo === Ruolo.CABIN_CREW ? 'MAY-CC' : 'MAY-PI';
-    const defaultContract = contracts.find((c: any) => c.codice === defaultContractCode);
+    const defaultContractCode =
+      adminRuolo === Ruolo.CABIN_CREW ? "MAY-CC" : "MAY-PI";
+    const defaultContract = contracts.find(
+      (c: any) => c.codice === defaultContractCode,
+    );
 
     for (let i = 0; i < records.length; i++) {
       const record = records[i];
@@ -889,9 +964,14 @@ export class UsersService {
         const surname = record.SURNAME || record.Cognome || record.cognome;
         const name = record.NAME || record.Nome || record.nome;
         const email = record.EMAIL || record.Email || record.email;
-        const phone = record.PHONE || record.Telefono || record.telefono || record.PHONE?.toString();
+        const phone =
+          record.PHONE ||
+          record.Telefono ||
+          record.telefono ||
+          record.PHONE?.toString();
         const baseCode = record.BASE || record.Base || record.base;
-        const gradeCode = record.GRADE || record.Grade || record.grade || record.QUALIFICA;
+        const gradeCode =
+          record.GRADE || record.Grade || record.grade || record.QUALIFICA;
         const note = record.NOTE || record.Note || record.note;
 
         // Validate required fields
@@ -920,11 +1000,12 @@ export class UsersService {
         }
 
         // Match base and grade by CODE (not name)
-        const base = bases.find((b: any) => 
-          b.codice.toUpperCase() === (baseCode || '').toUpperCase()
+        const base = bases.find(
+          (b: any) => b.codice.toUpperCase() === (baseCode || "").toUpperCase(),
         );
-        const grade = grades.find((g: any) => 
-          g.codice.toUpperCase() === (gradeCode || '').toUpperCase()
+        const grade = grades.find(
+          (g: any) =>
+            g.codice.toUpperCase() === (gradeCode || "").toUpperCase(),
         );
 
         // Determine ruolo: use override (SuperAdmin), grade, or admin role
@@ -938,13 +1019,13 @@ export class UsersService {
           if (ruolo && ruolo !== requestingUser.ruolo) {
             results.errors.push({
               row: rowNumber,
-              error: 'Cannot create user with different professional role',
+              error: "Cannot create user with different professional role",
             });
             continue;
           }
           ruolo = requestingUser.ruolo || ruolo;
         }
-        
+
         // SuperAdmin with override: validate the role matches
         if (requestingUser.role === UserRole.SUPERADMIN && overrideRuolo) {
           if (ruolo && ruolo !== overrideRuolo) {
@@ -958,12 +1039,15 @@ export class UsersService {
         }
 
         // Determine contract based on ruolo
-        const contract = ruolo === Ruolo.CABIN_CREW 
-          ? contracts.find((c: any) => c.codice === 'MAY-CC') || defaultContract
-          : contracts.find((c: any) => c.codice === 'MAY-PI') || defaultContract;
+        const contract =
+          ruolo === Ruolo.CABIN_CREW
+            ? contracts.find((c: any) => c.codice === "MAY-CC") ||
+              defaultContract
+            : contracts.find((c: any) => c.codice === "MAY-PI") ||
+              defaultContract;
 
         // Create user
-        const hashedPassword = await bcrypt.hash('password', 10);
+        const hashedPassword = await bcrypt.hash("password", 10);
         const user = this.usersRepository.create({
           crewcode: crewcode.toUpperCase(),
           nome: name,
@@ -989,7 +1073,7 @@ export class UsersService {
         await this.statusHistoryRepository.save({
           userId: user.id,
           changeType: StatusChangeType.ACTIVATION,
-          reason: 'User imported via bulk upload',
+          reason: "User imported via bulk upload",
           changedById: requestingUser.id,
         });
 
@@ -997,7 +1081,7 @@ export class UsersService {
       } catch (error: any) {
         results.errors.push({
           row: rowNumber,
-          error: error.message || 'Unknown error',
+          error: error.message || "Unknown error",
         });
       }
     }

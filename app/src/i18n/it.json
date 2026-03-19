@@ -228,7 +228,12 @@
     "contract": "Contratto",
     "grade": "Qualifica",
     "role": "Ruolo",
-    "notes": "Note"
+    "notes": "Note",
+    "professionalDates": "Date Professionali",
+    "dateOfEntry": "Data di Ingresso",
+    "dateOfCaptaincy": "Data di Promozione Comandante",
+    "dateOfEntryRequired": "La data di ingresso è obbligatoria",
+    "dateOfCaptaincyRequired": "La data di promozione è obbligatoria per il tuo grado"
   },
   "payslip": {
     "title": "Calcolo Busta Paga",

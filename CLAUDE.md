@@ -80,6 +80,7 @@ npm run lint               # ESLint check
 - `config/` - App configuration (TypeORM, JWT, etc.)
 
 **PDF Generation** (`api/src/documents/pdf.service.ts`):
+
 - Always uses `generateWithHtml()` (Puppeteer) — never the pdf-lib template path
 - FIT-CISL letterhead: Times New Roman/Tinos font, green separator lines (#177246), red/green institutional footer
 - Joint letterhead: two logos (FIT-CISL left, ANPAC right), Avenir font, `Roma dd.MM.yy` date format, no footer
@@ -87,10 +88,12 @@ npm run lint               # ESLint check
 - Logo assets in `api/templates/`: `logo.png`, `logo-joint-left.jpeg`, `logo-joint-right.png`, `whatsapp-qr.png`
 
 **OllamaService** (`api/src/ollama/ollama.service.ts`):
+
 - `isHtml(text)` detects HTML input via `text.trim().startsWith("<")`
 - `rewriteAsUnionCommunication()` and `translateToEnglish()` both preserve HTML tag structure when input is HTML
 
 **NotificationsService** (`api/src/notifications/notifications.service.ts`):
+
 - `broadcastSilent(type)` — sends data-only push (no title/body) to all active devices
 - Used by `IssueCategoriesService` and `IssueUrgenciesService` after every create/update/remove
 
@@ -109,7 +112,7 @@ npm run lint               # ESLint check
 
 **Database Schema** (PostgreSQL):
 
-- `users` - Unified auth + member data (crewcode, password, role, ruolo, nome, cognome, email, telefono, base_id, contratto_id, grade_id, note, itud, rsa)
+- `users` - Unified auth + member data (crewcode, password, role, ruolo, nome, cognome, email, telefono, base_id, contratto_id, grade_id, note, itud, rsa, dataIscrizione, dateOfEntry, dateOfCaptaincy)
 - `bases` - Operational bases (codice, nome)
 - `contracts` - Contract types (codice, nome)
 - `grades` - Professional grades (codice, nome, ruolo)
@@ -153,10 +156,12 @@ npm run lint               # ESLint check
 - Drawer menu is **network-aware**: online-only items hidden when `offlineStore.isOnline === false`.
 
 **Documents / PDF Viewer**:
+
 - `DocumentEditorScreen` navigates back to `Documents` (not `goBack()`) on close.
 - `PdfViewerScreen` — in-app PDF viewer using WebView + `expo-file-system/legacy`. Accessible via `navigation.navigate("PdfViewer", { documentId, title })`.
 
 **Offline Support**:
+
 - Offline-capable screens: Payslip Calculator, Settings, Report Issue (+ pending queue sync).
 - `offlineStore` persists categories, urgencies, and `pendingIssues[]` to AsyncStorage.
 - `useNetworkStatus` registers NetInfo listener once (stable deps), syncs queue on `isOnline: false→true` transition and on app mount.
@@ -170,6 +175,14 @@ npm run lint               # ESLint check
 - Rich text editor (`RichTextEditor`) using `react-native-pell-rich-editor`
 - Push notifications via Expo (silent + visible)
 - Offline issue reporting with background sync
+- Payslip calculator with Italian tax rules, persisted in Zustand; settings unified in the main Settings screen (two tabs: General / Payslip); admin-only Override tab in PayslipCalculator
+
+**Date Fields on Users**:
+
+- `dateOfEntry` — date user entered the company. Optional in admin create and bulk import. **Required** when the user edits their own profile.
+- `dateOfCaptaincy` — date user became captain. Only relevant for captain grades: `CPT`, `LTC`, `LCC`, `TRI`, `TRE`. Optional in admin create. **Required** when the user edits their own profile if their grade is a captain grade.
+- Date format in UI: `DD/MM/YYYY`. Conversion to `YYYY-MM-DD` for PostgreSQL happens in `users.service.ts` for all three paths: `create()`, `reactivateUser()`, `update()`.
+- Both fields are visible to all roles via `serialize()` (not admin-only).
 
 ## Authentication Flow
 

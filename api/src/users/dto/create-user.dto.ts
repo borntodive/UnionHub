@@ -8,9 +8,9 @@ import {
   MaxLength,
   IsBoolean,
   IsDateString,
-} from 'class-validator';
-import { UserRole } from '../../common/enums/user-role.enum';
-import { Ruolo } from '../../common/enums/ruolo.enum';
+} from "class-validator";
+import { UserRole } from "../../common/enums/user-role.enum";
+import { Ruolo } from "../../common/enums/ruolo.enum";
 
 export class CreateUserDto {
   @IsString()
@@ -72,4 +72,12 @@ export class CreateUserDto {
   @IsOptional()
   @IsDateString()
   dataIscrizione?: string;
+
+  @IsOptional()
+  @IsString()
+  dateOfEntry?: string;
+
+  @IsOptional()
+  @IsString()
+  dateOfCaptaincy?: string;
 }

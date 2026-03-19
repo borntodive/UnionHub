@@ -1,6 +1,16 @@
-import { IsString, IsEmail, IsOptional, IsEnum, IsUUID, MinLength, MaxLength, IsBoolean, IsDateString } from 'class-validator';
-import { UserRole } from '../../common/enums/user-role.enum';
-import { Ruolo } from '../../common/enums/ruolo.enum';
+import {
+  IsString,
+  IsEmail,
+  IsOptional,
+  IsEnum,
+  IsUUID,
+  MinLength,
+  MaxLength,
+  IsBoolean,
+  IsDateString,
+} from "class-validator";
+import { UserRole } from "../../common/enums/user-role.enum";
+import { Ruolo } from "../../common/enums/ruolo.enum";
 
 export class UpdateUserDto {
   @IsOptional()
@@ -75,4 +85,12 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   dataIscrizione?: string;
+
+  @IsOptional()
+  @IsString()
+  dateOfEntry?: string;
+
+  @IsOptional()
+  @IsString()
+  dateOfCaptaincy?: string;
 }

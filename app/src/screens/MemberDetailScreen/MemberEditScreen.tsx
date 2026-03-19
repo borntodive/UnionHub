@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   View,
   Text,
@@ -11,11 +12,14 @@ import {
   Switch,
   Modal,
   Platform,
-} from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Save,
@@ -30,31 +34,34 @@ import {
   FileText,
   ToggleLeft,
   Calendar,
-} from 'lucide-react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+} from "lucide-react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
-import { colors, spacing, typography, borderRadius } from '../../theme';
-import { Button } from '../../components/Button';
-import { Card } from '../../components/Card';
-import { Select } from '../../components/Select';
-import { usersApi } from '../../api/users';
-import { useAuthStore } from '../../store/authStore';
-import { RootStackParamList } from '../../navigation/types';
-import { Ruolo, UserRole } from '../../types';
-import { basesApi } from '../../api/bases';
-import { contractsApi } from '../../api/contracts';
-import { gradesApi } from '../../api/grades';
+import { colors, spacing, typography, borderRadius } from "../../theme";
+import { Button } from "../../components/Button";
+import { Card } from "../../components/Card";
+import { Select } from "../../components/Select";
+import { usersApi } from "../../api/users";
+import { useAuthStore } from "../../store/authStore";
+import { RootStackParamList } from "../../navigation/types";
+import { Ruolo, UserRole } from "../../types";
+import { basesApi } from "../../api/bases";
+import { contractsApi } from "../../api/contracts";
+import { gradesApi } from "../../api/grades";
 
-type MemberEditRouteProp = RouteProp<RootStackParamList, 'MemberEdit'>;
+type MemberEditRouteProp = RouteProp<RootStackParamList, "MemberEdit">;
 type MemberEditNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+const CAPTAIN_GRADES = ["CPT", "LTC", "LCC", "TRI", "TRE"];
+
 export const MemberEditScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<MemberEditNavigationProp>();
   const route = useRoute<MemberEditRouteProp>();
   const { memberId } = route.params;
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
-  
+
   const currentUser = useAuthStore((state) => state.user);
   const isSuperAdmin = currentUser?.role === UserRole.SUPERADMIN;
   const isAdmin = currentUser?.role === UserRole.ADMIN || isSuperAdmin;
@@ -64,50 +71,54 @@ export const MemberEditScreen: React.FC = () => {
 
   // Fetch member data
   const { data: member, isLoading: isLoadingMember } = useQuery({
-    queryKey: ['user', memberId],
+    queryKey: ["user", memberId],
     queryFn: () => usersApi.getUserById(memberId),
   });
 
   // Fetch filter options
   const { data: bases } = useQuery({
-    queryKey: ['bases'],
+    queryKey: ["bases"],
     queryFn: basesApi.getBases,
   });
 
   const { data: contracts } = useQuery({
-    queryKey: ['contracts'],
+    queryKey: ["contracts"],
     queryFn: contractsApi.getContracts,
   });
 
   const { data: grades } = useQuery({
-    queryKey: ['grades'],
+    queryKey: ["grades"],
     queryFn: gradesApi.getGrades,
   });
 
   // Form state
   const [formData, setFormData] = useState({
-    nome: '',
-    cognome: '',
-    email: '',
-    telefono: '',
-    baseId: '',
-    contrattoId: '',
-    gradeId: '',
-    note: '',
+    nome: "",
+    cognome: "",
+    email: "",
+    telefono: "",
+    baseId: "",
+    contrattoId: "",
+    gradeId: "",
+    note: "",
     itud: false,
     rsa: false,
-    dataIscrizione: '',
+    dataIscrizione: "",
+    dateOfEntry: "",
+    dateOfCaptaincy: "",
     isActive: true,
     role: UserRole.USER,
     ruolo: null as Ruolo | null,
   });
 
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [activePicker, setActivePicker] = useState<
+    "dataIscrizione" | "dateOfEntry" | "dateOfCaptaincy" | null
+  >(null);
 
   // Helper to parse DD/MM/YYYY string to Date
   const parseDate = (dateStr: string | undefined): Date | null => {
     if (!dateStr) return null;
-    const parts = dateStr.split('/');
+    const parts = dateStr.split("/");
     if (parts.length !== 3) return null;
     const day = parseInt(parts[0], 10);
     const month = parseInt(parts[1], 10) - 1;
@@ -118,27 +129,38 @@ export const MemberEditScreen: React.FC = () => {
 
   // Helper to format Date to DD/MM/YYYY
   const formatDate = (date: Date): string => {
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
+
+  // Determine if selected grade is a captain grade
+  const isCurrentGradeCaptain = useMemo(() => {
+    if (formData.gradeId && grades) {
+      const g = grades.find((gr) => gr.id === formData.gradeId);
+      return g ? CAPTAIN_GRADES.includes(g.codice) : false;
+    }
+    return CAPTAIN_GRADES.includes(member?.grade?.codice || "");
+  }, [formData.gradeId, grades, member]);
 
   // Initialize form when member data loads
   React.useEffect(() => {
     if (member) {
       setFormData({
-        nome: member.nome || '',
-        cognome: member.cognome || '',
-        email: member.email || '',
-        telefono: member.telefono || '',
-        baseId: member.base?.id || '',
-        contrattoId: member.contratto?.id || '',
-        gradeId: member.grade?.id || '',
-        note: member.note || '',
+        nome: member.nome || "",
+        cognome: member.cognome || "",
+        email: member.email || "",
+        telefono: member.telefono || "",
+        baseId: member.base?.id || "",
+        contrattoId: member.contratto?.id || "",
+        gradeId: member.grade?.id || "",
+        note: member.note || "",
         itud: member.itud || false,
         rsa: member.rsa || false,
-        dataIscrizione: member.dataIscrizione || '',
+        dataIscrizione: member.dataIscrizione || "",
+        dateOfEntry: member.dateOfEntry || "",
+        dateOfCaptaincy: member.dateOfCaptaincy || "",
         isActive: member.isActive,
         role: member.role,
         ruolo: member.ruolo,
@@ -150,16 +172,18 @@ export const MemberEditScreen: React.FC = () => {
   const filteredContracts = useMemo(() => {
     if (!contracts) return [];
     if (isSuperAdmin) return contracts;
-    
+
     // Admin sees only contracts for their role
     const userRuolo = currentUser?.ruolo;
-    return contracts.filter(c => {
+    return contracts.filter((c) => {
       if (userRuolo === Ruolo.PILOT) {
-        return c.codice.includes('PI') || 
-               ['AFA', 'Contractor', 'DAC'].includes(c.codice);
+        return (
+          c.codice.includes("PI") ||
+          ["AFA", "Contractor", "DAC"].includes(c.codice)
+        );
       }
       if (userRuolo === Ruolo.CABIN_CREW) {
-        return c.codice.includes('CC') || c.codice === 'CrewLink';
+        return c.codice.includes("CC") || c.codice === "CrewLink";
       }
       return true;
     });
@@ -168,48 +192,80 @@ export const MemberEditScreen: React.FC = () => {
   const filteredGrades = useMemo(() => {
     if (!grades) return [];
     if (isSuperAdmin) return grades;
-    
+
     // Admin sees only grades for their role
     const userRuolo = currentUser?.ruolo;
-    return grades.filter(g => g.ruolo === userRuolo);
+    return grades.filter((g) => g.ruolo === userRuolo);
   }, [grades, isSuperAdmin, currentUser?.ruolo]);
 
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: (data: typeof formData) => usersApi.updateUser(memberId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user', memberId] });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      Alert.alert('Success', 'Member updated successfully');
+      queryClient.invalidateQueries({ queryKey: ["user", memberId] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      Alert.alert("Success", "Member updated successfully");
       navigation.goBack();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to update member');
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to update member",
+      );
     },
   });
 
   const handleSave = () => {
-    if (!formData.nome.trim() || !formData.cognome.trim() || !formData.email.trim()) {
-      Alert.alert('Error', 'Name, surname and email are required');
+    if (
+      !formData.nome.trim() ||
+      !formData.cognome.trim() ||
+      !formData.email.trim()
+    ) {
+      Alert.alert("Error", "Name, surname and email are required");
       return;
+    }
+
+    // Own profile requires date of entry (and captaincy if captain grade)
+    if (isOwnProfile) {
+      if (!formData.dateOfEntry) {
+        Alert.alert("Error", t("members.dateOfEntryRequired"));
+        return;
+      }
+      if (isCurrentGradeCaptain && !formData.dateOfCaptaincy) {
+        Alert.alert("Error", t("members.dateOfCaptaincyRequired"));
+        return;
+      }
     }
 
     // Build update data - only include changed fields
     const updateData: any = {};
     if (member) {
       if (formData.nome !== member.nome) updateData.nome = formData.nome;
-      if (formData.cognome !== member.cognome) updateData.cognome = formData.cognome;
+      if (formData.cognome !== member.cognome)
+        updateData.cognome = formData.cognome;
       if (formData.email !== member.email) updateData.email = formData.email;
-      if (formData.telefono !== (member.telefono || '')) updateData.telefono = formData.telefono || null;
-      if (formData.baseId !== (member.base?.id || '')) updateData.baseId = formData.baseId || null;
-      if (formData.contrattoId !== (member.contratto?.id || '')) updateData.contrattoId = formData.contrattoId || null;
-      if (formData.gradeId !== (member.grade?.id || '')) updateData.gradeId = formData.gradeId || null;
-      if (formData.note !== (member.note || '')) updateData.note = formData.note || null;
-      if (formData.itud !== (member.itud || false)) updateData.itud = formData.itud;
+      if (formData.telefono !== (member.telefono || ""))
+        updateData.telefono = formData.telefono || null;
+      if (formData.baseId !== (member.base?.id || ""))
+        updateData.baseId = formData.baseId || null;
+      if (formData.contrattoId !== (member.contratto?.id || ""))
+        updateData.contrattoId = formData.contrattoId || null;
+      if (formData.gradeId !== (member.grade?.id || ""))
+        updateData.gradeId = formData.gradeId || null;
+      if (formData.note !== (member.note || ""))
+        updateData.note = formData.note || null;
+      if (formData.itud !== (member.itud || false))
+        updateData.itud = formData.itud;
       if (formData.rsa !== (member.rsa || false)) updateData.rsa = formData.rsa;
-      if (formData.dataIscrizione !== (member.dataIscrizione || '')) updateData.dataIscrizione = formData.dataIscrizione || null;
-      if (formData.isActive !== member.isActive) updateData.isActive = formData.isActive;
-      
+      if (formData.dataIscrizione !== (member.dataIscrizione || ""))
+        updateData.dataIscrizione = formData.dataIscrizione || null;
+      if (formData.dateOfEntry !== (member.dateOfEntry || ""))
+        updateData.dateOfEntry = formData.dateOfEntry || null;
+      if (formData.dateOfCaptaincy !== (member.dateOfCaptaincy || ""))
+        updateData.dateOfCaptaincy = formData.dateOfCaptaincy || null;
+      if (formData.isActive !== member.isActive)
+        updateData.isActive = formData.isActive;
+
       // Only SuperAdmin can change role and ruolo
       if (isSuperAdmin) {
         if (formData.role !== member.role) updateData.role = formData.role;
@@ -233,7 +289,10 @@ export const MemberEditScreen: React.FC = () => {
     return (
       <View style={styles.wrapper}>
         <View style={[styles.statusBarHack, { height: insets.top }]} />
-        <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+        <SafeAreaView
+          style={styles.container}
+          edges={["bottom", "left", "right"]}
+        >
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
@@ -245,10 +304,13 @@ export const MemberEditScreen: React.FC = () => {
   return (
     <View style={styles.wrapper}>
       <View style={[styles.statusBarHack, { height: insets.top }]} />
-      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <SafeAreaView
+        style={styles.container}
+        edges={["bottom", "left", "right"]}
+      >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleCancel}
             style={styles.backButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -256,7 +318,7 @@ export const MemberEditScreen: React.FC = () => {
             <ArrowLeft size={24} color={colors.textInverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Member</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleSave}
             style={styles.saveButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -274,7 +336,7 @@ export const MemberEditScreen: React.FC = () => {
           {/* Personal Info Section */}
           <Card style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Personal Information</Text>
-            
+
             <InputField
               label="First Name"
               value={formData.nome}
@@ -282,15 +344,17 @@ export const MemberEditScreen: React.FC = () => {
               icon={<User size={20} color={colors.primary} />}
               required
             />
-            
+
             <InputField
               label="Last Name"
               value={formData.cognome}
-              onChangeText={(text) => setFormData({ ...formData, cognome: text })}
+              onChangeText={(text) =>
+                setFormData({ ...formData, cognome: text })
+              }
               icon={<User size={20} color={colors.primary} />}
               required
             />
-            
+
             <InputField
               label="Email"
               value={formData.email}
@@ -300,11 +364,13 @@ export const MemberEditScreen: React.FC = () => {
               autoCapitalize="none"
               required
             />
-            
+
             <InputField
               label="Phone"
               value={formData.telefono}
-              onChangeText={(text) => setFormData({ ...formData, telefono: text })}
+              onChangeText={(text) =>
+                setFormData({ ...formData, telefono: text })
+              }
               icon={<Phone size={20} color={colors.primary} />}
               keyboardType="phone-pad"
             />
@@ -313,35 +379,51 @@ export const MemberEditScreen: React.FC = () => {
           {/* Professional Info Section */}
           <Card style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Professional Information</Text>
-            
+
             {canEditProfessional ? (
               <>
                 <SelectField
                   label="Base"
                   value={formData.baseId}
-                  options={bases?.map(b => ({ label: `${b.codice} - ${b.nome}`, value: b.id })) || []}
-                  onChange={(value) => setFormData({ ...formData, baseId: value })}
+                  options={
+                    bases?.map((b) => ({
+                      label: `${b.codice} - ${b.nome}`,
+                      value: b.id,
+                    })) || []
+                  }
+                  onChange={(value) =>
+                    setFormData({ ...formData, baseId: value })
+                  }
                   icon={<MapPin size={20} color={colors.primary} />}
                   placeholder="Select base"
                 />
-                
+
                 <SelectField
                   label="Contract"
                   value={formData.contrattoId}
-                  options={filteredContracts.map(c => ({ 
-                    label: isSuperAdmin ? c.codice : c.codice.replace(/-(PI|CC)$/, ''), 
-                    value: c.id 
+                  options={filteredContracts.map((c) => ({
+                    label: isSuperAdmin
+                      ? c.codice
+                      : c.codice.replace(/-(PI|CC)$/, ""),
+                    value: c.id,
                   }))}
-                  onChange={(value) => setFormData({ ...formData, contrattoId: value })}
+                  onChange={(value) =>
+                    setFormData({ ...formData, contrattoId: value })
+                  }
                   icon={<Briefcase size={20} color={colors.primary} />}
                   placeholder="Select contract"
                 />
-                
+
                 <SelectField
                   label="Grade"
                   value={formData.gradeId}
-                  options={filteredGrades.map(g => ({ label: g.codice, value: g.id }))}
-                  onChange={(value) => setFormData({ ...formData, gradeId: value })}
+                  options={filteredGrades.map((g) => ({
+                    label: g.codice,
+                    value: g.id,
+                  }))}
+                  onChange={(value) =>
+                    setFormData({ ...formData, gradeId: value })
+                  }
                   icon={<Award size={20} color={colors.primary} />}
                   placeholder="Select grade"
                 />
@@ -350,31 +432,90 @@ export const MemberEditScreen: React.FC = () => {
               <>
                 <ReadOnlyField
                   label="Base"
-                  value={member.base ? `${member.base.codice} - ${member.base.nome}` : 'Not specified'}
+                  value={
+                    member.base
+                      ? `${member.base.codice} - ${member.base.nome}`
+                      : "Not specified"
+                  }
                   icon={<MapPin size={20} color={colors.primary} />}
                 />
                 <ReadOnlyField
                   label="Contract"
-                  value={member.contratto ? (isSuperAdmin ? member.contratto.codice : member.contratto.codice.replace(/-(PI|CC)$/, '')) : 'Not specified'}
+                  value={
+                    member.contratto
+                      ? isSuperAdmin
+                        ? member.contratto.codice
+                        : member.contratto.codice.replace(/-(PI|CC)$/, "")
+                      : "Not specified"
+                  }
                   icon={<Briefcase size={20} color={colors.primary} />}
                 />
                 <ReadOnlyField
                   label="Grade"
-                  value={member.grade?.codice || 'Not specified'}
+                  value={member.grade?.codice || "Not specified"}
                   icon={<Award size={20} color={colors.primary} />}
                 />
               </>
             )}
           </Card>
 
+          {/* Professional Dates - visible to own profile or admin */}
+          {canEditProfessional && (
+            <Card style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>
+                {t("members.professionalDates")}
+              </Text>
+
+              <Text style={styles.fieldLabel}>
+                {t("members.dateOfEntry")}
+                {isOwnProfile && <Text style={styles.required}> *</Text>}
+              </Text>
+              <TouchableOpacity
+                style={styles.datePickerButton}
+                onPress={() => setActivePicker("dateOfEntry")}
+              >
+                <View style={styles.datePickerIcon}>
+                  <Calendar size={20} color={colors.primary} />
+                </View>
+                <View style={styles.datePickerContent}>
+                  <Text style={styles.datePickerValue}>
+                    {formData.dateOfEntry || "Select date"}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              {isCurrentGradeCaptain && (
+                <>
+                  <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>
+                    {t("members.dateOfCaptaincy")}
+                    {isOwnProfile && <Text style={styles.required}> *</Text>}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.datePickerButton}
+                    onPress={() => setActivePicker("dateOfCaptaincy")}
+                  >
+                    <View style={styles.datePickerIcon}>
+                      <Calendar size={20} color={colors.primary} />
+                    </View>
+                    <View style={styles.datePickerContent}>
+                      <Text style={styles.datePickerValue}>
+                        {formData.dateOfCaptaincy || "Select date"}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </>
+              )}
+            </Card>
+          )}
+
           {/* Subscription Date - Admin only */}
           {canEditAdminFields && (
             <Card style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>Membership Information</Text>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={styles.datePickerButton}
-                onPress={() => setShowDatePicker(true)}
+                onPress={() => setActivePicker("dataIscrizione")}
               >
                 <View style={styles.datePickerIcon}>
                   <Calendar size={20} color={colors.primary} />
@@ -382,7 +523,7 @@ export const MemberEditScreen: React.FC = () => {
                 <View style={styles.datePickerContent}>
                   <Text style={styles.datePickerLabel}>Subscription Date</Text>
                   <Text style={styles.datePickerValue}>
-                    {formData.dataIscrizione || 'Select date'}
+                    {formData.dataIscrizione || "Select date"}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -391,29 +532,36 @@ export const MemberEditScreen: React.FC = () => {
 
           {/* Date Picker Action Sheet Modal */}
           <Modal
-            visible={showDatePicker}
+            visible={activePicker !== null}
             transparent={true}
             animationType="slide"
-            onRequestClose={() => setShowDatePicker(false)}
+            onRequestClose={() => setActivePicker(null)}
           >
             <View style={styles.actionSheetOverlay}>
               <View style={styles.actionSheetContainer}>
                 <View style={styles.actionSheetHeader}>
                   <Text style={styles.actionSheetTitle}>Select Date</Text>
-                  <TouchableOpacity 
-                    onPress={() => setShowDatePicker(false)}
+                  <TouchableOpacity
+                    onPress={() => setActivePicker(null)}
                     style={styles.actionSheetDoneButton}
                   >
                     <Text style={styles.actionSheetDoneText}>Done</Text>
                   </TouchableOpacity>
                 </View>
                 <DateTimePicker
-                  value={parseDate(formData.dataIscrizione) || new Date()}
+                  value={
+                    parseDate(
+                      activePicker ? formData[activePicker] : undefined,
+                    ) || new Date()
+                  }
                   mode="date"
                   display="spinner"
                   onChange={(event, selectedDate) => {
-                    if (selectedDate) {
-                      setFormData({ ...formData, dataIscrizione: formatDate(selectedDate) });
+                    if (selectedDate && activePicker) {
+                      setFormData({
+                        ...formData,
+                        [activePicker]: formatDate(selectedDate),
+                      });
                     }
                   }}
                 />
@@ -425,41 +573,59 @@ export const MemberEditScreen: React.FC = () => {
           {canEditAdminFields && (
             <Card style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>Administrative</Text>
-              
+
               <View style={styles.switchRow}>
                 <View style={styles.switchLabelContainer}>
-                  <Building2 size={20} color={colors.primary} style={styles.switchIcon} />
+                  <Building2
+                    size={20}
+                    color={colors.primary}
+                    style={styles.switchIcon}
+                  />
                   <Text style={styles.switchLabel}>ITUD</Text>
                 </View>
                 <Switch
                   value={formData.itud}
-                  onValueChange={(value) => setFormData({ ...formData, itud: value })}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, itud: value })
+                  }
                   trackColor={{ false: colors.border, true: colors.primary }}
                   thumbColor={colors.background}
                 />
               </View>
-              
+
               <View style={styles.switchRow}>
                 <View style={styles.switchLabelContainer}>
-                  <Shield size={20} color={colors.primary} style={styles.switchIcon} />
+                  <Shield
+                    size={20}
+                    color={colors.primary}
+                    style={styles.switchIcon}
+                  />
                   <Text style={styles.switchLabel}>RSA</Text>
                 </View>
                 <Switch
                   value={formData.rsa}
-                  onValueChange={(value) => setFormData({ ...formData, rsa: value })}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, rsa: value })
+                  }
                   trackColor={{ false: colors.border, true: colors.primary }}
                   thumbColor={colors.background}
                 />
               </View>
-              
+
               <View style={styles.switchRow}>
                 <View style={styles.switchLabelContainer}>
-                  <ToggleLeft size={20} color={formData.isActive ? colors.success : colors.error} style={styles.switchIcon} />
+                  <ToggleLeft
+                    size={20}
+                    color={formData.isActive ? colors.success : colors.error}
+                    style={styles.switchIcon}
+                  />
                   <Text style={styles.switchLabel}>Active</Text>
                 </View>
                 <Switch
                   value={formData.isActive}
-                  onValueChange={(value) => setFormData({ ...formData, isActive: value })}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, isActive: value })
+                  }
                   trackColor={{ false: colors.error, true: colors.success }}
                   thumbColor={colors.background}
                 />
@@ -471,28 +637,32 @@ export const MemberEditScreen: React.FC = () => {
           {isSuperAdmin && (
             <Card style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>Role Management</Text>
-              
+
               <SelectField
                 label="System Role"
                 value={formData.role}
                 options={[
-                  { label: 'User', value: UserRole.USER },
-                  { label: 'Admin', value: UserRole.ADMIN },
-                  { label: 'Super Admin', value: UserRole.SUPERADMIN },
+                  { label: "User", value: UserRole.USER },
+                  { label: "Admin", value: UserRole.ADMIN },
+                  { label: "Super Admin", value: UserRole.SUPERADMIN },
                 ]}
-                onChange={(value) => setFormData({ ...formData, role: value as UserRole })}
+                onChange={(value) =>
+                  setFormData({ ...formData, role: value as UserRole })
+                }
                 icon={<Shield size={20} color={colors.primary} />}
                 placeholder="Select role"
               />
-              
+
               <SelectField
                 label="Crew Role"
-                value={formData.ruolo || ''}
+                value={formData.ruolo || ""}
                 options={[
-                  { label: 'Pilot', value: Ruolo.PILOT },
-                  { label: 'Cabin Crew', value: Ruolo.CABIN_CREW },
+                  { label: "Pilot", value: Ruolo.PILOT },
+                  { label: "Cabin Crew", value: Ruolo.CABIN_CREW },
                 ]}
-                onChange={(value) => setFormData({ ...formData, ruolo: value as Ruolo })}
+                onChange={(value) =>
+                  setFormData({ ...formData, ruolo: value as Ruolo })
+                }
                 icon={<User size={20} color={colors.primary} />}
                 placeholder="Select crew role"
               />
@@ -503,13 +673,19 @@ export const MemberEditScreen: React.FC = () => {
           {canEditAdminFields && (
             <Card style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>Notes</Text>
-              
+
               <View style={styles.textAreaContainer}>
-                <FileText size={20} color={colors.primary} style={styles.textAreaIcon} />
+                <FileText
+                  size={20}
+                  color={colors.primary}
+                  style={styles.textAreaIcon}
+                />
                 <TextInput
                   style={styles.textArea}
                   value={formData.note}
-                  onChangeText={(text) => setFormData({ ...formData, note: text })}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, note: text })
+                  }
                   placeholder="Add notes..."
                   placeholderTextColor={colors.textTertiary}
                   multiline
@@ -549,8 +725,8 @@ interface InputFieldProps {
   value: string;
   onChangeText: (text: string) => void;
   icon: React.ReactNode;
-  keyboardType?: 'default' | 'email-address' | 'phone-pad';
-  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  keyboardType?: "default" | "email-address" | "phone-pad";
+  autoCapitalize?: "none" | "sentences" | "words" | "characters";
   required?: boolean;
 }
 
@@ -559,8 +735,8 @@ const InputField: React.FC<InputFieldProps> = ({
   value,
   onChangeText,
   icon,
-  keyboardType = 'default',
-  autoCapitalize = 'sentences',
+  keyboardType = "default",
+  autoCapitalize = "sentences",
   required = false,
 }) => (
   <View style={styles.fieldContainer}>
@@ -598,7 +774,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
   options,
   onChange,
   icon,
-  placeholder = 'Select...',
+  placeholder = "Select...",
 }) => {
   return (
     <View style={styles.fieldContainer}>
@@ -609,7 +785,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
           <Select
             label=""
             value={value || undefined}
-            onValueChange={(val) => onChange(val || '')}
+            onValueChange={(val) => onChange(val || "")}
             options={options}
             placeholder={placeholder}
           />
@@ -626,7 +802,11 @@ interface ReadOnlyFieldProps {
   icon: React.ReactNode;
 }
 
-const ReadOnlyField: React.FC<ReadOnlyFieldProps> = ({ label, value, icon }) => (
+const ReadOnlyField: React.FC<ReadOnlyFieldProps> = ({
+  label,
+  value,
+  icon,
+}) => (
   <View style={styles.fieldContainer}>
     <Text style={styles.fieldLabel}>{label}</Text>
     <View style={styles.readOnlyContainer}>
@@ -650,13 +830,13 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     backgroundColor: colors.primary,
@@ -665,21 +845,21 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
     color: colors.textInverse,
     flex: 1,
-    textAlign: 'center',
+    textAlign: "center",
   },
   saveButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   content: {
     flex: 1,
@@ -708,8 +888,8 @@ const styles = StyleSheet.create({
     color: colors.error,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
@@ -726,8 +906,8 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   selectWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
@@ -738,12 +918,12 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   readOnlyContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.background + '80',
+    backgroundColor: colors.background + "80",
     paddingVertical: spacing.sm,
   },
   readOnlyText: {
@@ -753,16 +933,16 @@ const styles = StyleSheet.create({
     paddingRight: spacing.sm,
   },
   switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   switchLabelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   switchIcon: {
     marginRight: spacing.sm,
@@ -772,8 +952,8 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   textAreaContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
@@ -789,10 +969,10 @@ const styles = StyleSheet.create({
     height: 100,
     fontSize: typography.sizes.base,
     color: colors.text,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   actionsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.md,
     margin: spacing.md,
     marginTop: spacing.lg,
@@ -805,8 +985,8 @@ const styles = StyleSheet.create({
   },
   // Date Picker styles
   datePickerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
@@ -833,8 +1013,8 @@ const styles = StyleSheet.create({
   // Action Sheet styles
   actionSheetOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
   },
   actionSheetContainer: {
     backgroundColor: colors.surface,
@@ -843,9 +1023,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   actionSheetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,

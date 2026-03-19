@@ -8,13 +8,13 @@ import {
   JoinColumn,
   Index,
   OneToMany,
-} from 'typeorm';
-import { UserRole } from '../../common/enums/user-role.enum';
-import { Ruolo } from '../../common/enums/ruolo.enum';
-import { Base } from '../../bases/entities/base.entity';
-import { Contract } from '../../contracts/entities/contract.entity';
-import { Grade } from '../../grades/entities/grade.entity';
-import { UserStatusHistory } from './user-status-history.entity';
+} from "typeorm";
+import { UserRole } from "../../common/enums/user-role.enum";
+import { Ruolo } from "../../common/enums/ruolo.enum";
+import { Base } from "../../bases/entities/base.entity";
+import { Contract } from "../../contracts/entities/contract.entity";
+import { Grade } from "../../grades/entities/grade.entity";
+import { UserStatusHistory } from "./user-status-history.entity";
 
 export interface StatusLogEntry {
   isActive: boolean;
@@ -23,110 +23,118 @@ export interface StatusLogEntry {
   performedBy?: string;
 }
 
-@Entity('users')
-@Index(['crewcode'], { unique: true })
-@Index(['email'], { unique: true })
-@Index(['role'])
-@Index(['ruolo'])
-@Index(['isActive'])
+@Entity("users")
+@Index(["crewcode"], { unique: true })
+@Index(["email"], { unique: true })
+@Index(["role"])
+@Index(["ruolo"])
+@Index(["isActive"])
 export class User {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   // Authentication fields
-  @Column({ type: 'varchar', length: 50, unique: true })
+  @Column({ type: "varchar", length: 50, unique: true })
   crewcode: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: "varchar", length: 255 })
   password: string;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: UserRole,
     default: UserRole.USER,
   })
   role: UserRole;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ type: "boolean", default: true })
   mustChangePassword: boolean;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ type: "boolean", default: true })
   isActive: boolean;
 
   // Professional data
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: Ruolo,
-    enumName: 'ruolo_enum',
+    enumName: "ruolo_enum",
     nullable: true,
   })
   ruolo: Ruolo | null;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: "varchar", length: 100 })
   nome: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: "varchar", length: 100 })
   cognome: string;
 
-  @Column({ type: 'varchar', length: 255, unique: true })
+  @Column({ type: "varchar", length: 255, unique: true })
   email: string;
 
-  @Column({ type: 'varchar', length: 30, nullable: true })
+  @Column({ type: "varchar", length: 30, nullable: true })
   telefono: string | null;
 
   // Relations
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: "uuid", nullable: true })
   baseId: string | null;
 
   @ManyToOne(() => Base, (base) => base.users, { nullable: true })
-  @JoinColumn({ name: 'baseId' })
+  @JoinColumn({ name: "baseId" })
   base: Base | null;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: "uuid", nullable: true })
   contrattoId: string | null;
 
   @ManyToOne(() => Contract, (contract) => contract.users, { nullable: true })
-  @JoinColumn({ name: 'contrattoId' })
+  @JoinColumn({ name: "contrattoId" })
   contratto: Contract | null;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: "uuid", nullable: true })
   gradeId: string | null;
 
   @ManyToOne(() => Grade, (grade) => grade.users, { nullable: true })
-  @JoinColumn({ name: 'gradeId' })
+  @JoinColumn({ name: "gradeId" })
   grade: Grade | null;
 
   // Admin-only fields (sensitive)
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   note: string | null;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ type: "boolean", default: false })
   itud: boolean;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ type: "boolean", default: false })
   rsa: boolean;
 
   // PDF Registration Form
-  @Column({ type: 'varchar', length: 500, nullable: true })
+  @Column({ type: "varchar", length: 500, nullable: true })
   registrationFormUrl: string | null;
 
   // Membership subscription date (from PDF signature date)
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: "date", nullable: true })
   dataIscrizione: Date | null;
 
+  // Date when user entered the company
+  @Column({ type: "date", nullable: true })
+  dateOfEntry: Date | null;
+
+  // Date when user became captain (CPT, LTC, LCC, TRI, TRE grades)
+  @Column({ type: "date", nullable: true })
+  dateOfCaptaincy: Date | null;
+
   // Timestamps
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ type: "timestamptz" })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz' })
+  @UpdateDateColumn({ type: "timestamptz" })
   updatedAt: Date;
 
   // Soft delete - when user is deactivated, this is set
-  @Column({ type: 'timestamptz', nullable: true })
+  @Column({ type: "timestamptz", nullable: true })
   deactivatedAt: Date | null;
 
   // Quick status log for frontend display (summary of status changes)
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: "jsonb", nullable: true })
   statusLog: StatusLogEntry[] | null;
 
   // Status history (detailed audit trail in separate table)
@@ -156,6 +164,8 @@ export class User {
       mustChangePassword: this.mustChangePassword,
       registrationFormUrl: this.registrationFormUrl,
       dataIscrizione: this.dataIscrizione,
+      dateOfEntry: this.dateOfEntry,
+      dateOfCaptaincy: this.dateOfCaptaincy,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };
