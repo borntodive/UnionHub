@@ -1,289 +1,437 @@
-import React from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
-  TextInput,
   Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Menu, Info } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
-import { colors, spacing, typography, borderRadius } from '../../theme';
-import { useAuthStore } from '../../store/authStore';
-import { usePayslipStore } from '../store/usePayslipStore';
-import { formatCurrency, formatPercent } from '../utils/formatters';
-import { UserRole } from '../../types';
+  Switch,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Menu, AlertTriangle, X } from "lucide-react-native";
+import { useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 
-// Available ranks by role
-const PILOT_RANKS = ['cpt', 'fo', 'sfi', 'tri', 'tre', 'ltc', 'lcc', 'jfo', 'so'];
-const CC_RANKS = ['sepe', 'sepi', 'pu', 'jpu', 'ju'];
+import { colors, spacing, typography, borderRadius } from "../../theme";
+import { useAuthStore } from "../../store/authStore";
+import { usePayslipStore } from "../store/usePayslipStore";
+import { UserRole } from "../../types";
+import { PayslipSettings } from "../types";
+
+// ── Shared sub-components (inline) ──────────────────────────────────────────
+
+const PILOT_RANKS = [
+  "cpt",
+  "fo",
+  "sfi",
+  "tri",
+  "tre",
+  "ltc",
+  "lcc",
+  "jfo",
+  "so",
+];
+const CC_RANKS = ["sepe", "sepi", "pu", "jpu", "ju"];
+
+interface CheckboxRowProps {
+  label: string;
+  value: boolean;
+  onToggle: () => void;
+}
+
+const CheckboxRow: React.FC<CheckboxRowProps> = ({
+  label,
+  value,
+  onToggle,
+}) => (
+  <TouchableOpacity style={styles.checkboxRow} onPress={onToggle}>
+    <View style={[styles.checkbox, value && styles.checkboxActive]}>
+      {value && <Text style={styles.checkboxCheck}>✓</Text>}
+    </View>
+    <Text style={styles.checkboxLabel}>{label}</Text>
+  </TouchableOpacity>
+);
+
+// ── Main Screen ──────────────────────────────────────────────────────────────
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const { user } = useAuthStore();
-  const { settings, setSettings } = usePayslipStore();
+  const {
+    overrideActive,
+    overrideSettings,
+    setOverrideActive,
+    setOverrideSettings,
+  } = usePayslipStore();
+
+  const isAdmin =
+    user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
+  const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
 
   const handleMenuPress = () => {
-    // @ts-ignore - Now inside DrawerNavigator
+    // @ts-ignore
     navigation.openDrawer?.();
   };
 
-  const isPilot = settings.role === 'pil';
-  const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
-  const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
-
-  const handlePensionChange = (value: string) => {
-    const num = parseFloat(value);
-    if (!isNaN(num) && num >= 0 && num <= 100) {
-      setSettings({ voluntaryPensionContribution: num });
-    }
-  };
-
+  const isPilot = overrideSettings.role === "pil";
   const availableRanks = isPilot ? PILOT_RANKS : CC_RANKS;
+
+  const set = (patch: Partial<PayslipSettings>) => setOverrideSettings(patch);
+
+  // Local string states to allow decimal input without losing "." mid-typing
+  const [comunaliText, setComunaliText] = useState(
+    overrideSettings.addComunali.toString(),
+  );
+  const [accontoText, setAccontoText] = useState(
+    overrideSettings.accontoAddComunali.toString(),
+  );
+  const [regionaliText, setRegionaliText] = useState(
+    overrideSettings.addRegionali.toString(),
+  );
+
+  const handleReset = () => {
+    Alert.alert(
+      t("settings.payslipOverrideReset"),
+      "Reset all override settings to defaults?",
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: "Reset",
+          style: "destructive",
+          onPress: () =>
+            setOverrideSettings({
+              role: "pil",
+              rank: "fo",
+              parttime: false,
+              parttimePercentage: 1,
+              coniugeCarico: false,
+              cu: false,
+              triAndLtc: false,
+              btc: false,
+              voluntaryPensionContribution: 0,
+              addComunali: 0,
+              accontoAddComunali: 0,
+              addRegionali: 0,
+            }),
+        },
+      ],
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Settings</Text>
+          <Text style={styles.headerTitle}>
+            {t("settings.payslipOverrideSection")}
+          </Text>
           <View style={styles.placeholder} />
         </View>
       </SafeAreaView>
-      
-      <ScrollView style={styles.content}>
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Profile</Text>
-          
-          {/* Role selection - SuperAdmin only */}
-          {isSuperAdmin ? (
-            <View style={styles.selectorContainer}>
-              <Text style={styles.label}>Role</Text>
-              <View style={styles.buttonGroup}>
-                <TouchableOpacity
-                  style={[styles.roleButton, settings.role === 'pil' && styles.roleButtonActive]}
-                  onPress={() => setSettings({ role: 'pil' })}
-                >
-                  <Text style={[styles.roleButtonText, settings.role === 'pil' && styles.roleButtonTextActive]}>
-                    Pilot
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.roleButton, settings.role === 'cc' && styles.roleButtonActive]}
-                  onPress={() => setSettings({ role: 'cc' })}
-                >
-                  <Text style={[styles.roleButtonText, settings.role === 'cc' && styles.roleButtonTextActive]}>
-                    Cabin Crew
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Role</Text>
-              <Text style={styles.infoValue}>{isPilot ? 'Pilot' : 'Cabin Crew'}</Text>
-            </View>
-          )}
-          
-          {/* Rank selection - Admin and SuperAdmin */}
-          {isAdmin ? (
-            <View style={styles.selectorContainer}>
-              <Text style={styles.label}>Rank</Text>
-              <View style={styles.rankContainer}>
-                {availableRanks.map((rank) => (
-                  <TouchableOpacity
-                    key={rank}
-                    style={[styles.rankButton, settings.rank === rank && styles.rankButtonActive]}
-                    onPress={() => setSettings({ rank })}
-                  >
-                    <Text style={[styles.rankButtonText, settings.rank === rank && styles.rankButtonTextActive]}>
-                      {rank.toUpperCase()}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          ) : (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Rank</Text>
-              <Text style={styles.infoValue}>{settings.rank.toUpperCase()}</Text>
-            </View>
-          )}
-          
-          {/* New Captain - only for CPT */}
-          {settings.rank === 'cpt' && (
-            <View style={styles.checkboxRow}>
-              <TouchableOpacity
-                style={[styles.checkbox, settings.cu && styles.checkboxActive]}
-                onPress={() => setSettings({ cu: !settings.cu })}
-              >
-                {settings.cu && <Text style={styles.checkboxCheck}>✓</Text>}
-              </TouchableOpacity>
-              <Text style={styles.checkboxLabel}>New Captain (first year)</Text>
-            </View>
-          )}
-          
-          {/* TRI acting as LTC - only for TRI */}
-          {settings.rank === 'tri' && (
-            <View style={styles.checkboxRow}>
-              <TouchableOpacity
-                style={[styles.checkbox, settings.triAndLtc && styles.checkboxActive]}
-                onPress={() => setSettings({ triAndLtc: !settings.triAndLtc })}
-              >
-                {settings.triAndLtc && <Text style={styles.checkboxCheck}>✓</Text>}
-              </TouchableOpacity>
-              <Text style={styles.checkboxLabel}>TRI acting as LTC</Text>
-            </View>
-          )}
-          
-          {/* BTC based - for SFI, TRI, TRE */}
-          {['sfi', 'tri', 'tre'].includes(settings.rank) && (
-            <View style={styles.checkboxRow}>
-              <TouchableOpacity
-                style={[styles.checkbox, settings.btc && styles.checkboxActive]}
-                onPress={() => setSettings({ btc: !settings.btc })}
-              >
-                {settings.btc && <Text style={styles.checkboxCheck}>✓</Text>}
-              </TouchableOpacity>
-              <Text style={styles.checkboxLabel}>BTC Based Contract</Text>
-            </View>
-          )}
-          
-          {/* Dependent Spouse */}
-          <View style={styles.checkboxRow}>
-            <TouchableOpacity
-              style={[styles.checkbox, settings.coniugeCarico && styles.checkboxActive]}
-              onPress={() => setSettings({ coniugeCarico: !settings.coniugeCarico })}
-            >
-              {settings.coniugeCarico && <Text style={styles.checkboxCheck}>✓</Text>}
-            </TouchableOpacity>
-            <Text style={styles.checkboxLabel}>Dependent Spouse</Text>
-          </View>
-        </View>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Pension Fund</Text>
-          <Text style={styles.label}>Voluntary Contribution (%)</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              value={settings.voluntaryPensionContribution.toString()}
-              onChangeText={handlePensionChange}
-              keyboardType="numeric"
-              maxLength={5}
-              placeholder="0"
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Override toggle card */}
+        <View style={styles.overrideCard}>
+          <View style={styles.overrideHeaderRow}>
+            <AlertTriangle size={20} color={colors.warning} />
+            <Text style={styles.overrideTitle}>
+              {t("settings.payslipOverrideSection")}
+            </Text>
+            <Switch
+              value={overrideActive}
+              onValueChange={setOverrideActive}
+              trackColor={{ false: colors.border, true: colors.warning + "80" }}
+              thumbColor={
+                overrideActive ? colors.warning : colors.textSecondary
+              }
             />
-            <Text style={styles.percentSign}>%</Text>
           </View>
-          <Text style={styles.hint}>
-            Company contributes 2% only if your contribution is ≥ 2%
+          <Text style={styles.overrideDescription}>
+            {t("settings.payslipOverrideDescription")}
           </Text>
-        </View>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Part-Time</Text>
-          
-          <View style={styles.checkboxRow}>
-            <TouchableOpacity
-              style={[styles.checkbox, settings.parttime && styles.checkboxActive]}
-              onPress={() => setSettings({ parttime: !settings.parttime })}
-            >
-              {settings.parttime && <Text style={styles.checkboxCheck}>✓</Text>}
-            </TouchableOpacity>
-            <Text style={styles.checkboxLabel}>Part-time contract</Text>
-          </View>
-          
-          {settings.parttime && (
-            <View style={styles.selectorContainer}>
-              <Text style={styles.label}>Percentage</Text>
-              <View style={styles.buttonGroup}>
-                {[0.5, 0.66, 0.75].map((pct) => (
-                  <TouchableOpacity
-                    key={pct}
-                    style={[styles.roleButton, settings.parttimePercentage === pct && styles.roleButtonActive]}
-                    onPress={() => setSettings({ parttimePercentage: pct })}
-                  >
-                    <Text style={[styles.roleButtonText, settings.parttimePercentage === pct && styles.roleButtonTextActive]}>
-                      {Math.round(pct * 100)}%
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+          {overrideActive && (
+            <View style={styles.overrideBanner}>
+              <AlertTriangle size={14} color={colors.warning} />
+              <Text style={styles.overrideBannerText}>
+                {t("settings.payslipOverrideActive")}
+              </Text>
             </View>
           )}
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Local Taxes</Text>
-          
-          <Text style={styles.label}>Municipal Surcharge (%)</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              value={settings.addComunali.toString()}
-              onChangeText={(value) => {
-                const num = parseFloat(value);
-                if (!isNaN(num) && num >= 0 && num <= 100) {
-                  setSettings({ addComunali: num });
-                }
-              }}
-              keyboardType="numeric"
-              maxLength={5}
-              placeholder="0"
-            />
-            <Text style={styles.percentSign}>%</Text>
-          </View>
+        {/* Override settings — shown only when active */}
+        {overrideActive && (
+          <>
+            {/* Profile */}
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>
+                {t("settings.payslipProfile")}
+              </Text>
 
-          <Text style={[styles.label, { marginTop: spacing.md }]}>Municipal Surcharge Advance (€)</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              value={settings.accontoAddComunali.toString()}
-              onChangeText={(value) => {
-                const num = parseFloat(value);
-                if (!isNaN(num) && num >= 0) {
-                  setSettings({ accontoAddComunali: num });
-                }
-              }}
-              keyboardType="numeric"
-              maxLength={10}
-              placeholder="0"
-            />
-            <Text style={styles.percentSign}>€</Text>
-          </View>
+              {isSuperAdmin && (
+                <View style={styles.selectorContainer}>
+                  <Text style={styles.fieldLabel}>{t("members.role")}</Text>
+                  <View style={styles.buttonGroup}>
+                    <TouchableOpacity
+                      style={[
+                        styles.toggleBtn,
+                        overrideSettings.role === "pil" &&
+                          styles.toggleBtnActive,
+                      ]}
+                      onPress={() => set({ role: "pil", rank: "fo" })}
+                    >
+                      <Text
+                        style={[
+                          styles.toggleBtnText,
+                          overrideSettings.role === "pil" &&
+                            styles.toggleBtnTextActive,
+                        ]}
+                      >
+                        {t("settings.payslipPilot")}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.toggleBtn,
+                        overrideSettings.role === "cc" &&
+                          styles.toggleBtnActive,
+                      ]}
+                      onPress={() => set({ role: "cc", rank: "sepe" })}
+                    >
+                      <Text
+                        style={[
+                          styles.toggleBtnText,
+                          overrideSettings.role === "cc" &&
+                            styles.toggleBtnTextActive,
+                        ]}
+                      >
+                        {t("settings.payslipCabinCrew")}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
 
-          <Text style={[styles.label, { marginTop: spacing.md }]}>Regional Surcharge (%)</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              value={settings.addRegionali.toString()}
-              onChangeText={(value) => {
-                const num = parseFloat(value);
-                if (!isNaN(num) && num >= 0 && num <= 100) {
-                  setSettings({ addRegionali: num });
-                }
-              }}
-              keyboardType="numeric"
-              maxLength={5}
-              placeholder="0"
-            />
-            <Text style={styles.percentSign}>%</Text>
-          </View>
-        </View>
+              <View style={styles.selectorContainer}>
+                <Text style={styles.fieldLabel}>
+                  {t("settings.payslipRank")}
+                </Text>
+                <View style={styles.rankContainer}>
+                  {availableRanks.map((rank) => (
+                    <TouchableOpacity
+                      key={rank}
+                      style={[
+                        styles.rankBtn,
+                        overrideSettings.rank === rank && styles.rankBtnActive,
+                      ]}
+                      onPress={() => set({ rank })}
+                    >
+                      <Text
+                        style={[
+                          styles.rankBtnText,
+                          overrideSettings.rank === rank &&
+                            styles.rankBtnTextActive,
+                        ]}
+                      >
+                        {rank.toUpperCase()}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
 
-        <View style={styles.infoCard}>
-          <Info size={20} color={colors.primary} />
-          <Text style={styles.infoText}>
-            Settings are automatically saved. Changes will apply to the next calculation.
-          </Text>
-        </View>
+              {overrideSettings.rank === "cpt" && (
+                <CheckboxRow
+                  label={t("settings.payslipNewCaptain")}
+                  value={overrideSettings.cu}
+                  onToggle={() => set({ cu: !overrideSettings.cu })}
+                />
+              )}
+              {overrideSettings.rank === "tri" && (
+                <CheckboxRow
+                  label={t("settings.payslipTriLtc")}
+                  value={overrideSettings.triAndLtc}
+                  onToggle={() =>
+                    set({ triAndLtc: !overrideSettings.triAndLtc })
+                  }
+                />
+              )}
+              {["sfi", "tri", "tre"].includes(overrideSettings.rank) && (
+                <CheckboxRow
+                  label={t("settings.payslipBtc")}
+                  value={overrideSettings.btc}
+                  onToggle={() => set({ btc: !overrideSettings.btc })}
+                />
+              )}
+              <CheckboxRow
+                label={t("settings.payslipDependentSpouse")}
+                value={overrideSettings.coniugeCarico}
+                onToggle={() =>
+                  set({ coniugeCarico: !overrideSettings.coniugeCarico })
+                }
+              />
+            </View>
+
+            {/* Pension Fund */}
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>
+                {t("settings.payslipPension")}
+              </Text>
+              <Text style={styles.fieldLabel}>
+                {t("settings.payslipVoluntaryContribution")}
+              </Text>
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={styles.numInput}
+                  value={overrideSettings.voluntaryPensionContribution.toString()}
+                  onChangeText={(v) => {
+                    const n = parseFloat(v);
+                    if (!isNaN(n) && n >= 0 && n <= 100)
+                      set({ voluntaryPensionContribution: n });
+                  }}
+                  keyboardType="numeric"
+                  maxLength={5}
+                  placeholder="0"
+                  placeholderTextColor={colors.textSecondary}
+                />
+                <Text style={styles.inputSuffix}>%</Text>
+              </View>
+              <Text style={styles.hint}>
+                {t("settings.payslipPensionHint")}
+              </Text>
+            </View>
+
+            {/* Part-Time */}
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>
+                {t("settings.payslipPartTime")}
+              </Text>
+              <CheckboxRow
+                label={t("settings.payslipPartTimeContract")}
+                value={overrideSettings.parttime}
+                onToggle={() => set({ parttime: !overrideSettings.parttime })}
+              />
+              {overrideSettings.parttime && (
+                <View style={styles.selectorContainer}>
+                  <Text style={styles.fieldLabel}>
+                    {t("settings.payslipPercentage")}
+                  </Text>
+                  <View style={styles.buttonGroup}>
+                    {[0.5, 0.66, 0.75].map((pct) => (
+                      <TouchableOpacity
+                        key={pct}
+                        style={[
+                          styles.toggleBtn,
+                          overrideSettings.parttimePercentage === pct &&
+                            styles.toggleBtnActive,
+                        ]}
+                        onPress={() => set({ parttimePercentage: pct })}
+                      >
+                        <Text
+                          style={[
+                            styles.toggleBtnText,
+                            overrideSettings.parttimePercentage === pct &&
+                              styles.toggleBtnTextActive,
+                          ]}
+                        >
+                          {Math.round(pct * 100)}%
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </View>
+
+            {/* Local Taxes */}
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>
+                {t("settings.payslipLocalTaxes")}
+              </Text>
+
+              <Text style={styles.fieldLabel}>
+                {t("settings.payslipMunicipalSurcharge")}
+              </Text>
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={styles.numInput}
+                  value={comunaliText}
+                  onChangeText={(v) => {
+                    const normalized = v.replace(",", ".");
+                    setComunaliText(normalized);
+                    const n = parseFloat(normalized);
+                    if (!isNaN(n) && n >= 0) set({ addComunali: n });
+                  }}
+                  keyboardType="decimal-pad"
+                  maxLength={10}
+                  placeholder="0"
+                  placeholderTextColor={colors.textSecondary}
+                />
+                <Text style={styles.inputSuffix}>€</Text>
+              </View>
+
+              <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>
+                {t("settings.payslipMunicipalSurchargeAdvance")}
+              </Text>
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={styles.numInput}
+                  value={accontoText}
+                  onChangeText={(v) => {
+                    const normalized = v.replace(",", ".");
+                    setAccontoText(normalized);
+                    const n = parseFloat(normalized);
+                    if (!isNaN(n) && n >= 0) set({ accontoAddComunali: n });
+                  }}
+                  keyboardType="decimal-pad"
+                  maxLength={10}
+                  placeholder="0"
+                  placeholderTextColor={colors.textSecondary}
+                />
+                <Text style={styles.inputSuffix}>€</Text>
+              </View>
+
+              <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>
+                {t("settings.payslipRegionalSurcharge")}
+              </Text>
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={styles.numInput}
+                  value={regionaliText}
+                  onChangeText={(v) => {
+                    const normalized = v.replace(",", ".");
+                    setRegionaliText(normalized);
+                    const n = parseFloat(normalized);
+                    if (!isNaN(n) && n >= 0) set({ addRegionali: n });
+                  }}
+                  keyboardType="decimal-pad"
+                  maxLength={10}
+                  placeholder="0"
+                  placeholderTextColor={colors.textSecondary}
+                />
+                <Text style={styles.inputSuffix}>€</Text>
+              </View>
+            </View>
+
+            {/* Reset button */}
+            <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
+              <X size={16} color={colors.error} />
+              <Text style={styles.resetBtnText}>
+                {t("settings.payslipOverrideReset")}
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
 
         <View style={styles.bottomSpace} />
       </ScrollView>
@@ -292,41 +440,73 @@ export const SettingsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  safeArea: {
-    backgroundColor: colors.primary,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  safeArea: { backgroundColor: colors.primary },
   header: {
     backgroundColor: colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingBottom: 16,
   },
-  menuButton: {
-    padding: 8,
-  },
+  menuButton: { padding: 8 },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colors.textInverse,
   },
-  placeholder: {
-    width: 40,
+  placeholder: { width: 40 },
+  content: { flex: 1 },
+  scrollContent: { padding: spacing.md },
+  bottomSpace: { height: spacing.xl },
+  // ── Override toggle ──────────────────────────────
+  overrideCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1.5,
+    borderColor: colors.warning,
   },
-  content: {
+  overrideHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  overrideTitle: {
+    flex: 1,
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.bold,
+    color: colors.warning,
+  },
+  overrideDescription: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
+  },
+  overrideBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    backgroundColor: colors.warning + "20",
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  overrideBannerText: {
+    fontSize: typography.sizes.xs,
+    color: colors.warning,
+    fontWeight: typography.weights.semibold,
     flex: 1,
   },
+  // ── Cards ────────────────────────────────────────
   card: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.md,
+    marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -336,73 +516,57 @@ const styles = StyleSheet.create({
     color: colors.primary,
     marginBottom: spacing.md,
   },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-  },
-  infoLabel: {
-    fontSize: typography.sizes.sm,
-    color: colors.textSecondary,
-  },
-  infoValue: {
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
-    color: colors.text,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primaryLight,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.md,
-    gap: spacing.sm,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: typography.sizes.sm,
-    color: colors.primary,
-  },
-  bottomSpace: {
-    height: spacing.xl,
-  },
-  label: {
+  fieldLabel: {
     fontSize: typography.sizes.sm,
     color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
+  selectorContainer: { marginBottom: spacing.md },
+  buttonGroup: { flexDirection: "row", gap: spacing.sm },
+  toggleBtn: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surface,
+    alignItems: "center",
   },
-  input: {
-    flex: 1,
+  toggleBtnActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  toggleBtnText: {
     fontSize: typography.sizes.base,
     color: colors.text,
-    paddingVertical: spacing.md,
+    fontWeight: typography.weights.medium,
   },
-  percentSign: {
-    fontSize: typography.sizes.base,
-    color: colors.textSecondary,
-    marginLeft: spacing.xs,
+  toggleBtnTextActive: { color: colors.textInverse },
+  rankContainer: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  rankBtn: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    minWidth: 70,
+    alignItems: "center",
   },
-  hint: {
-    fontSize: typography.sizes.xs,
-    color: colors.textSecondary,
-    marginTop: spacing.sm,
-    fontStyle: 'italic',
+  rankBtnActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
+  rankBtnText: {
+    fontSize: typography.sizes.sm,
+    color: colors.text,
+    fontWeight: typography.weights.medium,
+  },
+  rankBtnTextActive: { color: colors.textInverse },
   checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: spacing.md,
   },
   checkbox: {
@@ -412,76 +576,59 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.primary,
     backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: spacing.sm,
   },
-  checkboxActive: {
-    backgroundColor: colors.primary,
-  },
+  checkboxActive: { backgroundColor: colors.primary },
   checkboxCheck: {
     color: colors.textInverse,
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.bold,
   },
-  checkboxLabel: {
-    fontSize: typography.sizes.base,
-    color: colors.text,
-  },
-  selectorContainer: {
+  checkboxLabel: { fontSize: typography.sizes.base, color: colors.text },
+  resetBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.error,
+    backgroundColor: colors.error + "10",
     marginBottom: spacing.md,
   },
-  buttonGroup: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+  resetBtnText: {
+    fontSize: typography.sizes.sm,
+    color: colors.error,
+    fontWeight: typography.weights.medium,
   },
-  roleButton: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.xs,
   },
-  roleButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  roleButtonText: {
+  numInput: {
+    flex: 1,
     fontSize: typography.sizes.base,
     color: colors.text,
-    fontWeight: typography.weights.medium,
+    paddingVertical: spacing.md,
   },
-  roleButtonTextActive: {
-    color: colors.textInverse,
+  inputSuffix: {
+    fontSize: typography.sizes.base,
+    color: colors.textSecondary,
+    marginLeft: spacing.xs,
   },
-  rankContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  rankButton: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    minWidth: 70,
-    alignItems: 'center',
-  },
-  rankButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  rankButtonText: {
+  hint: {
     fontSize: typography.sizes.sm,
-    color: colors.text,
-    fontWeight: typography.weights.medium,
-  },
-  rankButtonTextActive: {
-    color: colors.textInverse,
+    color: colors.textSecondary,
+    fontStyle: "italic",
+    marginTop: spacing.xs,
   },
 });

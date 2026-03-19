@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   PayslipInput,
   PayslipSettings,
@@ -8,8 +8,8 @@ import {
   SavedCalculation,
   AdditionalInput,
   AdditionalDeductionInput,
-} from '../types';
-import { calculatePayroll } from '../services/PayslipCalculator';
+} from "../types";
+import { calculatePayroll } from "../services/PayslipCalculator";
 
 interface PayslipState {
   input: PayslipInput;
@@ -18,9 +18,13 @@ interface PayslipState {
   history: SavedCalculation[];
   isCalculating: boolean;
   error: string | null;
+  overrideActive: boolean;
+  overrideSettings: PayslipSettings;
 
   setInput: (input: Partial<PayslipInput>) => void;
   setSettings: (settings: Partial<PayslipSettings>) => void;
+  setOverrideActive: (active: boolean) => void;
+  setOverrideSettings: (settings: Partial<PayslipSettings>) => void;
   calculate: (userFlags?: { itud?: boolean; rsa?: boolean }) => Promise<void>;
   saveCalculation: (name?: string) => void;
   deleteCalculation: (id: string) => void;
@@ -32,13 +36,16 @@ interface PayslipState {
   removeAdditionalPayment: (index: number) => void;
   // Additional deductions
   addAdditionalDeduction: (item: AdditionalDeductionInput) => void;
-  updateAdditionalDeduction: (index: number, item: AdditionalDeductionInput) => void;
+  updateAdditionalDeduction: (
+    index: number,
+    item: AdditionalDeductionInput,
+  ) => void;
   removeAdditionalDeduction: (index: number) => void;
 }
 
 const defaultInput: PayslipInput = {
-  date: new Date().toISOString().split('T')[0],
-  sbh: '00:00',
+  date: new Date().toISOString().split("T")[0],
+  sbh: "00:00",
   flyDiaria: 0,
   noFlyDiaria: 0,
   onlyNationalFly: 0,
@@ -63,10 +70,10 @@ const defaultInput: PayslipInput = {
 };
 
 const defaultSettings: PayslipSettings = {
-  company: 'RYR',
-  role: 'pil',
-  rank: 'fo',
-  base: 'BGY',
+  company: "RYR",
+  role: "pil",
+  rank: "fo",
+  base: "BGY",
   union: 20,
   parttime: false,
   parttimePercentage: 1,
@@ -92,6 +99,8 @@ export const usePayslipStore = create<PayslipState>()(
       history: [],
       isCalculating: false,
       error: null,
+      overrideActive: false,
+      overrideSettings: { ...defaultSettings },
 
       setInput: (input) => {
         set((state) => ({ input: { ...state.input, ...input } }));
@@ -101,20 +110,33 @@ export const usePayslipStore = create<PayslipState>()(
         set((state) => ({ settings: { ...state.settings, ...settings } }));
       },
 
+      setOverrideActive: (active) => set({ overrideActive: active }),
+
+      setOverrideSettings: (settings) => {
+        set((state) => ({
+          overrideSettings: { ...state.overrideSettings, ...settings },
+        }));
+      },
+
       calculate: async (userFlags = {}) => {
-        const { input, settings } = get();
+        const { input, settings, overrideActive, overrideSettings } = get();
+        const activeSettings = overrideActive ? overrideSettings : settings;
         set({ isCalculating: true, error: null });
 
         try {
-          const result = await calculatePayroll(input, settings, userFlags);
+          const result = await calculatePayroll(
+            input,
+            activeSettings,
+            userFlags,
+          );
           if (result) {
             set({ result, isCalculating: false });
           } else {
-            set({ error: 'Errore nel calcolo', isCalculating: false });
+            set({ error: "Errore nel calcolo", isCalculating: false });
           }
         } catch (err) {
           set({
-            error: err instanceof Error ? err.message : 'Errore sconosciuto',
+            error: err instanceof Error ? err.message : "Errore sconosciuto",
             isCalculating: false,
           });
         }
@@ -126,7 +148,7 @@ export const usePayslipStore = create<PayslipState>()(
 
         const calculation: SavedCalculation = {
           id: Date.now().toString(),
-          name: name || `Calcolo ${new Date().toLocaleDateString('it-IT')}`,
+          name: name || `Calcolo ${new Date().toLocaleDateString("it-IT")}`,
           date: input.date,
           input: { ...input },
           settings: { ...settings },
@@ -173,7 +195,9 @@ export const usePayslipStore = create<PayslipState>()(
         set((state) => ({
           input: {
             ...state.input,
-            additional: state.input.additional.map((a, i) => (i === index ? item : a)),
+            additional: state.input.additional.map((a, i) =>
+              i === index ? item : a,
+            ),
           },
         }));
       },
@@ -201,7 +225,9 @@ export const usePayslipStore = create<PayslipState>()(
         set((state) => ({
           input: {
             ...state.input,
-            additionalDeductions: state.input.additionalDeductions.map((a, i) => (i === index ? item : a)),
+            additionalDeductions: state.input.additionalDeductions.map(
+              (a, i) => (i === index ? item : a),
+            ),
           },
         }));
       },
@@ -210,18 +236,20 @@ export const usePayslipStore = create<PayslipState>()(
         set((state) => ({
           input: {
             ...state.input,
-            additionalDeductions: state.input.additionalDeductions.filter((_, i) => i !== index),
+            additionalDeductions: state.input.additionalDeductions.filter(
+              (_, i) => i !== index,
+            ),
           },
         }));
       },
     }),
     {
-      name: 'payslip-storage',
+      name: "payslip-storage",
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         settings: state.settings,
         history: state.history,
       }),
-    }
-  )
+    },
+  ),
 );

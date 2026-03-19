@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -6,25 +6,29 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Menu } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
-import { colors, spacing, typography, borderRadius } from '../../theme';
-import { useAuthStore } from '../../store/authStore';
-import { usePayslipStore } from '../store/usePayslipStore';
-import { MonthPicker } from '../components/input/MonthPicker';
-import { SbhPicker } from '../components/input/SbhPicker';
-import { NumberInput } from '../components/input/NumberInput';
-import { AdditionalPaymentsSection } from '../components/input/AdditionalPaymentsSection';
-import { AdditionalDeductionsSection } from '../components/input/AdditionalDeductionsSection';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Menu } from "lucide-react-native";
+import { useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
+import { colors, spacing, typography, borderRadius } from "../../theme";
+import { useAuthStore } from "../../store/authStore";
+import { usePayslipStore } from "../store/usePayslipStore";
+import { MonthPicker } from "../components/input/MonthPicker";
+import { SbhPicker } from "../components/input/SbhPicker";
+import { NumberInput } from "../components/input/NumberInput";
+import { AdditionalPaymentsSection } from "../components/input/AdditionalPaymentsSection";
+import { AdditionalDeductionsSection } from "../components/input/AdditionalDeductionsSection";
 
 export const InputScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const { user } = useAuthStore();
-  const { 
-    input, 
-    settings, 
+  const {
+    input,
+    settings,
+    overrideActive,
+    overrideSettings,
     setInput,
     addAdditionalPayment,
     updateAdditionalPayment,
@@ -34,9 +38,10 @@ export const InputScreen: React.FC = () => {
     removeAdditionalDeduction,
   } = usePayslipStore();
 
-  const isPilot = settings.role === 'pil';
-  const isLTC = settings.rank === 'ltc';
-  const isInstructor = ['sfi', 'tri', 'tre'].includes(settings.rank);
+  const activeSettings = overrideActive ? overrideSettings : settings;
+  const isPilot = activeSettings.role === "pil";
+  const isLTC = activeSettings.rank === "ltc";
+  const isInstructor = ["sfi", "tri", "tre"].includes(activeSettings.rank);
 
   // Get ITUD flag from user profile
   const hasItud = user?.itud ?? false;
@@ -49,46 +54,49 @@ export const InputScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Payslip Calculator</Text>
+          <Text style={styles.headerTitle}>{t("payslip.title")}</Text>
           <View style={styles.placeholder} />
         </View>
       </SafeAreaView>
-      
+
       <ScrollView style={styles.content}>
         <View style={styles.card}>
-          <MonthPicker value={input.date} onChange={(date) => setInput({ date })} />
+          <MonthPicker
+            value={input.date}
+            onChange={(date) => setInput({ date })}
+          />
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Flight Activity</Text>
+          <Text style={styles.sectionTitle}>{t("payslip.flightActivity")}</Text>
           <SbhPicker value={input.sbh} onChange={(sbh) => setInput({ sbh })} />
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Per Diem</Text>
+          <Text style={styles.sectionTitle}>{t("payslip.perDiem")}</Text>
           <NumberInput
-            label="Flying Per Diem Days"
+            label={t("payslip.flyingPerDiem")}
             value={input.flyDiaria}
             onChange={(flyDiaria) => setInput({ flyDiaria })}
           />
           <NumberInput
-            label="Non-Flying Per Diem Days"
+            label={t("payslip.nonFlyingPerDiem")}
             value={input.noFlyDiaria}
             onChange={(noFlyDiaria) => setInput({ noFlyDiaria })}
           />
           <NumberInput
-            label="Out Of Base Nights"
+            label={t("payslip.outOfBase")}
             value={input.oob}
             onChange={(oob) => setInput({ oob })}
           />
           {isPilot && (
             <NumberInput
-              label="Working Day Off"
+              label={t("payslip.workingDayOff")}
               value={input.woff}
               onChange={(woff) => setInput({ woff })}
             />
@@ -96,38 +104,38 @@ export const InputScreen: React.FC = () => {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Leave & Absences</Text>
+          <Text style={styles.sectionTitle}>{t("payslip.leaveAbsences")}</Text>
           <NumberInput
-            label="Annual Leave Days"
+            label={t("payslip.annualLeave")}
             value={input.al}
             onChange={(al) => setInput({ al })}
           />
           {!isPilot && (
             <NumberInput
-              label="Bank Holidays"
+              label={t("payslip.bankHolidays")}
               value={input.bankHolydays}
               onChange={(bankHolydays) => setInput({ bankHolydays })}
             />
           )}
           {!isPilot && (
             <NumberInput
-              label="OOB Unplanned"
+              label={t("payslip.oobUnplanned")}
               value={input.oobUnplanned}
               onChange={(oobUnplanned) => setInput({ oobUnplanned })}
             />
           )}
           <NumberInput
-            label="Unpaid Leave Days"
+            label={t("payslip.unpaidLeave")}
             value={input.ul}
             onChange={(ul) => setInput({ ul })}
           />
           <NumberInput
-            label="Parental Leave Days"
+            label={t("payslip.parentalLeave")}
             value={input.parentalDays}
             onChange={(parentalDays) => setInput({ parentalDays })}
           />
           <NumberInput
-            label="Law 104 Leave Days"
+            label={t("payslip.law104")}
             value={input.days104}
             onChange={(days104) => setInput({ days104 })}
           />
@@ -135,9 +143,9 @@ export const InputScreen: React.FC = () => {
 
         {isLTC && (
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>LTC Training</Text>
+            <Text style={styles.sectionTitle}>{t("payslip.ltcTraining")}</Text>
             <NumberInput
-              label="Training Sectors"
+              label={t("payslip.trainingSectors")}
               value={input.trainingSectors}
               onChange={(trainingSectors) => setInput({ trainingSectors })}
             />
@@ -146,9 +154,9 @@ export const InputScreen: React.FC = () => {
 
         {isInstructor && (
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Instructor</Text>
+            <Text style={styles.sectionTitle}>{t("payslip.instructor")}</Text>
             <NumberInput
-              label="Simulator Days"
+              label={t("payslip.simulatorDays")}
               value={input.simDays}
               onChange={(simDays) => setInput({ simDays })}
             />
@@ -157,19 +165,19 @@ export const InputScreen: React.FC = () => {
 
         {!isPilot && (
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Cabin Crew</Text>
+            <Text style={styles.sectionTitle}>{t("members.cabinCrew")}</Text>
             <NumberInput
-              label="CC Training Days"
+              label={t("payslip.cabinCrewTraining")}
               value={input.ccTrainingDays}
               onChange={(ccTrainingDays) => setInput({ ccTrainingDays })}
             />
             <NumberInput
-              label="Landings on Day Off"
+              label={t("payslip.landingsOffDay")}
               value={input.landingInOffDay}
               onChange={(landingInOffDay) => setInput({ landingInOffDay })}
             />
             <NumberInput
-              label="Commissions"
+              label={t("payslip.commissions")}
               value={input.commissions}
               onChange={(commissions) => setInput({ commissions })}
             />
@@ -178,9 +186,9 @@ export const InputScreen: React.FC = () => {
 
         {hasItud && (
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Other</Text>
+            <Text style={styles.sectionTitle}>{t("payslip.other")}</Text>
             <NumberInput
-              label="ITUD Days"
+              label={t("payslip.itudDays")}
               value={input.itud}
               onChange={(itud) => setInput({ itud })}
             />
@@ -190,7 +198,14 @@ export const InputScreen: React.FC = () => {
         <View style={styles.card}>
           <AdditionalPaymentsSection
             items={input.additional}
-            onAdd={() => addAdditionalPayment({ amount: 0, tax: 100, isSLR: false, isConguaglio: false })}
+            onAdd={() =>
+              addAdditionalPayment({
+                amount: 0,
+                tax: 100,
+                isSLR: false,
+                isConguaglio: false,
+              })
+            }
             onUpdate={updateAdditionalPayment}
             onRemove={removeAdditionalPayment}
           />
@@ -199,7 +214,13 @@ export const InputScreen: React.FC = () => {
         <View style={styles.card}>
           <AdditionalDeductionsSection
             items={input.additionalDeductions}
-            onAdd={() => addAdditionalDeduction({ amount: 0, tax: 100, isConguaglio: false })}
+            onAdd={() =>
+              addAdditionalDeduction({
+                amount: 0,
+                tax: 100,
+                isConguaglio: false,
+              })
+            }
             onUpdate={updateAdditionalDeduction}
             onRemove={removeAdditionalDeduction}
           />
@@ -221,9 +242,9 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingBottom: 16,
   },
@@ -232,7 +253,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colors.textInverse,
   },
   placeholder: {

@@ -1,14 +1,10 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
-import { Plus, Trash2 } from 'lucide-react-native';
-import { colors, spacing, typography, borderRadius } from '../../../theme';
-import { NumberInput } from './NumberInput';
-import { AdditionalDeductionInput } from '../../types';
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Plus, Trash2 } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
+import { colors, spacing, typography, borderRadius } from "../../../theme";
+import { NumberInput } from "./NumberInput";
+import { AdditionalDeductionInput } from "../../types";
 
 interface AdditionalDeductionsSectionProps {
   items: AdditionalDeductionInput[];
@@ -17,19 +13,18 @@ interface AdditionalDeductionsSectionProps {
   onRemove: (index: number) => void;
 }
 
-const TAX_OPTIONS = [
-  { value: 100, label: 'Basic' },
-  { value: 50, label: 'FFP' },
-  { value: 0, label: 'Free' },
-  { value: 999, label: 'Conguaglio' },
-];
+export const AdditionalDeductionsSection: React.FC<
+  AdditionalDeductionsSectionProps
+> = ({ items, onAdd, onUpdate, onRemove }) => {
+  const { t } = useTranslation();
 
-export const AdditionalDeductionsSection: React.FC<AdditionalDeductionsSectionProps> = ({
-  items,
-  onAdd,
-  onUpdate,
-  onRemove,
-}) => {
+  const TAX_OPTIONS = [
+    { value: 100, label: t("payslip.basic") },
+    { value: 50, label: t("payslip.ffp") },
+    { value: 0, label: t("payslip.free") },
+    { value: 999, label: t("payslip.conguaglio") },
+  ];
+
   const handleTaxChange = (index: number, newTax: number) => {
     const item = items[index];
     onUpdate(index, { ...item, tax: newTax, isConguaglio: newTax === 999 });
@@ -38,10 +33,9 @@ export const AdditionalDeductionsSection: React.FC<AdditionalDeductionsSectionPr
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Additional Deductions</Text>
+        <Text style={styles.title}>{t("payslip.additionalDeductions")}</Text>
         <TouchableOpacity style={styles.addButton} onPress={onAdd}>
           <Plus size={20} color={colors.primary} />
-          <Text style={styles.addButtonText}>ADD</Text>
         </TouchableOpacity>
       </View>
 
@@ -57,14 +51,14 @@ export const AdditionalDeductionsSection: React.FC<AdditionalDeductionsSectionPr
           </View>
 
           <NumberInput
-            label="Amount"
+            label={t("payslip.amount")}
             value={item.amount}
             onChange={(amount) => onUpdate(index, { ...item, amount })}
             suffix="€"
           />
 
           <View style={styles.taxContainer}>
-            <Text style={styles.label}>Taxation</Text>
+            <Text style={styles.label}>{t("payslip.taxation")}</Text>
             <View style={styles.taxOptions}>
               {TAX_OPTIONS.map((option) => (
                 <TouchableOpacity
@@ -98,9 +92,9 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: spacing.md,
   },
   title: {
@@ -109,8 +103,8 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
   },
   addButtonText: {
@@ -127,8 +121,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   itemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
     marginBottom: spacing.sm,
   },
   removeButton: {
@@ -143,8 +137,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   taxOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm,
   },
   taxOption: {

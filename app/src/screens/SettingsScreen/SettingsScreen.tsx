@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,41 +7,375 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Fingerprint, Trash2, Globe, ChevronRight } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
+  TextInput,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  Fingerprint,
+  Trash2,
+  Globe,
+  ChevronRight,
+  Info,
+} from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 
-import { colors, spacing, typography, borderRadius } from '../../theme';
-import { useAuthStore } from '../../store/authStore';
-import { setLanguage, getLanguage } from '../../i18n';
+import { colors, spacing, typography, borderRadius } from "../../theme";
+import { useAuthStore } from "../../store/authStore";
+import { setLanguage, getLanguage } from "../../i18n";
+import { usePayslipStore } from "../../payslip/store/usePayslipStore";
+import { PayslipSettings } from "../../payslip/types";
 
 const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'it', label: 'Italiano' },
+  { code: "en", label: "English" },
+  { code: "it", label: "Italiano" },
 ];
 
+const PILOT_RANKS = [
+  "cpt",
+  "fo",
+  "sfi",
+  "tri",
+  "tre",
+  "ltc",
+  "lcc",
+  "jfo",
+  "so",
+];
+const CC_RANKS = ["sepe", "sepi", "pu", "jpu", "ju"];
+
+// Renders a full payslip settings form for a given settings object + setter
+interface PayslipFormProps {
+  s: PayslipSettings;
+  set: (patch: Partial<PayslipSettings>) => void;
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
+  /** When true, role and rank are always editable (override mode) */
+  forceEditable?: boolean;
+}
+
+const PayslipForm: React.FC<PayslipFormProps> = ({
+  s,
+  set,
+  isAdmin,
+  isSuperAdmin,
+  forceEditable = false,
+}) => {
+  const { t } = useTranslation();
+  const isPilot = s.role === "pil";
+  const availableRanks = isPilot ? PILOT_RANKS : CC_RANKS;
+  const canEditRole = isSuperAdmin || forceEditable;
+  const canEditRank = isAdmin || forceEditable;
+
+  const [comunaliText, setComunaliText] = useState(s.addComunali.toString());
+  const [accontoText, setAccontoText] = useState(
+    s.accontoAddComunali.toString(),
+  );
+  const [regionaliText, setRegionaliText] = useState(s.addRegionali.toString());
+
+  const handlePensionChange = (value: string) => {
+    const num = parseFloat(value);
+    if (!isNaN(num) && num >= 0 && num <= 100) {
+      set({ voluntaryPensionContribution: num });
+    }
+  };
+
+  return (
+    <>
+      {/* Profile */}
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>{t("settings.payslipProfile")}</Text>
+
+        {canEditRole ? (
+          <View style={styles.selectorContainer}>
+            <Text style={styles.fieldLabel}>{t("members.role")}</Text>
+            <View style={styles.buttonGroup}>
+              <TouchableOpacity
+                style={[
+                  styles.toggleBtn,
+                  s.role === "pil" && styles.toggleBtnActive,
+                ]}
+                onPress={() => set({ role: "pil", rank: "fo" })}
+              >
+                <Text
+                  style={[
+                    styles.toggleBtnText,
+                    s.role === "pil" && styles.toggleBtnTextActive,
+                  ]}
+                >
+                  {t("settings.payslipPilot")}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.toggleBtn,
+                  s.role === "cc" && styles.toggleBtnActive,
+                ]}
+                onPress={() => set({ role: "cc", rank: "sepe" })}
+              >
+                <Text
+                  style={[
+                    styles.toggleBtnText,
+                    s.role === "cc" && styles.toggleBtnTextActive,
+                  ]}
+                >
+                  {t("settings.payslipCabinCrew")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>{t("members.role")}</Text>
+            <Text style={styles.infoValue}>
+              {isPilot
+                ? t("settings.payslipPilot")
+                : t("settings.payslipCabinCrew")}
+            </Text>
+          </View>
+        )}
+
+        {canEditRank ? (
+          <View style={styles.selectorContainer}>
+            <Text style={styles.fieldLabel}>{t("settings.payslipRank")}</Text>
+            <View style={styles.rankContainer}>
+              {availableRanks.map((rank) => (
+                <TouchableOpacity
+                  key={rank}
+                  style={[
+                    styles.rankBtn,
+                    s.rank === rank && styles.rankBtnActive,
+                  ]}
+                  onPress={() => set({ rank })}
+                >
+                  <Text
+                    style={[
+                      styles.rankBtnText,
+                      s.rank === rank && styles.rankBtnTextActive,
+                    ]}
+                  >
+                    {rank.toUpperCase()}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        ) : (
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>{t("settings.payslipRank")}</Text>
+            <Text style={styles.infoValue}>{s.rank.toUpperCase()}</Text>
+          </View>
+        )}
+
+        {s.rank === "cpt" && (
+          <CheckboxRow
+            label={t("settings.payslipNewCaptain")}
+            value={s.cu}
+            onToggle={() => set({ cu: !s.cu })}
+          />
+        )}
+        {s.rank === "tri" && (
+          <CheckboxRow
+            label={t("settings.payslipTriLtc")}
+            value={s.triAndLtc}
+            onToggle={() => set({ triAndLtc: !s.triAndLtc })}
+          />
+        )}
+        {["sfi", "tri", "tre"].includes(s.rank) && (
+          <CheckboxRow
+            label={t("settings.payslipBtc")}
+            value={s.btc}
+            onToggle={() => set({ btc: !s.btc })}
+          />
+        )}
+        <CheckboxRow
+          label={t("settings.payslipDependentSpouse")}
+          value={s.coniugeCarico}
+          onToggle={() => set({ coniugeCarico: !s.coniugeCarico })}
+        />
+      </View>
+
+      {/* Pension Fund */}
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>{t("settings.payslipPension")}</Text>
+        <Text style={styles.fieldLabel}>
+          {t("settings.payslipVoluntaryContribution")}
+        </Text>
+        <View style={styles.inputRow}>
+          <TextInput
+            style={styles.numInput}
+            value={s.voluntaryPensionContribution.toString()}
+            onChangeText={handlePensionChange}
+            keyboardType="numeric"
+            maxLength={5}
+            placeholder="0"
+            placeholderTextColor={colors.textSecondary}
+          />
+          <Text style={styles.inputSuffix}>%</Text>
+        </View>
+        <Text style={styles.hint}>{t("settings.payslipPensionHint")}</Text>
+      </View>
+
+      {/* Part-Time */}
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>{t("settings.payslipPartTime")}</Text>
+        <CheckboxRow
+          label={t("settings.payslipPartTimeContract")}
+          value={s.parttime}
+          onToggle={() => set({ parttime: !s.parttime })}
+        />
+        {s.parttime && (
+          <View style={styles.selectorContainer}>
+            <Text style={styles.fieldLabel}>
+              {t("settings.payslipPercentage")}
+            </Text>
+            <View style={styles.buttonGroup}>
+              {[0.5, 0.66, 0.75].map((pct) => (
+                <TouchableOpacity
+                  key={pct}
+                  style={[
+                    styles.toggleBtn,
+                    s.parttimePercentage === pct && styles.toggleBtnActive,
+                  ]}
+                  onPress={() => set({ parttimePercentage: pct })}
+                >
+                  <Text
+                    style={[
+                      styles.toggleBtnText,
+                      s.parttimePercentage === pct &&
+                        styles.toggleBtnTextActive,
+                    ]}
+                  >
+                    {Math.round(pct * 100)}%
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* Local Taxes */}
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>
+          {t("settings.payslipLocalTaxes")}
+        </Text>
+
+        <Text style={styles.fieldLabel}>
+          {t("settings.payslipMunicipalSurcharge")}
+        </Text>
+        <View style={styles.inputRow}>
+          <TextInput
+            style={styles.numInput}
+            value={comunaliText}
+            onChangeText={(v) => {
+              const normalized = v.replace(",", ".");
+              setComunaliText(normalized);
+              const n = parseFloat(normalized);
+              if (!isNaN(n) && n >= 0) set({ addComunali: n });
+            }}
+            keyboardType="decimal-pad"
+            maxLength={10}
+            placeholder="0"
+            placeholderTextColor={colors.textSecondary}
+          />
+          <Text style={styles.inputSuffix}>€</Text>
+        </View>
+
+        <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>
+          {t("settings.payslipMunicipalSurchargeAdvance")}
+        </Text>
+        <View style={styles.inputRow}>
+          <TextInput
+            style={styles.numInput}
+            value={accontoText}
+            onChangeText={(v) => {
+              const normalized = v.replace(",", ".");
+              setAccontoText(normalized);
+              const n = parseFloat(normalized);
+              if (!isNaN(n) && n >= 0) set({ accontoAddComunali: n });
+            }}
+            keyboardType="decimal-pad"
+            maxLength={10}
+            placeholder="0"
+            placeholderTextColor={colors.textSecondary}
+          />
+          <Text style={styles.inputSuffix}>€</Text>
+        </View>
+
+        <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>
+          {t("settings.payslipRegionalSurcharge")}
+        </Text>
+        <View style={styles.inputRow}>
+          <TextInput
+            style={styles.numInput}
+            value={regionaliText}
+            onChangeText={(v) => {
+              const normalized = v.replace(",", ".");
+              setRegionaliText(normalized);
+              const n = parseFloat(normalized);
+              if (!isNaN(n) && n >= 0) set({ addRegionali: n });
+            }}
+            keyboardType="decimal-pad"
+            maxLength={10}
+            placeholder="0"
+            placeholderTextColor={colors.textSecondary}
+          />
+          <Text style={styles.inputSuffix}>€</Text>
+        </View>
+      </View>
+    </>
+  );
+};
+
+// Small reusable checkbox row
+interface CheckboxRowProps {
+  label: string;
+  value: boolean;
+  onToggle: () => void;
+}
+
+const CheckboxRow: React.FC<CheckboxRowProps> = ({
+  label,
+  value,
+  onToggle,
+}) => (
+  <TouchableOpacity style={styles.checkboxRow} onPress={onToggle}>
+    <View style={[styles.checkbox, value && styles.checkboxActive]}>
+      {value && <Text style={styles.checkboxCheck}>✓</Text>}
+    </View>
+    <Text style={styles.checkboxLabel}>{label}</Text>
+  </TouchableOpacity>
+);
+
+// ─── Main Screen ────────────────────────────────────────────────────────────
+
 export const SettingsScreen: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { biometricEnabled, disableBiometric } = useAuthStore();
+  const { settings, setSettings } = usePayslipStore();
+
+  const [activeTab, setActiveTab] = useState<"general" | "payslip">("general");
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const currentLanguage = getLanguage();
 
   const handleDisableBiometric = () => {
     Alert.alert(
-      t('settings.disableBiometricConfirm'),
-      t('settings.disableBiometricConfirm'),
+      t("settings.disableBiometricConfirm"),
+      t("settings.disableBiometricConfirm"),
       [
-        { text: t('common.cancel'), style: 'cancel' },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: t('common.delete'),
-          style: 'destructive',
+          text: t("common.delete"),
+          style: "destructive",
           onPress: () => {
             disableBiometric();
-            Alert.alert(t('common.success'), t('settings.biometricAuth') + ' ' + t('settings.disabled'));
-          }
-        }
-      ]
+            Alert.alert(
+              t("common.success"),
+              t("settings.biometricAuth") + " " + t("settings.disabled"),
+            );
+          },
+        },
+      ],
     );
   };
 
@@ -50,118 +384,174 @@ export const SettingsScreen: React.FC = () => {
     setShowLanguageModal(false);
   };
 
-  const getCurrentLanguageLabel = () => {
-    return LANGUAGES.find(l => l.code === currentLanguage)?.label || 'English';
-  };
+  const getCurrentLanguageLabel = () =>
+    LANGUAGES.find((l) => l.code === currentLanguage)?.label || "English";
 
-  return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.content}>
-        {/* Language Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
-          
-          <TouchableOpacity 
-            style={styles.card}
-            onPress={() => setShowLanguageModal(true)}
-            activeOpacity={0.8}
-          >
-            <View style={styles.row}>
-              <View style={styles.iconContainer}>
-                <Globe size={24} color={colors.primary} />
-              </View>
-              <View style={styles.textContainer}>
-                <Text style={styles.label}>{t('settings.selectLanguage')}</Text>
-                <Text style={styles.value}>{getCurrentLanguageLabel()}</Text>
-              </View>
-              <ChevronRight size={20} color={colors.textSecondary} />
+  const renderGeneralTab = () => (
+    <>
+      {/* Language */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t("settings.language")}</Text>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => setShowLanguageModal(true)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.row}>
+            <View style={styles.iconContainer}>
+              <Globe size={24} color={colors.primary} />
             </View>
-          </TouchableOpacity>
-
-          {/* Language Selector Modal */}
-          {showLanguageModal && (
-            <View style={styles.languageModal}>
-              {LANGUAGES.map((lang) => (
-                <TouchableOpacity
-                  key={lang.code}
+            <View style={styles.textContainer}>
+              <Text style={styles.label}>{t("settings.selectLanguage")}</Text>
+              <Text style={styles.value}>{getCurrentLanguageLabel()}</Text>
+            </View>
+            <ChevronRight size={20} color={colors.textSecondary} />
+          </View>
+        </TouchableOpacity>
+        {showLanguageModal && (
+          <View style={styles.languageModal}>
+            {LANGUAGES.map((lang) => (
+              <TouchableOpacity
+                key={lang.code}
+                style={[
+                  styles.languageOption,
+                  currentLanguage === lang.code && styles.languageOptionActive,
+                ]}
+                onPress={() => handleLanguageChange(lang.code)}
+              >
+                <Text
                   style={[
-                    styles.languageOption,
-                    currentLanguage === lang.code && styles.languageOptionActive
-                  ]}
-                  onPress={() => handleLanguageChange(lang.code)}
-                >
-                  <Text style={[
                     styles.languageOptionText,
-                    currentLanguage === lang.code && styles.languageOptionTextActive
-                  ]}>
-                    {lang.label}
-                  </Text>
-                  {currentLanguage === lang.code && (
-                    <View style={styles.checkmark}>
-                      <Text style={styles.checkmarkText}>✓</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Security Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('settings.security')}</Text>
-          
-          <View style={styles.card}>
-            <View style={styles.row}>
-              <View style={styles.iconContainer}>
-                <Fingerprint size={24} color={colors.primary} />
-              </View>
-              <View style={styles.textContainer}>
-                <Text style={styles.label}>{t('settings.biometricAuth')}</Text>
-                <Text style={styles.value}>
-                  {biometricEnabled ? t('auth.biometricEnabled') : t('auth.biometricDisabled')}
-                </Text>
-              </View>
-              {biometricEnabled && (
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={handleDisableBiometric}
+                    currentLanguage === lang.code &&
+                      styles.languageOptionTextActive,
+                  ]}
                 >
-                  <Trash2 size={20} color={colors.error} />
-                </TouchableOpacity>
-              )}
+                  {lang.label}
+                </Text>
+                {currentLanguage === lang.code && (
+                  <View style={styles.checkmark}>
+                    <Text style={styles.checkmarkText}>✓</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
+
+      {/* Security */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t("settings.security")}</Text>
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <View style={styles.iconContainer}>
+              <Fingerprint size={24} color={colors.primary} />
             </View>
-            
+            <View style={styles.textContainer}>
+              <Text style={styles.label}>{t("settings.biometricAuth")}</Text>
+              <Text style={styles.value}>
+                {biometricEnabled
+                  ? t("auth.biometricEnabled")
+                  : t("auth.biometricDisabled")}
+              </Text>
+            </View>
             {biometricEnabled && (
               <TouchableOpacity
-                style={styles.disableButton}
+                style={styles.actionButton}
                 onPress={handleDisableBiometric}
               >
-                <Text style={styles.disableButtonText}>
-                  {t('settings.disableAndDelete')}
-                </Text>
+                <Trash2 size={20} color={colors.error} />
               </TouchableOpacity>
             )}
           </View>
+          {biometricEnabled && (
+            <TouchableOpacity
+              style={styles.disableButton}
+              onPress={handleDisableBiometric}
+            >
+              <Text style={styles.disableButtonText}>
+                {t("settings.disableAndDelete")}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
+      </View>
 
-        {/* App Info Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('settings.info')}</Text>
-          
-          <View style={styles.card}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>{t('settings.version')}</Text>
-              <Text style={styles.infoValue}>1.0.0</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>{t('settings.build')}</Text>
-              <Text style={styles.infoValue}>2025.03.16</Text>
-            </View>
+      {/* App Info */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t("settings.info")}</Text>
+        <View style={styles.card}>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>{t("settings.version")}</Text>
+            <Text style={styles.infoValue}>1.0.0</Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>{t("settings.build")}</Text>
+            <Text style={styles.infoValue}>2025.03.16</Text>
           </View>
         </View>
+      </View>
+    </>
+  );
 
+  const renderPayslipTab = () => (
+    <>
+      {/* User's own payslip settings — role/rank always read-only here */}
+      <View style={styles.section}>
+        <PayslipForm
+          s={settings}
+          set={setSettings}
+          isAdmin={false}
+          isSuperAdmin={false}
+        />
+
+        {/* Info */}
+        <View style={styles.infoCard}>
+          <Info size={20} color={colors.primary} />
+          <Text style={styles.infoCardText}>
+            Settings are automatically saved and applied to the payslip
+            calculator.
+          </Text>
+        </View>
+      </View>
+    </>
+  );
+
+  return (
+    <SafeAreaView style={styles.container} edges={["bottom"]}>
+      {/* Tab bar */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === "general" && styles.tabActive]}
+          onPress={() => setActiveTab("general")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "general" && styles.tabTextActive,
+            ]}
+          >
+            {t("settings.tabGeneral")}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === "payslip" && styles.tabActive]}
+          onPress={() => setActiveTab("payslip")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "payslip" && styles.tabTextActive,
+            ]}
+          >
+            {t("settings.tabPayslip")}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.content}>
+        {activeTab === "general" ? renderGeneralTab() : renderPayslipTab()}
         <View style={styles.bottomSpace} />
       </ScrollView>
     </SafeAreaView>
@@ -173,6 +563,35 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  // ── Tabs ────────────────────────────────
+  tabBar: {
+    flexDirection: "row",
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.md,
+    gap: spacing.xs,
+  },
+  tabActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: colors.primary,
+  },
+  tabText: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.medium,
+    color: colors.textSecondary,
+  },
+  tabTextActive: {
+    color: colors.primary,
+    fontWeight: typography.weights.bold,
+  },
+  // ── Layout ──────────────────────────────
   content: {
     flex: 1,
   },
@@ -180,41 +599,46 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     paddingHorizontal: spacing.md,
   },
+  bottomSpace: {
+    height: spacing.xl,
+  },
+  // ── Card (General tab) ──────────────────
   sectionTitle: {
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
     color: colors.text,
     marginBottom: spacing.md,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   card: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.08,
         shadowRadius: 4,
       },
-      android: {
-        elevation: 3,
-      },
+      android: { elevation: 2 },
     }),
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   iconContainer: {
     width: 44,
     height: 44,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.primary + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: colors.primary + "15",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: spacing.md,
   },
   textContainer: {
@@ -236,9 +660,9 @@ const styles = StyleSheet.create({
   disableButton: {
     marginTop: spacing.md,
     paddingVertical: spacing.md,
-    backgroundColor: colors.error + '10',
+    backgroundColor: colors.error + "10",
     borderRadius: borderRadius.md,
-    alignItems: 'center',
+    alignItems: "center",
   },
   disableButtonText: {
     fontSize: typography.sizes.base,
@@ -246,17 +670,17 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.medium,
   },
   infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: spacing.xs,
   },
   infoLabel: {
-    fontSize: typography.sizes.base,
+    fontSize: typography.sizes.sm,
     color: colors.textSecondary,
   },
   infoValue: {
-    fontSize: typography.sizes.base,
+    fontSize: typography.sizes.sm,
     fontWeight: typography.weights.medium,
     color: colors.text,
   },
@@ -264,36 +688,24 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.border,
   },
-  bottomSpace: {
-    height: spacing.xl,
-  },
   languageModal: {
     marginTop: spacing.md,
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.sm,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   languageOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.md,
   },
   languageOptionActive: {
-    backgroundColor: colors.primary + '10',
+    backgroundColor: colors.primary + "10",
   },
   languageOptionText: {
     fontSize: typography.sizes.base,
@@ -308,13 +720,144 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: borderRadius.full,
     backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   checkmarkText: {
     color: colors.textInverse,
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.bold,
+  },
+  // ── Payslip form ────────────────────────
+  fieldLabel: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  selectorContainer: {
+    marginBottom: spacing.md,
+  },
+  buttonGroup: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  toggleBtn: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+  },
+  toggleBtnActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  toggleBtnText: {
+    fontSize: typography.sizes.base,
+    color: colors.text,
+    fontWeight: typography.weights.medium,
+  },
+  toggleBtnTextActive: {
+    color: colors.textInverse,
+  },
+  rankContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  rankBtn: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    minWidth: 70,
+    alignItems: "center",
+  },
+  rankBtnActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  rankBtnText: {
+    fontSize: typography.sizes.sm,
+    color: colors.text,
+    fontWeight: typography.weights.medium,
+  },
+  rankBtnTextActive: {
+    color: colors.textInverse,
+  },
+  checkboxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.md,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: borderRadius.sm,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: colors.surface,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: spacing.sm,
+  },
+  checkboxActive: {
+    backgroundColor: colors.primary,
+  },
+  checkboxCheck: {
+    color: colors.textInverse,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.bold,
+  },
+  checkboxLabel: {
+    fontSize: typography.sizes.base,
+    color: colors.text,
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  numInput: {
+    flex: 1,
+    fontSize: typography.sizes.base,
+    color: colors.text,
+    paddingVertical: spacing.md,
+  },
+  inputSuffix: {
+    fontSize: typography.sizes.base,
+    color: colors.textSecondary,
+    marginLeft: spacing.xs,
+  },
+  hint: {
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
+    fontStyle: "italic",
+    marginTop: spacing.xs,
+  },
+  infoCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.primaryLighter,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  infoCardText: {
+    flex: 1,
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
   },
 });
 
