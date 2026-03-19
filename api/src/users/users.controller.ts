@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -14,24 +15,24 @@ import {
   HttpStatus,
   UploadedFile,
   UseInterceptors,
-} from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
-import { UsersService } from './users.service';
-import { PdfExtractionService } from './services/pdf-extraction.service';
-import { FileStorageService } from './services/file-storage.service';
-import { PdfImageService } from './services/pdf-image.service';
-import { BasesService } from '../bases/bases.service';
-import { ContractsService } from '../contracts/contracts.service';
-import { GradesService } from '../grades/grades.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../common/decorators/roles.decorator';
-import { UserRole } from '../common/enums/user-role.enum';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
-import { Ruolo } from '../common/enums/ruolo.enum';
+} from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { memoryStorage } from "multer";
+import { UsersService } from "./users.service";
+import { PdfExtractionService } from "./services/pdf-extraction.service";
+import { FileStorageService } from "./services/file-storage.service";
+import { PdfImageService } from "./services/pdf-image.service";
+import { BasesService } from "../bases/bases.service";
+import { ContractsService } from "../contracts/contracts.service";
+import { GradesService } from "../grades/grades.service";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../common/decorators/roles.decorator";
+import { UserRole } from "../common/enums/user-role.enum";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { User } from "./entities/user.entity";
+import { Ruolo } from "../common/enums/ruolo.enum";
 
 interface RequestWithUser extends Request {
   user: {
@@ -42,7 +43,7 @@ interface RequestWithUser extends Request {
   };
 }
 
-@Controller('users')
+@Controller("users")
 @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(
@@ -59,18 +60,18 @@ export class UsersController {
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async findAll(
     @Request() req: RequestWithUser,
-    @Query('role') role?: UserRole,
-    @Query('ruolo') ruolo?: Ruolo,
-    @Query('baseId') baseId?: string,
-    @Query('contrattoId') contrattoId?: string,
-    @Query('gradeId') gradeId?: string,
-    @Query('isActive') isActive?: string,
-    @Query('search') search?: string,
-    @Query('page') page?: string,
-    @Query('perPage') perPage?: string,
+    @Query("role") role?: UserRole,
+    @Query("ruolo") ruolo?: Ruolo,
+    @Query("baseId") baseId?: string,
+    @Query("contrattoId") contrattoId?: string,
+    @Query("gradeId") gradeId?: string,
+    @Query("isActive") isActive?: string,
+    @Query("search") search?: string,
+    @Query("page") page?: string,
+    @Query("perPage") perPage?: string,
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
-    
+
     return this.usersService.findAll(
       {
         role,
@@ -78,7 +79,7 @@ export class UsersController {
         baseId,
         contrattoId,
         gradeId,
-        isActive: isActive !== undefined ? isActive === 'true' : undefined,
+        isActive: isActive !== undefined ? isActive === "true" : undefined,
         search,
         page: page ? parseInt(page, 10) : 1,
         perPage: perPage ? parseInt(perPage, 10) : 20,
@@ -87,31 +88,51 @@ export class UsersController {
     );
   }
 
-  @Get('recent')
+  @Get("me")
+  async getMe(@Request() req: RequestWithUser): Promise<Partial<User>> {
+    const user = await this.usersService.findById(req.user.userId);
+    return user.serialize(user.role);
+  }
+
+  @Patch("me")
+  async updateMe(
+    @Request() req: RequestWithUser,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<Partial<User>> {
+    const requestingUser = await this.usersService.findById(req.user.userId);
+    const user = await this.usersService.update(
+      req.user.userId,
+      updateUserDto,
+      requestingUser,
+    );
+    return user.serialize(user.role);
+  }
+
+  @Get("recent")
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async getRecentUsers(
     @Request() req: RequestWithUser,
-    @Query('limit') limit?: string,
+    @Query("limit") limit?: string,
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
-    
+
     return this.usersService.getRecentUsers(
       limit ? parseInt(limit, 10) : 5,
       requestingUser,
     );
   }
 
-  @Get('count-by-role')
+  @Get("count-by-role")
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  async countByRole(@Query('ruolo') ruolo: Ruolo) {
+  async countByRole(@Query("ruolo") ruolo: Ruolo) {
     const count = await this.usersService.countByRole(ruolo);
     return { ruolo, count };
   }
 
-  @Get(':id')
+  @Get(":id")
   async findOne(
     @Request() req: RequestWithUser,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
   ): Promise<Partial<User> | null> {
     const requestingUser = await this.usersService.findById(req.user.userId);
     const user = await this.usersService.findById(id);
@@ -144,58 +165,71 @@ export class UsersController {
     return user.serialize(requestingUser.role);
   }
 
-  @Put(':id')
+  @Put(":id")
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async update(
     @Request() req: RequestWithUser,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
-    const user = await this.usersService.update(id, updateUserDto, requestingUser);
+    const user = await this.usersService.update(
+      id,
+      updateUserDto,
+      requestingUser,
+    );
     return user.serialize(requestingUser.role);
   }
 
-  @Delete(':id')
+  @Delete(":id")
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(
     @Request() req: RequestWithUser,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
     await this.usersService.remove(id, requestingUser);
   }
 
-  @Post('extract-pdf')
+  @Post("extract-pdf")
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  @UseInterceptors(FileInterceptor('pdf', {
-    storage: memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
-  }))
+  @UseInterceptors(
+    FileInterceptor("pdf", {
+      storage: memoryStorage(),
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+    }),
+  )
   async extractPdf(
     @Request() req: RequestWithUser,
     @UploadedFile() file: Express.Multer.File,
-    @Body('role') role: Ruolo,
+    @Body("role") role: Ruolo,
   ) {
     if (!file) {
-      console.log('No file received');
+      console.log("No file received");
       return {
-        crewcode: '',
-        nome: '',
-        cognome: '',
-        email: '',
-        telefono: '',
-        baseId: '',
-        contrattoId: '',
-        gradeId: '',
+        crewcode: "",
+        nome: "",
+        cognome: "",
+        email: "",
+        telefono: "",
+        baseId: "",
+        contrattoId: "",
+        gradeId: "",
         confidence: 0,
-        extractionMethod: 'manual',
+        extractionMethod: "manual",
         rawFields: {},
       };
     }
 
-    console.log('File received:', file.originalname, 'Size:', file.size, 'Buffer exists:', !!file.buffer);
+    console.log(
+      "File received:",
+      file.originalname,
+      "Size:",
+      file.size,
+      "Buffer exists:",
+      !!file.buffer,
+    );
 
     try {
       // Extract data from PDF form fields
@@ -214,64 +248,66 @@ export class UsersController {
       // Match extracted text values to entity IDs
       const matched = this.pdfExtractionService.matchToEntities(
         extracted,
-        bases.map(b => ({ id: b.id, codice: b.codice, nome: b.nome })),
-        contracts.map(c => ({ id: c.id, codice: c.codice, nome: c.nome })),
-        grades.map(g => ({ id: g.id, codice: g.codice, nome: g.nome })),
+        bases.map((b) => ({ id: b.id, codice: b.codice, nome: b.nome })),
+        contracts.map((c) => ({ id: c.id, codice: c.codice, nome: c.nome })),
+        grades.map((g) => ({ id: g.id, codice: g.codice, nome: g.nome })),
       );
 
       // Set default contract if not found (MAY-PI or MAY-CC)
       if (!matched.contrattoId) {
-        const defaultContract = contracts.find(c => 
-          role === Ruolo.CABIN_CREW 
-            ? c.codice === 'MAY-CC' 
-            : c.codice === 'MAY-PI'
+        const defaultContract = contracts.find((c) =>
+          role === Ruolo.CABIN_CREW
+            ? c.codice === "MAY-CC"
+            : c.codice === "MAY-PI",
         );
         if (defaultContract) {
           matched.contrattoId = defaultContract.id;
         }
       }
 
-      console.log('Extracted and matched:', matched);
+      console.log("Extracted and matched:", matched);
 
       return matched;
     } catch (error) {
-      console.error('PDF extraction error:', error);
+      console.error("PDF extraction error:", error);
       return {
-        crewcode: '',
-        nome: '',
-        cognome: '',
-        email: '',
-        telefono: '',
-        baseId: '',
-        contrattoId: '',
-        gradeId: '',
+        crewcode: "",
+        nome: "",
+        cognome: "",
+        email: "",
+        telefono: "",
+        baseId: "",
+        contrattoId: "",
+        gradeId: "",
         confidence: 0,
-        extractionMethod: 'manual',
+        extractionMethod: "manual",
         rawFields: {},
       };
     }
   }
 
-  @Post(':id/registration-form')
+  @Post(":id/registration-form")
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  @UseInterceptors(FileInterceptor('pdf', {
-    storage: memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
-  }))
+  @UseInterceptors(
+    FileInterceptor("pdf", {
+      storage: memoryStorage(),
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+    }),
+  )
   async uploadRegistrationForm(
     @Request() req: RequestWithUser,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) {
-      throw new Error('No PDF file provided');
+      throw new Error("No PDF file provided");
     }
 
     const requestingUser = await this.usersService.findById(req.user.userId);
     const user = await this.usersService.findById(id);
 
     if (!user) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
 
     // Delete old file if exists
@@ -296,22 +332,22 @@ export class UsersController {
     return updated.serialize(requestingUser.role);
   }
 
-  @Get(':id/registration-form')
+  @Get(":id/registration-form")
   async getRegistrationForm(
     @Request() req: RequestWithUser,
-    @Param('id', ParseUUIDPipe) id: string,
-    @Query('download') download?: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query("download") download?: string,
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
     const user = await this.usersService.findById(id);
 
     if (!user) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
 
     // Users can only view their own PDF
     if (requestingUser.role === UserRole.USER && requestingUser.id !== id) {
-      throw new Error('Access denied');
+      throw new Error("Access denied");
     }
 
     // Admin can only view PDFs of users with the same role
@@ -320,42 +356,44 @@ export class UsersController {
       requestingUser.ruolo &&
       user.ruolo !== requestingUser.ruolo
     ) {
-      throw new Error('Access denied');
+      throw new Error("Access denied");
     }
 
     if (!user.registrationFormUrl) {
-      throw new Error('No registration form found for this user');
+      throw new Error("No registration form found for this user");
     }
 
-    const filePath = this.fileStorageService.getFilePathFromUrl(user.registrationFormUrl);
-    
+    const filePath = this.fileStorageService.getFilePathFromUrl(
+      user.registrationFormUrl,
+    );
+
     if (!this.fileStorageService.fileExists(user.registrationFormUrl)) {
-      throw new Error('File not found');
+      throw new Error("File not found");
     }
 
     return {
       fileUrl: user.registrationFormUrl,
       filePath,
-      filename: filePath.split('/').pop(),
-      download: download === 'true',
+      filename: filePath.split("/").pop(),
+      download: download === "true",
     };
   }
 
-  @Get(':id/registration-form/preview')
+  @Get(":id/registration-form/preview")
   async getRegistrationFormPreview(
     @Request() req: RequestWithUser,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
     const user = await this.usersService.findById(id);
 
     if (!user) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
 
     // Users can only view their own PDF preview
     if (requestingUser.role === UserRole.USER && requestingUser.id !== id) {
-      throw new Error('Access denied');
+      throw new Error("Access denied");
     }
 
     // Admin can only view PDFs of users with the same role
@@ -364,67 +402,71 @@ export class UsersController {
       requestingUser.ruolo &&
       user.ruolo !== requestingUser.ruolo
     ) {
-      throw new Error('Access denied');
+      throw new Error("Access denied");
     }
 
     if (!user.registrationFormUrl) {
-      throw new Error('No registration form found for this user');
+      throw new Error("No registration form found for this user");
     }
 
     // Read PDF file
-    const filePath = this.fileStorageService.getFilePathFromUrl(user.registrationFormUrl);
-    
+    const filePath = this.fileStorageService.getFilePathFromUrl(
+      user.registrationFormUrl,
+    );
+
     if (!this.fileStorageService.fileExists(user.registrationFormUrl)) {
-      throw new Error('File not found');
+      throw new Error("File not found");
     }
 
-    const pdfBuffer = await require('fs').promises.readFile(filePath);
-    
+    const pdfBuffer = await require("fs").promises.readFile(filePath);
+
     // Convert first page to image
-    const base64Image = await this.pdfImageService.convertFirstPageToImage(pdfBuffer);
+    const base64Image =
+      await this.pdfImageService.convertFirstPageToImage(pdfBuffer);
 
     return {
       imageBase64: base64Image,
-      mimeType: 'image/png',
+      mimeType: "image/png",
     };
   }
 
-  @Post('convert-pdf-to-image')
+  @Post("convert-pdf-to-image")
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  async convertPdfToImage(@Body('pdfBase64') pdfBase64: string) {
+  async convertPdfToImage(@Body("pdfBase64") pdfBase64: string) {
     if (!pdfBase64) {
-      throw new Error('No PDF data provided');
+      throw new Error("No PDF data provided");
     }
 
     try {
       // Convert base64 to buffer
-      const pdfBuffer = Buffer.from(pdfBase64, 'base64');
-      
+      const pdfBuffer = Buffer.from(pdfBase64, "base64");
+
       // Convert first page to image
-      const base64Image = await this.pdfImageService.convertFirstPageToImage(pdfBuffer);
+      const base64Image =
+        await this.pdfImageService.convertFirstPageToImage(pdfBuffer);
 
       return {
         imageBase64: base64Image,
-        mimeType: 'image/png',
+        mimeType: "image/png",
       };
     } catch (error) {
-      console.error('PDF conversion error:', error);
-      throw new Error('Failed to convert PDF to image');
+      console.error("PDF conversion error:", error);
+      throw new Error("Failed to convert PDF to image");
     }
   }
 
   // ==================== DEACTIVATED USERS MANAGEMENT (SUPERADMIN ONLY) ====================
 
-  @Get('deactivated/list')
+  @Get("deactivated/list")
   @Roles(UserRole.SUPERADMIN)
   async findAllDeactivated(
     @Request() req: RequestWithUser,
-    @Query('search') search?: string,
-    @Query('page') page?: string,
-    @Query('perPage') perPage?: string,
+    @Query("search") search?: string,
+    @Query("page") page?: string,
+    @Query("perPage") perPage?: string,
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
-    
+
     return this.usersService.findAllDeactivated(
       {
         search,
@@ -435,23 +477,26 @@ export class UsersController {
     );
   }
 
-  @Post('deactivated/:id/reactivate')
+  @Post("deactivated/:id/reactivate")
   @Roles(UserRole.SUPERADMIN)
   async reactivateDeactivatedUser(
     @Request() req: RequestWithUser,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
-    const user = await this.usersService.reactivateDeactivatedUser(id, requestingUser);
+    const user = await this.usersService.reactivateDeactivatedUser(
+      id,
+      requestingUser,
+    );
     return user.serialize(requestingUser.role);
   }
 
-  @Delete('deactivated/:id/permanent')
+  @Delete("deactivated/:id/permanent")
   @Roles(UserRole.SUPERADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async permanentlyDelete(
     @Request() req: RequestWithUser,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
     await this.usersService.permanentlyDelete(id, requestingUser);
@@ -459,13 +504,13 @@ export class UsersController {
 
   // ==================== EXPORT & STATISTICS ====================
 
-  @Get('export/csv')
+  @Get("export/csv")
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async exportToCsv(
     @Request() req: RequestWithUser,
-    @Query('ruolo') ruolo?: Ruolo,
-    @Query('baseId') baseId?: string,
-    @Query('contrattoId') contrattoId?: string,
+    @Query("ruolo") ruolo?: Ruolo,
+    @Query("baseId") baseId?: string,
+    @Query("contrattoId") contrattoId?: string,
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
     return this.usersService.exportToCsv(
@@ -474,32 +519,41 @@ export class UsersController {
     );
   }
 
-  @Get('statistics/dashboard')
+  @Get("statistics/dashboard")
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async getDashboardStatistics(@Request() req: RequestWithUser) {
     const requestingUser = await this.usersService.findById(req.user.userId);
     return this.usersService.getDashboardStatistics(requestingUser);
   }
 
-  @Post('import/bulk')
+  @Post("import/bulk")
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  @UseInterceptors(FileInterceptor("file", { storage: memoryStorage() }))
   async bulkImport(
     @Request() req: RequestWithUser,
     @UploadedFile() file: Express.Multer.File,
-    @Body('ruolo') ruolo?: Ruolo,
+    @Body("ruolo") ruolo?: Ruolo,
   ) {
     if (!file) {
-      throw new Error('No file provided');
+      throw new Error("No file provided");
     }
 
     const requestingUser = await this.usersService.findById(req.user.userId);
-    const fileExtension = file.originalname.substring(file.originalname.lastIndexOf('.')).toLowerCase();
-    
-    if (!['.csv', '.xlsx', '.xls'].includes(fileExtension)) {
-      throw new Error('Unsupported file format. Use CSV or Excel (.xlsx, .xls)');
+    const fileExtension = file.originalname
+      .substring(file.originalname.lastIndexOf("."))
+      .toLowerCase();
+
+    if (![".csv", ".xlsx", ".xls"].includes(fileExtension)) {
+      throw new Error(
+        "Unsupported file format. Use CSV or Excel (.xlsx, .xls)",
+      );
     }
 
-    return this.usersService.bulkImport(file.buffer, fileExtension, requestingUser, ruolo);
+    return this.usersService.bulkImport(
+      file.buffer,
+      fileExtension,
+      requestingUser,
+      ruolo,
+    );
   }
 }

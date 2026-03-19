@@ -24,11 +24,21 @@ import {
   DeactivatedMembersScreen,
   StatisticsScreen,
   BulkImportScreen,
+  IssueDetailScreen,
+  IssueCategoriesScreen,
+  IssueCategoryFormScreen,
+  IssueUrgenciesScreen,
+  IssueUrgencyFormScreen,
 } from "../screens/admin";
+// Issues screens
+import { MyIssueDetailScreen } from "../screens/MyIssueDetailScreen/MyIssueDetailScreen";
 // Note: CLA Contract screens are now in DrawerNavigator
+import { PdfViewerScreen } from "../screens/admin/PdfViewerScreen";
 import { colors } from "../theme";
 import { useAuthStore } from "../store/authStore";
 import { SharedFileHandler } from "../components/SharedFileHandler";
+import { CompleteProfileScreen } from "../screens/CompleteProfileScreen/CompleteProfileScreen";
+import { UserRole } from "../types";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -37,6 +47,13 @@ export const AppNavigator: React.FC = () => {
   const isLoading = useAuthStore((state) => state.isLoading);
   const user = useAuthStore((state) => state.user);
   const mustChangePassword = user?.mustChangePassword ?? false;
+
+  const CAPTAIN_GRADES = ["CPT", "LTC", "LCC", "TRI", "TRE"];
+  const isCaptainGrade = CAPTAIN_GRADES.includes(user?.grade?.codice || "");
+  // Profile completion required for users with a professional role (not superadmin)
+  const needsProfileCompletion =
+    !!user?.ruolo &&
+    (!user?.dateOfEntry || (isCaptainGrade && !user?.dateOfCaptaincy));
 
   // Show loading while checking auth state
   if (isLoading) {
@@ -72,6 +89,16 @@ export const AppNavigator: React.FC = () => {
               headerStyle: { backgroundColor: colors.secondary },
               headerTintColor: colors.textInverse,
               headerBackVisible: false,
+              gestureEnabled: false,
+            }}
+          />
+        ) : needsProfileCompletion ? (
+          // Force profile completion
+          <Stack.Screen
+            name="CompleteProfile"
+            component={CompleteProfileScreen}
+            options={{
+              headerShown: false,
               gestureEnabled: false,
             }}
           />
@@ -154,6 +181,42 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen
               name="BulkImport"
               component={BulkImportScreen}
+              options={{ headerShown: false }}
+            />
+            {/* Issues Routes */}
+            <Stack.Screen
+              name="MyIssueDetail"
+              component={MyIssueDetailScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="IssueDetail"
+              component={IssueDetailScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="IssueCategories"
+              component={IssueCategoriesScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="IssueCategoryForm"
+              component={IssueCategoryFormScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="IssueUrgencies"
+              component={IssueUrgenciesScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="IssueUrgencyForm"
+              component={IssueUrgencyFormScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="PdfViewer"
+              component={PdfViewerScreen}
               options={{ headerShown: false }}
             />
             {/* Note: CLA Contract screens moved to DrawerNavigator */}

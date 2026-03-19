@@ -375,6 +375,12 @@
     "urgencyDeleted": "Urgenza eliminata con successo",
     "deleteUrgencyConfirm": "Elimina urgenza"
   },
+  "completeProfile": {
+    "title": "Completa il tuo profilo",
+    "description": "Prima di accedere all'app, fornisci alcuni dettagli sulla tua storia lavorativa.",
+    "selectDate": "Seleziona data",
+    "save": "Continua all'app"
+  },
   "errors": {
     "generic": "Qualcosa è andato storto",
     "sessionExpired": "Sessione scaduta. Effettua nuovamente il login.",

@@ -375,6 +375,12 @@
     "urgencyDeleted": "Urgency deleted successfully",
     "deleteUrgencyConfirm": "Delete urgency"
   },
+  "completeProfile": {
+    "title": "Complete Your Profile",
+    "description": "Before accessing the app, please provide a few details about your employment history.",
+    "selectDate": "Select date",
+    "save": "Continue to App"
+  },
   "errors": {
     "generic": "Something went wrong",
     "sessionExpired": "Session expired. Please login again.",

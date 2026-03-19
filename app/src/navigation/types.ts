@@ -1,6 +1,7 @@
 export type RootStackParamList = {
   Login: undefined;
   ChangePassword: undefined;
+  CompleteProfile: undefined;
   MainTabs: undefined;
   MemberDetail: { memberId: string };
   MemberEdit: { memberId: string };
@@ -24,6 +25,17 @@ export type RootStackParamList = {
   // Documents / Communications
   Documents: undefined;
   DocumentEditor: { documentId?: string } | undefined;
+  PdfViewer: { documentId: string; title: string };
+  // Issues
+  ReportIssue: undefined;
+  MyIssues: undefined;
+  MyIssueDetail: { issueId: string };
+  Issues: undefined;
+  IssueDetail: { issueId: string };
+  IssueCategories: undefined;
+  IssueCategoryForm: { categoryId?: string };
+  IssueUrgencies: undefined;
+  IssueUrgencyForm: { urgencyId?: string };
 };
 
 declare global {

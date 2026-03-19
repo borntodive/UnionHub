@@ -184,6 +184,15 @@ npm run lint               # ESLint check
 - Date format in UI: `DD/MM/YYYY`. Conversion to `YYYY-MM-DD` for PostgreSQL happens in `users.service.ts` for all three paths: `create()`, `reactivateUser()`, `update()`.
 - Both fields are visible to all roles via `serialize()` (not admin-only).
 
+**Profile Completion Gate**:
+
+After login, `AppNavigator` checks three conditions in order before showing the main app:
+1. `!isAuthenticated` → Login screen
+2. `mustChangePassword` → ChangePassword screen (forced, no back)
+3. `!!user.ruolo && (!user.dateOfEntry || (isCaptainGrade && !user.dateOfCaptaincy))` → `CompleteProfileScreen` (forced, no back)
+
+`CompleteProfileScreen` uses `PATCH /users/me` and calls `setUser()` on success — the store update re-triggers the gate check in `AppNavigator`, automatically releasing the user to the main app without explicit navigation. SuperAdmin users (no `ruolo`) skip the gate entirely.
+
 ## Authentication Flow
 
 1. User logs in with `crewcode` + `password` → receives `accessToken` + `refreshToken`
@@ -203,6 +212,8 @@ Key endpoints:
 - `POST /auth/refresh` - Refresh access token
 - `GET /auth/me` - Get current user profile
 - `GET /users` - List users (role-scoped for Admin)
+- `GET /users/me` - Get own profile (any authenticated user)
+- `PATCH /users/me` - Update own profile fields e.g. dateOfEntry/dateOfCaptaincy (any authenticated user)
 - `POST /users` - Create user (Admin+)
 - `PATCH /users/:id` - Update user
 - `GET /bases`, `/contracts`, `/grades` - Reference data
