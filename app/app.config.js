@@ -17,8 +17,8 @@ module.exports = {
     slug: "unionhub",
     owner: "acovelli",
     newArchEnabled: true,
-    version: "1.0.1",
-    runtimeVersion: "1.0.0",
+    version: "1.0.3",
+    runtimeVersion: "1.0.3",
     updates: {
       url: "https://u.expo.dev/505f6694-7b00-484d-94cd-fcebdb0ee8e9",
       enabled: true,
@@ -38,6 +38,7 @@ module.exports = {
       supportsTablet: true,
       bundleIdentifier: "it.unionhub.app",
       infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
         NSCameraUsageDescription:
           "UnionHub uses the camera to scan and upload registration documents.",
         UIViewControllerBasedStatusBarAppearance: false,
