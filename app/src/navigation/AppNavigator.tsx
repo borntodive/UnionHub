@@ -42,13 +42,13 @@ import { UserRole } from "../types";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+const CAPTAIN_GRADES = ["CPT", "LTC", "LCC", "TRI", "TRE"];
+
 export const AppNavigator: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
   const user = useAuthStore((state) => state.user);
   const mustChangePassword = user?.mustChangePassword ?? false;
-
-  const CAPTAIN_GRADES = ["CPT", "LTC", "LCC", "TRI", "TRE"];
   const isCaptainGrade = CAPTAIN_GRADES.includes(user?.grade?.codice || "");
   // Profile completion required for users with a professional role (not superadmin)
   const needsProfileCompletion =

@@ -355,8 +355,8 @@ export const MembersScreen: React.FC = () => {
       {/* Active Filter Chips */}
       {filterChips.length > 0 && (
         <View style={styles.chipsContainer}>
-          {filterChips.map((chip, index) => (
-            <View key={index} style={styles.chip}>
+          {filterChips.map((chip) => (
+            <View key={chip.label} style={styles.chip}>
               <Text style={styles.chipText}>{chip.label}</Text>
               <TouchableOpacity onPress={chip.onRemove}>
                 <X size={14} color={colors.textInverse} />

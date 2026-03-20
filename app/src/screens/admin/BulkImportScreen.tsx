@@ -129,12 +129,14 @@ DEF456,Bianchi,Laura,laura.bianchi@email.com,+39987654321,MXP,Purser,`;
 
     // Share template
     const fileUri = `${FileSystem.cacheDirectory}template_import.csv`;
-    FileSystem.writeAsStringAsync(fileUri, template).then(() => {
-      Sharing.shareAsync(fileUri, {
-        mimeType: "text/csv",
-        dialogTitle: "Download Template",
-      });
-    });
+    FileSystem.writeAsStringAsync(fileUri, template)
+      .then(() =>
+        Sharing.shareAsync(fileUri, {
+          mimeType: "text/csv",
+          dialogTitle: "Download Template",
+        }),
+      )
+      .catch((e) => console.error("Failed to share template:", e));
   };
 
   const renderRoleSelector = () => {
@@ -310,8 +312,8 @@ DEF456,Bianchi,Laura,laura.bianchi@email.com,+39987654321,MXP,Purser,`;
               {result.errors.length > 0 && (
                 <View style={styles.errorsSection}>
                   <Text style={styles.errorsTitle}>Errors:</Text>
-                  {result.errors.slice(0, 5).map((error, index) => (
-                    <View key={index} style={styles.errorItem}>
+                  {result.errors.slice(0, 5).map((error) => (
+                    <View key={`row-${error.row}`} style={styles.errorItem}>
                       <XCircle size={16} color={colors.error} />
                       <Text style={styles.errorText}>
                         Row {error.row}: {error.error}

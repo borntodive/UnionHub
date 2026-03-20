@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
+import Constants from "expo-constants";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/authStore";
 import { useOfflineStore } from "../store/offlineStore";
@@ -53,7 +54,9 @@ export const useNotifications = () => {
       }
 
       const tokenData = await Notifications.getExpoPushTokenAsync({
-        projectId: "your-project-id",
+        projectId:
+          Constants.easConfig?.projectId ??
+          "505f6694-7b00-484d-94cd-fcebdb0ee8e9",
       });
 
       const token = tokenData.data;

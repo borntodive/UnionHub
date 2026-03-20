@@ -131,7 +131,11 @@ export const IssueDetailScreen: React.FC = () => {
       >
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() =>
+              navigation.canGoBack()
+                ? navigation.goBack()
+                : navigation.navigate("Issues" as never)
+            }
             style={styles.backButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >

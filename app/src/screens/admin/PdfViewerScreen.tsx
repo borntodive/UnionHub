@@ -32,6 +32,7 @@ export const PdfViewerScreen: React.FC = () => {
   const [fileUri, setFileUri] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
+  const cachedUriRef = React.useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +49,13 @@ export const PdfViewerScreen: React.FC = () => {
         await FileSystem.writeAsStringAsync(uri, base64, {
           encoding: FileSystem.EncodingType.Base64,
         });
-        if (!cancelled) setFileUri(uri);
+        if (!cancelled) {
+          cachedUriRef.current = uri;
+          setFileUri(uri);
+        } else {
+          // Component unmounted before write finished — delete immediately
+          FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
+        }
       } catch (e: any) {
         if (!cancelled) setError(e.message || "Errore nel caricamento del PDF");
       }
@@ -57,6 +64,13 @@ export const PdfViewerScreen: React.FC = () => {
     loadPdf();
     return () => {
       cancelled = true;
+      // Delete cached file on unmount to avoid unbounded disk accumulation
+      if (cachedUriRef.current) {
+        FileSystem.deleteAsync(cachedUriRef.current, {
+          idempotent: true,
+        }).catch(() => {});
+        cachedUriRef.current = null;
+      }
     };
   }, [documentId]);
 

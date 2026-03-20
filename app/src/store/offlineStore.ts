@@ -40,7 +40,7 @@ interface OfflineState {
 export const useOfflineStore = create<OfflineState>()(
   persist(
     (set) => ({
-      isOnline: true,
+      isOnline: false, // starts false; NetInfo sets it to true once confirmed online
       categories: [],
       urgencies: [],
       pendingIssues: [],

@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useCallback, useEffect } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import {
   RichEditor,
@@ -30,6 +30,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     },
     [onChange],
   );
+
+  // initialContentHTML is only read at mount — sync external value changes
+  // (e.g. when an existing document finishes loading) imperatively.
+  useEffect(() => {
+    editorRef.current?.setContentHTML(value);
+  }, [value]);
 
   return (
     <View style={styles.container}>

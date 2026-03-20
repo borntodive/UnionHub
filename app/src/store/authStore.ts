@@ -43,7 +43,7 @@ export const useAuthStore = create<AuthState>()(
           isLoading: false,
         }),
 
-      logout: async () => {
+      logout: () => {
         set({
           user: null,
           accessToken: null,
@@ -59,7 +59,6 @@ export const useAuthStore = create<AuthState>()(
       setLoading: (isLoading) => set({ isLoading }),
 
       enableBiometric: async (crewcode: string, password: string) => {
-        console.log("[AuthStore] Enabling biometric for:", crewcode);
         await SecureStore.setItemAsync(
           BIOMETRIC_CREDENTIALS_KEY,
           JSON.stringify({ crewcode, password }),

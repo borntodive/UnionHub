@@ -160,7 +160,7 @@ export const usePayslipStore = create<PayslipState>()(
           createdAt: new Date().toISOString(),
         };
 
-        set({ history: [calculation, ...history] });
+        set({ history: [calculation, ...history].slice(0, 50) });
       },
 
       deleteCalculation: (id) => {

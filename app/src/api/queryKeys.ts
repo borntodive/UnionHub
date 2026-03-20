@@ -33,8 +33,9 @@ export const QUERY_KEYS = {
       : (["issueCategories"] as const),
   issueUrgencies: ["issueUrgencies"] as const,
 
-  // Home stats
+  // Home stats + home-specific queries
   homeStats: ["homeStats"] as const,
+  homePublicDocuments: ["homePublicDocuments"] as const,
 
   // Notifications
   notifications: ["notifications"] as const,

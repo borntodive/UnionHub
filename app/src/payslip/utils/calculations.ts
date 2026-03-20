@@ -205,6 +205,7 @@ export function calculateCuneoFiscale(
   monthlyIncome: number,
   year: number,
 ): { percentage: number; amount: number } {
+  if (monthlyIncome <= 0) return { percentage: 0, amount: 0 };
   const annualIncome = monthlyIncome * 12;
 
   if (year === 2024) {

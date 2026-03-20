@@ -79,10 +79,13 @@ export const DocumentEditorScreen: React.FC = () => {
     if (!isEditing) {
       return title.trim() !== "" || content.trim() !== "";
     }
+    // While the document is still loading, existingDoc is undefined —
+    // avoid a false positive by reporting no changes until data arrives.
+    if (isLoadingDoc || !existingDoc) return false;
     return (
-      title !== existingDoc?.title ||
-      content !== existingDoc?.originalContent ||
-      aiReviewedContent !== (existingDoc?.aiReviewedContent || "")
+      title !== existingDoc.title ||
+      content !== existingDoc.originalContent ||
+      aiReviewedContent !== (existingDoc.aiReviewedContent || "")
     );
   };
 

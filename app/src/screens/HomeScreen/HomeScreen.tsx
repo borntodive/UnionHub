@@ -37,6 +37,7 @@ import { useAuthStore } from "../../store/authStore";
 import { UserRole, IssueStatus } from "../../types";
 import { issuesApi } from "../../api/issues";
 import { usersApi } from "../../api/users";
+import { QUERY_KEYS } from "../../api/queryKeys";
 import { RootStackParamList } from "../../navigation/types";
 import apiClient from "../../api/client";
 
@@ -81,28 +82,28 @@ export const HomeScreen: React.FC = () => {
 
   // Data: my issues (user view)
   const { data: myIssues, isLoading: myIssuesLoading } = useQuery({
-    queryKey: ["my-issues-home"],
+    queryKey: QUERY_KEYS.myIssues,
     queryFn: issuesApi.getMyIssues,
     enabled: !isAdmin,
   });
 
   // Data: all issues count (admin view)
   const { data: allIssues } = useQuery({
-    queryKey: ["all-issues-home"],
+    queryKey: QUERY_KEYS.adminIssues,
     queryFn: issuesApi.getIssues,
     enabled: isAdmin,
   });
 
   // Data: statistics (admin view)
   const { data: stats } = useQuery({
-    queryKey: ["home-statistics"],
+    queryKey: QUERY_KEYS.homeStats,
     queryFn: usersApi.getStatistics,
     enabled: isAdmin,
   });
 
   // Data: last published document
   const { data: documents } = useQuery({
-    queryKey: ["home-published-documents"],
+    queryKey: QUERY_KEYS.homePublicDocuments,
     queryFn: async (): Promise<PublishedDocument[]> => {
       const response = await apiClient.get("/documents/public/published");
       return response.data;
@@ -160,9 +161,7 @@ export const HomeScreen: React.FC = () => {
                 <QuickAction
                   icon={<BarChart3 size={28} color={colors.primary} />}
                   label={t("navigation.statistics")}
-                  onPress={() =>
-                    navigation.dispatch(DrawerActions.jumpTo("Statistics"))
-                  }
+                  onPress={() => navigation.navigate("Statistics")}
                 />
                 <QuickAction
                   icon={<AlertTriangle size={28} color={colors.primary} />}
