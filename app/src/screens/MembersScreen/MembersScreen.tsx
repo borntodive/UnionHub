@@ -102,6 +102,7 @@ export const MembersScreen: React.FC = () => {
   const {
     data,
     isLoading,
+    isFetching,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
@@ -385,7 +386,10 @@ export const MembersScreen: React.FC = () => {
         renderItem={renderMember}
         contentContainerStyle={styles.listContainer}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
+          <RefreshControl
+            refreshing={isFetching && !isLoading}
+            onRefresh={refetch}
+          />
         }
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}

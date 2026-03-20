@@ -55,17 +55,9 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user, ipAddress, userAgent);
 
-    // In development mode, always set mustChangePassword to false
-    const isDev = process.env.NODE_ENV === "development";
-    const serializedUser = user.serialize(user.role);
-
-    if (isDev) {
-      serializedUser.mustChangePassword = false;
-    }
-
     return {
       ...tokens,
-      user: serializedUser,
+      user: user.serialize(user.role),
     };
   }
 
@@ -93,17 +85,9 @@ export class AuthService {
       userAgent,
     );
 
-    // In development mode, always set mustChangePassword to false
-    const isDev = process.env.NODE_ENV === "development";
-    const serializedUser = tokenEntity.user.serialize(tokenEntity.user.role);
-
-    if (isDev) {
-      serializedUser.mustChangePassword = false;
-    }
-
     return {
       ...tokens,
-      user: serializedUser,
+      user: tokenEntity.user.serialize(tokenEntity.user.role),
     };
   }
 
@@ -174,22 +158,24 @@ export class AuthService {
     ipAddress?: string,
     userAgent?: string,
   ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
-    const payload: TokenPayloadDto = {
+    const basePayload: TokenPayloadDto = {
       sub: user.id,
       crewcode: user.crewcode,
       role: user.role,
       ruolo: user.ruolo,
     };
 
-    const accessToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>("JWT_SECRET"),
-      expiresIn: "15m",
-    });
+    const secret = this.configService.get<string>("JWT_SECRET");
 
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>("JWT_SECRET"),
-      expiresIn: "30d",
-    });
+    const accessToken = this.jwtService.sign(
+      { ...basePayload, type: "access" },
+      { secret, expiresIn: "15m" },
+    );
+
+    const refreshToken = this.jwtService.sign(
+      { ...basePayload, type: "refresh" },
+      { secret, expiresIn: "30d" },
+    );
 
     // Calculate expiration date for refresh token
     const refreshExpirationDays = parseInt(

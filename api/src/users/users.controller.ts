@@ -1,3 +1,5 @@
+import * as fs from "fs";
+import * as path from "path";
 import {
   Controller,
   Get,
@@ -15,6 +17,10 @@ import {
   HttpStatus,
   UploadedFile,
   UseInterceptors,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+  InternalServerErrorException,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { memoryStorage } from "multer";
@@ -206,7 +212,6 @@ export class UsersController {
     @Body("role") role: Ruolo,
   ) {
     if (!file) {
-      console.log("No file received");
       return {
         crewcode: "",
         nome: "",
@@ -221,15 +226,6 @@ export class UsersController {
         rawFields: {},
       };
     }
-
-    console.log(
-      "File received:",
-      file.originalname,
-      "Size:",
-      file.size,
-      "Buffer exists:",
-      !!file.buffer,
-    );
 
     try {
       // Extract data from PDF form fields
@@ -265,8 +261,6 @@ export class UsersController {
         }
       }
 
-      console.log("Extracted and matched:", matched);
-
       return matched;
     } catch (error) {
       console.error("PDF extraction error:", error);
@@ -300,14 +294,14 @@ export class UsersController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) {
-      throw new Error("No PDF file provided");
+      throw new BadRequestException("No PDF file provided");
     }
 
     const requestingUser = await this.usersService.findById(req.user.userId);
     const user = await this.usersService.findById(id);
 
     if (!user) {
-      throw new Error("User not found");
+      throw new NotFoundException("User not found");
     }
 
     // Delete old file if exists
@@ -342,12 +336,12 @@ export class UsersController {
     const user = await this.usersService.findById(id);
 
     if (!user) {
-      throw new Error("User not found");
+      throw new NotFoundException("User not found");
     }
 
     // Users can only view their own PDF
     if (requestingUser.role === UserRole.USER && requestingUser.id !== id) {
-      throw new Error("Access denied");
+      throw new ForbiddenException("Access denied");
     }
 
     // Admin can only view PDFs of users with the same role
@@ -356,11 +350,11 @@ export class UsersController {
       requestingUser.ruolo &&
       user.ruolo !== requestingUser.ruolo
     ) {
-      throw new Error("Access denied");
+      throw new ForbiddenException("Access denied");
     }
 
     if (!user.registrationFormUrl) {
-      throw new Error("No registration form found for this user");
+      throw new NotFoundException("No registration form found for this user");
     }
 
     const filePath = this.fileStorageService.getFilePathFromUrl(
@@ -368,7 +362,7 @@ export class UsersController {
     );
 
     if (!this.fileStorageService.fileExists(user.registrationFormUrl)) {
-      throw new Error("File not found");
+      throw new NotFoundException("File not found");
     }
 
     return {
@@ -388,12 +382,12 @@ export class UsersController {
     const user = await this.usersService.findById(id);
 
     if (!user) {
-      throw new Error("User not found");
+      throw new NotFoundException("User not found");
     }
 
     // Users can only view their own PDF preview
     if (requestingUser.role === UserRole.USER && requestingUser.id !== id) {
-      throw new Error("Access denied");
+      throw new ForbiddenException("Access denied");
     }
 
     // Admin can only view PDFs of users with the same role
@@ -402,23 +396,28 @@ export class UsersController {
       requestingUser.ruolo &&
       user.ruolo !== requestingUser.ruolo
     ) {
-      throw new Error("Access denied");
+      throw new ForbiddenException("Access denied");
     }
 
     if (!user.registrationFormUrl) {
-      throw new Error("No registration form found for this user");
+      throw new NotFoundException("No registration form found for this user");
     }
 
-    // Read PDF file
+    // Read PDF file — validate path stays within uploads directory
     const filePath = this.fileStorageService.getFilePathFromUrl(
       user.registrationFormUrl,
     );
-
-    if (!this.fileStorageService.fileExists(user.registrationFormUrl)) {
-      throw new Error("File not found");
+    const uploadsDir = path.resolve("uploads");
+    const resolvedPath = path.resolve(filePath);
+    if (!resolvedPath.startsWith(uploadsDir + path.sep)) {
+      throw new ForbiddenException("Access denied");
     }
 
-    const pdfBuffer = await require("fs").promises.readFile(filePath);
+    if (!this.fileStorageService.fileExists(user.registrationFormUrl)) {
+      throw new NotFoundException("File not found");
+    }
+
+    const pdfBuffer = await fs.promises.readFile(resolvedPath);
 
     // Convert first page to image
     const base64Image =
@@ -434,14 +433,11 @@ export class UsersController {
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async convertPdfToImage(@Body("pdfBase64") pdfBase64: string) {
     if (!pdfBase64) {
-      throw new Error("No PDF data provided");
+      throw new BadRequestException("No PDF data provided");
     }
 
     try {
-      // Convert base64 to buffer
       const pdfBuffer = Buffer.from(pdfBase64, "base64");
-
-      // Convert first page to image
       const base64Image =
         await this.pdfImageService.convertFirstPageToImage(pdfBuffer);
 
@@ -450,8 +446,7 @@ export class UsersController {
         mimeType: "image/png",
       };
     } catch (error) {
-      console.error("PDF conversion error:", error);
-      throw new Error("Failed to convert PDF to image");
+      throw new InternalServerErrorException("Failed to convert PDF to image");
     }
   }
 
@@ -528,14 +523,19 @@ export class UsersController {
 
   @Post("import/bulk")
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  @UseInterceptors(FileInterceptor("file", { storage: memoryStorage() }))
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+    }),
+  )
   async bulkImport(
     @Request() req: RequestWithUser,
     @UploadedFile() file: Express.Multer.File,
     @Body("ruolo") ruolo?: Ruolo,
   ) {
     if (!file) {
-      throw new Error("No file provided");
+      throw new BadRequestException("No file provided");
     }
 
     const requestingUser = await this.usersService.findById(req.user.userId);
@@ -544,7 +544,7 @@ export class UsersController {
       .toLowerCase();
 
     if (![".csv", ".xlsx", ".xls"].includes(fileExtension)) {
-      throw new Error(
+      throw new BadRequestException(
         "Unsupported file format. Use CSV or Excel (.xlsx, .xls)",
       );
     }

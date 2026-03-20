@@ -2,6 +2,23 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ PRODUCTION CHECKLIST — when the user says "sono pronto per la produzione"
+
+STOP and remind the user to complete ALL of the following before building:
+
+1. **Rimuovere il Quick Login** — in `app/src/screens/LoginScreen/LoginScreen.tsx`:
+   - Eliminare la costante `QUICK_USERS` e tutto il blocco del selettore utenti rapidi dall'UI
+   - Assicurarsi che al login venga mostrato solo il form manuale (crewcode + password)
+
+2. **Usare il seed di produzione** — eseguire `npm run seed:prod` (non `npm run seed`):
+   - Il seed prod crea **solo il SuperAdmin** (`SUPERADMIN` / password da configurare via env `DEFAULT_ADMIN_PASSWORD`)
+   - File: `api/src/database/seeds/run-seed-prod.ts`
+   - Script da aggiungere in `package.json`: `"seed:prod": "ts-node src/database/seeds/run-seed-prod.ts"`
+
+3. **Ripristinare il cambio password obbligatorio** — impostare `mustChangePassword: true` per tutti gli utenti nel seed prod (il SuperAdmin dovrà cambiare password al primo accesso)
+
+---
+
 ## Project Overview
 
 UnionConnect (also referred to as UnionHub) is a mobile app for CISL aviation union member management. It consists of:
@@ -266,11 +283,27 @@ PORT=3000
 
 ## Default Credentials (after seed)
 
-- **SuperAdmin**: `SUPERADMIN` / `changeme` (must change on first login)
+All accounts use `password` as the default password. `mustChangePassword` is `false` for all seed users.
+
+- **SuperAdmin**: `SUPERADMIN` / `password`
 - **Admin Pilot**: `ADMINPILOT` / `password`
 - **Admin Cabin Crew**: `ADMINCC` / `password`
-- **Test Pilots**: `PIL0001`-`PIL0100` / `password`
-- **Test Cabin Crew**: `CC0001`-`CC0100` / `password`
+- **Pilots** (100 total, grade-coded crewcodes, 9 grades):
+  - SO0001–SO0011 (Second Officer × 11)
+  - JFO0001–JFO0011 (Junior First Officer × 11)
+  - FO0001–FO0012 (First Officer × 12)
+  - CPT0001–CPT0012 (Captain × 12)
+  - LTC0001–LTC0011 (Line Training Captain × 11)
+  - SFI0001–SFI0011 (Synthetic Flight Instructor × 11)
+  - LCC0001–LCC0011 (Line Check Captain × 11)
+  - TRI0001–TRI0010 (Type Rating Instructor × 10)
+  - TRE0001–TRE0011 (Type Rating Examiner × 11)
+- **Cabin Crew** (100 total, grade-coded crewcodes, 5 grades):
+  - JU0001–JU0020 (Junior × 20)
+  - JPU0001–JPU0020 (Junior Purser × 20)
+  - CC0001–CC0020 (Cabin Crew × 20)
+  - SEPE0001–SEPE0020 (Senior Purser Europe × 20)
+  - SEPI0001–SEPI0020 (Senior Purser Intercontinental × 20)
 
 ## Code Conventions
 

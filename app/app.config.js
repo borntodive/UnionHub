@@ -38,6 +38,8 @@ module.exports = {
       supportsTablet: true,
       bundleIdentifier: "it.unionhub.app",
       infoPlist: {
+        NSCameraUsageDescription:
+          "UnionHub uses the camera to scan and upload registration documents.",
         UIViewControllerBasedStatusBarAppearance: false,
         UISupportsOpeningDocumentsInPlace: true,
         CFBundleDocumentTypes: [
@@ -67,6 +69,7 @@ module.exports = {
         backgroundColor: "#177246",
       },
       package: "it.unionhub.app",
+      permissions: ["android.permission.CAMERA"],
       intentFilters: [
         {
           action: "VIEW",

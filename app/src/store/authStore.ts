@@ -5,6 +5,8 @@ import * as SecureStore from "expo-secure-store";
 import { User, AuthResponse } from "../types";
 
 const BIOMETRIC_CREDENTIALS_KEY = "biometric_credentials";
+const SECURE_ACCESS_TOKEN_KEY = "auth_access_token";
+const SECURE_REFRESH_TOKEN_KEY = "auth_refresh_token";
 
 interface AuthState {
   user: User | null;
@@ -34,16 +36,31 @@ export const useAuthStore = create<AuthState>()(
       biometricEnabled: false,
       biometricCredentials: null,
 
-      setAuth: (data) =>
+      setAuth: (data) => {
+        if (data.accessToken) {
+          SecureStore.setItemAsync(
+            SECURE_ACCESS_TOKEN_KEY,
+            data.accessToken,
+          ).catch(() => {});
+        }
+        if (data.refreshToken) {
+          SecureStore.setItemAsync(
+            SECURE_REFRESH_TOKEN_KEY,
+            data.refreshToken,
+          ).catch(() => {});
+        }
         set({
           user: data.user ?? null,
           accessToken: data.accessToken ?? null,
           refreshToken: data.refreshToken ?? null,
           isAuthenticated: !!data.accessToken,
           isLoading: false,
-        }),
+        });
+      },
 
       logout: () => {
+        SecureStore.deleteItemAsync(SECURE_ACCESS_TOKEN_KEY).catch(() => {});
+        SecureStore.deleteItemAsync(SECURE_REFRESH_TOKEN_KEY).catch(() => {});
         set({
           user: null,
           accessToken: null,
@@ -52,7 +69,6 @@ export const useAuthStore = create<AuthState>()(
           isLoading: false,
           // Keep biometricEnabled and biometricCredentials for biometric login
         });
-        console.log("[AuthStore] Logout complete");
       },
 
       setUser: (user) => set({ user }),
@@ -98,18 +114,40 @@ export const useAuthStore = create<AuthState>()(
       name: "auth-storage",
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
+        // Tokens are NOT persisted in AsyncStorage — stored in SecureStore instead
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         biometricEnabled: state.biometricEnabled,
         // biometricCredentials intentionally excluded — stored in SecureStore
       }),
-      onRehydrateStorage: () => (state) => {
-        // Always unblock the UI once AsyncStorage hydration is done (success or fail).
-        // If state is undefined (rehydration error), the store keeps its initial values
-        // (isAuthenticated: false) which is safe — user will need to log in again.
-        state?.setLoading(false);
+      onRehydrateStorage: () => async (state) => {
+        // Restore tokens from SecureStore (encrypted storage)
+        try {
+          const [accessToken, refreshToken] = await Promise.all([
+            SecureStore.getItemAsync(SECURE_ACCESS_TOKEN_KEY),
+            SecureStore.getItemAsync(SECURE_REFRESH_TOKEN_KEY),
+          ]);
+          if (accessToken && refreshToken) {
+            useAuthStore.setState({ accessToken, refreshToken });
+          } else {
+            // No tokens in SecureStore → force logged-out state
+            useAuthStore.setState({
+              isAuthenticated: false,
+              user: null,
+              accessToken: null,
+              refreshToken: null,
+            });
+          }
+        } catch {
+          useAuthStore.setState({
+            isAuthenticated: false,
+            user: null,
+            accessToken: null,
+            refreshToken: null,
+          });
+        } finally {
+          state?.setLoading(false);
+        }
       },
     },
   ),

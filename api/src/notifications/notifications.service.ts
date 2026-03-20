@@ -50,8 +50,11 @@ export class NotificationsService {
     return this.deviceTokenRepository.save(deviceToken);
   }
 
-  async unregisterToken(token: string): Promise<void> {
-    await this.deviceTokenRepository.update({ token }, { isActive: false });
+  async unregisterToken(token: string, userId: string): Promise<void> {
+    await this.deviceTokenRepository.update(
+      { token, userId },
+      { isActive: false },
+    );
   }
 
   async sendPushNotification(

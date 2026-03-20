@@ -128,8 +128,6 @@ export class PdfExtractionService {
       const form = pdfDoc.getForm();
       const fields = form.getFields();
 
-      console.log("PDF Extraction: Found", fields.length, "form fields");
-
       const rawFields: Record<string, string> = {};
       const extracted: Partial<ExtractedPdfData> = {
         extractionMethod: "form_fields",
@@ -137,9 +135,6 @@ export class PdfExtractionService {
       };
 
       // Extract all form fields
-      console.log("=== PDF EXTRACTION DEBUG ===");
-      console.log("Total fields found:", fields.length);
-
       for (const field of fields) {
         const name = field.getName(); // Keep original case for matching
         const nameLower = name.toLowerCase().trim();
@@ -181,11 +176,8 @@ export class PdfExtractionService {
         if (value && value.trim()) {
           rawFields[name] = value.trim(); // Store with original name
           rawFields[nameLower] = value.trim(); // Also store lowercase
-          console.log(`Field: "${name}" = "${value.trim()}"`);
         }
       }
-
-      console.log("Raw fields extracted:", Object.keys(rawFields));
 
       // Map fields to our data structure
       const mapping = FIELD_MAPPINGS[role] || FIELD_MAPPINGS[Ruolo.PILOT];
@@ -228,9 +220,6 @@ export class PdfExtractionService {
         // Normalize date format to DD/MM/YYYY
         dataIscrizione = this.normalizeDateFormat(dataIscrizione);
       }
-
-      console.log("Form fields confidence:", formConfidence);
-      console.log("Using FORM FIELDS extraction");
 
       return {
         crewcode: mappedFields["crewcode"],
@@ -372,19 +361,6 @@ export class PdfExtractionService {
   ): ExtractedPdfData {
     const result = { ...extracted };
 
-    console.log("=== MATCHING DEBUG ===");
-    console.log(
-      "Available bases:",
-      bases.map((b) => ({ codice: b.codice, nome: b.nome })),
-    );
-    console.log(
-      "Available contracts:",
-      contracts.map((c) => ({ codice: c.codice, nome: c.nome })),
-    );
-    console.log("Extracted baseId:", extracted.baseId);
-    console.log("Extracted contrattoId:", extracted.contrattoId);
-    console.log("Extracted gradeId:", extracted.gradeId);
-
     // Match base
     const baseId = extracted.baseId;
     if (baseId && baseId !== "true" && baseId !== "false") {
@@ -395,10 +371,7 @@ export class PdfExtractionService {
           baseId.toLowerCase().includes(b.codice.toLowerCase()),
       );
       if (baseMatch) {
-        console.log("Base matched:", baseMatch.codice, "->", baseMatch.id);
         result.baseId = baseMatch.id;
-      } else {
-        console.log("Base NOT matched:", baseId);
       }
     }
 
@@ -412,18 +385,8 @@ export class PdfExtractionService {
           contrattoId.toLowerCase().includes(c.codice.toLowerCase()),
       );
       if (contractMatch) {
-        console.log(
-          "Contract matched:",
-          contractMatch.codice,
-          "->",
-          contractMatch.id,
-        );
         result.contrattoId = contractMatch.id;
-      } else {
-        console.log("Contract NOT matched:", contrattoId);
       }
-    } else {
-      console.log("Contract skipped (checkbox value):", contrattoId);
     }
 
     // Match grade

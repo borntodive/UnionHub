@@ -34,8 +34,11 @@ export class NotificationsController {
   }
 
   @Post("unregister-token")
-  async unregisterToken(@Body() dto: { token: string }) {
-    await this.notificationsService.unregisterToken(dto.token);
+  async unregisterToken(
+    @Request() req: RequestWithUser,
+    @Body() dto: { token: string },
+  ) {
+    await this.notificationsService.unregisterToken(dto.token, req.user.userId);
     return { message: "Token unregistered successfully" };
   }
 }

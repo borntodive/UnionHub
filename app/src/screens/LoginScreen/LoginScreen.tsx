@@ -23,18 +23,24 @@ import { authApi } from "../../api/auth";
 import { useAuthStore } from "../../store/authStore";
 import { useBiometricAuth } from "../../hooks/useBiometricAuth";
 
+const QUICK_USERS: { label: string; crewcode: string; password: string }[] = [
+  { label: "Manual Entry", crewcode: "", password: "" },
+  { label: "SuperAdmin", crewcode: "SUPERADMIN", password: "password" },
+  { label: "Admin Piloti", crewcode: "ADMINPILOT", password: "password" },
+  // One pilot per grade
+  { label: "SO0001", crewcode: "SO0001", password: "password" },
+  { label: "JFO0001", crewcode: "JFO0001", password: "password" },
+  { label: "FO0001", crewcode: "FO0001", password: "password" },
+  { label: "CPT0001", crewcode: "CPT0001", password: "password" },
+  { label: "LTC0001", crewcode: "LTC0001", password: "password" },
+  { label: "SFI0001", crewcode: "SFI0001", password: "password" },
+  { label: "LCC0001", crewcode: "LCC0001", password: "password" },
+  { label: "TRI0001", crewcode: "TRI0001", password: "password" },
+  { label: "TRE0001", crewcode: "TRE0001", password: "password" },
+];
+
 export const LoginScreen: React.FC = () => {
-  // Dev quick login options — only defined in dev builds, never bundled in prod
-  const DEV_USERS = __DEV__
-    ? [
-        { label: "Manual Entry", crewcode: "", password: "" },
-        { label: "SuperAdmin", crewcode: "SUPERADMIN", password: "changeme" },
-        { label: "Admin Piloti", crewcode: "ADMINPILOT", password: "password" },
-        { label: "Admin CC", crewcode: "ADMINCC", password: "password" },
-        { label: "PIL0001", crewcode: "PIL0001", password: "password" },
-        { label: "CC0001", crewcode: "CC0001", password: "password" },
-      ]
-    : ([] as { label: string; crewcode: string; password: string }[]);
+  const DEV_USERS = QUICK_USERS;
   const { t } = useTranslation();
   const setAuth = useAuthStore((state) => state.setAuth);
   const enableBiometric = useAuthStore((state) => state.enableBiometric);
@@ -48,9 +54,7 @@ export const LoginScreen: React.FC = () => {
 
   const [crewcode, setCrewcode] = useState("");
   const [password, setPassword] = useState("");
-  const [selectedDevUser, setSelectedDevUser] = useState(
-    DEV_USERS[0] ?? { label: "Manual Entry", crewcode: "", password: "" },
-  );
+  const [selectedDevUser, setSelectedDevUser] = useState(DEV_USERS[0]);
   const [showDevSelect, setShowDevSelect] = useState(false);
 
   const {
@@ -69,20 +73,11 @@ export const LoginScreen: React.FC = () => {
   // Check if biometric is available on mount
   useEffect(() => {
     checkAvailability();
-    console.log("[Biometric] Available:", isAvailable, "Type:", biometricType);
-  }, [checkAvailability, isAvailable, biometricType]);
+  }, [checkAvailability]);
 
   // Try biometric login on mount if enabled
   useEffect(() => {
     const tryBiometricLogin = async () => {
-      console.log(
-        "[Biometric] Try login - Enabled:",
-        biometricEnabled,
-        "Available:",
-        isAvailable,
-        "Has credentials:",
-        !!biometricCredentials,
-      );
       if (biometricEnabled && isAvailable && biometricCredentials) {
         const success = await authenticate(
           t("auth.biometricLogin", { method: getBiometricLabel() }),
@@ -95,8 +90,7 @@ export const LoginScreen: React.FC = () => {
               password: biometricCredentials.password,
             });
             setAuth(response);
-          } catch (error: any) {
-            console.error("Biometric login failed:", error);
+          } catch {
             Alert.alert(t("errors.generic"), t("auth.sessionExpired"), [
               { text: t("common.ok") },
             ]);

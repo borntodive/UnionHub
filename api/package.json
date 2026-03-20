@@ -22,7 +22,11 @@
     "migration:generate": "npm run typeorm -- migration:generate -d src/database/data-source.ts",
     "migration:run": "npm run typeorm -- migration:run -d src/database/data-source.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/database/data-source.ts",
-    "seed": "ts-node src/database/seeds/run-seed.ts"
+    "seed": "ts-node src/database/seeds/run-seed.ts",
+    "seed:dev": "ts-node src/database/seeds/run-seed.ts",
+    "seed:prod": "ts-node src/database/seeds/run-seed-prod.ts",
+    "db:reset": "dropdb --if-exists $DB_DATABASE && createdb $DB_DATABASE",
+    "db:reset:dev": "npm run db:reset && npm run migration:run && npm run seed:dev"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",

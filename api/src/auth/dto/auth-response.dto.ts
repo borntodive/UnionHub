@@ -12,6 +12,7 @@ export class TokenPayloadDto {
   crewcode: string;
   role: string;
   ruolo: string | null;
+  type?: "access" | "refresh";
   iat?: number;
   exp?: number;
 }

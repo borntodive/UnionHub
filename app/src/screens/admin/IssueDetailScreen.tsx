@@ -104,6 +104,7 @@ export const IssueDetailScreen: React.FC = () => {
   const handleSave = () => {
     if (!issue) return;
     const updates: { status?: IssueStatus; adminNotes?: string } = {};
+    updates.adminNotes = adminNotes;
     if (selectedStatus && selectedStatus !== issue.status) {
       if (selectedStatus === IssueStatus.SOLVED) {
         Alert.alert(t("issues.confirmSolve"), t("issues.confirmSolveMessage"), [
@@ -118,7 +119,6 @@ export const IssueDetailScreen: React.FC = () => {
       }
       updates.status = selectedStatus;
     }
-    updates.adminNotes = adminNotes;
     mutation.mutate(updates);
   };
 

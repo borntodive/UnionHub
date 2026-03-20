@@ -102,11 +102,7 @@ export const IssuesScreen: React.FC = () => {
       const result = await issuesApi.getSummary();
       setSummaryText(result.summary);
       setSummaryPdfBase64(result.pdfBase64 || "");
-    } catch (err: any) {
-      console.error(
-        "[Summary] Error:",
-        JSON.stringify(err?.response?.data ?? err?.message ?? err),
-      );
+    } catch {
       setSummaryText(t("issues.summaryError"));
     } finally {
       setSummaryLoading(false);
@@ -141,11 +137,7 @@ export const IssuesScreen: React.FC = () => {
         mimeType: "text/csv",
         dialogTitle: t("issues.exportTitle"),
       });
-    } catch (err: any) {
-      console.error(
-        "[Export] Error:",
-        JSON.stringify(err?.response?.data ?? err?.message ?? err),
-      );
+    } catch {
       Alert.alert(t("common.error"), t("issues.exportError"));
     } finally {
       setExportLoading(false);
@@ -262,6 +254,9 @@ export const IssuesScreen: React.FC = () => {
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
+          removeClippedSubviews
+          maxToRenderPerBatch={10}
+          windowSize={5}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
           }
