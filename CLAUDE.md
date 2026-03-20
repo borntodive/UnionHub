@@ -176,6 +176,10 @@ npm run lint               # ESLint check
 - Push notifications via Expo (silent + visible)
 - Offline issue reporting with background sync
 - Payslip calculator with Italian tax rules, persisted in Zustand; settings unified in the main Settings screen (two tabs: General / Payslip); admin-only Override tab in PayslipCalculator
+  - **Tabs**: Input → Results → Contract → Reverse (all users) + Settings/Override (Admin+) + Debug (SuperAdmin)
+  - **Contract tab** (`ContractScreen`): displays all contract amounts adjusted for part-time %, CU reduction, and legacy overrides; RSA and ITUD rows shown only if `user.rsa === true` / `user.itud === true`
+  - **Reverse tab** (`ReverseScreen`): enter sector pay (€) → get hours at contract rate (HH:MM) + effective rate using Input tab SBH hours; enter diaria (€) → get days at contract rate + effective rate using Input tab diaria days
+  - **Legacy contract flag**: available in both Settings (general) and Override (admin). In general mode stores `Δ = custom − contract` so future CLA updates preserve the relative difference; in override mode uses custom values directly (`legacyDirect: true`, injected at runtime, never persisted)
 
 **Date Fields on Users**:
 
@@ -198,10 +202,13 @@ After login, `AppNavigator` checks three conditions in order before showing the 
 
 1. User logs in with `crewcode` + `password` → receives `accessToken` + `refreshToken`
 2. Tokens stored in AsyncStorage via Zustand persist (`onRehydrateStorage` calls `setLoading(false)`)
-3. Axios interceptor adds `Authorization: Bearer <token>` header
-4. On 401, client attempts automatic token refresh
-5. On refresh failure: **only logs out if the server explicitly rejected the token (4xx response)**. Network errors (offline) do NOT trigger logout.
-6. Biometric auth can be enabled after first successful login
+3. `AuthProvider` **only blocks rendering** until Zustand finishes rehydrating AsyncStorage — it does NOT validate the token on startup (race condition fix)
+4. Axios interceptor adds `Authorization: Bearer <token>` header
+5. On 401, client attempts automatic token refresh
+6. On refresh failure: **only logs out if the server explicitly rejected the token (4xx response)**. Network errors (offline) do NOT trigger logout.
+7. Biometric auth can be enabled after first successful login
+
+**Why AuthProvider does NOT refresh the token on startup**: at mount time, AsyncStorage rehydration is still pending, so `refreshToken` is `null`. Doing validation here caused spurious logouts on every app update. Token refresh is handled lazily by the Axios interceptor on the first 401.
 
 ## API Endpoints
 
@@ -337,5 +344,6 @@ rm -rf node_modules && npm install
 ### Common Issues
 
 - **Re-login required after every reload (Expo Go)**: Fixed via `onRehydrateStorage` in `authStore` — calls `setLoading(false)` after AsyncStorage hydration.
+- **Logout on app update / OTA reload**: Fixed by removing token validation from `AuthProvider`. The old code read `refreshToken` before AsyncStorage rehydration completed (it was `null`), causing immediate `setLoading(false)` with no session. Now `AuthProvider` only shows a spinner until rehydration fires. A 3-second timeout in `AuthProvider` unblocks the UI if AsyncStorage fails entirely.
 - **Logout when going offline**: Fixed in `api/client.ts` — token refresh catch only calls `logout()` when server returns an HTTP error response (not on network errors).
 - **HTML tags visible in PDF**: `contentToHtml()` uses regex `/<[a-z][\s\S]*?>/i` to detect HTML anywhere in content, not just `startsWith("<")`.
