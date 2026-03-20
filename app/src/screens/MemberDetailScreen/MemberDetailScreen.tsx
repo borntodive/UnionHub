@@ -12,9 +12,17 @@ import {
   AppState,
   AppStateStatus,
 } from "react-native";
-import * as WebBrowser from 'expo-web-browser';
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import * as WebBrowser from "expo-web-browser";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import {
+  useNavigation,
+  useRoute,
+  RouteProp,
+  DrawerActions,
+} from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -30,6 +38,7 @@ import {
   Check,
   X,
   ArrowLeft,
+  Menu,
   FileText,
   ExternalLink,
 } from "lucide-react-native";
@@ -84,9 +93,11 @@ export const MemberDetailScreen: React.FC = () => {
   const isOwnProfile = currentUser?.id === memberId;
   const canEdit = isAdmin || isOwnProfile;
 
-  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
+  const [appState, setAppState] = useState<AppStateStatus>(
+    AppState.currentState,
+  );
   const [screenKey, setScreenKey] = useState(0);
-  
+
   const {
     data: member,
     isLoading,
@@ -99,21 +110,21 @@ export const MemberDetailScreen: React.FC = () => {
 
   // Handle app state changes - force re-render when coming back to foreground
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (appState.match(/inactive|background/) && nextAppState === 'active') {
-        console.log('[MemberDetail] App came to foreground, forcing re-render');
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (appState.match(/inactive|background/) && nextAppState === "active") {
+        console.log("[MemberDetail] App came to foreground, forcing re-render");
         // Force multiple re-renders to ensure layout is recalculated
-        setScreenKey(prev => prev + 1);
-        
+        setScreenKey((prev) => prev + 1);
+
         // Additional re-render after a short delay
         setTimeout(() => {
-          setScreenKey(prev => prev + 1);
+          setScreenKey((prev) => prev + 1);
           refetch();
         }, 50);
-        
+
         // Final re-render after layout should be stable
         setTimeout(() => {
-          setScreenKey(prev => prev + 1);
+          setScreenKey((prev) => prev + 1);
         }, 200);
       }
       setAppState(nextAppState);
@@ -158,7 +169,7 @@ export const MemberDetailScreen: React.FC = () => {
   };
 
   const handleEdit = () => {
-    navigation.navigate('MemberEdit', { memberId });
+    navigation.navigate("MemberEdit", { memberId });
   };
 
   const formatDate = (dateString: string) => {
@@ -175,7 +186,7 @@ export const MemberDetailScreen: React.FC = () => {
         <StatusBar backgroundColor={colors.primary} barStyle="light-content" />
         <SafeAreaView
           style={styles.container}
-          edges={['bottom', 'left', 'right', 'top']}
+          edges={["bottom", "left", "right", "top"]}
         >
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
@@ -191,7 +202,7 @@ export const MemberDetailScreen: React.FC = () => {
         <StatusBar backgroundColor={colors.primary} barStyle="light-content" />
         <SafeAreaView
           style={styles.container}
-          edges={['bottom', 'left', 'right', 'top']}
+          edges={["bottom", "left", "right", "top"]}
         >
           <View style={styles.errorContainer}>
             <AlertCircle size={48} color={colors.error} />
@@ -211,230 +222,250 @@ export const MemberDetailScreen: React.FC = () => {
     <View style={styles.wrapper} key={screenKey}>
       <View style={[styles.statusBarHack, { height: insets.top }]} />
       <StatusBar barStyle="light-content" />
-      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <SafeAreaView
+        style={styles.container}
+        edges={["bottom", "left", "right"]}
+      >
         {/* Header - Same style as drawer screens */}
         <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <ArrowLeft size={24} color={colors.textInverse} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Member Details</Text>
-        {canEdit ? (
           <TouchableOpacity
-            onPress={handleEdit}
-            style={styles.editButton}
+            onPress={() =>
+              isOwnProfile
+                ? navigation.getParent()?.dispatch(DrawerActions.openDrawer())
+                : navigation.goBack()
+            }
+            style={styles.backButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Edit3 size={20} color={colors.textInverse} />
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.headerSpacer} />
-        )}
-      </View>
-
-      <ScrollView 
-        key={`scroll-${screenKey}`}
-        style={styles.content} 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ minHeight: '100%' }}
-      >
-        {/* Profile Card */}
-        <Card style={styles.profileCard}>
-          <View style={styles.avatarContainer}>
-            <View
-              style={[styles.avatar, !member.isActive && styles.avatarInactive]}
-            >
-              <Text style={styles.avatarText}>
-                {member.nome?.[0]}
-                {member.cognome?.[0]}
-              </Text>
-            </View>
-            {!member.isActive && (
-              <View style={styles.inactiveBadge}>
-                <Text style={styles.inactiveText}>Inactive</Text>
-              </View>
+            {isOwnProfile ? (
+              <Menu size={24} color={colors.textInverse} />
+            ) : (
+              <ArrowLeft size={24} color={colors.textInverse} />
             )}
-          </View>
-
-          <Text style={styles.name}>
-            {member.nome} {member.cognome}
-          </Text>
-          <Text style={styles.crewcode}>{member.crewcode}</Text>
-
-          <View style={styles.roleContainer}>
-            <View style={styles.roleBadge}>
-              <Shield size={14} color={colors.primary} />
-              <Text style={styles.roleText}>{getRoleLabel(member.role)}</Text>
-            </View>
-            <View
-              style={[
-                styles.ruoloBadge,
-                {
-                  backgroundColor:
-                    member.ruolo === Ruolo.PILOT ? "#3b82f6" : "#8b5cf6",
-                },
-              ]}
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Member Details</Text>
+          {canEdit ? (
+            <TouchableOpacity
+              onPress={handleEdit}
+              style={styles.editButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Text style={styles.ruoloText}>
-                {getRuoloLabel(member.ruolo)}
-              </Text>
-            </View>
-          </View>
-        </Card>
-
-        {/* Contact Info */}
-        <Card style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Contact Information</Text>
-
-          <InfoRow
-            icon={<Mail size={20} color={colors.primary} />}
-            label="Email"
-            value={member.email}
-          />
-
-          <InfoRow
-            icon={<Phone size={20} color={colors.primary} />}
-            label="Phone"
-            value={member.telefono || "Not specified"}
-          />
-        </Card>
-
-        {/* Professional Info */}
-        <Card style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Professional Information</Text>
-
-          <InfoRow
-            icon={<Award size={20} color={colors.primary} />}
-            label="Grade"
-            value={member.grade?.codice || "Not specified"}
-          />
-
-          <InfoRow
-            icon={<Briefcase size={20} color={colors.primary} />}
-            label="Contract"
-            value={
-              isSuperAdmin
-                ? member.contratto?.codice || "Not specified"
-                : member.contratto?.codice?.replace(/-(PI|CC)$/, "") ||
-                  "Not specified"
-            }
-          />
-
-          <InfoRow
-            icon={<MapPin size={20} color={colors.primary} />}
-            label="Base"
-            value={member.base?.codice || "Not specified"}
-          />
-        </Card>
-
-        {/* Special Flags */}
-        {isAdmin && (
-          <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Special Flags</Text>
-
-            <View style={styles.flagsContainer}>
-              <FlagItem label="ITUD" isActive={member.itud} />
-              <FlagItem label="RSA" isActive={member.rsa} />
-            </View>
-          </Card>
-        )}
-
-        {/* Notes */}
-        {isAdmin && member.note && (
-          <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Notes</Text>
-            <Text style={styles.noteText}>{member.note}</Text>
-          </Card>
-        )}
-
-        {/* Subscription Date */}
-        {member.dataIscrizione && (
-          <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Membership Information</Text>
-            <InfoRow
-              icon={<Calendar size={20} color={colors.primary} />}
-              label="Subscription Date"
-              value={new Date(member.dataIscrizione).toLocaleDateString('it-IT', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            />
-          </Card>
-        )}
-
-        {/* Registration Form PDF */}
-        {member.registrationFormUrl && (
-          <Card style={{ ...styles.sectionCard, ...styles.pdfCard }}>
-            <Text style={styles.sectionTitle}>Registration Form</Text>
-            <TouchableOpacity 
-              style={styles.pdfButton}
-              onPress={async () => {
-                // Open PDF in in-app browser (Safari View Controller)
-                // This prevents the white screen issue when returning to the app
-                const baseUrl = 'http://localhost:3000';
-                const fullUrl = `${baseUrl}${member.registrationFormUrl}`;
-                try {
-                  await WebBrowser.openBrowserAsync(fullUrl, {
-                    presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
-                  });
-                } catch (error) {
-                  // Fallback to Linking if WebBrowser fails
-                  Linking.openURL(fullUrl).catch(() => {
-                    Alert.alert('Error', 'Could not open PDF');
-                  });
-                }
-              }}
-            >
-              <View style={styles.pdfIconContainer}>
-                <FileText size={24} color={colors.primary} />
-              </View>
-              <View style={styles.pdfInfo}>
-                <Text style={styles.pdfLabel}>Signed Membership Form</Text>
-                <Text style={styles.pdfHint}>Tap to view PDF</Text>
-              </View>
-              <ExternalLink size={20} color={colors.textSecondary} />
+              <Edit3 size={20} color={colors.textInverse} />
             </TouchableOpacity>
-          </Card>
-        )}
+          ) : (
+            <View style={styles.headerSpacer} />
+          )}
+        </View>
 
-        {/* Account Information - Hidden for own profile */}
-        {!isOwnProfile && (
+        <ScrollView
+          key={`scroll-${screenKey}`}
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ minHeight: "100%" }}
+        >
+          {/* Profile Card */}
+          <Card style={styles.profileCard}>
+            <View style={styles.avatarContainer}>
+              <View
+                style={[
+                  styles.avatar,
+                  !member.isActive && styles.avatarInactive,
+                ]}
+              >
+                <Text style={styles.avatarText}>
+                  {member.nome?.[0]}
+                  {member.cognome?.[0]}
+                </Text>
+              </View>
+              {!member.isActive && (
+                <View style={styles.inactiveBadge}>
+                  <Text style={styles.inactiveText}>Inactive</Text>
+                </View>
+              )}
+            </View>
+
+            <Text style={styles.name}>
+              {member.nome} {member.cognome}
+            </Text>
+            <Text style={styles.crewcode}>{member.crewcode}</Text>
+
+            <View style={styles.roleContainer}>
+              <View style={styles.roleBadge}>
+                <Shield size={14} color={colors.primary} />
+                <Text style={styles.roleText}>{getRoleLabel(member.role)}</Text>
+              </View>
+              <View
+                style={[
+                  styles.ruoloBadge,
+                  {
+                    backgroundColor:
+                      member.ruolo === Ruolo.PILOT ? "#3b82f6" : "#8b5cf6",
+                  },
+                ]}
+              >
+                <Text style={styles.ruoloText}>
+                  {getRuoloLabel(member.ruolo)}
+                </Text>
+              </View>
+            </View>
+          </Card>
+
+          {/* Contact Info */}
           <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Account Information</Text>
+            <Text style={styles.sectionTitle}>Contact Information</Text>
 
             <InfoRow
-              icon={<Calendar size={20} color={colors.primary} />}
-              label="Created"
-              value={formatDate(member.createdAt)}
+              icon={<Mail size={20} color={colors.primary} />}
+              label="Email"
+              value={member.email}
             />
 
             <InfoRow
-              icon={<Calendar size={20} color={colors.primary} />}
-              label="Last Updated"
-              value={formatDate(member.updatedAt)}
+              icon={<Phone size={20} color={colors.primary} />}
+              label="Phone"
+              value={member.telefono || "Not specified"}
             />
           </Card>
-        )}
 
-        {/* Admin Actions */}
-        {isAdmin && (
-          <View style={styles.actionsContainer}>
-            <Button
-              title={member.isActive ? "Deactivate Member" : "Activate Member"}
-              onPress={handleToggleActive}
-              variant={member.isActive ? "secondary" : "primary"}
-              loading={toggleActiveMutation.isPending}
-              style={styles.actionButton}
+          {/* Professional Info */}
+          <Card style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>Professional Information</Text>
+
+            <InfoRow
+              icon={<Award size={20} color={colors.primary} />}
+              label="Grade"
+              value={member.grade?.codice || "Not specified"}
             />
-          </View>
-        )}
 
-        <View style={styles.bottomSpacer} />
-      </ScrollView>
+            <InfoRow
+              icon={<Briefcase size={20} color={colors.primary} />}
+              label="Contract"
+              value={
+                isSuperAdmin
+                  ? member.contratto?.codice || "Not specified"
+                  : member.contratto?.codice?.replace(/-(PI|CC)$/, "") ||
+                    "Not specified"
+              }
+            />
+
+            <InfoRow
+              icon={<MapPin size={20} color={colors.primary} />}
+              label="Base"
+              value={member.base?.codice || "Not specified"}
+            />
+          </Card>
+
+          {/* Special Flags */}
+          {isAdmin && (
+            <Card style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Special Flags</Text>
+
+              <View style={styles.flagsContainer}>
+                <FlagItem label="ITUD" isActive={member.itud} />
+                <FlagItem label="RSA" isActive={member.rsa} />
+              </View>
+            </Card>
+          )}
+
+          {/* Notes */}
+          {isAdmin && member.note && (
+            <Card style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Notes</Text>
+              <Text style={styles.noteText}>{member.note}</Text>
+            </Card>
+          )}
+
+          {/* Subscription Date */}
+          {member.dataIscrizione && (
+            <Card style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Membership Information</Text>
+              <InfoRow
+                icon={<Calendar size={20} color={colors.primary} />}
+                label="Subscription Date"
+                value={new Date(member.dataIscrizione).toLocaleDateString(
+                  "it-IT",
+                  {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  },
+                )}
+              />
+            </Card>
+          )}
+
+          {/* Registration Form PDF */}
+          {member.registrationFormUrl && (
+            <Card style={{ ...styles.sectionCard, ...styles.pdfCard }}>
+              <Text style={styles.sectionTitle}>Registration Form</Text>
+              <TouchableOpacity
+                style={styles.pdfButton}
+                onPress={async () => {
+                  // Open PDF in in-app browser (Safari View Controller)
+                  // This prevents the white screen issue when returning to the app
+                  const baseUrl = "http://localhost:3000";
+                  const fullUrl = `${baseUrl}${member.registrationFormUrl}`;
+                  try {
+                    await WebBrowser.openBrowserAsync(fullUrl, {
+                      presentationStyle:
+                        WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+                    });
+                  } catch (error) {
+                    // Fallback to Linking if WebBrowser fails
+                    Linking.openURL(fullUrl).catch(() => {
+                      Alert.alert("Error", "Could not open PDF");
+                    });
+                  }
+                }}
+              >
+                <View style={styles.pdfIconContainer}>
+                  <FileText size={24} color={colors.primary} />
+                </View>
+                <View style={styles.pdfInfo}>
+                  <Text style={styles.pdfLabel}>Signed Membership Form</Text>
+                  <Text style={styles.pdfHint}>Tap to view PDF</Text>
+                </View>
+                <ExternalLink size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </Card>
+          )}
+
+          {/* Account Information - Hidden for own profile */}
+          {!isOwnProfile && (
+            <Card style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Account Information</Text>
+
+              <InfoRow
+                icon={<Calendar size={20} color={colors.primary} />}
+                label="Created"
+                value={formatDate(member.createdAt)}
+              />
+
+              <InfoRow
+                icon={<Calendar size={20} color={colors.primary} />}
+                label="Last Updated"
+                value={formatDate(member.updatedAt)}
+              />
+            </Card>
+          )}
+
+          {/* Admin Actions */}
+          {isAdmin && (
+            <View style={styles.actionsContainer}>
+              <Button
+                title={
+                  member.isActive ? "Deactivate Member" : "Activate Member"
+                }
+                onPress={handleToggleActive}
+                variant={member.isActive ? "secondary" : "primary"}
+                loading={toggleActiveMutation.isPending}
+                style={styles.actionButton}
+              />
+            </View>
+          )}
+
+          <View style={styles.bottomSpacer} />
+        </ScrollView>
       </SafeAreaView>
     </View>
   );
@@ -695,13 +726,13 @@ const styles = StyleSheet.create({
   },
   // PDF Section
   pdfCard: {
-    backgroundColor: colors.primary + '08',
+    backgroundColor: colors.primary + "08",
     borderWidth: 1,
-    borderColor: colors.primary + '20',
+    borderColor: colors.primary + "20",
   },
   pdfButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: spacing.md,
     backgroundColor: colors.background,
     borderRadius: borderRadius.md,
@@ -712,9 +743,9 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.primary + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: colors.primary + "15",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: spacing.md,
   },
   pdfInfo: {

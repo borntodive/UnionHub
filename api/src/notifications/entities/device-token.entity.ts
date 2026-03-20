@@ -6,26 +6,26 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
-} from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+} from "typeorm";
+import { User } from "../../users/entities/user.entity";
 
-@Entity('device_tokens')
+@Entity("device_tokens")
 export class DeviceToken {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   userId: string;
 
   @ManyToOne(() => User)
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: "userId" })
   user: User;
 
   @Column()
   @Index()
   token: string;
 
-  @Column({ default: 'expo' })
+  @Column({ default: "expo" })
   platform: string;
 
   @Column({ default: true })
@@ -34,6 +34,6 @@ export class DeviceToken {
   @CreateDateColumn()
   createdAt: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   lastUsedAt: Date;
 }

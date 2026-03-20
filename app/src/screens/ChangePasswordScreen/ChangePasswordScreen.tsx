@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,26 +9,26 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMutation } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-import { Lock, Shield, AlertTriangle } from 'lucide-react-native';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { Lock, Shield, AlertTriangle } from "lucide-react-native";
 
-import { colors, spacing, typography, borderRadius } from '../../theme';
-import { Button } from '../../components/Button';
-import { Input } from '../../components/Input';
-import { authApi } from '../../api/auth';
-import { useAuthStore } from '../../store/authStore';
+import { colors, spacing, typography, borderRadius } from "../../theme";
+import { Button } from "../../components/Button";
+import { Input } from "../../components/Input";
+import { authApi } from "../../api/auth";
+import { useAuthStore } from "../../store/authStore";
 
 export const ChangePasswordScreen: React.FC = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
-  
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const wasMandatoryChange = user?.mustChangePassword ?? false;
 
@@ -37,44 +37,48 @@ export const ChangePasswordScreen: React.FC = () => {
     onSuccess: () => {
       setTimeout(() => {
         Alert.alert(
-          t('auth.passwordChanged'),
+          t("auth.passwordChanged"),
           wasMandatoryChange
-            ? t('auth.sessionExpired')
-            : t('auth.passwordChanged'),
+            ? t("auth.sessionExpired")
+            : t("auth.passwordChanged"),
           [
             {
-              text: t('common.ok'),
+              text: t("common.ok"),
               onPress: async () => {
                 if (wasMandatoryChange) {
                   await logout();
                 }
               },
             },
-          ]
+          ],
         );
       }, 100);
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 
-        error.response?.data?.error || 
-        t('errors.generic');
-      Alert.alert(t('common.error'), Array.isArray(message) ? message.join('\n') : message);
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        t("errors.generic");
+      Alert.alert(
+        t("common.error"),
+        Array.isArray(message) ? message.join("\n") : message,
+      );
     },
   });
 
   const handleChangePassword = useCallback(() => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert(t('common.error'), t('errors.requiredField'));
+      Alert.alert(t("common.error"), t("errors.requiredField"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert(t('common.error'), t('errors.passwordMismatch'));
+      Alert.alert(t("common.error"), t("errors.passwordMismatch"));
       return;
     }
 
     if (newPassword.length < 12) {
-      Alert.alert(t('common.error'), 'Password must be at least 12 characters');
+      Alert.alert(t("common.error"), "Password must be at least 12 characters");
       return;
     }
 
@@ -82,9 +86,12 @@ export const ChangePasswordScreen: React.FC = () => {
     const hasUppercase = /[A-Z]/.test(newPassword);
     const hasNumber = /[0-9]/.test(newPassword);
     const hasSpecial = /[@$!%*?&]/.test(newPassword);
-    
+
     if (!hasLowercase || !hasUppercase || !hasNumber || !hasSpecial) {
-      Alert.alert(t('common.error'), 'Password must contain at least one lowercase, one uppercase, one number, and one special character (@ $ ! % * ? &)');
+      Alert.alert(
+        t("common.error"),
+        "Password must contain at least one lowercase, one uppercase, one number, and one special character (@ $ ! % * ? &)",
+      );
       return;
     }
 
@@ -92,12 +99,18 @@ export const ChangePasswordScreen: React.FC = () => {
       currentPassword,
       newPassword,
     });
-  }, [currentPassword, newPassword, confirmPassword, changePasswordMutation, t]);
+  }, [
+    currentPassword,
+    newPassword,
+    confirmPassword,
+    changePasswordMutation,
+    t,
+  ]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -110,11 +123,11 @@ export const ChangePasswordScreen: React.FC = () => {
               <View style={styles.iconContainer}>
                 <Shield size={48} color={colors.secondary} />
               </View>
-              <Text style={styles.title}>{t('auth.changePassword')}</Text>
+              <Text style={styles.title}>{t("auth.changePassword")}</Text>
               <Text style={styles.subtitle}>
-                {user?.mustChangePassword 
-                  ? t('auth.firstLoginRequired')
-                  : t('settings.security')}
+                {user?.mustChangePassword
+                  ? t("auth.firstLoginRequired")
+                  : t("settings.security")}
               </Text>
             </View>
 
@@ -123,7 +136,7 @@ export const ChangePasswordScreen: React.FC = () => {
               <View style={styles.alertBox}>
                 <AlertTriangle size={20} color={colors.secondary} />
                 <Text style={styles.alertText}>
-                  {t('auth.firstLoginRequired')}
+                  {t("auth.firstLoginRequired")}
                 </Text>
               </View>
             )}
@@ -131,8 +144,8 @@ export const ChangePasswordScreen: React.FC = () => {
             {/* Form */}
             <View style={styles.formContainer}>
               <Input
-                label={t('auth.currentPassword')}
-                placeholder={t('auth.enterPassword')}
+                label={t("auth.currentPassword")}
+                placeholder={t("auth.enterPassword")}
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
                 secureTextEntry
@@ -141,8 +154,8 @@ export const ChangePasswordScreen: React.FC = () => {
               />
 
               <Input
-                label={t('auth.newPassword')}
-                placeholder={t('auth.enterPassword')}
+                label={t("auth.newPassword")}
+                placeholder={t("auth.enterPassword")}
                 value={newPassword}
                 onChangeText={setNewPassword}
                 secureTextEntry
@@ -151,55 +164,74 @@ export const ChangePasswordScreen: React.FC = () => {
               />
 
               <Input
-                label={t('auth.confirmPassword')}
-                placeholder={t('auth.enterPassword')}
+                label={t("auth.confirmPassword")}
+                placeholder={t("auth.enterPassword")}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
                 leftIcon={<Lock size={20} color={colors.textTertiary} />}
                 containerStyle={styles.inputContainer}
-                error={confirmPassword && newPassword !== confirmPassword ? t('errors.passwordMismatch') : undefined}
+                error={
+                  confirmPassword && newPassword !== confirmPassword
+                    ? t("errors.passwordMismatch")
+                    : undefined
+                }
               />
 
               <View style={styles.passwordHints}>
                 <Text style={styles.hintTitle}>Password requirements:</Text>
-                <Text style={[
-                  styles.hint,
-                  newPassword.length >= 12 && styles.hintValid
-                ]}>
+                <Text
+                  style={[
+                    styles.hint,
+                    newPassword.length >= 12 && styles.hintValid,
+                  ]}
+                >
                   • At least 12 characters
                 </Text>
-                <Text style={[
-                  styles.hint,
-                  /[a-z]/.test(newPassword) && styles.hintValid
-                ]}>
+                <Text
+                  style={[
+                    styles.hint,
+                    /[a-z]/.test(newPassword) && styles.hintValid,
+                  ]}
+                >
                   • At least one lowercase letter
                 </Text>
-                <Text style={[
-                  styles.hint,
-                  /[A-Z]/.test(newPassword) && styles.hintValid
-                ]}>
+                <Text
+                  style={[
+                    styles.hint,
+                    /[A-Z]/.test(newPassword) && styles.hintValid,
+                  ]}
+                >
                   • At least one uppercase letter
                 </Text>
-                <Text style={[
-                  styles.hint,
-                  /[0-9]/.test(newPassword) && styles.hintValid
-                ]}>
+                <Text
+                  style={[
+                    styles.hint,
+                    /[0-9]/.test(newPassword) && styles.hintValid,
+                  ]}
+                >
                   • At least one number
                 </Text>
-                <Text style={[
-                  styles.hint,
-                  /[@$!%*?&]/.test(newPassword) && styles.hintValid
-                ]}>
+                <Text
+                  style={[
+                    styles.hint,
+                    /[@$!%*?&]/.test(newPassword) && styles.hintValid,
+                  ]}
+                >
                   • At least one special character: @ $ ! % * ? &
                 </Text>
               </View>
 
               <Button
-                title={t('auth.changePassword')}
+                title={t("auth.changePassword")}
                 onPress={handleChangePassword}
                 loading={changePasswordMutation.isPending}
-                disabled={!currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword}
+                disabled={
+                  !currentPassword ||
+                  !newPassword ||
+                  !confirmPassword ||
+                  newPassword !== confirmPassword
+                }
                 size="lg"
                 style={styles.button}
               />
@@ -224,7 +256,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: spacing.lg,
   },
   iconContainer: {
@@ -232,12 +264,12 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: borderRadius.full,
     backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: spacing.md,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -256,12 +288,12 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: typography.sizes.base,
     color: colors.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
   },
   alertBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.secondary + '15',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.secondary + "15",
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.lg,
@@ -278,7 +310,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,

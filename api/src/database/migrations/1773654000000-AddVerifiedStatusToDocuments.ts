@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class AddVerifiedStatusToDocuments1773654000000 implements MigrationInterface {
-  name = 'AddVerifiedStatusToDocuments1773654000000';
+  name = "AddVerifiedStatusToDocuments1773654000000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Add 'verified' value to the enum
@@ -16,6 +16,6 @@ export class AddVerifiedStatusToDocuments1773654000000 implements MigrationInter
     // Cannot remove enum values in PostgreSQL easily
     // We would need to recreate the enum type
     // For now, we leave it as is since it's backwards compatible
-    console.log('Cannot remove enum value verified - leaving as is');
+    console.log("Cannot remove enum value verified - leaving as is");
   }
 }

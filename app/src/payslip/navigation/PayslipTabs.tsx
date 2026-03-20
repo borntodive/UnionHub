@@ -1,7 +1,14 @@
 import React from "react";
 import { View, StyleSheet, StatusBar } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Calculator, FileText, Bug, Settings } from "lucide-react-native";
+import {
+  Calculator,
+  FileText,
+  Bug,
+  Settings,
+  BookOpen,
+  ArrowLeftRight,
+} from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { colors } from "../../theme";
 import { useAuthStore } from "../../store/authStore";
@@ -9,12 +16,16 @@ import { usePayslipStore } from "../store/usePayslipStore";
 import { UserRole } from "../../types";
 import { InputScreen } from "../screens/InputScreen";
 import { ResultScreen } from "../screens/ResultScreen";
+import { ContractScreen } from "../screens/ContractScreen";
+import { ReverseScreen } from "../screens/ReverseScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
 import DebugContractScreen from "../screens/DebugContractScreen";
 
 export type PayslipTabParamList = {
   Input: undefined;
   Results: undefined;
+  Contract: undefined;
+  Reverse: undefined;
   Settings: undefined;
   Debug: undefined;
 };
@@ -56,6 +67,26 @@ export const PayslipTabs: React.FC = () => {
             tabBarLabel: t("payslip.results"),
             tabBarIcon: ({ color, size }: { color: string; size: number }) => (
               <Calculator size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Contract"
+          component={ContractScreen}
+          options={{
+            tabBarLabel: t("payslip.contractTab"),
+            tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+              <BookOpen size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Reverse"
+          component={ReverseScreen}
+          options={{
+            tabBarLabel: t("payslip.reverseTab"),
+            tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+              <ArrowLeftRight size={size} color={color} />
             ),
           }}
         />

@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
-import { colors, spacing, typography, borderRadius } from '../../../theme';
+import React from "react";
+import { View, Text, TextInput, StyleSheet } from "react-native";
+import { colors, spacing, typography, borderRadius } from "../../../theme";
 
 interface NumberInputProps {
   label: string;
@@ -15,7 +15,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   value,
   onChange,
   suffix,
-  placeholder = '0',
+  placeholder = "0",
 }) => {
   return (
     <View style={styles.container}>
@@ -45,8 +45,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     borderWidth: 1,

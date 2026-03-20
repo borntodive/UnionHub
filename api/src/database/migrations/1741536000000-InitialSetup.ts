@@ -1,7 +1,6 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class InitialSetup1741536000000 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create enum types
     await queryRunner.query(`
@@ -145,10 +144,18 @@ export class InitialSetup1741536000000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop foreign keys
-    await queryRunner.query(`ALTER TABLE "refresh_tokens" DROP CONSTRAINT "FK_refresh_tokens_userId"`);
-    await queryRunner.query(`ALTER TABLE "users" DROP CONSTRAINT "FK_users_gradeId"`);
-    await queryRunner.query(`ALTER TABLE "users" DROP CONSTRAINT "FK_users_contrattoId"`);
-    await queryRunner.query(`ALTER TABLE "users" DROP CONSTRAINT "FK_users_baseId"`);
+    await queryRunner.query(
+      `ALTER TABLE "refresh_tokens" DROP CONSTRAINT "FK_refresh_tokens_userId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "users" DROP CONSTRAINT "FK_users_gradeId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "users" DROP CONSTRAINT "FK_users_contrattoId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "users" DROP CONSTRAINT "FK_users_baseId"`,
+    );
 
     // Drop indexes
     await queryRunner.query(`DROP INDEX "IDX_refresh_tokens_expiresAt"`);

@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class CreateDeviceTokensTable1773656000000 implements MigrationInterface {
-  name = 'CreateDeviceTokensTable1773656000000';
+  name = "CreateDeviceTokensTable1773656000000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`

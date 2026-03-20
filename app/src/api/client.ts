@@ -1,18 +1,19 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { useAuthStore } from '../store/authStore';
-import Constants from 'expo-constants';
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { useAuthStore } from "../store/authStore";
+import Constants from "expo-constants";
 
-// API URL - usa ngrok per sviluppo su device fisico
-const DEV_API_URL = 'https://seagull-pleased-nationally.ngrok-free.app/api/v1';
-const API_BASE_URL = __DEV__ 
-  ? DEV_API_URL
-  : (Constants.expoConfig?.extra?.apiUrl || 'https://api.unionhub.app/api/v1');
+// API URL — loaded from .env.development (API_URL) via app.config.js extra.apiUrl
+const API_BASE_URL =
+  Constants.expoConfig?.extra?.apiUrl ||
+  (__DEV__
+    ? "http://localhost:3000/api/v1"
+    : "https://api.unionhub.app/api/v1");
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -25,21 +26,23 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Response interceptor - handle token refresh
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         const { refreshToken, setAuth, logout } = useAuthStore.getState();
-        
+
         if (!refreshToken) {
           logout();
           return Promise.reject(error);
@@ -50,8 +53,9 @@ apiClient.interceptors.response.use(
           refreshToken,
         });
 
-        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
-        
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+          response.data;
+
         setAuth({
           accessToken: newAccessToken,
           refreshToken: newRefreshToken,
@@ -60,14 +64,20 @@ apiClient.interceptors.response.use(
         // Retry original request
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return apiClient(originalRequest);
-      } catch (refreshError) {
-        useAuthStore.getState().logout();
+      } catch (refreshError: any) {
+        // Only logout if the refresh endpoint explicitly rejected the token (401/403).
+        // Network errors (no internet) must NOT trigger a logout so the user can
+        // keep using offline-capable screens with their existing session.
+        const isNetworkError = !refreshError.response;
+        if (!isNetworkError) {
+          useAuthStore.getState().logout();
+        }
         return Promise.reject(refreshError);
       }
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiClient;

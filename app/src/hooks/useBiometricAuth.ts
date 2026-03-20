@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import * as LocalAuthentication from 'expo-local-authentication';
+import { useState, useEffect, useCallback } from "react";
+import * as LocalAuthentication from "expo-local-authentication";
 
-export type BiometricType = 'fingerprint' | 'face' | 'iris' | 'none';
+export type BiometricType = "fingerprint" | "face" | "iris" | "none";
 
 interface BiometricAuthState {
   isAvailable: boolean;
@@ -13,7 +13,7 @@ interface BiometricAuthState {
 export const useBiometricAuth = () => {
   const [state, setState] = useState<BiometricAuthState>({
     isAvailable: false,
-    biometricType: 'none',
+    biometricType: "none",
     isAuthenticated: false,
     error: null,
   });
@@ -23,15 +23,26 @@ export const useBiometricAuth = () => {
     try {
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-      const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
+      const supportedTypes =
+        await LocalAuthentication.supportedAuthenticationTypesAsync();
 
-      let biometricType: BiometricType = 'none';
-      if (supportedTypes.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
-        biometricType = 'face';
-      } else if (supportedTypes.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
-        biometricType = 'fingerprint';
-      } else if (supportedTypes.includes(LocalAuthentication.AuthenticationType.IRIS)) {
-        biometricType = 'iris';
+      let biometricType: BiometricType = "none";
+      if (
+        supportedTypes.includes(
+          LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION,
+        )
+      ) {
+        biometricType = "face";
+      } else if (
+        supportedTypes.includes(
+          LocalAuthentication.AuthenticationType.FINGERPRINT,
+        )
+      ) {
+        biometricType = "fingerprint";
+      } else if (
+        supportedTypes.includes(LocalAuthentication.AuthenticationType.IRIS)
+      ) {
+        biometricType = "iris";
       }
 
       setState({
@@ -45,49 +56,55 @@ export const useBiometricAuth = () => {
     } catch (error) {
       setState({
         isAvailable: false,
-        biometricType: 'none',
+        biometricType: "none",
         isAuthenticated: false,
-        error: 'Errore nel controllo della biometrica',
+        error: "Errore nel controllo della biometrica",
       });
       return false;
     }
   }, []);
 
   // Authenticate with biometric
-  const authenticate = useCallback(async (promptMessage?: string): Promise<boolean> => {
-    try {
-      setState(prev => ({ ...prev, error: null }));
+  const authenticate = useCallback(
+    async (promptMessage?: string): Promise<boolean> => {
+      try {
+        setState((prev) => ({ ...prev, error: null }));
 
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: promptMessage || 'Autenticazione richiesta',
-        fallbackLabel: 'Usa password',
-        disableDeviceFallback: false,
-      });
+        const result = await LocalAuthentication.authenticateAsync({
+          promptMessage: promptMessage || "Autenticazione richiesta",
+          fallbackLabel: "Usa password",
+          disableDeviceFallback: false,
+        });
 
-      if (result.success) {
-        setState(prev => ({ ...prev, isAuthenticated: true, error: null }));
-        return true;
-      } else {
-        setState(prev => ({ 
-          ...prev, 
-          isAuthenticated: false, 
-          error: result.error === 'user_cancel' ? 'Autenticazione annullata' : 'Autenticazione fallita'
+        if (result.success) {
+          setState((prev) => ({ ...prev, isAuthenticated: true, error: null }));
+          return true;
+        } else {
+          setState((prev) => ({
+            ...prev,
+            isAuthenticated: false,
+            error:
+              result.error === "user_cancel"
+                ? "Autenticazione annullata"
+                : "Autenticazione fallita",
+          }));
+          return false;
+        }
+      } catch (error) {
+        setState((prev) => ({
+          ...prev,
+          isAuthenticated: false,
+          error: "Errore durante l'autenticazione",
         }));
         return false;
       }
-    } catch (error) {
-      setState(prev => ({ 
-        ...prev, 
-        isAuthenticated: false, 
-        error: 'Errore durante l\'autenticazione'
-      }));
-      return false;
-    }
-  }, []);
+    },
+    [],
+  );
 
   // Reset authentication state
   const reset = useCallback(() => {
-    setState(prev => ({ ...prev, isAuthenticated: false, error: null }));
+    setState((prev) => ({ ...prev, isAuthenticated: false, error: null }));
   }, []);
 
   // Check availability on mount
@@ -98,14 +115,14 @@ export const useBiometricAuth = () => {
   // Get label for biometric type
   const getBiometricLabel = useCallback((): string => {
     switch (state.biometricType) {
-      case 'face':
-        return 'Face ID';
-      case 'fingerprint':
-        return 'Impronta digitale';
-      case 'iris':
-        return 'Riconoscimento iride';
+      case "face":
+        return "Face ID";
+      case "fingerprint":
+        return "Impronta digitale";
+      case "iris":
+        return "Riconoscimento iride";
       default:
-        return 'Biometrica';
+        return "Biometrica";
     }
   }, [state.biometricType]);
 

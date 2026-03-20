@@ -1,17 +1,17 @@
 // CLA Contracts Seed - April 2026 to March 2027
 // Values WITH corrections applied (post-April 2026)
 
-import { DataSource } from 'typeorm';
-import { ClaContract } from '../../cla-contracts/entities/cla-contract.entity';
+import { DataSource } from "typeorm";
+import { ClaContract } from "../../cla-contracts/entities/cla-contract.entity";
 
 const CONTRACTS_2026 = [
   // ========== PILOTS - Line Crew ==========
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'cpt',
+    company: "RYR",
+    role: "pil",
+    rank: "cpt",
     basic: Math.round((15000 / 13) * 100) / 100,
-    ffp: Math.round((85044 / 12) * 100) / 100,  // WITH correction: 82044 + 3000
+    ffp: Math.round((85044 / 12) * 100) / 100, // WITH correction: 82044 + 3000
     sbh: Math.round((35870 / 850) * 10000) / 10000,
     al: Math.round((4785 / 29) * 100) / 100,
     oob: 160,
@@ -26,11 +26,11 @@ const CONTRACTS_2026 = [
     isActive: true,
   },
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'fo',
+    company: "RYR",
+    role: "pil",
+    rank: "fo",
     basic: Math.round((5000 / 13) * 100) / 100,
-    ffp: Math.round((41332 / 12) * 100) / 100,  // WITH correction: 39732 + 1600
+    ffp: Math.round((41332 / 12) * 100) / 100, // WITH correction: 39732 + 1600
     sbh: Math.round((15479 / 850) * 10000) / 10000,
     al: Math.round((3828 / 29) * 100) / 100,
     oob: 155,
@@ -45,11 +45,11 @@ const CONTRACTS_2026 = [
     isActive: true,
   },
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'jfo',
+    company: "RYR",
+    role: "pil",
+    rank: "jfo",
     basic: Math.round((5000 / 13) * 100) / 100,
-    ffp: Math.round((35432 / 12) * 100) / 100,  // No correction
+    ffp: Math.round((35432 / 12) * 100) / 100, // No correction
     sbh: Math.round((13566 / 850) * 10000) / 10000,
     al: Math.round((3828 / 29) * 100) / 100,
     oob: 155,
@@ -64,11 +64,11 @@ const CONTRACTS_2026 = [
     isActive: true,
   },
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'so',
+    company: "RYR",
+    role: "pil",
+    rank: "so",
     basic: Math.round((5000 / 13) * 100) / 100,
-    ffp: Math.round((14698 / 12) * 100) / 100,  // No correction
+    ffp: Math.round((14698 / 12) * 100) / 100, // No correction
     sbh: Math.round((15640 / 850) * 10000) / 10000,
     al: Math.round((225 / 29) * 100) / 100,
     oob: 155,
@@ -84,11 +84,11 @@ const CONTRACTS_2026 = [
   },
   // ========== PILOTS - Instructors (NO BTC) ==========
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'tre',
+    company: "RYR",
+    role: "pil",
+    rank: "tre",
     basic: Math.round((15000 / 13) * 100) / 100,
-    ffp: Math.round((85044 / 12) * 100) / 100,  // WITH correction (same as CPT)
+    ffp: Math.round((85044 / 12) * 100) / 100, // WITH correction (same as CPT)
     sbh: Math.round((35870 / 850) * 10000) / 10000,
     al: Math.round((4785 / 29) * 100) / 100,
     oob: 160,
@@ -109,11 +109,11 @@ const CONTRACTS_2026 = [
     isActive: true,
   },
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'tri',
+    company: "RYR",
+    role: "pil",
+    rank: "tri",
     basic: Math.round((15000 / 13) * 100) / 100,
-    ffp: Math.round((85044 / 12) * 100) / 100,  // WITH correction (same as CPT)
+    ffp: Math.round((85044 / 12) * 100) / 100, // WITH correction (same as CPT)
     sbh: Math.round((35870 / 850) * 10000) / 10000,
     al: Math.round((4785 / 29) * 100) / 100,
     oob: 160,
@@ -134,11 +134,11 @@ const CONTRACTS_2026 = [
     isActive: true,
   },
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'ltc',
+    company: "RYR",
+    role: "pil",
+    rank: "ltc",
     basic: Math.round((15000 / 13) * 100) / 100,
-    ffp: Math.round((85044 / 12) * 100) / 100,  // WITH correction (same as CPT)
+    ffp: Math.round((85044 / 12) * 100) / 100, // WITH correction (same as CPT)
     sbh: Math.round((35870 / 850) * 10000) / 10000,
     al: Math.round((4785 / 29) * 100) / 100,
     oob: 160,
@@ -163,11 +163,11 @@ const CONTRACTS_2026 = [
     isActive: true,
   },
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'lcc',
+    company: "RYR",
+    role: "pil",
+    rank: "lcc",
     basic: Math.round((15000 / 13) * 100) / 100,
-    ffp: Math.round((85044 / 12) * 100) / 100,  // WITH correction (same as CPT)
+    ffp: Math.round((85044 / 12) * 100) / 100, // WITH correction (same as CPT)
     sbh: Math.round((35870 / 850) * 10000) / 10000,
     al: Math.round((4785 / 29) * 100) / 100,
     oob: 160,
@@ -184,11 +184,11 @@ const CONTRACTS_2026 = [
     isActive: true,
   },
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'sfi',
+    company: "RYR",
+    role: "pil",
+    rank: "sfi",
     basic: Math.round((5000 / 13) * 100) / 100,
-    ffp: Math.round((41332 / 12) * 100) / 100,  // WITH correction (same as FO)
+    ffp: Math.round((41332 / 12) * 100) / 100, // WITH correction (same as FO)
     sbh: Math.round((15479 / 850) * 10000) / 10000,
     al: Math.round((3828 / 29) * 100) / 100,
     oob: 155,
@@ -216,10 +216,13 @@ const CONTRACTS_2026 = [
   },
 ];
 
-export async function seedClaContracts2026(dataSource: DataSource, adminUserId: string): Promise<void> {
+export async function seedClaContracts2026(
+  dataSource: DataSource,
+  adminUserId: string,
+): Promise<void> {
   const repository = dataSource.getRepository(ClaContract);
 
-  console.log('Seeding CLA Contracts 2026 (Apr 2026 - Mar 2027)...');
+  console.log("Seeding CLA Contracts 2026 (Apr 2026 - Mar 2027)...");
 
   for (const contractData of CONTRACTS_2026) {
     const contract = repository.create({

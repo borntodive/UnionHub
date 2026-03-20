@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { fromBuffer } from 'pdf2pic';
-import * as fs from 'fs';
-import * as path from 'path';
+import { Injectable, Logger } from "@nestjs/common";
+import { fromBuffer } from "pdf2pic";
+import * as fs from "fs";
+import * as path from "path";
 
 @Injectable()
 export class PdfImageService {
@@ -9,7 +9,7 @@ export class PdfImageService {
   private readonly tempDir: string;
 
   constructor() {
-    this.tempDir = path.join(process.cwd(), 'uploads', 'temp');
+    this.tempDir = path.join(process.cwd(), "uploads", "temp");
     this.ensureTempDirExists();
   }
 
@@ -28,23 +28,26 @@ export class PdfImageService {
     try {
       const options = {
         density: 150,
-        format: 'png',
+        format: "png",
         width: 800,
         height: 1131, // A4 ratio
         quality: 90,
       };
 
       const convert = fromBuffer(pdfBuffer, options);
-      const result = await convert.bulk(1, { responseType: 'base64' }); // Convert page 1 to base64
+      const result = await convert.bulk(1, { responseType: "base64" }); // Convert page 1 to base64
 
       if (!result || result.length === 0 || !result[0].base64) {
-        throw new Error('Failed to convert PDF to image');
+        throw new Error("Failed to convert PDF to image");
       }
 
       return result[0].base64;
     } catch (error) {
-      this.logger.error(`Failed to convert PDF to image: ${error.message}`, error.stack);
-      throw new Error('Failed to convert PDF to image');
+      this.logger.error(
+        `Failed to convert PDF to image: ${error.message}`,
+        error.stack,
+      );
+      throw new Error("Failed to convert PDF to image");
     }
   }
 
@@ -54,11 +57,14 @@ export class PdfImageService {
    * @param filename - Output filename
    * @returns Path to generated image
    */
-  async convertFirstPageToFile(pdfBuffer: Buffer, filename: string): Promise<string> {
+  async convertFirstPageToFile(
+    pdfBuffer: Buffer,
+    filename: string,
+  ): Promise<string> {
     try {
       const options = {
         density: 150,
-        format: 'png',
+        format: "png",
         width: 800,
         height: 1131,
         quality: 90,
@@ -72,8 +78,11 @@ export class PdfImageService {
       const outputPath = path.join(this.tempDir, `${filename}.png`);
       return outputPath;
     } catch (error) {
-      this.logger.error(`Failed to convert PDF to file: ${error.message}`, error.stack);
-      throw new Error('Failed to convert PDF to image');
+      this.logger.error(
+        `Failed to convert PDF to file: ${error.message}`,
+        error.stack,
+      );
+      throw new Error("Failed to convert PDF to image");
     }
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,174 +10,235 @@ import {
   Keyboard,
   Alert,
   TouchableOpacity,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMutation } from '@tanstack/react-query';
-import { Lock, User, ChevronDown, Fingerprint } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useMutation } from "@tanstack/react-query";
+import { Lock, User, ChevronDown, Fingerprint } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 
-import { colors, spacing, typography, borderRadius } from '../../theme';
-import { Button } from '../../components/Button';
-import { Input } from '../../components/Input';
-import { authApi } from '../../api/auth';
-import { useAuthStore } from '../../store/authStore';
-import { useBiometricAuth } from '../../hooks/useBiometricAuth';
-
-
-// Dev quick login options
-const DEV_USERS = [
-  { label: 'Manual Entry', crewcode: '', password: '' },
-  { label: 'SuperAdmin', crewcode: 'SUPERADMIN', password: 'changeme' },
-  { label: 'Admin Piloti', crewcode: 'ADMINPILOT', password: 'password' },
-  { label: 'Admin CC', crewcode: 'ADMINCC', password: 'password' },
-  { label: 'PIL0001', crewcode: 'PIL0001', password: 'password' },
-  { label: 'CC0001', crewcode: 'CC0001', password: 'password' },
-];
+import { colors, spacing, typography, borderRadius } from "../../theme";
+import { Button } from "../../components/Button";
+import { Input } from "../../components/Input";
+import { authApi } from "../../api/auth";
+import { useAuthStore } from "../../store/authStore";
+import { useBiometricAuth } from "../../hooks/useBiometricAuth";
 
 export const LoginScreen: React.FC = () => {
+  // Dev quick login options — only defined in dev builds, never bundled in prod
+  const DEV_USERS = __DEV__
+    ? [
+        { label: "Manual Entry", crewcode: "", password: "" },
+        { label: "SuperAdmin", crewcode: "SUPERADMIN", password: "changeme" },
+        { label: "Admin Piloti", crewcode: "ADMINPILOT", password: "password" },
+        { label: "Admin CC", crewcode: "ADMINCC", password: "password" },
+        { label: "PIL0001", crewcode: "PIL0001", password: "password" },
+        { label: "CC0001", crewcode: "CC0001", password: "password" },
+      ]
+    : ([] as { label: string; crewcode: string; password: string }[]);
   const { t } = useTranslation();
   const setAuth = useAuthStore((state) => state.setAuth);
   const enableBiometric = useAuthStore((state) => state.enableBiometric);
   const biometricEnabled = useAuthStore((state) => state.biometricEnabled);
-  const biometricCredentials = useAuthStore((state) => state.biometricCredentials);
-  
-  const [crewcode, setCrewcode] = useState('');
-  const [password, setPassword] = useState('');
-  const [selectedDevUser, setSelectedDevUser] = useState(DEV_USERS[0]);
+  const biometricCredentials = useAuthStore(
+    (state) => state.biometricCredentials,
+  );
+  const loadBiometricCredentials = useAuthStore(
+    (state) => state.loadBiometricCredentials,
+  );
+
+  const [crewcode, setCrewcode] = useState("");
+  const [password, setPassword] = useState("");
+  const [selectedDevUser, setSelectedDevUser] = useState(
+    DEV_USERS[0] ?? { label: "Manual Entry", crewcode: "", password: "" },
+  );
   const [showDevSelect, setShowDevSelect] = useState(false);
-  
-  const { isAvailable, biometricType, authenticate, getBiometricLabel, checkAvailability } = useBiometricAuth();
+
+  const {
+    isAvailable,
+    biometricType,
+    authenticate,
+    getBiometricLabel,
+    checkAvailability,
+  } = useBiometricAuth();
+
+  // Load biometric credentials from SecureStore on mount
+  useEffect(() => {
+    loadBiometricCredentials();
+  }, [loadBiometricCredentials]);
 
   // Check if biometric is available on mount
   useEffect(() => {
     checkAvailability();
-    console.log('[Biometric] Available:', isAvailable, 'Type:', biometricType);
+    console.log("[Biometric] Available:", isAvailable, "Type:", biometricType);
   }, [checkAvailability, isAvailable, biometricType]);
 
   // Try biometric login on mount if enabled
   useEffect(() => {
     const tryBiometricLogin = async () => {
-      console.log('[Biometric] Try login - Enabled:', biometricEnabled, 'Available:', isAvailable, 'Has credentials:', !!biometricCredentials);
+      console.log(
+        "[Biometric] Try login - Enabled:",
+        biometricEnabled,
+        "Available:",
+        isAvailable,
+        "Has credentials:",
+        !!biometricCredentials,
+      );
       if (biometricEnabled && isAvailable && biometricCredentials) {
-        const success = await authenticate(t('auth.biometricLogin', { method: getBiometricLabel() }));
+        const success = await authenticate(
+          t("auth.biometricLogin", { method: getBiometricLabel() }),
+        );
         if (success) {
           // Login using stored credentials
           try {
             const response = await authApi.login({
               crewcode: biometricCredentials.crewcode,
-              password: biometricCredentials.password
+              password: biometricCredentials.password,
             });
             setAuth(response);
           } catch (error: any) {
-            console.error('Biometric login failed:', error);
-            Alert.alert(
-              t('errors.generic'),
-              t('auth.sessionExpired'),
-              [{ text: t('common.ok') }]
-            );
+            console.error("Biometric login failed:", error);
+            Alert.alert(t("errors.generic"), t("auth.sessionExpired"), [
+              { text: t("common.ok") },
+            ]);
           }
         }
       }
     };
-    
+
     tryBiometricLogin();
   }, [biometricEnabled, isAvailable, biometricCredentials]);
 
   // Store credentials temporarily for biometric enable
-  const [lastLoginCredentials, setLastLoginCredentials] = useState<{ crewcode: string; password: string } | null>(null);
+  const [lastLoginCredentials, setLastLoginCredentials] = useState<{
+    crewcode: string;
+    password: string;
+  } | null>(null);
 
   const loginMutation = useMutation({
     mutationFn: authApi.login,
     onSuccess: (data, variables) => {
       setAuth(data);
       // Store credentials used for this login
-      setLastLoginCredentials({ crewcode: variables.crewcode, password: variables.password });
-      
+      setLastLoginCredentials({
+        crewcode: variables.crewcode,
+        password: variables.password,
+      });
+
       // Ask to enable biometric after successful login (if available and not already enabled)
-      console.log('[Biometric] Login success - Available:', isAvailable, 'Enabled:', biometricEnabled, 'Dev:', __DEV__);
-      console.log('[Biometric] Should show dialog:', (isAvailable || __DEV__) && !biometricEnabled);
+      console.log(
+        "[Biometric] Login success - Available:",
+        isAvailable,
+        "Enabled:",
+        biometricEnabled,
+        "Dev:",
+        __DEV__,
+      );
+      console.log(
+        "[Biometric] Should show dialog:",
+        (isAvailable || __DEV__) && !biometricEnabled,
+      );
       if ((isAvailable || __DEV__) && !biometricEnabled) {
-        console.log('[Biometric] Showing enable dialog...');
+        console.log("[Biometric] Showing enable dialog...");
         setTimeout(() => {
           Alert.alert(
-            t('auth.enableBiometric', { method: getBiometricLabel() }),
-            t('auth.biometricLogin', { method: getBiometricLabel() }),
+            t("auth.enableBiometric", { method: getBiometricLabel() }),
+            t("auth.biometricLogin", { method: getBiometricLabel() }),
             [
-              { text: t('common.no'), style: 'cancel' },
-              { 
-                text: t('common.yes'), 
+              { text: t("common.no"), style: "cancel" },
+              {
+                text: t("common.yes"),
                 onPress: async () => {
-                  console.log('[Biometric] Dialog - crewcode from variables:', variables.crewcode);
-                  console.log('[Biometric] Dialog - crewcode from state:', crewcode);
-                  const success = await authenticate(t('auth.biometricLogin', { method: getBiometricLabel() }));
-                  console.log('[Biometric] Auth success:', success);
+                  console.log(
+                    "[Biometric] Dialog - crewcode from variables:",
+                    variables.crewcode,
+                  );
+                  console.log(
+                    "[Biometric] Dialog - crewcode from state:",
+                    crewcode,
+                  );
+                  const success = await authenticate(
+                    t("auth.biometricLogin", { method: getBiometricLabel() }),
+                  );
+                  console.log("[Biometric] Auth success:", success);
                   if (success) {
                     const credsToSave = variables.crewcode || crewcode;
                     const passToSave = variables.password || password;
-                    console.log('[Biometric] Saving credentials for:', credsToSave);
+                    console.log(
+                      "[Biometric] Saving credentials for:",
+                      credsToSave,
+                    );
                     enableBiometric(credsToSave, passToSave);
-                    Alert.alert(t('common.success'), t('auth.biometricLogin', { method: getBiometricLabel() }));
+                    Alert.alert(
+                      t("common.success"),
+                      t("auth.biometricLogin", { method: getBiometricLabel() }),
+                    );
                   }
-                }
+                },
               },
-            ]
+            ],
           );
         }, 500);
       }
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || t('auth.invalidCredentials');
-      Alert.alert(t('common.error'), message);
+      const message =
+        error.response?.data?.message || t("auth.invalidCredentials");
+      Alert.alert(t("common.error"), message);
     },
   });
 
   const handleLogin = useCallback(() => {
     if (!crewcode.trim() || !password.trim()) {
-      Alert.alert(t('common.error'), t('errors.requiredField'));
+      Alert.alert(t("common.error"), t("errors.requiredField"));
       return;
     }
-    
+
     loginMutation.mutate({ crewcode: crewcode.trim(), password });
   }, [crewcode, password, loginMutation, t]);
 
-  const handleDevUserSelect = useCallback((user: typeof DEV_USERS[0]) => {
-    setSelectedDevUser(user);
-    setCrewcode(user.crewcode);
-    setPassword(user.password);
-    setShowDevSelect(false);
-    
-    // Auto login if credentials are provided
-    if (user.crewcode && user.password) {
-      setTimeout(() => {
-        loginMutation.mutate({ crewcode: user.crewcode, password: user.password });
-      }, 100);
-    }
-  }, [loginMutation]);
+  const handleDevUserSelect = useCallback(
+    (user: (typeof DEV_USERS)[0]) => {
+      setSelectedDevUser(user);
+      setCrewcode(user.crewcode);
+      setPassword(user.password);
+      setShowDevSelect(false);
+
+      // Auto login if credentials are provided
+      if (user.crewcode && user.password) {
+        setTimeout(() => {
+          loginMutation.mutate({
+            crewcode: user.crewcode,
+            password: user.password,
+          });
+        }, 100);
+      }
+    },
+    [loginMutation],
+  );
 
   const handleBiometricLogin = async () => {
     if (!isAvailable) {
-      Alert.alert(t('common.error'), t('auth.biometricNotAvailable'));
+      Alert.alert(t("common.error"), t("auth.biometricNotAvailable"));
       return;
     }
-    
+
     if (!biometricCredentials) {
-      Alert.alert(t('common.error'), t('auth.firstLoginRequired'));
+      Alert.alert(t("common.error"), t("auth.firstLoginRequired"));
       return;
     }
-    
-    const success = await authenticate(t('auth.biometricLogin', { method: getBiometricLabel() }));
+
+    const success = await authenticate(
+      t("auth.biometricLogin", { method: getBiometricLabel() }),
+    );
     if (success) {
       try {
         const response = await authApi.login({
           crewcode: biometricCredentials.crewcode,
-          password: biometricCredentials.password
+          password: biometricCredentials.password,
         });
         setAuth(response);
       } catch (error: any) {
-        Alert.alert(
-          t('errors.generic'),
-          t('auth.sessionExpired')
-        );
+        Alert.alert(t("errors.generic"), t("auth.sessionExpired"));
       }
     }
   };
@@ -185,7 +246,7 @@ export const LoginScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -198,26 +259,32 @@ export const LoginScreen: React.FC = () => {
               <View style={styles.logoCircle}>
                 <Text style={styles.logoText}>UNION</Text>
               </View>
-              <Text style={styles.appName}>{t('common.appName')}</Text>
-              <Text style={styles.appTagline}>Platform for air transport workers</Text>
+              <Text style={styles.appName}>{t("common.appName")}</Text>
+              <Text style={styles.appTagline}>
+                Platform for air transport workers
+              </Text>
             </View>
 
             {/* Form Section */}
             <View style={styles.formContainer}>
-              <Text style={styles.formTitle}>{t('auth.login')}</Text>
+              <Text style={styles.formTitle}>{t("auth.login")}</Text>
 
               {/* Dev Quick Login Select */}
               {__DEV__ && (
                 <View style={styles.devSelectContainer}>
-                  <Text style={styles.devSelectLabel}>Quick Login (Dev Only):</Text>
+                  <Text style={styles.devSelectLabel}>
+                    Quick Login (Dev Only):
+                  </Text>
                   <TouchableOpacity
                     style={styles.devSelectButton}
                     onPress={() => setShowDevSelect(!showDevSelect)}
                   >
-                    <Text style={styles.devSelectText}>{selectedDevUser.label}</Text>
+                    <Text style={styles.devSelectText}>
+                      {selectedDevUser.label}
+                    </Text>
                     <ChevronDown size={20} color={colors.primary} />
                   </TouchableOpacity>
-                  
+
                   {showDevSelect && (
                     <View style={styles.devSelectDropdown}>
                       {DEV_USERS.map((user, index) => (
@@ -226,17 +293,19 @@ export const LoginScreen: React.FC = () => {
                           style={styles.devSelectOption}
                           onPress={() => handleDevUserSelect(user)}
                         >
-                          <Text style={styles.devSelectOptionText}>{user.label}</Text>
+                          <Text style={styles.devSelectOptionText}>
+                            {user.label}
+                          </Text>
                         </TouchableOpacity>
                       ))}
                     </View>
                   )}
                 </View>
               )}
-              
+
               <Input
-                label={t('auth.crewcode')}
-                placeholder={t('auth.enterCrewcode')}
+                label={t("auth.crewcode")}
+                placeholder={t("auth.enterCrewcode")}
                 value={crewcode}
                 onChangeText={setCrewcode}
                 autoCapitalize="characters"
@@ -246,8 +315,8 @@ export const LoginScreen: React.FC = () => {
               />
 
               <Input
-                label={t('auth.password')}
-                placeholder={t('auth.enterPassword')}
+                label={t("auth.password")}
+                placeholder={t("auth.enterPassword")}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -256,7 +325,7 @@ export const LoginScreen: React.FC = () => {
               />
 
               <Button
-                title={t('auth.login')}
+                title={t("auth.login")}
                 onPress={handleLogin}
                 loading={loginMutation.isPending}
                 disabled={!crewcode.trim() || !password.trim()}
@@ -273,7 +342,7 @@ export const LoginScreen: React.FC = () => {
                 >
                   <Fingerprint size={24} color={colors.primary} />
                   <Text style={styles.biometricText}>
-                    {t('auth.biometricLogin', { method: getBiometricLabel() })}
+                    {t("auth.biometricLogin", { method: getBiometricLabel() })}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -285,9 +354,7 @@ export const LoginScreen: React.FC = () => {
 
             {/* Footer */}
             <View style={styles.footer}>
-              <Text style={styles.footerText}>
-                © 2025 UnionHub
-              </Text>
+              <Text style={styles.footerText}>© 2025 UnionHub</Text>
             </View>
           </ScrollView>
         </TouchableWithoutFeedback>
@@ -307,10 +374,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: spacing.lg,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   logoContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: spacing.xl,
     marginBottom: spacing.xl,
   },
@@ -319,8 +386,8 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: borderRadius.full,
     backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: spacing.md,
   },
   logoText: {
@@ -337,7 +404,7 @@ const styles = StyleSheet.create({
   appTagline: {
     fontSize: typography.sizes.sm,
     color: colors.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
   },
   formContainer: {
     backgroundColor: colors.surface,
@@ -345,7 +412,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -360,7 +427,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold,
     color: colors.text,
     marginBottom: spacing.lg,
-    textAlign: 'center',
+    textAlign: "center",
   },
   inputContainer: {
     marginBottom: spacing.md,
@@ -369,9 +436,9 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   biometricButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: spacing.md,
     paddingVertical: spacing.md,
     gap: spacing.sm,
@@ -384,18 +451,17 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: typography.sizes.xs,
     color: colors.textTertiary,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: spacing.md,
   },
   footer: {
     marginTop: spacing.lg,
-    alignItems: 'center',
+    alignItems: "center",
   },
   footerText: {
     fontSize: typography.sizes.xs,
     color: colors.textTertiary,
   },
-
 
   // Dev select styles
   devSelectContainer: {
@@ -407,9 +473,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   devSelectButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: colors.surfaceVariant,
     borderWidth: 1,
     borderColor: colors.border,
@@ -427,7 +493,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: borderRadius.md,
     marginTop: spacing.xs,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   devSelectOption: {
     padding: spacing.md,

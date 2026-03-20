@@ -92,6 +92,18 @@ export const SettingsScreen: React.FC = () => {
     overrideSettings.addRegionali.toString(),
   );
 
+  // Legacy local states
+  const olc = overrideSettings.legacyCustom ?? { ffp: 0, sbh: 0, al: 0 };
+  const [legacyFfpText, setLegacyFfpText] = useState(
+    olc.ffp > 0 ? olc.ffp.toFixed(2) : "",
+  );
+  const [legacySbhText, setLegacySbhText] = useState(
+    olc.sbh > 0 ? olc.sbh.toFixed(4) : "",
+  );
+  const [legacyAlText, setLegacyAlText] = useState(
+    olc.al > 0 ? olc.al.toFixed(2) : "",
+  );
+
   const handleReset = () => {
     Alert.alert(
       t("settings.payslipOverrideReset"),
@@ -101,7 +113,7 @@ export const SettingsScreen: React.FC = () => {
         {
           text: "Reset",
           style: "destructive",
-          onPress: () =>
+          onPress: () => {
             setOverrideSettings({
               role: "pil",
               rank: "fo",
@@ -115,7 +127,13 @@ export const SettingsScreen: React.FC = () => {
               addComunali: 0,
               accontoAddComunali: 0,
               addRegionali: 0,
-            }),
+              legacy: false,
+              legacyCustom: { ffp: 0, sbh: 0, al: 0 },
+            });
+            setLegacyFfpText("");
+            setLegacySbhText("");
+            setLegacyAlText("");
+          },
         },
       ],
     );
@@ -421,6 +439,95 @@ export const SettingsScreen: React.FC = () => {
                 />
                 <Text style={styles.inputSuffix}>€</Text>
               </View>
+            </View>
+
+            {/* Legacy Contract */}
+            <View style={styles.card}>
+              <CheckboxRow
+                label={t("payslip.legacyContract")}
+                value={overrideSettings.legacy}
+                onToggle={() => set({ legacy: !overrideSettings.legacy })}
+              />
+              {overrideSettings.legacy && (
+                <>
+                  <Text style={[styles.hint, { marginBottom: spacing.md }]}>
+                    {t("payslip.legacyDirectHint")}
+                  </Text>
+
+                  <Text style={styles.fieldLabel}>
+                    {t("payslip.legacyFfp")}
+                  </Text>
+                  <View style={[styles.inputRow, { marginBottom: spacing.md }]}>
+                    <TextInput
+                      style={styles.numInput}
+                      value={legacyFfpText}
+                      onChangeText={(v) => {
+                        const norm = v.replace(",", ".");
+                        setLegacyFfpText(norm);
+                        set({
+                          legacyCustom: {
+                            ...olc,
+                            ffp: parseFloat(norm) || 0,
+                          },
+                        });
+                      }}
+                      keyboardType="decimal-pad"
+                      maxLength={10}
+                      placeholder="0.00"
+                      placeholderTextColor={colors.textSecondary}
+                    />
+                    <Text style={styles.inputSuffix}>€</Text>
+                  </View>
+
+                  <Text style={styles.fieldLabel}>
+                    {t("payslip.legacySbh")}
+                  </Text>
+                  <View style={[styles.inputRow, { marginBottom: spacing.md }]}>
+                    <TextInput
+                      style={styles.numInput}
+                      value={legacySbhText}
+                      onChangeText={(v) => {
+                        const norm = v.replace(",", ".");
+                        setLegacySbhText(norm);
+                        set({
+                          legacyCustom: {
+                            ...olc,
+                            sbh: parseFloat(norm) || 0,
+                          },
+                        });
+                      }}
+                      keyboardType="decimal-pad"
+                      maxLength={10}
+                      placeholder="0.0000"
+                      placeholderTextColor={colors.textSecondary}
+                    />
+                    <Text style={styles.inputSuffix}>€</Text>
+                  </View>
+
+                  <Text style={styles.fieldLabel}>{t("payslip.legacyAl")}</Text>
+                  <View style={styles.inputRow}>
+                    <TextInput
+                      style={styles.numInput}
+                      value={legacyAlText}
+                      onChangeText={(v) => {
+                        const norm = v.replace(",", ".");
+                        setLegacyAlText(norm);
+                        set({
+                          legacyCustom: {
+                            ...olc,
+                            al: parseFloat(norm) || 0,
+                          },
+                        });
+                      }}
+                      keyboardType="decimal-pad"
+                      maxLength={10}
+                      placeholder="0.00"
+                      placeholderTextColor={colors.textSecondary}
+                    />
+                    <Text style={styles.inputSuffix}>€</Text>
+                  </View>
+                </>
+              )}
             </View>
 
             {/* Reset button */}

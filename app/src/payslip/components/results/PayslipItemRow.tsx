@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing, typography } from '../../../theme';
-import { PayslipItem as PayslipItemType } from '../../types';
-import { formatCurrency } from '../../utils/formatters';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { colors, spacing, typography } from "../../../theme";
+import { PayslipItem as PayslipItemType } from "../../types";
+import { formatCurrency } from "../../utils/formatters";
 
 interface PayslipItemRowProps {
   label: string;
@@ -22,15 +22,18 @@ export const PayslipItemRow: React.FC<PayslipItemRowProps> = ({
       <View style={styles.mainRow}>
         <View style={styles.labelContainer}>
           <Text style={styles.label}>{label}</Text>
-          {item.quantity !== null && item.quantity > 0 && item.unit !== null && (
-            <Text style={styles.quantity}>
-              {item.quantity} × {formatCurrency(item.unit || 0)}
-            </Text>
-          )}
+          {item.quantity !== null &&
+            item.quantity > 0 &&
+            item.unit !== null && (
+              <Text style={styles.quantity}>
+                {item.quantity} × {formatCurrency(item.unit || 0)}
+              </Text>
+            )}
         </View>
         <View style={styles.valuesContainer}>
           <Text style={[styles.total, item.isDeduction && styles.deduction]}>
-            {item.isDeduction && item.total >= 0 ? '-' : ''}{formatCurrency(item.total)}
+            {item.isDeduction && item.total >= 0 ? "-" : ""}
+            {formatCurrency(item.total)}
           </Text>
         </View>
       </View>
@@ -58,9 +61,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   mainRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   labelContainer: {
     flex: 1,
@@ -75,7 +78,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   valuesContainer: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   total: {
     fontSize: typography.sizes.base,
@@ -86,7 +89,7 @@ const styles = StyleSheet.create({
     color: colors.error,
   },
   detailsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.md,
     marginTop: spacing.xs,
   },

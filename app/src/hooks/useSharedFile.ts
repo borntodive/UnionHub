@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Platform } from 'react-native';
-import * as Linking from 'expo-linking';
+import { useEffect, useState, useCallback } from "react";
+import { Platform } from "react-native";
+import * as Linking from "expo-linking";
 
 export interface SharedFile {
   uri: string;
@@ -19,29 +19,31 @@ export const useSharedFile = () => {
   const handleIncomingURL = useCallback((url: string) => {
     try {
       setIsProcessing(true);
-      
+
       // Parse the URL
       const parsedUrl = Linking.parse(url);
-      
+
       // Check if this is a file share intent
       if (parsedUrl.queryParams?.sharedFileUri) {
         const fileUri = parsedUrl.queryParams.sharedFileUri as string;
-        const mimeType = (parsedUrl.queryParams.mimeType as string) || 'application/pdf';
-        const name = (parsedUrl.queryParams.fileName as string) || 'shared-file.pdf';
-        
+        const mimeType =
+          (parsedUrl.queryParams.mimeType as string) || "application/pdf";
+        const name =
+          (parsedUrl.queryParams.fileName as string) || "shared-file.pdf";
+
         const file: SharedFile = {
           uri: fileUri,
           mimeType,
           name,
         };
-        
+
         setSharedFile(file);
         return file;
       }
-      
+
       return null;
     } catch (error) {
-      console.error('Error parsing shared file URL:', error);
+      console.error("Error parsing shared file URL:", error);
       return null;
     } finally {
       setIsProcessing(false);
@@ -62,9 +64,12 @@ export const useSharedFile = () => {
 
   // Listen for URL changes while app is running
   useEffect(() => {
-    const subscription = Linking.addEventListener('url', (event: { url: string }) => {
-      handleIncomingURL(event.url);
-    });
+    const subscription = Linking.addEventListener(
+      "url",
+      (event: { url: string }) => {
+        handleIncomingURL(event.url);
+      },
+    );
 
     return () => {
       subscription.remove();

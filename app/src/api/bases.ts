@@ -1,5 +1,5 @@
-import apiClient from './client';
-import { Base } from '../types';
+import apiClient from "./client";
+import { Base } from "../types";
 
 export interface CreateBaseData {
   codice: string;
@@ -13,7 +13,7 @@ export interface UpdateBaseData {
 
 export const basesApi = {
   getBases: async (): Promise<Base[]> => {
-    const response = await apiClient.get<Base[]>('/bases');
+    const response = await apiClient.get<Base[]>("/bases");
     return response.data;
   },
 
@@ -23,7 +23,7 @@ export const basesApi = {
   },
 
   createBase: async (data: CreateBaseData): Promise<Base> => {
-    const response = await apiClient.post<Base>('/bases', data);
+    const response = await apiClient.post<Base>("/bases", data);
     return response.data;
   },
 

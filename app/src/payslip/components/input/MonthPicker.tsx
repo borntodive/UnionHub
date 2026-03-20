@@ -1,15 +1,18 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { colors, spacing, typography, borderRadius } from '../../../theme';
-import { getMonthName, getYear } from '../../utils/formatters';
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { colors, spacing, typography, borderRadius } from "../../../theme";
+import { getMonthName, getYear } from "../../utils/formatters";
 
 interface MonthPickerProps {
   value: string;
   onChange: (value: string) => void;
 }
 
-export const MonthPicker: React.FC<MonthPickerProps> = ({ value, onChange }) => {
+export const MonthPicker: React.FC<MonthPickerProps> = ({
+  value,
+  onChange,
+}) => {
   const date = new Date(value);
   const year = date.getFullYear();
   const month = date.getMonth();
@@ -17,13 +20,13 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({ value, onChange }) => 
   const handlePrevMonth = () => {
     const newDate = new Date(date);
     newDate.setMonth(month - 1);
-    onChange(newDate.toISOString().split('T')[0]);
+    onChange(newDate.toISOString().split("T")[0]);
   };
 
   const handleNextMonth = () => {
     const newDate = new Date(date);
     newDate.setMonth(month + 1);
-    onChange(newDate.toISOString().split('T')[0]);
+    onChange(newDate.toISOString().split("T")[0]);
   };
 
   return (
@@ -54,9 +57,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   pickerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     borderWidth: 1,
@@ -70,6 +73,6 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.semibold,
     color: colors.text,
-    textTransform: 'capitalize',
+    textTransform: "capitalize",
   },
 });

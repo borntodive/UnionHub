@@ -5,26 +5,26 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-} from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+} from "typeorm";
+import { User } from "../../users/entities/user.entity";
 
-@Entity('bases')
+@Entity("bases")
 export class Base {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'varchar', length: 20, unique: true })
+  @Column({ type: "varchar", length: 20, unique: true })
   codice: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: "varchar", length: 100 })
   nome: string;
 
   @OneToMany(() => User, (user) => user.base)
   users: User[];
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ type: "timestamptz" })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz' })
+  @UpdateDateColumn({ type: "timestamptz" })
   updatedAt: Date;
 }

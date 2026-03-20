@@ -6,21 +6,22 @@
 
 UnionConnect uses **Expo** as the development framework, built on top of **React Native** for true native iOS/Android applications.
 
-| Criterion | Expo + React Native | Ionic + Angular |
-|-----------|---------------------|-----------------|
-| Native Performance | True native UI (60fps) | WebView-based |
-| App Store Distribution | Native app experience | Hybrid web app |
-| OTA Updates | ✅ Expo Updates without app store review | Requires Capacitor sync |
-| PDF Processing | Native PDF rendering and extraction | Web-based PDF.js |
-| Push Notifications | Native Firebase/APNs integration | Plugin-based, less reliable |
-| Camera/Scanner | Native camera access for documents | Web APIs limited |
-| Offline Storage | SQLite/AsyncStorage native | LocalStorage/IndexedDB |
-| Development Speed | Hot reload, Expo Go for testing | Live reload, device testing |
-| Long-term maintenance | Meta-backed RN, Expo managed workflow | Ionic/Capacitor updates |
+| Criterion              | Expo + React Native                      | Ionic + Angular             |
+| ---------------------- | ---------------------------------------- | --------------------------- |
+| Native Performance     | True native UI (60fps)                   | WebView-based               |
+| App Store Distribution | Native app experience                    | Hybrid web app              |
+| OTA Updates            | ✅ Expo Updates without app store review | Requires Capacitor sync     |
+| PDF Processing         | Native PDF rendering and extraction      | Web-based PDF.js            |
+| Push Notifications     | Native Firebase/APNs integration         | Plugin-based, less reliable |
+| Camera/Scanner         | Native camera access for documents       | Web APIs limited            |
+| Offline Storage        | SQLite/AsyncStorage native               | LocalStorage/IndexedDB      |
+| Development Speed      | Hot reload, Expo Go for testing          | Live reload, device testing |
+| Long-term maintenance  | Meta-backed RN, Expo managed workflow    | Ionic/Capacitor updates     |
 
 **Conclusion**: For an app distributed to all CISL union members with PDF processing, offline capabilities, and professional quality requirements, Expo provides superior native performance and user experience.
 
 **Chosen stack:**
+
 - Expo SDK 52+ with React Native 0.76+
 - React 18+ with TypeScript
 - React Navigation 6+ for routing
@@ -176,48 +177,48 @@ union-connect-app/
 
 ### Screens
 
-| Screen | Role | Responsibility |
-|--------|------|----------------|
-| `LoginScreen` | all | Login form crewcode+password, biometric prompt after first successful login |
-| `ChangePasswordScreen` | all | Mandatory password change for new users (`must_change_password=true`) |
-| `DashboardScreen` | all | Post-login home, KPI cards differentiated by role |
-| `MemberListScreen` | Admin, SuperAdmin | Members list with filters, search, infinite scroll |
-| `MemberDetailScreen` | Admin, SuperAdmin | View + edit member, fields restricted by role |
-| `MemberFormScreen` | Admin, SuperAdmin | Member creation: manual or with PDF-extracted data |
-| `ProfileScreen` | User | Personal profile view (without notes/ITUD/RSA), edit phone |
-| `BasesScreen` | SuperAdmin | CRUD airport bases list |
-| `BasesFormScreen` | SuperAdmin | Base creation/edit form (code + name) |
-| `ContractsScreen` | SuperAdmin | CRUD contracts list |
-| `ContractsFormScreen` | SuperAdmin | Contract creation/edit form |
-| `GradesScreen` | SuperAdmin | CRUD grades list, filter by role |
-| `GradesFormScreen` | SuperAdmin | Grade creation/edit form (code + name + role) |
-| `PdfFieldMappingsScreen` | SuperAdmin | CRUD PDF field mappings per role |
-| `ExcelFieldMappingsScreen` | SuperAdmin | CRUD Excel import templates per role |
-| `ImportUploadScreen` | Admin, SuperAdmin | Step 1: Upload Excel/CSV with role selection |
-| `ImportPreviewScreen` | Admin, SuperAdmin | Step 2: Preview data, validation errors, duplicates |
-| `ImportOptionsScreen` | Admin, SuperAdmin | Step 3: Configure import options |
-| `ImportResultsScreen` | Admin, SuperAdmin | Step 4: Import progress and results summary |
-| `ToolsScreen` | all | Extensible tools section (future features) |
+| Screen                     | Role              | Responsibility                                                              |
+| -------------------------- | ----------------- | --------------------------------------------------------------------------- |
+| `LoginScreen`              | all               | Login form crewcode+password, biometric prompt after first successful login |
+| `ChangePasswordScreen`     | all               | Mandatory password change for new users (`must_change_password=true`)       |
+| `DashboardScreen`          | all               | Post-login home, KPI cards differentiated by role                           |
+| `MemberListScreen`         | Admin, SuperAdmin | Members list with filters, search, infinite scroll                          |
+| `MemberDetailScreen`       | Admin, SuperAdmin | View + edit member, fields restricted by role                               |
+| `MemberFormScreen`         | Admin, SuperAdmin | Member creation: manual or with PDF-extracted data                          |
+| `ProfileScreen`            | User              | Personal profile view (without notes/ITUD/RSA), edit phone                  |
+| `BasesScreen`              | SuperAdmin        | CRUD airport bases list                                                     |
+| `BasesFormScreen`          | SuperAdmin        | Base creation/edit form (code + name)                                       |
+| `ContractsScreen`          | SuperAdmin        | CRUD contracts list                                                         |
+| `ContractsFormScreen`      | SuperAdmin        | Contract creation/edit form                                                 |
+| `GradesScreen`             | SuperAdmin        | CRUD grades list, filter by role                                            |
+| `GradesFormScreen`         | SuperAdmin        | Grade creation/edit form (code + name + role)                               |
+| `PdfFieldMappingsScreen`   | SuperAdmin        | CRUD PDF field mappings per role                                            |
+| `ExcelFieldMappingsScreen` | SuperAdmin        | CRUD Excel import templates per role                                        |
+| `ImportUploadScreen`       | Admin, SuperAdmin | Step 1: Upload Excel/CSV with role selection                                |
+| `ImportPreviewScreen`      | Admin, SuperAdmin | Step 2: Preview data, validation errors, duplicates                         |
+| `ImportOptionsScreen`      | Admin, SuperAdmin | Step 3: Configure import options                                            |
+| `ImportResultsScreen`      | Admin, SuperAdmin | Step 4: Import progress and results summary                                 |
+| `ToolsScreen`              | all               | Extensible tools section (future features)                                  |
 
 ### Shared Components
 
-| Component | Responsibility |
-|-----------|----------------|
-| `MemberCard` | Card display of member summary info, press to navigate |
-| `MemberForm` | Complete member form with all fields; accepts `readOnlyFields` and `hiddenFields` props |
-| `MemberList` | FlatList with pull-to-refresh, search, role filter |
-| `BaseSelect` | Picker populated with bases from API, displays `codice – nome` |
-| `ContractSelect` | Picker populated with contracts from API |
-| `RoleSelect` | Picker with Pilot / Cabin Crew options |
-| `GradeSelect` | Picker with grades from API, filtered by selected role |
-| `PdfUploader` | PDF file selection, native file picker, preview trigger |
-| `PdfPreview` | Native PDF rendering with zoom, page navigation |
-| `ExtractionStatus` | Badge showing extraction method (form fields / OCR / manual) |
-| `ExcelUploader` | Excel/CSV file selection, role selection |
-| `ImportPreviewTable` | Virtualized list showing import preview with status icons |
-| `ImportProgress` | Progress bar with real-time stats |
-| `FieldMappingGrid` | Draggable grid for configuring field mappings |
-| `ConfirmDialog` | Native confirmation alert |
+| Component            | Responsibility                                                                          |
+| -------------------- | --------------------------------------------------------------------------------------- |
+| `MemberCard`         | Card display of member summary info, press to navigate                                  |
+| `MemberForm`         | Complete member form with all fields; accepts `readOnlyFields` and `hiddenFields` props |
+| `MemberList`         | FlatList with pull-to-refresh, search, role filter                                      |
+| `BaseSelect`         | Picker populated with bases from API, displays `codice – nome`                          |
+| `ContractSelect`     | Picker populated with contracts from API                                                |
+| `RoleSelect`         | Picker with Pilot / Cabin Crew options                                                  |
+| `GradeSelect`        | Picker with grades from API, filtered by selected role                                  |
+| `PdfUploader`        | PDF file selection, native file picker, preview trigger                                 |
+| `PdfPreview`         | Native PDF rendering with zoom, page navigation                                         |
+| `ExtractionStatus`   | Badge showing extraction method (form fields / OCR / manual)                            |
+| `ExcelUploader`      | Excel/CSV file selection, role selection                                                |
+| `ImportPreviewTable` | Virtualized list showing import preview with status icons                               |
+| `ImportProgress`     | Progress bar with real-time stats                                                       |
+| `FieldMappingGrid`   | Draggable grid for configuring field mappings                                           |
+| `ConfirmDialog`      | Native confirmation alert                                                               |
 
 ---
 
@@ -239,7 +240,7 @@ const Stack = createNativeStackNavigator();
 
 export const AppNavigator = () => {
   const { user, isAuthenticated } = useAuthStore();
-  
+
   if (!isAuthenticated) {
     return (
       <NavigationContainer>
@@ -274,8 +275,8 @@ const Stack = createNativeStackNavigator();
 export const AuthNavigator = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="Login" component={LoginScreen} />
-    <Stack.Screen 
-      name="ChangePassword" 
+    <Stack.Screen
+      name="ChangePassword"
       component={ChangePasswordScreen}
       options={{ headerShown: true, title: 'Change Password' }}
     />
@@ -338,12 +339,14 @@ export const AdminNavigator = () => (
 ### Solution: TanStack Query + Zustand
 
 **TanStack Query (React Query)** for server state:
+
 - Caching, background refetching, stale-while-revalidate
 - Automatic loading/error states
 - Optimistic updates
 - Offline support with persistence
 
 **Zustand** for client state:
+
 - Auth state with AsyncStorage persistence
 - UI preferences (theme, etc.)
 - Simple, unopinionated, minimal boilerplate
@@ -352,17 +355,21 @@ export const AdminNavigator = () => (
 
 ```typescript
 // store/authStore.ts
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User } from '../types/models';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { User } from "../types/models";
 
 interface AuthState {
   user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
-  setAuth: (auth: { user: User; accessToken: string; refreshToken: string }) => void;
+  setAuth: (auth: {
+    user: User;
+    accessToken: string;
+    refreshToken: string;
+  }) => void;
   updateUser: (user: Partial<User>) => void;
   logout: () => void;
 }
@@ -374,23 +381,28 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
-      
+
       setAuth: ({ user, accessToken, refreshToken }) =>
         set({ user, accessToken, refreshToken, isAuthenticated: true }),
-      
+
       updateUser: (updates) =>
         set((state) => ({
           user: state.user ? { ...state.user, ...updates } : null,
         })),
-      
+
       logout: () =>
-        set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false }),
+        set({
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          isAuthenticated: false,
+        }),
     }),
     {
-      name: 'auth-storage',
+      name: "auth-storage",
       storage: createJSONStorage(() => AsyncStorage),
-    }
-  )
+    },
+  ),
 );
 ```
 
@@ -398,13 +410,13 @@ export const useAuthStore = create<AuthState>()(
 
 ```typescript
 // hooks/useMembers.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { membersApi } from '../api/members';
-import { useAuthStore } from '../store/authStore';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { membersApi } from "../api/members";
+import { useAuthStore } from "../store/authStore";
 
 export const useMembers = (filters?: MembersFilter) => {
   return useQuery({
-    queryKey: ['members', filters],
+    queryKey: ["members", filters],
     queryFn: () => membersApi.getAll(filters),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -412,7 +424,7 @@ export const useMembers = (filters?: MembersFilter) => {
 
 export const useMember = (id: string) => {
   return useQuery({
-    queryKey: ['member', id],
+    queryKey: ["member", id],
     queryFn: () => membersApi.getById(id),
     enabled: !!id,
   });
@@ -420,21 +432,26 @@ export const useMember = (id: string) => {
 
 export const useCreateMember = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: membersApi.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['members'] });
+      queryClient.invalidateQueries({ queryKey: ["members"] });
     },
   });
 };
 
 export const useExtractPdf = () => {
   const { user } = useAuthStore();
-  
+
   return useMutation({
-    mutationFn: ({ file, role }: { file: File; role: 'pilot' | 'cabin_crew' }) =>
-      membersApi.extractPdf(file, role),
+    mutationFn: ({
+      file,
+      role,
+    }: {
+      file: File;
+      role: "pilot" | "cabin_crew";
+    }) => membersApi.extractPdf(file, role),
   });
 };
 ```
@@ -447,15 +464,15 @@ export const useExtractPdf = () => {
 
 ```typescript
 // api/client.ts
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { useAuthStore } from '../store/authStore';
-import { refreshToken } from './auth';
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { useAuthStore } from "../store/authStore";
+import { refreshToken } from "./auth";
 
 const apiClient = axios.create({
-  baseURL: 'https://api.unionconnect.cisl.it/api/v1',
+  baseURL: "https://api.unionconnect.cisl.it/api/v1",
   timeout: 30000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -468,29 +485,32 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Response interceptor - handle token refresh
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-    
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      
+
       try {
         const { refreshToken: currentRefresh } = useAuthStore.getState();
-        if (!currentRefresh) throw new Error('No refresh token');
-        
-        const { accessToken, refreshToken: newRefresh } = await refreshToken(currentRefresh);
+        if (!currentRefresh) throw new Error("No refresh token");
+
+        const { accessToken, refreshToken: newRefresh } =
+          await refreshToken(currentRefresh);
         useAuthStore.getState().setAuth({
           ...useAuthStore.getState(),
           accessToken,
           refreshToken: newRefresh,
         });
-        
+
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
@@ -498,9 +518,9 @@ apiClient.interceptors.response.use(
         return Promise.reject(refreshError);
       }
     }
-    
+
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiClient;
@@ -510,12 +530,19 @@ export default apiClient;
 
 ```typescript
 // api/members.ts
-import apiClient from './client';
-import { Member, CreateMemberDto, UpdateMemberDto, PaginatedResponse } from '../types/models';
+import apiClient from "./client";
+import {
+  Member,
+  CreateMemberDto,
+  UpdateMemberDto,
+  PaginatedResponse,
+} from "../types/models";
 
 export const membersApi = {
-  getAll: async (filters?: MembersFilter): Promise<PaginatedResponse<Member>> => {
-    const { data } = await apiClient.get('/members', { params: filters });
+  getAll: async (
+    filters?: MembersFilter,
+  ): Promise<PaginatedResponse<Member>> => {
+    const { data } = await apiClient.get("/members", { params: filters });
     return data;
   },
 
@@ -525,7 +552,7 @@ export const membersApi = {
   },
 
   create: async (dto: CreateMemberDto): Promise<Member> => {
-    const { data } = await apiClient.post('/members', dto);
+    const { data } = await apiClient.post("/members", dto);
     return data;
   },
 
@@ -538,13 +565,16 @@ export const membersApi = {
     await apiClient.delete(`/members/${id}`);
   },
 
-  extractPdf: async (file: File, role: 'pilot' | 'cabin_crew'): Promise<ExtractionResult> => {
+  extractPdf: async (
+    file: File,
+    role: "pilot" | "cabin_crew",
+  ): Promise<ExtractionResult> => {
     const formData = new FormData();
-    formData.append('pdf', file as any);
-    formData.append('role', role);
-    
-    const { data } = await apiClient.post('/members/extract-pdf', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    formData.append("pdf", file as any);
+    formData.append("role", role);
+
+    const { data } = await apiClient.post("/members/extract-pdf", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
     return data;
   },
@@ -559,7 +589,7 @@ export const membersApi = {
 
 ```typescript
 // utils/secureStorage.ts
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from "expo-secure-store";
 
 export const secureStorage = {
   async saveToken(key: string, value: string): Promise<void> {
@@ -580,8 +610,8 @@ export const secureStorage = {
 
 ```typescript
 // hooks/useBiometric.ts
-import * as LocalAuthentication from 'expo-local-authentication';
-import { useAuthStore } from '../store/authStore';
+import * as LocalAuthentication from "expo-local-authentication";
+import { useAuthStore } from "../store/authStore";
 
 export const useBiometric = () => {
   const { user, setAuth } = useAuthStore();
@@ -594,8 +624,8 @@ export const useBiometric = () => {
 
   const authenticate = async (): Promise<boolean> => {
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'Authenticate to access UnionConnect',
-      fallbackLabel: 'Use password',
+      promptMessage: "Authenticate to access UnionConnect",
+      fallbackLabel: "Use password",
       disableDeviceFallback: false,
     });
     return result.success;
@@ -605,7 +635,7 @@ export const useBiometric = () => {
     const success = await authenticate();
     if (success) {
       // Store preference in SecureStore
-      await SecureStore.setItemAsync('biometric_enabled', 'true');
+      await SecureStore.setItemAsync("biometric_enabled", "true");
     }
   };
 
@@ -642,7 +672,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onExtracted, role }) =
     if (!result.canceled && result.assets[0]) {
       const file = result.assets[0];
       setSelectedFile(file);
-      
+
       // Extract data
       extractPdf.mutate(
         { file: file as any, role },
@@ -709,7 +739,6 @@ const styles = StyleSheet.create({
 });
 ```
 
-
 ---
 
 ## 9. Reusable Components
@@ -746,14 +775,14 @@ interface MemberFormData {
   rsa: boolean;
 }
 
-export const MemberForm: React.FC<MemberFormProps> = ({ 
-  defaultValues, 
+export const MemberForm: React.FC<MemberFormProps> = ({
+  defaultValues,
   onSubmit,
-  mode 
+  mode
 }) => {
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'Admin' || user?.role === 'SuperAdmin';
-  
+
   const { control, handleSubmit, watch, formState: { errors } } = useForm<MemberFormData>({
     defaultValues: {
       nome: '',
@@ -826,7 +855,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
       <Controller
         control={control}
         name="email"
-        rules={{ 
+        rules={{
           required: 'Email is required',
           pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' }
         }}
@@ -1018,9 +1047,7 @@ export const GradeSelect: React.FC<GradeSelectProps> = ({ ruolo, value, onSelect
       "resizeMode": "contain",
       "backgroundColor": "#177246"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "it.cisl.unionconnect",
@@ -1037,10 +1064,7 @@ export const GradeSelect: React.FC<GradeSelectProps> = ({ ruolo, value, onSelect
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#177246"
       },
-      "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE"
-      ]
+      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE"]
     },
     "plugins": [
       [
@@ -1234,32 +1258,32 @@ interface User {
 // theme/colors.ts
 export const colors = {
   // Brand colors (CISL official)
-  primary: '#177246',          // CISL Green
-  primaryLight: '#1d8f57',
-  primaryDark: '#125a38',
-  
-  secondary: '#DA0E32',        // CISL Red (CTA)
-  secondaryLight: '#f4153d',
-  secondaryDark: '#b00b29',
-  
+  primary: "#177246", // CISL Green
+  primaryLight: "#1d8f57",
+  primaryDark: "#125a38",
+
+  secondary: "#DA0E32", // CISL Red (CTA)
+  secondaryLight: "#f4153d",
+  secondaryDark: "#b00b29",
+
   // Semantic colors
-  success: '#10b981',
-  warning: '#f59e0b',
-  error: '#ef4444',
-  info: '#3b82f6',
-  
+  success: "#10b981",
+  warning: "#f59e0b",
+  error: "#ef4444",
+  info: "#3b82f6",
+
   // Grayscale
-  white: '#ffffff',
-  gray100: '#f3f4f6',
-  gray200: '#e5e7eb',
-  gray300: '#d1d5db',
-  gray400: '#9ca3af',
-  gray500: '#6b7280',
-  gray600: '#4b5563',
-  gray700: '#374151',
-  gray800: '#1f2937',
-  gray900: '#111827',
-  black: '#000000',
+  white: "#ffffff",
+  gray100: "#f3f4f6",
+  gray200: "#e5e7eb",
+  gray300: "#d1d5db",
+  gray400: "#9ca3af",
+  gray500: "#6b7280",
+  gray600: "#4b5563",
+  gray700: "#374151",
+  gray800: "#1f2937",
+  gray900: "#111827",
+  black: "#000000",
 };
 
 // theme/spacing.ts
@@ -1284,10 +1308,10 @@ export const typography = {
     xxxl: 32,
   },
   weights: {
-    normal: '400' as const,
-    medium: '500' as const,
-    semibold: '600' as const,
-    bold: '700' as const,
+    normal: "400" as const,
+    medium: "500" as const,
+    semibold: "600" as const,
+    bold: "700" as const,
   },
 };
 ```
@@ -1296,9 +1320,9 @@ export const typography = {
 
 ```typescript
 // components/common/Button.styles.ts
-import { StyleSheet } from 'react-native';
-import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
+import { StyleSheet } from "react-native";
+import { colors } from "../../theme/colors";
+import { spacing } from "../../theme/spacing";
 
 export const styles = StyleSheet.create({
   button: {
@@ -1306,8 +1330,8 @@ export const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonDisabled: {
     backgroundColor: colors.gray400,
@@ -1315,10 +1339,10 @@ export const styles = StyleSheet.create({
   buttonText: {
     color: colors.white,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   outlineButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 1,
     borderColor: colors.primary,
   },
@@ -1332,11 +1356,11 @@ export const styles = StyleSheet.create({
 
 ```typescript
 // hooks/useTheme.ts
-import { useColorScheme } from 'react-native';
+import { useColorScheme } from "react-native";
 
 export const useTheme = () => {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
 
   return {
     isDark,
@@ -1356,25 +1380,25 @@ export const useTheme = () => {
     "react": "18.3.1",
     "react-native": "0.76.0",
     "typescript": "~5.3.0",
-    
+
     "@react-navigation/native": "^6.1.0",
     "@react-navigation/native-stack": "^6.9.0",
     "@react-navigation/bottom-tabs": "^6.5.0",
     "react-native-screens": "~4.0.0",
     "react-native-safe-area-context": "~4.12.0",
-    
+
     "@tanstack/react-query": "^5.0.0",
     "zustand": "^5.0.0",
     "react-hook-form": "^7.47.0",
     "axios": "^1.6.0",
-    
+
     "@react-native-async-storage/async-storage": "1.23.1",
     "expo-secure-store": "~14.0.0",
     "expo-local-authentication": "~14.0.0",
     "expo-document-picker": "~13.0.0",
     "expo-file-system": "~18.0.0",
     "expo-updates": "~0.26.0",
-    
+
     "react-native-pdf": "^6.7.0",
     "react-native-blob-util": "^0.19.0",
     "@expo/vector-icons": "^14.0.0"
@@ -1470,19 +1494,19 @@ eas update --channel production --message "Bug fixes"
 
 ## 15. Key Differences from Ionic/Angular
 
-| Aspect | Expo/React Native | Ionic/Angular |
-|--------|-------------------|---------------|
-| **Navigation** | React Navigation (imperative) | Angular Router (declarative) |
-| **State Management** | TanStack Query + Zustand | Angular Signals |
-| **HTTP Client** | Axios | Angular HttpClient |
-| **Forms** | React Hook Form | Angular Reactive Forms |
-| **Storage** | AsyncStorage / SecureStore | localStorage / Capacitor Preferences |
-| **UI Components** | Custom + React Native Paper/NativeBase | Ionic Components |
-| **Styling** | StyleSheet (CSS-in-JS) | SCSS/CSS |
-| **PDF Preview** | react-native-pdf (native) | iframe with PDF.js |
-| **File Upload** | expo-document-picker | HTML file input |
-| **Biometrics** | expo-local-authentication | Capacitor plugin |
+| Aspect               | Expo/React Native                      | Ionic/Angular                        |
+| -------------------- | -------------------------------------- | ------------------------------------ |
+| **Navigation**       | React Navigation (imperative)          | Angular Router (declarative)         |
+| **State Management** | TanStack Query + Zustand               | Angular Signals                      |
+| **HTTP Client**      | Axios                                  | Angular HttpClient                   |
+| **Forms**            | React Hook Form                        | Angular Reactive Forms               |
+| **Storage**          | AsyncStorage / SecureStore             | localStorage / Capacitor Preferences |
+| **UI Components**    | Custom + React Native Paper/NativeBase | Ionic Components                     |
+| **Styling**          | StyleSheet (CSS-in-JS)                 | SCSS/CSS                             |
+| **PDF Preview**      | react-native-pdf (native)              | iframe with PDF.js                   |
+| **File Upload**      | expo-document-picker                   | HTML file input                      |
+| **Biometrics**       | expo-local-authentication              | Capacitor plugin                     |
 
 ---
 
-*This document describes the Expo + React Native frontend architecture for UnionConnect. For backend architecture, see `04-backend-architecture.md`.*
+_This document describes the Expo + React Native frontend architecture for UnionConnect. For backend architecture, see `04-backend-architecture.md`._

@@ -1,7 +1,10 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, AuthResponse } from '../types';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
+import { User, AuthResponse } from "../types";
+
+const BIOMETRIC_CREDENTIALS_KEY = "biometric_credentials";
 
 interface AuthState {
   user: User | null;
@@ -10,25 +13,26 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   biometricEnabled: boolean;
-  biometricCredentials: { crewcode: string; password: string } | null; // Stored for biometric login
+  biometricCredentials: { crewcode: string; password: string } | null;
   setAuth: (data: Partial<AuthResponse>) => void;
   logout: () => void;
   setUser: (user: User) => void;
   setLoading: (loading: boolean) => void;
-  enableBiometric: (crewcode: string, password: string) => void;
-  disableBiometric: () => void;
+  enableBiometric: (crewcode: string, password: string) => Promise<void>;
+  disableBiometric: () => Promise<void>;
+  loadBiometricCredentials: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
       isLoading: true,
       biometricEnabled: false,
-      biometricRefreshToken: null,
+      biometricCredentials: null,
 
       setAuth: (data) =>
         set({
@@ -40,7 +44,6 @@ export const useAuthStore = create<AuthState>()(
         }),
 
       logout: async () => {
-        // Clear main auth data but keep biometric credentials if enabled
         set({
           user: null,
           accessToken: null,
@@ -49,25 +52,51 @@ export const useAuthStore = create<AuthState>()(
           isLoading: false,
           // Keep biometricEnabled and biometricCredentials for biometric login
         });
-        console.log('[AuthStore] Logout complete');
+        console.log("[AuthStore] Logout complete");
       },
 
       setUser: (user) => set({ user }),
       setLoading: (isLoading) => set({ isLoading }),
-      enableBiometric: (crewcode: string, password: string) => {
-        console.log('[AuthStore] Enabling biometric for:', crewcode);
-        set({ 
+
+      enableBiometric: async (crewcode: string, password: string) => {
+        console.log("[AuthStore] Enabling biometric for:", crewcode);
+        await SecureStore.setItemAsync(
+          BIOMETRIC_CREDENTIALS_KEY,
+          JSON.stringify({ crewcode, password }),
+        );
+        set({
           biometricEnabled: true,
-          biometricCredentials: { crewcode, password }
+          biometricCredentials: { crewcode, password },
         });
       },
-      disableBiometric: () => set({ 
-        biometricEnabled: false,
-        biometricCredentials: null 
-      }),
+
+      disableBiometric: async () => {
+        await SecureStore.deleteItemAsync(BIOMETRIC_CREDENTIALS_KEY);
+        set({
+          biometricEnabled: false,
+          biometricCredentials: null,
+        });
+      },
+
+      loadBiometricCredentials: async () => {
+        try {
+          const raw = await SecureStore.getItemAsync(BIOMETRIC_CREDENTIALS_KEY);
+          if (raw) {
+            const credentials = JSON.parse(raw) as {
+              crewcode: string;
+              password: string;
+            };
+            set({ biometricCredentials: credentials });
+          } else {
+            set({ biometricCredentials: null, biometricEnabled: false });
+          }
+        } catch {
+          set({ biometricCredentials: null, biometricEnabled: false });
+        }
+      },
     }),
     {
-      name: 'auth-storage',
+      name: "auth-storage",
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         accessToken: state.accessToken,
@@ -75,8 +104,14 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         biometricEnabled: state.biometricEnabled,
-        biometricCredentials: state.biometricCredentials,
+        // biometricCredentials intentionally excluded — stored in SecureStore
       }),
-    }
-  )
+      onRehydrateStorage: () => (state) => {
+        // Always unblock the UI once AsyncStorage hydration is done (success or fail).
+        // If state is undefined (rehydration error), the store keeps its initial values
+        // (isAuthenticated: false) which is safe — user will need to log in again.
+        state?.setLoading(false);
+      },
+    },
+  ),
 );

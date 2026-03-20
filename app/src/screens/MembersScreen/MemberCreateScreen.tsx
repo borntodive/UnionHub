@@ -611,6 +611,7 @@ export const MemberCreateScreen: React.FC = () => {
                   }
                   mode="date"
                   display="spinner"
+                  maximumDate={new Date()}
                   onChange={(event, selectedDate) => {
                     if (selectedDate && activePicker) {
                       setFormData({

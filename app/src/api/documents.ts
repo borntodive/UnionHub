@@ -1,8 +1,30 @@
-import apiClient from './client';
+import axios from "axios";
+import apiClient from "./client";
+import { useAuthStore } from "../store/authStore";
 
-export type DocumentStatus = 'draft' | 'reviewing' | 'approved' | 'verified' | 'published';
-export type UnionType = 'fit-cisl' | 'joint';
-export type DocumentRuolo = 'pilot' | 'cabin_crew';
+const localClient = axios.create({
+  baseURL: "http://localhost:3000/api/v1",
+  timeout: 120000,
+});
+localClient.interceptors.request.use((config) => {
+  const { accessToken } = useAuthStore.getState();
+  if (accessToken && config.headers) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+  return config;
+});
+
+const ollamaClient = __DEV__ ? localClient : apiClient;
+
+export type DocumentStatus =
+  | "draft"
+  | "reviewing"
+  | "approved"
+  | "verified"
+  | "published"
+  | "rejected";
+export type UnionType = "fit-cisl" | "joint";
+export type DocumentRuolo = "pilot" | "cabin_crew";
 
 export interface Document {
   id: string;
@@ -50,12 +72,12 @@ export interface OllamaHealth {
 
 export const documentsApi = {
   getOllamaHealth: async (): Promise<OllamaHealth> => {
-    const response = await apiClient.get('/documents/health/ollama');
+    const response = await apiClient.get("/documents/health/ollama");
     return response.data;
   },
 
   getDocuments: async (): Promise<Document[]> => {
-    const response = await apiClient.get('/documents');
+    const response = await apiClient.get("/documents");
     return response.data;
   },
 
@@ -65,17 +87,23 @@ export const documentsApi = {
   },
 
   createDocument: async (data: CreateDocumentRequest): Promise<Document> => {
-    const response = await apiClient.post('/documents', data);
+    const response = await apiClient.post("/documents", data);
     return response.data;
   },
 
-  reviewDocument: async (id: string, data: ReviewDocumentRequest): Promise<Document> => {
-    const response = await apiClient.post(`/documents/${id}/review`, data);
+  reviewDocument: async (
+    id: string,
+    data: ReviewDocumentRequest,
+  ): Promise<Document> => {
+    const response = await ollamaClient.post(`/documents/${id}/review`, data);
     return response.data;
   },
 
-  approveDocument: async (id: string, data: ApproveDocumentRequest): Promise<Document> => {
-    const response = await apiClient.post(`/documents/${id}/approve`, data);
+  approveDocument: async (
+    id: string,
+    data: ApproveDocumentRequest,
+  ): Promise<Document> => {
+    const response = await ollamaClient.post(`/documents/${id}/approve`, data);
     return response.data;
   },
 
@@ -95,19 +123,41 @@ export const documentsApi = {
   },
 
   regenerateTranslations: async (id: string): Promise<Document> => {
-    const response = await apiClient.post(`/documents/${id}/regenerate-translations`);
+    const response = await ollamaClient.post(
+      `/documents/${id}/regenerate-translations`,
+    );
     return response.data;
   },
 
   getPdfBase64: async (id: string): Promise<string | null> => {
     const response = await apiClient.get(`/documents/${id}`);
     const document = response.data as Document;
-    
+
     // Extract base64 from data URL
-    if (document.finalPdfUrl?.startsWith('data:application/pdf;base64,')) {
-      return document.finalPdfUrl.replace('data:application/pdf;base64,', '');
+    if (document.finalPdfUrl?.startsWith("data:application/pdf;base64,")) {
+      return document.finalPdfUrl.replace("data:application/pdf;base64,", "");
     }
     return null;
+  },
+
+  updateTranslation: async (
+    id: string,
+    englishTranslation: string,
+  ): Promise<Document> => {
+    const response = await apiClient.patch(`/documents/${id}/translation`, {
+      englishTranslation,
+    });
+    return response.data;
+  },
+
+  rejectDocument: async (
+    id: string,
+    rejectionReason?: string,
+  ): Promise<Document> => {
+    const response = await apiClient.patch(`/documents/${id}/reject`, {
+      rejectionReason,
+    });
+    return response.data;
   },
 
   deleteDocument: async (id: string): Promise<void> => {

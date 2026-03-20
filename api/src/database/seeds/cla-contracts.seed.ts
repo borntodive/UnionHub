@@ -1,15 +1,15 @@
-import { DataSource } from 'typeorm';
-import { ClaContract } from '../../cla-contracts/entities/cla-contract.entity';
+import { DataSource } from "typeorm";
+import { ClaContract } from "../../cla-contracts/entities/cla-contract.entity";
 
 // Initial contract data based on RYR_CONFIG from the app
 const INITIAL_CONTRACTS = [
   // Pilots - CPT
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'cpt',
+    company: "RYR",
+    role: "pil",
+    rank: "cpt",
     basic: 15000 / 13,
-    ffp: (79044 + 3000) / 12,  // +€3.000 from April 2026 correction
+    ffp: (79044 + 3000) / 12, // +€3.000 from April 2026 correction
     sbh: 35870 / 850,
     al: 4785 / 29,
     oob: 160,
@@ -21,16 +21,16 @@ const INITIAL_CONTRACTS = [
     effectiveYear: 2026,
     effectiveMonth: 1,
     endYear: 2026,
-    endMonth: 3,  // Ends March 2026, new correction starts April
+    endMonth: 3, // Ends March 2026, new correction starts April
     isActive: true,
   },
   // Pilots - FO
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'fo',
+    company: "RYR",
+    role: "pil",
+    rank: "fo",
     basic: 5000 / 13,
-    ffp: (38132 + 1600) / 12,  // +€1.600 from April 2026 correction
+    ffp: (38132 + 1600) / 12, // +€1.600 from April 2026 correction
     sbh: 15479 / 850,
     al: 3828 / 29,
     oob: 155,
@@ -44,11 +44,11 @@ const INITIAL_CONTRACTS = [
   },
   // Pilots - SFI
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'sfi',
+    company: "RYR",
+    role: "pil",
+    rank: "sfi",
     basic: 5000 / 13,
-    ffp: (38132 + 1600) / 12,  // +€1.600 from April 2026 correction (SFI gets FO rate)
+    ffp: (38132 + 1600) / 12, // +€1.600 from April 2026 correction (SFI gets FO rate)
     sbh: 15479 / 850,
     al: 3828 / 29,
     oob: 155,
@@ -74,11 +74,11 @@ const INITIAL_CONTRACTS = [
   },
   // Pilots - TRI
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'tri',
+    company: "RYR",
+    role: "pil",
+    rank: "tri",
     basic: 15000 / 13,
-    ffp: (79044 + 3000) / 12,  // Same as CPT (+€3.000 from April 2026)
+    ffp: (79044 + 3000) / 12, // Same as CPT (+€3.000 from April 2026)
     sbh: 35870 / 850,
     al: 4785 / 29,
     oob: 160,
@@ -106,11 +106,11 @@ const INITIAL_CONTRACTS = [
   },
   // Pilots - TRE
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'tre',
+    company: "RYR",
+    role: "pil",
+    rank: "tre",
     basic: 15000 / 13,
-    ffp: (79044 + 3000) / 12,  // Same as CPT (+€3.000 from April 2026)
+    ffp: (79044 + 3000) / 12, // Same as CPT (+€3.000 from April 2026)
     sbh: 35870 / 850,
     al: 4785 / 29,
     oob: 160,
@@ -138,11 +138,11 @@ const INITIAL_CONTRACTS = [
   },
   // Pilots - LTC
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'ltc',
+    company: "RYR",
+    role: "pil",
+    rank: "ltc",
     basic: 15000 / 13,
-    ffp: (79044 + 3000) / 12,  // Same as CPT (+€3.000 from April 2026)
+    ffp: (79044 + 3000) / 12, // Same as CPT (+€3.000 from April 2026)
     sbh: 35870 / 850,
     al: 4785 / 29,
     oob: 160,
@@ -166,11 +166,11 @@ const INITIAL_CONTRACTS = [
   },
   // Pilots - LCC
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'lcc',
+    company: "RYR",
+    role: "pil",
+    rank: "lcc",
     basic: 15000 / 13,
-    ffp: (79044 + 3000) / 12,  // Same as CPT (+€3.000 from April 2026)
+    ffp: (79044 + 3000) / 12, // Same as CPT (+€3.000 from April 2026)
     sbh: 35870 / 850,
     al: 4785 / 29,
     oob: 160,
@@ -186,9 +186,9 @@ const INITIAL_CONTRACTS = [
   },
   // Pilots - JFO
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'jfo',
+    company: "RYR",
+    role: "pil",
+    rank: "jfo",
     basic: 5000 / 13,
     ffp: 35432 / 12,
     sbh: 13566 / 850,
@@ -204,9 +204,9 @@ const INITIAL_CONTRACTS = [
   },
   // Pilots - SO
   {
-    company: 'RYR',
-    role: 'pil',
-    rank: 'so',
+    company: "RYR",
+    role: "pil",
+    rank: "so",
     basic: 5000 / 13,
     ffp: 14698 / 12,
     sbh: 15640 / 850,
@@ -222,9 +222,9 @@ const INITIAL_CONTRACTS = [
   },
   // Cabin Crew - SEPE
   {
-    company: 'RYR',
-    role: 'cc',
-    rank: 'sepe',
+    company: "RYR",
+    role: "cc",
+    rank: "sepe",
     basic: 5000 / 13,
     ffp: 13262.76 / 12,
     sbh: 6.88,
@@ -243,9 +243,9 @@ const INITIAL_CONTRACTS = [
   },
   // Cabin Crew - SEPI
   {
-    company: 'RYR',
-    role: 'cc',
-    rank: 'sepi',
+    company: "RYR",
+    role: "cc",
+    rank: "sepi",
     basic: 5000 / 13,
     ffp: 13262.76 / 12,
     sbh: 6.88,
@@ -264,11 +264,11 @@ const INITIAL_CONTRACTS = [
   },
   // Cabin Crew - PU
   {
-    company: 'RYR',
-    role: 'cc',
-    rank: 'pu',
+    company: "RYR",
+    role: "cc",
+    rank: "pu",
     basic: 5000 / 13,
-    ffp: 938.5 + (750 / 12),  // +€750/year from April 2026 correction
+    ffp: 938.5 + 750 / 12, // +€750/year from April 2026 correction
     sbh: 6.88,
     al: 41.29,
     oob: 28,
@@ -282,11 +282,11 @@ const INITIAL_CONTRACTS = [
   },
   // Cabin Crew - JPU
   {
-    company: 'RYR',
-    role: 'cc',
-    rank: 'jpu',
+    company: "RYR",
+    role: "cc",
+    rank: "jpu",
     basic: 307.69,
-    ffp: 676.07 + (750 / 12),  // +€750/year from April 2026 correction
+    ffp: 676.07 + 750 / 12, // +€750/year from April 2026 correction
     sbh: 5.7,
     al: 35.03,
     oob: 28,
@@ -300,11 +300,11 @@ const INITIAL_CONTRACTS = [
   },
   // Cabin Crew - JU
   {
-    company: 'RYR',
-    role: 'cc',
-    rank: 'ju',
+    company: "RYR",
+    role: "cc",
+    rank: "ju",
     basic: 230.77,
-    ffp: 567.98 + (500 / 12),  // +€500/year from April 2026 correction
+    ffp: 567.98 + 500 / 12, // +€500/year from April 2026 correction
     sbh: 4.69,
     al: 29.06,
     oob: 28,
@@ -318,17 +318,20 @@ const INITIAL_CONTRACTS = [
   },
 ];
 
-export async function seedClaContracts(dataSource: DataSource, adminUserId: string): Promise<void> {
+export async function seedClaContracts(
+  dataSource: DataSource,
+  adminUserId: string,
+): Promise<void> {
   const repository = dataSource.getRepository(ClaContract);
 
   // Check if contracts already exist
   const count = await repository.count();
   if (count > 0) {
-    console.log('CLA Contracts already seeded, skipping...');
+    console.log("CLA Contracts already seeded, skipping...");
     return;
   }
 
-  console.log('Seeding CLA Contracts...');
+  console.log("Seeding CLA Contracts...");
 
   for (const contractData of INITIAL_CONTRACTS) {
     const contract = repository.create({

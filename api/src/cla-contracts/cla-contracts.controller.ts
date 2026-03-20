@@ -13,14 +13,14 @@ import {
   HttpCode,
   HttpStatus,
   ParseIntPipe,
-} from '@nestjs/common';
-import { ClaContractsService } from './cla-contracts.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../common/decorators/roles.decorator';
-import { UserRole } from '../common/enums/user-role.enum';
-import { CreateClaContractDto } from './dto/create-cla-contract.dto';
-import { UpdateClaContractDto } from './dto/update-cla-contract.dto';
+} from "@nestjs/common";
+import { ClaContractsService } from "./cla-contracts.service";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../common/decorators/roles.decorator";
+import { UserRole } from "../common/enums/user-role.enum";
+import { CreateClaContractDto } from "./dto/create-cla-contract.dto";
+import { UpdateClaContractDto } from "./dto/update-cla-contract.dto";
 
 interface RequestWithUser extends Request {
   user: {
@@ -35,7 +35,7 @@ interface RequestWithUser extends Request {
  * Manage contractual data for payslip calculations
  * SUPERADMIN only access
  */
-@Controller('admin/cla-contracts')
+@Controller("admin/cla-contracts")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.SUPERADMIN)
 export class ClaContractsController {
@@ -43,18 +43,18 @@ export class ClaContractsController {
 
   @Get()
   async findAll(
-    @Query('year', new ParseIntPipe({ optional: true })) year?: number,
+    @Query("year", new ParseIntPipe({ optional: true })) year?: number,
   ) {
     return this.claContractsService.findAll(year);
   }
 
-  @Get(':id')
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+  @Get(":id")
+  async findOne(@Param("id", ParseUUIDPipe) id: string) {
     return this.claContractsService.findById(id);
   }
 
-  @Get(':id/history')
-  async getHistory(@Param('id', ParseUUIDPipe) id: string) {
+  @Get(":id/history")
+  async getHistory(@Param("id", ParseUUIDPipe) id: string) {
     return this.claContractsService.getHistory(id);
   }
 
@@ -69,9 +69,9 @@ export class ClaContractsController {
     });
   }
 
-  @Put(':id')
+  @Put(":id")
   async update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
     @Body() updateDto: UpdateClaContractDto,
     @Request() req: RequestWithUser,
   ) {
@@ -81,10 +81,10 @@ export class ClaContractsController {
     });
   }
 
-  @Delete(':id')
+  @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
   async deactivate(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
     @Request() req: RequestWithUser,
   ) {
     await this.claContractsService.deactivate(id, {
@@ -93,9 +93,9 @@ export class ClaContractsController {
     });
   }
 
-  @Post(':id/activate')
+  @Post(":id/activate")
   async activate(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
     @Request() req: RequestWithUser,
   ) {
     return this.claContractsService.activate(id, {
@@ -104,25 +104,32 @@ export class ClaContractsController {
     });
   }
 
-  @Post(':id/clone')
+  @Post(":id/clone")
   async cloneForYear(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body('year', ParseIntPipe) year: number,
-    @Body('isActive') isActive?: boolean,
-    @Body('effectiveMonth', new ParseIntPipe({ optional: true })) effectiveMonth?: number,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body("year", ParseIntPipe) year: number,
+    @Body("isActive") isActive?: boolean,
+    @Body("effectiveMonth", new ParseIntPipe({ optional: true }))
+    effectiveMonth?: number,
     @Request() req?: RequestWithUser,
   ) {
-    return this.claContractsService.cloneForYear(id, year, {
-      userId: req!.user.userId,
-      crewcode: req!.user.crewcode,
-    }, isActive ?? true, effectiveMonth ?? 1);
+    return this.claContractsService.cloneForYear(
+      id,
+      year,
+      {
+        userId: req!.user.userId,
+        crewcode: req!.user.crewcode,
+      },
+      isActive ?? true,
+      effectiveMonth ?? 1,
+    );
   }
 
-  @Post(':id/close')
+  @Post(":id/close")
   async close(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body('endYear', ParseIntPipe) endYear: number,
-    @Body('endMonth', ParseIntPipe) endMonth: number,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body("endYear", ParseIntPipe) endYear: number,
+    @Body("endMonth", ParseIntPipe) endMonth: number,
     @Request() req: RequestWithUser,
   ) {
     return this.claContractsService.close(id, endYear, endMonth, {
@@ -131,10 +138,10 @@ export class ClaContractsController {
     });
   }
 
-  @Delete('year/:year')
+  @Delete("year/:year")
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteAllForYear(
-    @Param('year', ParseIntPipe) year: number,
+    @Param("year", ParseIntPipe) year: number,
     @Request() req: RequestWithUser,
   ) {
     return this.claContractsService.deleteAllForYear(year, {

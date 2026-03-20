@@ -1,10 +1,14 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Grade } from './entities/grade.entity';
-import { CreateGradeDto } from './dto/create-grade.dto';
-import { UpdateGradeDto } from './dto/update-grade.dto';
-import { Ruolo } from '../common/enums/ruolo.enum';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Grade } from "./entities/grade.entity";
+import { CreateGradeDto } from "./dto/create-grade.dto";
+import { UpdateGradeDto } from "./dto/update-grade.dto";
+import { Ruolo } from "../common/enums/ruolo.enum";
 
 @Injectable()
 export class GradesService {
@@ -15,14 +19,14 @@ export class GradesService {
 
   async findAll(): Promise<Grade[]> {
     return this.gradesRepository.find({
-      order: { ruolo: 'ASC', codice: 'ASC' },
+      order: { ruolo: "ASC", codice: "ASC" },
     });
   }
 
   async findByRuolo(ruolo: Ruolo): Promise<Grade[]> {
     return this.gradesRepository.find({
       where: { ruolo },
-      order: { codice: 'ASC' },
+      order: { codice: "ASC" },
     });
   }
 
@@ -32,7 +36,7 @@ export class GradesService {
     });
 
     if (!grade) {
-      throw new NotFoundException('Grade not found');
+      throw new NotFoundException("Grade not found");
     }
 
     return grade;
@@ -48,7 +52,7 @@ export class GradesService {
     // Check for duplicate codice
     const existing = await this.findByCodice(createGradeDto.codice);
     if (existing) {
-      throw new ConflictException('Grade code already exists');
+      throw new ConflictException("Grade code already exists");
     }
 
     const grade = this.gradesRepository.create({
@@ -63,14 +67,17 @@ export class GradesService {
     const grade = await this.findById(id);
 
     if (!grade) {
-      throw new NotFoundException('Grade not found');
+      throw new NotFoundException("Grade not found");
     }
 
     // Check for duplicate codice if changing
-    if (updateGradeDto.codice && updateGradeDto.codice.toUpperCase() !== grade.codice) {
+    if (
+      updateGradeDto.codice &&
+      updateGradeDto.codice.toUpperCase() !== grade.codice
+    ) {
       const existing = await this.findByCodice(updateGradeDto.codice);
       if (existing) {
-        throw new ConflictException('Grade code already exists');
+        throw new ConflictException("Grade code already exists");
       }
     }
 
@@ -86,7 +93,7 @@ export class GradesService {
     const grade = await this.findById(id);
 
     if (!grade) {
-      throw new NotFoundException('Grade not found');
+      throw new NotFoundException("Grade not found");
     }
 
     await this.gradesRepository.remove(grade);

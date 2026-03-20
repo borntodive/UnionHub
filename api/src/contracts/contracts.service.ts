@@ -1,9 +1,13 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Contract } from './entities/contract.entity';
-import { CreateContractDto } from './dto/create-contract.dto';
-import { UpdateContractDto } from './dto/update-contract.dto';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Contract } from "./entities/contract.entity";
+import { CreateContractDto } from "./dto/create-contract.dto";
+import { UpdateContractDto } from "./dto/update-contract.dto";
 
 @Injectable()
 export class ContractsService {
@@ -14,7 +18,7 @@ export class ContractsService {
 
   async findAll(): Promise<Contract[]> {
     return this.contractsRepository.find({
-      order: { codice: 'ASC' },
+      order: { codice: "ASC" },
     });
   }
 
@@ -24,7 +28,7 @@ export class ContractsService {
     });
 
     if (!contract) {
-      throw new NotFoundException('Contract not found');
+      throw new NotFoundException("Contract not found");
     }
 
     return contract;
@@ -40,7 +44,7 @@ export class ContractsService {
     // Check for duplicate codice
     const existing = await this.findByCodice(createContractDto.codice);
     if (existing) {
-      throw new ConflictException('Contract code already exists');
+      throw new ConflictException("Contract code already exists");
     }
 
     const contract = this.contractsRepository.create({
@@ -51,18 +55,24 @@ export class ContractsService {
     return this.contractsRepository.save(contract);
   }
 
-  async update(id: string, updateContractDto: UpdateContractDto): Promise<Contract> {
+  async update(
+    id: string,
+    updateContractDto: UpdateContractDto,
+  ): Promise<Contract> {
     const contract = await this.findById(id);
 
     if (!contract) {
-      throw new NotFoundException('Contract not found');
+      throw new NotFoundException("Contract not found");
     }
 
     // Check for duplicate codice if changing
-    if (updateContractDto.codice && updateContractDto.codice.toUpperCase() !== contract.codice) {
+    if (
+      updateContractDto.codice &&
+      updateContractDto.codice.toUpperCase() !== contract.codice
+    ) {
       const existing = await this.findByCodice(updateContractDto.codice);
       if (existing) {
-        throw new ConflictException('Contract code already exists');
+        throw new ConflictException("Contract code already exists");
       }
     }
 
@@ -78,7 +88,7 @@ export class ContractsService {
     const contract = await this.findById(id);
 
     if (!contract) {
-      throw new NotFoundException('Contract not found');
+      throw new NotFoundException("Contract not found");
     }
 
     await this.contractsRepository.remove(contract);

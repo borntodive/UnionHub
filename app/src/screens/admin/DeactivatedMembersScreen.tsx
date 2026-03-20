@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,8 +10,12 @@ import {
   ActivityIndicator,
   Modal,
   ScrollView,
-} from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+} from "react-native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import {
   Search,
   UserX,
@@ -23,23 +27,27 @@ import {
   History,
   CheckCircle2,
   XCircle,
-} from 'lucide-react-native';
-import { colors, spacing, typography, borderRadius } from '../../theme';
-import { usersApi } from '../../api/users';
-import { User, StatusLogEntry } from '../../types';
+} from "lucide-react-native";
+import { colors, spacing, typography, borderRadius } from "../../theme";
+import { usersApi } from "../../api/users";
+import { User, StatusLogEntry } from "../../types";
 
 export const DeactivatedMembersScreen: React.FC = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [members, setMembers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [total, setTotal] = useState(0);
   const [selectedMember, setSelectedMember] = useState<User | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
-  const fetchDeactivatedMembers = async (pageNum: number = 1, search: string = '') => {
+  const fetchDeactivatedMembers = async (
+    pageNum: number = 1,
+    search: string = "",
+  ) => {
     try {
       setLoading(true);
       const response = await usersApi.getDeactivated({
@@ -47,18 +55,18 @@ export const DeactivatedMembersScreen: React.FC = () => {
         perPage: 20,
         search: search || undefined,
       });
-      
+
       if (pageNum === 1) {
         setMembers(response.data);
       } else {
         setMembers((prev) => [...prev, ...response.data]);
       }
-      
+
       setTotal(response.total);
       setHasMore(response.data.length === 20);
     } catch (error) {
-      console.error('Error fetching deactivated members:', error);
-      Alert.alert('Error', 'Failed to load deactivated members');
+      console.error("Error fetching deactivated members:", error);
+      Alert.alert("Error", "Failed to load deactivated members");
     } finally {
       setLoading(false);
     }
@@ -68,7 +76,7 @@ export const DeactivatedMembersScreen: React.FC = () => {
     useCallback(() => {
       fetchDeactivatedMembers(1, searchQuery);
       setPage(1);
-    }, [])
+    }, []),
   );
 
   const handleSearch = (text: string) => {
@@ -87,51 +95,51 @@ export const DeactivatedMembersScreen: React.FC = () => {
 
   const handleReactivate = (member: User) => {
     Alert.alert(
-      'Reactivate Member',
+      "Reactivate Member",
       `Are you sure you want to reactivate ${member.nome} ${member.cognome}?`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Reactivate',
-          style: 'default',
+          text: "Reactivate",
+          style: "default",
           onPress: async () => {
             try {
               await usersApi.reactivateDeactivated(member.id);
-              Alert.alert('Success', 'Member reactivated successfully');
+              Alert.alert("Success", "Member reactivated successfully");
               fetchDeactivatedMembers(1, searchQuery);
               setPage(1);
             } catch (error) {
-              console.error('Error reactivating member:', error);
-              Alert.alert('Error', 'Failed to reactivate member');
+              console.error("Error reactivating member:", error);
+              Alert.alert("Error", "Failed to reactivate member");
             }
           },
         },
-      ]
+      ],
     );
   };
 
   const handlePermanentDelete = (member: User) => {
     Alert.alert(
-      'Permanent Delete',
+      "Permanent Delete",
       `Are you sure you want to permanently delete ${member.nome} ${member.cognome}?\n\nThis action cannot be undone!`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Delete Permanently',
-          style: 'destructive',
+          text: "Delete Permanently",
+          style: "destructive",
           onPress: async () => {
             try {
               await usersApi.permanentlyDelete(member.id);
-              Alert.alert('Success', 'Member permanently deleted');
+              Alert.alert("Success", "Member permanently deleted");
               fetchDeactivatedMembers(1, searchQuery);
               setPage(1);
             } catch (error) {
-              console.error('Error deleting member:', error);
-              Alert.alert('Error', 'Failed to delete member');
+              console.error("Error deleting member:", error);
+              Alert.alert("Error", "Failed to delete member");
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -142,16 +150,22 @@ export const DeactivatedMembersScreen: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('it-IT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return date.toLocaleDateString("it-IT", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
-  const renderHistoryItem = ({ item, index }: { item: StatusLogEntry; index: number }) => (
+  const renderHistoryItem = ({
+    item,
+    index,
+  }: {
+    item: StatusLogEntry;
+    index: number;
+  }) => (
     <View style={styles.historyItem}>
       <View style={styles.historyIcon}>
         {item.isActive ? (
@@ -162,26 +176,25 @@ export const DeactivatedMembersScreen: React.FC = () => {
       </View>
       <View style={styles.historyContent}>
         <Text style={styles.historyStatus}>
-          {item.isActive ? 'Activated' : 'Deactivated'}
+          {item.isActive ? "Activated" : "Deactivated"}
         </Text>
         <Text style={styles.historyDate}>{formatDate(item.timestamp)}</Text>
-        {item.reason && (
-          <Text style={styles.historyReason}>{item.reason}</Text>
-        )}
+        {item.reason && <Text style={styles.historyReason}>{item.reason}</Text>}
       </View>
     </View>
   );
 
   const renderMember = ({ item }: { item: User }) => (
     <View style={styles.memberCard}>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.memberInfo}
         onPress={() => handleShowHistory(item)}
         activeOpacity={0.7}
       >
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
-            {item.nome?.[0]}{item.cognome?.[0]}
+            {item.nome?.[0]}
+            {item.cognome?.[0]}
           </Text>
         </View>
         <View style={styles.memberDetails}>
@@ -193,7 +206,7 @@ export const DeactivatedMembersScreen: React.FC = () => {
           {item.ruolo && (
             <View style={styles.roleBadge}>
               <Text style={styles.roleText}>
-                {item.ruolo === 'pilot' ? 'Pilot' : 'Cabin Crew'}
+                {item.ruolo === "pilot" ? "Pilot" : "Cabin Crew"}
               </Text>
             </View>
           )}
@@ -207,7 +220,7 @@ export const DeactivatedMembersScreen: React.FC = () => {
           )}
         </View>
       </TouchableOpacity>
-      
+
       <View style={styles.actions}>
         <TouchableOpacity
           style={[styles.actionButton, styles.reactivateButton]}
@@ -218,7 +231,7 @@ export const DeactivatedMembersScreen: React.FC = () => {
             Reactivate
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.actionButton, styles.deleteButton]}
           onPress={() => handlePermanentDelete(item)}
@@ -233,67 +246,77 @@ export const DeactivatedMembersScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <ArrowLeft size={24} color={colors.textInverse} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Deactivated Members</Text>
-        <View style={styles.headerRight} />
-      </View>
-
-      {/* Info Banner */}
-      <View style={styles.infoBanner}>
-        <AlertTriangle size={20} color={colors.warning} />
-        <Text style={styles.infoText}>
-          {total} deactivated member{total !== 1 ? 's' : ''}
-        </Text>
-      </View>
-
-      {/* Search */}
-      <View style={styles.searchContainer}>
-        <Search size={20} color={colors.textSecondary} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search by name, crewcode, or email..."
-          value={searchQuery}
-          onChangeText={handleSearch}
-          placeholderTextColor={colors.textSecondary}
-        />
-      </View>
-
-      {/* Members List */}
-      {loading && members.length === 0 ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+    <View style={styles.wrapper}>
+      <View style={[styles.statusBarHack, { height: insets.top }]} />
+      <SafeAreaView
+        style={styles.container}
+        edges={["bottom", "left", "right"]}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <ArrowLeft size={24} color={colors.textInverse} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Deactivated Members</Text>
+          <View style={styles.headerRight} />
         </View>
-      ) : members.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <UserX size={64} color={colors.textTertiary} />
-          <Text style={styles.emptyTitle}>No Deactivated Members</Text>
-          <Text style={styles.emptySubtitle}>
-            There are no deactivated members in the system
+
+        {/* Info Banner */}
+        <View style={styles.infoBanner}>
+          <AlertTriangle size={20} color={colors.warning} />
+          <Text style={styles.infoText}>
+            {total} deactivated member{total !== 1 ? "s" : ""}
           </Text>
         </View>
-      ) : (
-        <FlatList
-          data={members}
-          renderItem={renderMember}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={
-            loading && hasMore ? (
-              <ActivityIndicator style={styles.loadMoreIndicator} color={colors.primary} />
-            ) : null
-          }
-        />
-      )}
+
+        {/* Search */}
+        <View style={styles.searchContainer}>
+          <Search size={20} color={colors.textSecondary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search by name, crewcode, or email..."
+            value={searchQuery}
+            onChangeText={handleSearch}
+            placeholderTextColor={colors.textSecondary}
+          />
+        </View>
+
+        {/* Members List */}
+        {loading && members.length === 0 ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : members.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <UserX size={64} color={colors.textTertiary} />
+            <Text style={styles.emptyTitle}>No Deactivated Members</Text>
+            <Text style={styles.emptySubtitle}>
+              There are no deactivated members in the system
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={members}
+            renderItem={renderMember}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={
+              loading && hasMore ? (
+                <ActivityIndicator
+                  style={styles.loadMoreIndicator}
+                  color={colors.primary}
+                />
+              ) : null
+            }
+          />
+        )}
+      </SafeAreaView>
 
       {/* History Action Sheet Modal */}
       <Modal
@@ -303,7 +326,7 @@ export const DeactivatedMembersScreen: React.FC = () => {
         onRequestClose={() => setShowHistory(false)}
       >
         <View style={styles.modalOverlay}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.modalBackground}
             onPress={() => setShowHistory(false)}
           />
@@ -313,14 +336,14 @@ export const DeactivatedMembersScreen: React.FC = () => {
                 <History size={24} color={colors.primary} />
                 <Text style={styles.modalTitle}>Status History</Text>
               </View>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setShowHistory(false)}
                 style={styles.modalCloseButton}
               >
                 <X size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
-            
+
             {selectedMember && (
               <View style={styles.modalMemberInfo}>
                 <Text style={styles.modalMemberName}>
@@ -333,7 +356,8 @@ export const DeactivatedMembersScreen: React.FC = () => {
             )}
 
             <ScrollView style={styles.modalContent}>
-              {selectedMember?.statusLog && selectedMember.statusLog.length > 0 ? (
+              {selectedMember?.statusLog &&
+              selectedMember.statusLog.length > 0 ? (
                 <View style={styles.historyList}>
                   {[...selectedMember.statusLog]
                     .reverse()
@@ -348,13 +372,15 @@ export const DeactivatedMembersScreen: React.FC = () => {
                         </View>
                         <View style={styles.historyContent}>
                           <Text style={styles.historyStatus}>
-                            {item.isActive ? 'Activated' : 'Deactivated'}
+                            {item.isActive ? "Activated" : "Deactivated"}
                           </Text>
                           <Text style={styles.historyDate}>
                             {formatDate(item.timestamp)}
                           </Text>
                           {item.reason && (
-                            <Text style={styles.historyReason}>{item.reason}</Text>
+                            <Text style={styles.historyReason}>
+                              {item.reason}
+                            </Text>
                           )}
                         </View>
                       </View>
@@ -363,7 +389,9 @@ export const DeactivatedMembersScreen: React.FC = () => {
               ) : (
                 <View style={styles.emptyHistory}>
                   <History size={48} color={colors.textTertiary} />
-                  <Text style={styles.emptyHistoryText}>No history available</Text>
+                  <Text style={styles.emptyHistoryText}>
+                    No history available
+                  </Text>
                 </View>
               )}
             </ScrollView>
@@ -375,34 +403,46 @@ export const DeactivatedMembersScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: colors.primary,
+  },
+  statusBarHack: {
+    backgroundColor: colors.primary,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: colors.primary,
-    paddingTop: 50,
-    paddingBottom: spacing.md,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    minHeight: 56,
   },
   backButton: {
-    padding: spacing.sm,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
-    fontSize: typography.sizes.lg,
+    fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
     color: colors.textInverse,
+    flex: 1,
+    textAlign: "center",
   },
   headerRight: {
     width: 40,
   },
   infoBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.warning + '20',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.warning + "20",
     padding: spacing.md,
     gap: spacing.sm,
   },
@@ -412,8 +452,8 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.medium,
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
     margin: spacing.md,
     paddingHorizontal: spacing.md,
@@ -430,13 +470,13 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: spacing.xl,
   },
   emptyTitle: {
@@ -449,7 +489,7 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     color: colors.textSecondary,
     marginTop: spacing.sm,
-    textAlign: 'center',
+    textAlign: "center",
   },
   listContent: {
     padding: spacing.md,
@@ -463,16 +503,16 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   memberInfo: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: spacing.md,
   },
   avatar: {
     width: 50,
     height: 50,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.primary + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: colors.primary + "20",
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarText: {
     fontSize: typography.sizes.md,
@@ -499,11 +539,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   roleBadge: {
-    backgroundColor: colors.primary + '10',
+    backgroundColor: colors.primary + "10",
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     marginTop: spacing.xs,
   },
   roleText: {
@@ -512,8 +552,8 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.medium,
   },
   historyHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: spacing.xs,
     gap: spacing.xs,
   },
@@ -522,7 +562,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   actions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: colors.border,
@@ -530,18 +570,18 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.sm,
     gap: spacing.xs,
   },
   reactivateButton: {
-    backgroundColor: colors.success + '10',
+    backgroundColor: colors.success + "10",
   },
   deleteButton: {
-    backgroundColor: colors.error + '10',
+    backgroundColor: colors.error + "10",
   },
   actionText: {
     fontSize: typography.sizes.sm,
@@ -553,8 +593,8 @@ const styles = StyleSheet.create({
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
   },
   modalBackground: {
     flex: 1,
@@ -563,19 +603,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-    maxHeight: '80%',
+    maxHeight: "80%",
   },
   modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   modalHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
   },
   modalTitle: {
@@ -610,8 +650,8 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   historyItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     gap: spacing.md,
     paddingVertical: spacing.sm,
   },
@@ -620,8 +660,8 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: borderRadius.full,
     backgroundColor: colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   historyContent: {
     flex: 1,
@@ -640,10 +680,10 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     color: colors.textTertiary,
     marginTop: spacing.xs,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   emptyHistory: {
-    alignItems: 'center',
+    alignItems: "center",
     padding: spacing.xl,
   },
   emptyHistoryText: {

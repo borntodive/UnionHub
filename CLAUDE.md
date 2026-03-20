@@ -187,6 +187,7 @@ npm run lint               # ESLint check
 **Profile Completion Gate**:
 
 After login, `AppNavigator` checks three conditions in order before showing the main app:
+
 1. `!isAuthenticated` → Login screen
 2. `mustChangePassword` → ChangePassword screen (forced, no back)
 3. `!!user.ruolo && (!user.dateOfEntry || (isCaptainGrade && !user.dateOfCaptaincy))` → `CompleteProfileScreen` (forced, no back)

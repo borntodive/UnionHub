@@ -1,5 +1,5 @@
-import apiClient from './client';
-import { Grade, Ruolo } from '../types';
+import apiClient from "./client";
+import { Grade, Ruolo } from "../types";
 
 export interface CreateGradeData {
   codice: string;
@@ -15,7 +15,7 @@ export interface UpdateGradeData {
 
 export const gradesApi = {
   getGrades: async (): Promise<Grade[]> => {
-    const response = await apiClient.get<Grade[]>('/grades');
+    const response = await apiClient.get<Grade[]>("/grades");
     return response.data;
   },
 
@@ -25,7 +25,7 @@ export const gradesApi = {
   },
 
   createGrade: async (data: CreateGradeData): Promise<Grade> => {
-    const response = await apiClient.post<Grade>('/grades', data);
+    const response = await apiClient.post<Grade>("/grades", data);
     return response.data;
   },
 

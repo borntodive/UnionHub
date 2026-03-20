@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Alert, AppState, AppStateStatus } from 'react-native';
-import * as Updates from 'expo-updates';
+import { useEffect, useState } from "react";
+import { Alert, AppState, AppStateStatus } from "react-native";
+import * as Updates from "expo-updates";
 
 interface UpdateInfo {
   isAvailable: boolean;
@@ -20,11 +20,14 @@ export function useOTAUpdate() {
 
   useEffect(() => {
     // Controlla aggiornamenti quando l'app torna in foreground
-    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
-      if (nextAppState === 'active') {
-        checkForUpdate();
-      }
-    });
+    const subscription = AppState.addEventListener(
+      "change",
+      (nextAppState: AppStateStatus) => {
+        if (nextAppState === "active") {
+          checkForUpdate();
+        }
+      },
+    );
 
     // Controlla subito all'avvio
     checkForUpdate();
@@ -36,23 +39,23 @@ export function useOTAUpdate() {
 
   async function checkForUpdate() {
     if (isChecking) return;
-    
+
     try {
       setIsChecking(true);
-      
+
       if (!Updates.isEnabled) {
-        console.log('OTA Updates not enabled');
+        console.log("OTA Updates not enabled");
         return;
       }
 
       const update = await Updates.checkForUpdateAsync();
-      
+
       if (update.isAvailable) {
         setUpdateInfo(update);
         showUpdateAlert(update);
       }
     } catch (error) {
-      console.error('Errore controllo aggiornamenti:', error);
+      console.error("Errore controllo aggiornamenti:", error);
     } finally {
       setIsChecking(false);
     }
@@ -60,65 +63,66 @@ export function useOTAUpdate() {
 
   function showUpdateAlert(update: UpdateInfo) {
     // Estrai informazioni dall'update
-    const version = update.manifest?.extra?.expoClient?.version || 'nuova versione';
-    const createdAt = update.manifest?.createdAt 
-      ? new Date(update.manifest.createdAt).toLocaleDateString('it-IT')
-      : 'oggi';
+    const version =
+      update.manifest?.extra?.expoClient?.version || "nuova versione";
+    const createdAt = update.manifest?.createdAt
+      ? new Date(update.manifest.createdAt).toLocaleDateString("it-IT")
+      : "oggi";
 
     Alert.alert(
-      '📱 Aggiornamento disponibile',
+      "📱 Aggiornamento disponibile",
       `È disponibile una nuova versione (${version}) del ${createdAt}.\n\n` +
-      `Vuoi aggiornare ora? L'app si riavvierà automaticamente.`,
+        `Vuoi aggiornare ora? L'app si riavvierà automaticamente.`,
       [
         {
-          text: 'Più tardi',
-          style: 'cancel',
+          text: "Più tardi",
+          style: "cancel",
           onPress: () => {
-            console.log('Utente ha posticipato l\'aggiornamento');
-          }
+            console.log("Utente ha posticipato l'aggiornamento");
+          },
         },
         {
-          text: 'Aggiorna ora',
-          style: 'default',
+          text: "Aggiorna ora",
+          style: "default",
           onPress: async () => {
             await downloadAndInstallUpdate();
-          }
-        }
+          },
+        },
       ],
-      { cancelable: false }
+      { cancelable: false },
     );
   }
 
   async function downloadAndInstallUpdate() {
     try {
       Alert.alert(
-        '⏳ Download in corso...',
-        'Stiamo scaricando l\'aggiornamento. Attendi un momento.',
+        "⏳ Download in corso...",
+        "Stiamo scaricando l'aggiornamento. Attendi un momento.",
         [],
-        { cancelable: false }
+        { cancelable: false },
       );
 
       await Updates.fetchUpdateAsync();
-      
+
       // Chiudi l'alert di download e riavvia
       Alert.alert(
-        '✅ Aggiornamento completato',
-        'L\'app si riavvierà per applicare le modifiche.',
+        "✅ Aggiornamento completato",
+        "L'app si riavvierà per applicare le modifiche.",
         [
           {
-            text: 'Riavvia',
+            text: "Riavvia",
             onPress: async () => {
               await Updates.reloadAsync();
-            }
-          }
+            },
+          },
         ],
-        { cancelable: false }
+        { cancelable: false },
       );
     } catch (error) {
-      console.error('Errore download aggiornamento:', error);
+      console.error("Errore download aggiornamento:", error);
       Alert.alert(
-        '❌ Errore',
-        'Non è stato possibile scaricare l\'aggiornamento. Riprova più tardi.'
+        "❌ Errore",
+        "Non è stato possibile scaricare l'aggiornamento. Riprova più tardi.",
       );
     }
   }
@@ -131,6 +135,6 @@ export function useOTAUpdate() {
   return {
     checkForUpdate: checkForUpdateManual,
     updateInfo,
-    isChecking
+    isChecking,
   };
 }

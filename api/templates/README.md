@@ -22,6 +22,7 @@ Carica qui il tuo template PDF della carta intestata CISL.
 ## Formato di esempio
 
 La carta intestata dovrebbe contenere:
+
 - Logo CISL in alto
 - Eventuali intestazioni ("CISL Trasporti", indirizzo, contatti)
 - Spazio vuoto centrale per il contenuto

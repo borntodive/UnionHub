@@ -1,9 +1,9 @@
 // Formatters for Payslip Calculator
 
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('it-IT', {
-    style: 'currency',
-    currency: 'EUR',
+  return new Intl.NumberFormat("it-IT", {
+    style: "currency",
+    currency: "EUR",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
@@ -17,32 +17,35 @@ export function formatPercent(value: number): string {
 export function formatSbh(decimalHours: number): string {
   const hours = Math.floor(decimalHours);
   const minutes = Math.round((decimalHours - hours) * 60);
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 }
 
 // Parse HH:MM to decimal hours
 export function parseSbh(sbhString: string): number {
-  const [hours, minutes] = sbhString.split(':').map(Number);
+  const [hours, minutes] = sbhString.split(":").map(Number);
   return hours + minutes / 60;
 }
 
 // Parse HH:MM to hours and minutes
-export function parseSbhToParts(sbhString: string): { hours: number; minutes: number } {
-  const [hours, minutes] = sbhString.split(':').map(Number);
+export function parseSbhToParts(sbhString: string): {
+  hours: number;
+  minutes: number;
+} {
+  const [hours, minutes] = sbhString.split(":").map(Number);
   return { hours, minutes };
 }
 
 // Format date to Italian locale
 export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('it-IT', {
-    year: 'numeric',
-    month: 'long',
+  return new Date(dateString).toLocaleDateString("it-IT", {
+    year: "numeric",
+    month: "long",
   });
 }
 
 // Get month name
 export function getMonthName(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('it-IT', { month: 'long' });
+  return new Date(dateString).toLocaleDateString("it-IT", { month: "long" });
 }
 
 // Get year
@@ -62,7 +65,7 @@ export function isDecember(dateString: string): boolean {
 
 // Format number with Italian locale
 export function formatNumber(num: number, decimals: number = 2): string {
-  return new Intl.NumberFormat('it-IT', {
+  return new Intl.NumberFormat("it-IT", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(num);

@@ -1,14 +1,15 @@
-const dotenv = require('dotenv');
-const path = require('path');
+const dotenv = require("dotenv");
+const path = require("path");
 
 // Load the correct .env file
 // For EAS builds, always use .env.production
 // For local development, use .env.development
-const isEASBuild = process.env.EAS_BUILD || process.env.NODE_ENV === 'production';
-const envFile = isEASBuild ? '.env.production' : '.env.development';
+const isEASBuild =
+  process.env.EAS_BUILD || process.env.NODE_ENV === "production";
+const envFile = isEASBuild ? ".env.production" : ".env.development";
 
 dotenv.config({ path: path.resolve(__dirname, envFile) });
-console.log('Loading env from:', envFile, 'API_URL:', process.env.API_URL);
+console.log("Loading env from:", envFile, "API_URL:", process.env.API_URL);
 
 module.exports = {
   expo: {
@@ -22,7 +23,7 @@ module.exports = {
       url: "https://u.expo.dev/505f6694-7b00-484d-94cd-fcebdb0ee8e9",
       enabled: true,
       checkAutomatically: "ON_LOAD",
-      fallbackToCacheTimeout: 0
+      fallbackToCacheTimeout: 0,
     },
     orientation: "portrait",
     icon: "./assets/icon.png",
@@ -30,11 +31,9 @@ module.exports = {
     splash: {
       image: "./assets/splash.png",
       resizeMode: "contain",
-      backgroundColor: "#177246"
+      backgroundColor: "#177246",
     },
-    assetBundlePatterns: [
-      "**/*"
-    ],
+    assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,
       bundleIdentifier: "it.unionhub.app",
@@ -46,64 +45,51 @@ module.exports = {
             CFBundleTypeName: "PDF Document",
             CFBundleTypeRole: "Editor",
             LSHandlerRank: "Alternate",
-            LSItemContentTypes: [
-              "com.adobe.pdf"
-            ]
-          }
+            LSItemContentTypes: ["com.adobe.pdf"],
+          },
         ],
         UIImportedTypeDeclarations: [
           {
             UTTypeIdentifier: "com.adobe.pdf",
             UTTypeDescription: "PDF Document",
-            UTTypeConformsTo: [
-              "public.data"
-            ],
+            UTTypeConformsTo: ["public.data"],
             UTTypeTagSpecification: {
-              "public.filename-extension": [
-                "pdf"
-              ],
-              "public.mime-type": [
-                "application/pdf"
-              ]
-            }
-          }
-        ]
-      }
+              "public.filename-extension": ["pdf"],
+              "public.mime-type": ["application/pdf"],
+            },
+          },
+        ],
+      },
     },
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#177246"
+        backgroundColor: "#177246",
       },
       package: "it.unionhub.app",
       intentFilters: [
         {
           action: "VIEW",
-          category: [
-            "BROWSABLE",
-            "DEFAULT"
-          ],
+          category: ["BROWSABLE", "DEFAULT"],
           data: [
             {
-              mimeType: "application/pdf"
-            }
-          ]
+              mimeType: "application/pdf",
+            },
+          ],
         },
         {
           action: "SEND",
-          category: [
-            "DEFAULT"
-          ],
+          category: ["DEFAULT"],
           data: [
             {
-              mimeType: "application/pdf"
-            }
-          ]
-        }
-      ]
+              mimeType: "application/pdf",
+            },
+          ],
+        },
+      ],
     },
     web: {
-      favicon: "./assets/favicon.png"
+      favicon: "./assets/favicon.png",
     },
     plugins: [
       "expo-secure-store",
@@ -111,15 +97,15 @@ module.exports = {
       "expo-build-properties",
       "expo-localization",
       "expo-sharing",
-      "expo-web-browser"
+      "expo-web-browser",
     ],
     // Extra config accessible via Constants.expoConfig.extra
     extra: {
       apiUrl: process.env.API_URL,
-      environment: process.env.NODE_ENV || 'development',
+      environment: process.env.NODE_ENV || "development",
       eas: {
-        projectId: "505f6694-7b00-484d-94cd-fcebdb0ee8e9"
-      }
-    }
-  }
+        projectId: "505f6694-7b00-484d-94cd-fcebdb0ee8e9",
+      },
+    },
+  },
 };

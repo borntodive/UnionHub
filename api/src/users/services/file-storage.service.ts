@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { Injectable, Logger } from "@nestjs/common";
+import * as fs from "fs";
+import * as path from "path";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class FileStorageService {
@@ -10,7 +10,7 @@ export class FileStorageService {
 
   constructor() {
     // Upload directory: project-root/uploads/registration-forms/
-    this.uploadDir = path.join(process.cwd(), 'uploads', 'registration-forms');
+    this.uploadDir = path.join(process.cwd(), "uploads", "registration-forms");
     this.ensureUploadDirExists();
   }
 
@@ -42,7 +42,7 @@ export class FileStorageService {
 
       // Generate unique filename
       const timestamp = Date.now();
-      const sanitizedOriginal = originalName.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const sanitizedOriginal = originalName.replace(/[^a-zA-Z0-9.-]/g, "_");
       const filename = `${timestamp}_${uuidv4().slice(0, 8)}_${sanitizedOriginal}`;
       const filePath = path.join(userDir, filename);
 
@@ -57,7 +57,7 @@ export class FileStorageService {
       return { filePath, fileUrl };
     } catch (error) {
       this.logger.error(`Failed to save PDF: ${error.message}`, error.stack);
-      throw new Error('Failed to save PDF file');
+      throw new Error("Failed to save PDF file");
     }
   }
 
@@ -66,8 +66,8 @@ export class FileStorageService {
    */
   getFilePathFromUrl(fileUrl: string): string {
     // Remove leading slash and convert to absolute path
-    const relativePath = fileUrl.replace(/^\/uploads\//, '');
-    return path.join(process.cwd(), 'uploads', relativePath);
+    const relativePath = fileUrl.replace(/^\/uploads\//, "");
+    return path.join(process.cwd(), "uploads", relativePath);
   }
 
   /**

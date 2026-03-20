@@ -1,6 +1,6 @@
 // Calculation Helpers for Payslip Calculator
 
-import { PayslipItem, LeaveItem, AdditionalItem, TieredPay } from '../types';
+import { PayslipItem, LeaveItem, AdditionalItem, TieredPay } from "../types";
 
 // Create a PayslipItem
 export function createPayslipItem(
@@ -8,7 +8,7 @@ export function createPayslipItem(
   taxablePercentage: number = 100,
   quantity: number | null = null,
   isDeduction: boolean = false,
-  isSectorPay: boolean = false
+  isSectorPay: boolean = false,
 ): PayslipItem {
   const taxable = total * (taxablePercentage / 100);
   const taxFree = total - taxable;
@@ -29,7 +29,7 @@ export function createPayslipItem(
 export function createLeaveItem(
   basicQuota: number,
   ffpQuota: number,
-  days: number
+  days: number,
 ): LeaveItem {
   return {
     basicQuota: createPayslipItem(basicQuota, 100, days, true),
@@ -43,7 +43,7 @@ export function createAdditionalItem(
   amount: number,
   taxPercentage: number,
   isSLR: boolean = false,
-  isConguaglio: boolean = false
+  isConguaglio: boolean = false,
 ): AdditionalItem {
   const taxable = amount * (taxPercentage / 100);
   const taxFree = amount - taxable;
@@ -58,10 +58,7 @@ export function createAdditionalItem(
 }
 
 // Calculate tiered pay (for LTC training bonus)
-export function calculateTieredPay(
-  value: number,
-  tiers: TieredPay[]
-): number {
+export function calculateTieredPay(value: number, tiers: TieredPay[]): number {
   const sortedTiers = [...tiers].sort((a, b) => a.min - b.min);
   let totalPay = 0;
   let remainingValue = value;
@@ -84,7 +81,11 @@ export function calculateTieredPay(
 // Calculate sim diaria pay
 export function calculateSimDiariaPay(
   days: number,
-  tiers: { min: number; max: number; pay: { ffp: number; sectorPay: number } }[]
+  tiers: {
+    min: number;
+    max: number;
+    pay: { ffp: number; sectorPay: number };
+  }[],
 ): { ffp: number; sectorPay: number } {
   const sortedTiers = [...tiers].sort((a, b) => a.min - b.min);
   let totalFfp = 0;
@@ -105,7 +106,7 @@ export function calculateSimDiariaPay(
 export function calculateDiariaWithTaxFree(
   days: number,
   rate: number,
-  maxTaxFree: number = 46.48
+  maxTaxFree: number = 46.48,
 ): { total: number; taxable: number; taxFree: number } {
   const total = days * rate;
   const taxFreePerDay = Math.min(rate, maxTaxFree);
@@ -123,7 +124,7 @@ export function sumValues(obj: Record<string, number>): number {
 // Calculate tax brackets
 export function calculateTaxBrackets(
   annualIncome: number,
-  brackets: { limit: number; rate: number }[]
+  brackets: { limit: number; rate: number }[],
 ): number {
   let tax = 0;
   let previousLimit = 0;
@@ -147,7 +148,7 @@ export function calculateTaxBrackets(
 export function calculateWorkDeductions(
   annualIncome: number,
   year: number,
-  date: Date
+  date: Date,
 ): number {
   let detrazione = 0;
 
@@ -170,7 +171,7 @@ export function calculateWorkDeductions(
 // Calculate spouse deductions
 export function calculateSpouseDeductions(
   annualIncome: number,
-  year: number
+  year: number,
 ): number {
   if (year >= 2025) return 0; // Abolished from 2025
 
@@ -202,7 +203,7 @@ export function calculateSpouseDeductions(
 // Calculate cuneo fiscale (tax cut)
 export function calculateCuneoFiscale(
   monthlyIncome: number,
-  year: number
+  year: number,
 ): { percentage: number; amount: number } {
   const annualIncome = monthlyIncome * 12;
 
@@ -235,7 +236,7 @@ export function calculateCuneoFiscale(
 // Calculate IVS exemption
 export function calculateIVSExemption(
   monthlyIncome: number,
-  year: number
+  year: number,
 ): { percentage: number; amount: number; concorreImponibileIRPEF: boolean } {
   // Same as cuneo fiscale for 2024, none for 2025
   if (year === 2024) {
@@ -250,7 +251,7 @@ export function calculateBonus(
   annualIncome: number,
   impostaLorda: number,
   detrazioni: number,
-  date: Date
+  date: Date,
 ): number {
   if (annualIncome > 28000) return 0;
 

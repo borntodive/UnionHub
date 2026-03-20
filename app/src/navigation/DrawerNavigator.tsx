@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -6,10 +6,13 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-} from 'react-native';
-import { createDrawerNavigator, DrawerContentComponentProps } from '@react-navigation/drawer';
-import { useNavigation } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
+} from "react-native";
+import {
+  createDrawerNavigator,
+  DrawerContentComponentProps,
+} from "@react-navigation/drawer";
+import { useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import {
   Home,
   User,
@@ -26,44 +29,41 @@ import {
   Calculator,
   FileText,
   Bell,
-} from 'lucide-react-native';
+  AlertTriangle,
+} from "lucide-react-native";
 
-import { colors, spacing, typography, borderRadius } from '../theme';
-import { useAuthStore } from '../store/authStore';
-import { authApi } from '../api/auth';
-import * as Updates from 'expo-updates';
-import { MembersScreen } from '../screens/MembersScreen/MembersScreen';
-import { PayslipTabs } from '../payslip/navigation/PayslipTabs';
-import AdminContractsScreen from '../payslip/screens/AdminContractsScreen';
-import ContractEditorScreen from '../payslip/screens/ContractEditorScreen';
-import { SettingsScreen } from '../screens/SettingsScreen/SettingsScreen';
-import { ContractsScreen } from '../screens/admin/ContractsScreen';
-import { ContractFormScreen } from '../screens/admin/ContractFormScreen';
-import { DocumentsScreen } from '../screens/admin/DocumentsScreen';
-import { DocumentEditorScreen } from '../screens/admin/DocumentEditorScreen';
-import { PublicDocumentsScreen } from '../screens/PublicDocumentsScreen';
-import { UserRole } from '../types';
+import { colors, spacing, typography, borderRadius } from "../theme";
+import { useAuthStore } from "../store/authStore";
+import { useOfflineStore } from "../store/offlineStore";
+import { authApi } from "../api/auth";
+import * as Updates from "expo-updates";
+import { HomeScreen } from "../screens/HomeScreen/HomeScreen";
+import { MembersScreen } from "../screens/MembersScreen/MembersScreen";
+import { PayslipTabs } from "../payslip/navigation/PayslipTabs";
+import AdminContractsScreen from "../payslip/screens/AdminContractsScreen";
+import ContractEditorScreen from "../payslip/screens/ContractEditorScreen";
+import { SettingsScreen } from "../screens/SettingsScreen/SettingsScreen";
+import { ContractsScreen } from "../screens/admin/ContractsScreen";
+import { ContractFormScreen } from "../screens/admin/ContractFormScreen";
+import { DocumentsScreen } from "../screens/admin/DocumentsScreen";
+import { DocumentEditorScreen } from "../screens/admin/DocumentEditorScreen";
+import { IssuesScreen } from "../screens/admin/IssuesScreen";
+import { PublicDocumentsScreen } from "../screens/PublicDocumentsScreen";
+import { ReportIssueScreen } from "../screens/ReportIssueScreen/ReportIssueScreen";
+import { MyIssuesScreen } from "../screens/MyIssuesScreen/MyIssuesScreen";
+import { NotificationsScreen } from "../screens/NotificationsScreen/NotificationsScreen";
+import { UserRole } from "../types";
 const Drawer = createDrawerNavigator();
-
-// Placeholder Screens
-const HomeScreen = () => {
-  const { t } = useTranslation();
-  return (
-    <View style={styles.screenContainer}>
-      <Home size={64} color={colors.primary} />
-      <Text style={styles.screenTitle}>{t('common.appName')}</Text>
-      <Text style={styles.screenSubtitle}>{t('navigation.home')}</Text>
-    </View>
-  );
-};
 
 const AdminScreen = () => {
   const { t } = useTranslation();
   return (
     <View style={styles.screenContainer}>
       <Shield size={64} color={colors.primary} />
-      <Text style={styles.screenTitle}>{t('navigation.admin')}</Text>
-      <Text style={styles.screenSubtitle}>Admin Panel - Under Construction</Text>
+      <Text style={styles.screenTitle}>{t("navigation.admin")}</Text>
+      <Text style={styles.screenSubtitle}>
+        Admin Panel - Under Construction
+      </Text>
     </View>
   );
 };
@@ -75,6 +75,10 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const logout = useAuthStore((state) => state.logout);
   const refreshToken = useAuthStore((state) => state.refreshToken);
   const navigation = useNavigation();
+  const isOnline = useOfflineStore((state) => state.isOnline);
+  const notificationCount = useOfflineStore(
+    (state) => state.notifications.length,
+  );
 
   const handleLogout = async () => {
     try {
@@ -93,200 +97,287 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
     props.navigation.closeDrawer();
   };
 
-  const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
+  const isAdmin =
+    user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-    <View style={styles.drawerContainer}>
-      {/* Header with User Info */}
-      <View style={styles.drawerHeader}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {user?.nome?.[0]}{user?.cognome?.[0]}
-          </Text>
-        </View>
-        <Text style={styles.userName}>{user?.nome} {user?.cognome}</Text>
-        <Text style={styles.userCrewcode}>{user?.crewcode}</Text>
-        <View style={styles.roleBadge}>
-          <Text style={styles.roleText}>
-            {user?.role === UserRole.SUPERADMIN ? t('navigation.superAdmin') : 
-             user?.role === UserRole.ADMIN ? t('navigation.admin') : t('members.active')}
-          </Text>
-        </View>
-
-        {/* Notification Bell */}
-        <TouchableOpacity style={styles.notificationButton}>
-          <Bell size={24} color={colors.textInverse} />
-          <View style={styles.notificationBadge}>
-            <Text style={styles.notificationBadgeText}>3</Text>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+      <View style={styles.drawerContainer}>
+        {/* Header with User Info */}
+        <View style={styles.drawerHeader}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {user?.nome?.[0]}
+              {user?.cognome?.[0]}
+            </Text>
           </View>
-        </TouchableOpacity>
+          <Text style={styles.userName}>
+            {user?.nome} {user?.cognome}
+          </Text>
+          <Text style={styles.userCrewcode}>{user?.crewcode}</Text>
+          <View style={styles.roleBadge}>
+            <Text style={styles.roleText}>
+              {user?.role === UserRole.SUPERADMIN
+                ? t("navigation.superAdmin")
+                : user?.role === UserRole.ADMIN
+                  ? t("navigation.admin")
+                  : t("members.active")}
+            </Text>
+          </View>
+
+          {/* Notification Bell */}
+          <TouchableOpacity
+            style={styles.notificationButton}
+            onPress={() => {
+              props.navigation.navigate("Notifications");
+              props.navigation.closeDrawer();
+            }}
+          >
+            <Bell size={24} color={colors.textInverse} />
+            {notificationCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>
+                  {notificationCount > 99 ? "99+" : notificationCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* Menu Items */}
+        <ScrollView style={styles.menuContainer}>
+          {/* ── Always available (online + offline) ── */}
+          <MenuItem
+            icon={<Home size={22} color={colors.primary} />}
+            label={t("navigation.home")}
+            onPress={() => navigateToScreen("Home")}
+          />
+
+          {isOnline && (
+            <MenuItem
+              icon={<User size={22} color={colors.primary} />}
+              label={t("navigation.profile")}
+              onPress={() => {
+                if (user?.id) {
+                  props.navigation.navigate("MemberDetail", {
+                    memberId: user.id,
+                  });
+                }
+                props.navigation.closeDrawer();
+              }}
+            />
+          )}
+
+          <MenuItem
+            icon={<Calculator size={22} color={colors.primary} />}
+            label={t("navigation.payslipCalculator")}
+            onPress={() => {
+              props.navigation.navigate("PayslipCalculator");
+              props.navigation.closeDrawer();
+            }}
+          />
+
+          {/* Issues — available offline */}
+          <View style={styles.sectionDivider} />
+          <Text style={styles.sectionTitle}>
+            {t("navigation.issuesSection")}
+          </Text>
+          <MenuItem
+            icon={<AlertTriangle size={22} color={colors.primary} />}
+            label={t("navigation.reportIssue")}
+            onPress={() => {
+              props.navigation.navigate("ReportIssue");
+              props.navigation.closeDrawer();
+            }}
+          />
+          {isOnline && (
+            <>
+              <MenuItem
+                icon={<AlertTriangle size={22} color={colors.primary} />}
+                label={t("navigation.myIssues")}
+                onPress={() => {
+                  props.navigation.navigate("MyIssues");
+                  props.navigation.closeDrawer();
+                }}
+              />
+              {isAdmin && (
+                <MenuItem
+                  icon={<AlertTriangle size={22} color={colors.primary} />}
+                  label={t("navigation.issues")}
+                  onPress={() => {
+                    props.navigation.navigate("Issues");
+                    props.navigation.closeDrawer();
+                  }}
+                />
+              )}
+            </>
+          )}
+
+          {/* ── Online-only items ── */}
+          {isOnline && (
+            <>
+              {/* Public Documents - non-admin */}
+              {!isAdmin && (
+                <>
+                  <View style={styles.sectionDivider} />
+                  <MenuItem
+                    icon={<FileText size={22} color={colors.primary} />}
+                    label={t("documents.publicDocuments")}
+                    onPress={() => {
+                      props.navigation.navigate("PublicDocuments");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                </>
+              )}
+
+              {isAdmin && (
+                <>
+                  {/* Sezione Membri */}
+                  <View style={styles.sectionDivider} />
+                  <Text style={styles.sectionTitle}>
+                    {t("navigation.membersSection")}
+                  </Text>
+                  <MenuItem
+                    icon={<Users size={22} color={colors.primary} />}
+                    label={t("navigation.members")}
+                    onPress={() => navigateToScreen("Members")}
+                  />
+                  <MenuItem
+                    icon={<BarChart3 size={22} color={colors.primary} />}
+                    label={t("navigation.statistics")}
+                    onPress={() => {
+                      props.navigation.navigate("Statistics");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                  <MenuItem
+                    icon={<Upload size={22} color={colors.primary} />}
+                    label={t("navigation.bulkImport")}
+                    onPress={() => {
+                      props.navigation.navigate("BulkImport");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+
+                  {/* Sezione Comunicati */}
+                  <View style={styles.sectionDivider} />
+                  <Text style={styles.sectionTitle}>
+                    {t("navigation.documentsSection")}
+                  </Text>
+                  <MenuItem
+                    icon={<FileText size={22} color={colors.primary} />}
+                    label={t("navigation.documentsManagement")}
+                    onPress={() => {
+                      props.navigation.navigate("Documents");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                  <MenuItem
+                    icon={<FileText size={22} color={colors.primary} />}
+                    label={t("documents.publicDocuments")}
+                    onPress={() => {
+                      props.navigation.navigate("PublicDocuments");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                </>
+              )}
+
+              {isSuperAdmin && (
+                <>
+                  <View style={styles.sectionDivider} />
+                  <Text style={styles.sectionTitle}>
+                    {t("navigation.superAdmin")}
+                  </Text>
+                  <MenuItem
+                    icon={<UserX size={22} color={colors.primary} />}
+                    label={t("navigation.deactivatedMembers")}
+                    onPress={() => {
+                      props.navigation.navigate("DeactivatedMembers");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                  <View style={styles.sectionDivider} />
+                  <Text style={styles.sectionTitle}>
+                    {t("navigation.configuration")}
+                  </Text>
+                  <MenuItem
+                    icon={<Building2 size={22} color={colors.primary} />}
+                    label={t("navigation.bases")}
+                    onPress={() => {
+                      props.navigation.navigate("Bases");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                  <MenuItem
+                    icon={<Briefcase size={22} color={colors.primary} />}
+                    label={t("navigation.contracts")}
+                    onPress={() => {
+                      props.navigation.navigate("Contracts");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                  <MenuItem
+                    icon={<Award size={22} color={colors.primary} />}
+                    label={t("navigation.grades")}
+                    onPress={() => {
+                      props.navigation.navigate("Grades");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                  <MenuItem
+                    icon={<Calculator size={22} color={colors.primary} />}
+                    label={t("navigation.claContracts")}
+                    onPress={() => {
+                      props.navigation.navigate("ClaContracts");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                  <MenuItem
+                    icon={<AlertTriangle size={22} color={colors.primary} />}
+                    label={t("navigation.issueCategories")}
+                    onPress={() => {
+                      props.navigation.navigate("IssueCategories");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                  <MenuItem
+                    icon={<AlertTriangle size={22} color={colors.primary} />}
+                    label={t("navigation.issueUrgencies")}
+                    onPress={() => {
+                      props.navigation.navigate("IssueUrgencies");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                </>
+              )}
+            </>
+          )}
+
+          {/* ── Always available ── */}
+          <View style={styles.sectionDivider} />
+          <MenuItem
+            icon={<Settings size={22} color={colors.primary} />}
+            label={t("navigation.settings")}
+            onPress={() => navigateToScreen("Settings")}
+          />
+        </ScrollView>
+
+        {/* Footer with Logout */}
+        <View style={styles.drawerFooter}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <LogOut size={22} color={colors.error} />
+            <Text style={styles.logoutText}>{t("auth.logout")}</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.versionText}>
+            {t("settings.version")}{" "}
+            {Updates.updateId ? Updates.updateId.slice(0, 8) : "1.0.0"}
+          </Text>
+        </View>
       </View>
-
-      {/* Menu Items */}
-      <ScrollView style={styles.menuContainer}>
-        <MenuItem
-          icon={<Home size={22} color={colors.primary} />}
-          label={t('navigation.home')}
-          onPress={() => navigateToScreen('Home')}
-        />
-        
-        <MenuItem
-          icon={<User size={22} color={colors.primary} />}
-          label={t('navigation.profile')}
-          onPress={() => {
-            if (user?.id) {
-              props.navigation.navigate('MemberDetail', { memberId: user.id });
-            }
-            props.navigation.closeDrawer();
-          }}
-        />
-
-        {/* Payslip Calculator - Visible to all */}
-        <MenuItem
-          icon={<Calculator size={22} color={colors.primary} />}
-          label={t('navigation.payslipCalculator')}
-          onPress={() => {
-            props.navigation.navigate('PayslipCalculator');
-            props.navigation.closeDrawer();
-          }}
-        />
-
-        {isAdmin && (
-          <>
-            {/* Sezione Membri */}
-            <View style={styles.sectionDivider} />
-            <Text style={styles.sectionTitle}>{t('navigation.membersSection')}</Text>
-            <MenuItem
-              icon={<Users size={22} color={colors.primary} />}
-              label={t('navigation.members')}
-              onPress={() => navigateToScreen('Members')}
-            />
-            <MenuItem
-              icon={<BarChart3 size={22} color={colors.primary} />}
-              label={t('navigation.statistics')}
-              onPress={() => {
-                props.navigation.navigate('Statistics');
-                props.navigation.closeDrawer();
-              }}
-            />
-            <MenuItem
-              icon={<Upload size={22} color={colors.primary} />}
-              label={t('navigation.bulkImport')}
-              onPress={() => {
-                props.navigation.navigate('BulkImport');
-                props.navigation.closeDrawer();
-              }}
-            />
-
-            {/* Sezione Comunicati */}
-            <View style={styles.sectionDivider} />
-            <Text style={styles.sectionTitle}>{t('navigation.documentsSection')}</Text>
-            <MenuItem
-              icon={<FileText size={22} color={colors.primary} />}
-              label={t('navigation.documentsManagement')}
-              onPress={() => {
-                props.navigation.navigate('Documents');
-                props.navigation.closeDrawer();
-              }}
-            />
-            <MenuItem
-              icon={<FileText size={22} color={colors.primary} />}
-              label={t('documents.publicDocuments')}
-              onPress={() => {
-                props.navigation.navigate('PublicDocuments');
-                props.navigation.closeDrawer();
-              }}
-            />
-          </>
-        )}
-
-        {/* Public Documents - Visible to non-admin users */}
-        {!isAdmin && (
-          <>
-            <View style={styles.sectionDivider} />
-            <MenuItem
-              icon={<FileText size={22} color={colors.primary} />}
-              label={t('documents.publicDocuments')}
-              onPress={() => {
-                props.navigation.navigate('PublicDocuments');
-                props.navigation.closeDrawer();
-              }}
-            />
-          </>
-        )}
-
-        {isSuperAdmin && (
-          <>
-            <View style={styles.sectionDivider} />
-            <Text style={styles.sectionTitle}>{t('navigation.superAdmin')}</Text>
-            <MenuItem
-              icon={<UserX size={22} color={colors.primary} />}
-              label={t('navigation.deactivatedMembers')}
-              onPress={() => {
-                props.navigation.navigate('DeactivatedMembers');
-                props.navigation.closeDrawer();
-              }}
-            />
-            <View style={styles.sectionDivider} />
-            <Text style={styles.sectionTitle}>{t('navigation.configuration')}</Text>
-            <MenuItem
-              icon={<Building2 size={22} color={colors.primary} />}
-              label={t('navigation.bases')}
-              onPress={() => {
-                props.navigation.navigate('Bases');
-                props.navigation.closeDrawer();
-              }}
-            />
-            <MenuItem
-              icon={<Briefcase size={22} color={colors.primary} />}
-              label={t('navigation.contracts')}
-              onPress={() => {
-                props.navigation.navigate('Contracts');
-                props.navigation.closeDrawer();
-              }}
-            />
-            <MenuItem
-              icon={<Award size={22} color={colors.primary} />}
-              label={t('navigation.grades')}
-              onPress={() => {
-                props.navigation.navigate('Grades');
-                props.navigation.closeDrawer();
-              }}
-            />
-            <MenuItem
-              icon={<Calculator size={22} color={colors.primary} />}
-              label={t('navigation.claContracts')}
-              onPress={() => {
-                props.navigation.navigate('ClaContracts');
-                props.navigation.closeDrawer();
-              }}
-            />
-          </>
-        )}
-
-        {/* Sezione Impostazioni (senza titolo) */}
-        <View style={styles.sectionDivider} />
-        <MenuItem
-          icon={<Settings size={22} color={colors.primary} />}
-          label={t('navigation.settings')}
-          onPress={() => navigateToScreen('Settings')}
-        />
-      </ScrollView>
-
-      {/* Footer with Logout */}
-      <View style={styles.drawerFooter}>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <LogOut size={22} color={colors.error} />
-          <Text style={styles.logoutText}>{t('auth.logout')}</Text>
-        </TouchableOpacity>
-        
-        <Text style={styles.versionText}>
-          {t('settings.version')} {Updates.updateId ? Updates.updateId.slice(0, 8) : '1.0.0'}
-        </Text>
-      </View>
-    </View>
     </SafeAreaView>
   );
 };
@@ -308,7 +399,8 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress }) => (
 export const DrawerNavigator: React.FC = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
+  const isAdmin =
+    user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
 
   return (
@@ -326,102 +418,141 @@ export const DrawerNavigator: React.FC = () => {
           backgroundColor: colors.surface,
           width: 280,
         },
-        drawerType: 'front',
-        overlayColor: 'rgba(0,0,0,0.5)',
+        drawerType: "front",
+        overlayColor: "rgba(0,0,0,0.5)",
       }}
     >
-      <Drawer.Screen 
-        name="Home" 
+      <Drawer.Screen
+        name="Home"
         component={HomeScreen}
         options={{
-          title: t('navigation.home'),
+          title: t("navigation.home"),
+          headerShown: false,
           drawerIcon: ({ color }) => <Home size={22} color={color} />,
         }}
       />
 
       {isAdmin && (
         <>
-          <Drawer.Screen 
-            name="Members" 
+          <Drawer.Screen
+            name="Members"
             component={MembersScreen}
             options={{
-              title: t('navigation.members'),
+              title: t("navigation.members"),
               drawerIcon: ({ color }) => <Users size={22} color={color} />,
             }}
           />
-          <Drawer.Screen 
-            name="Contracts" 
+          <Drawer.Screen
+            name="Contracts"
             component={ContractsScreen}
             options={{
-              title: t('navigation.contracts'),
+              title: t("navigation.contracts"),
               drawerIcon: ({ color }) => <Briefcase size={22} color={color} />,
               headerShown: false,
             }}
           />
-          <Drawer.Screen 
-            name="ContractForm" 
+          <Drawer.Screen
+            name="ContractForm"
             component={ContractFormScreen}
             options={{
-              title: t('navigation.contracts'),
-              drawerItemStyle: { display: 'none' },
+              title: t("navigation.contracts"),
+              drawerItemStyle: { display: "none" },
               headerShown: false,
             }}
           />
         </>
       )}
       {isSuperAdmin && (
-        <Drawer.Screen 
-          name="Admin" 
+        <Drawer.Screen
+          name="Admin"
           component={AdminScreen}
           options={{
-            title: t('navigation.admin'),
+            title: t("navigation.admin"),
             drawerIcon: ({ color }) => <Shield size={22} color={color} />,
           }}
         />
       )}
-      <Drawer.Screen 
-        name="Settings" 
+      <Drawer.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{
+          title: t("notifications.title"),
+          drawerItemStyle: { display: "none" },
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
+        name="Settings"
         component={SettingsScreen}
         options={{
-          title: t('navigation.settings'),
+          title: t("navigation.settings"),
           drawerIcon: ({ color }) => <Settings size={22} color={color} />,
         }}
       />
-      <Drawer.Screen 
-        name="PublicDocuments" 
+      <Drawer.Screen
+        name="PublicDocuments"
         component={PublicDocumentsScreen}
         options={{
-          title: t('documents.publicDocuments'),
+          title: t("documents.publicDocuments"),
           drawerIcon: ({ color }) => <FileText size={22} color={color} />,
           headerShown: false,
         }}
       />
-      <Drawer.Screen 
-        name="PayslipCalculator" 
+      <Drawer.Screen
+        name="PayslipCalculator"
         component={PayslipTabs}
         options={{
-          title: t('navigation.payslipCalculator'),
+          title: t("navigation.payslipCalculator"),
           drawerIcon: ({ color }) => <Calculator size={22} color={color} />,
           headerShown: false,
         }}
       />
+      {/* Issues screens — hidden from drawer list, accessible to all users */}
+      <Drawer.Screen
+        name="ReportIssue"
+        component={ReportIssueScreen}
+        options={{
+          title: t("navigation.reportIssue"),
+          drawerItemStyle: { display: "none" },
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
+        name="MyIssues"
+        component={MyIssuesScreen}
+        options={{
+          title: t("navigation.myIssues"),
+          drawerItemStyle: { display: "none" },
+          headerShown: false,
+        }}
+      />
+
       {isAdmin && (
         <>
-          <Drawer.Screen 
-            name="Documents" 
-            component={DocumentsScreen}
+          <Drawer.Screen
+            name="Issues"
+            component={IssuesScreen}
             options={{
-              title: t('documents.title'),
-              drawerItemStyle: { display: 'none' },
+              title: t("navigation.issues"),
+              drawerItemStyle: { display: "none" },
               headerShown: false,
             }}
           />
-          <Drawer.Screen 
-            name="DocumentEditor" 
+          <Drawer.Screen
+            name="Documents"
+            component={DocumentsScreen}
+            options={{
+              title: t("documents.title"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="DocumentEditor"
             component={DocumentEditorScreen}
             options={{
-              title: t('documents.editDocument'),
-              drawerItemStyle: { display: 'none' },
+              title: t("documents.editDocument"),
+              drawerItemStyle: { display: "none" },
               headerShown: false,
             }}
           />
@@ -429,21 +560,21 @@ export const DrawerNavigator: React.FC = () => {
       )}
       {isSuperAdmin && (
         <>
-          <Drawer.Screen 
-            name="ClaContracts" 
+          <Drawer.Screen
+            name="ClaContracts"
             component={AdminContractsScreen}
             options={{
-              title: t('navigation.claContracts'),
+              title: t("navigation.claContracts"),
               drawerIcon: ({ color }) => <Briefcase size={22} color={color} />,
               headerShown: false,
             }}
           />
-          <Drawer.Screen 
-            name="ContractEditor" 
+          <Drawer.Screen
+            name="ContractEditor"
             component={ContractEditorScreen}
             options={{
-              title: t('navigation.contracts'),
-              drawerItemStyle: { display: 'none' },
+              title: t("navigation.contracts"),
+              drawerItemStyle: { display: "none" },
               headerShown: false,
             }}
           />
@@ -465,15 +596,15 @@ const styles = StyleSheet.create({
   drawerHeader: {
     backgroundColor: colors.primary,
     padding: spacing.lg,
-    alignItems: 'center',
+    alignItems: "center",
   },
   avatar: {
     width: 70,
     height: 70,
     borderRadius: borderRadius.full,
     backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: spacing.md,
   },
   avatarText: {
@@ -494,7 +625,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   roleBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: "rgba(255,255,255,0.2)",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
@@ -505,24 +636,24 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
   },
   notificationButton: {
-    position: 'absolute',
+    position: "absolute",
     top: spacing.md,
     right: spacing.md,
     width: 44,
     height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   notificationBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: 4,
     right: 4,
     backgroundColor: colors.secondary,
     borderRadius: borderRadius.full,
     minWidth: 18,
     height: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 4,
     borderWidth: 2,
     borderColor: colors.primary,
@@ -537,14 +668,14 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
   },
   menuIcon: {
     width: 32,
-    alignItems: 'center',
+    alignItems: "center",
   },
   menuLabel: {
     fontSize: typography.sizes.base,
@@ -558,8 +689,8 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: spacing.sm,
   },
   logoutText: {
@@ -571,7 +702,7 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: typography.sizes.xs,
     color: colors.textTertiary,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: spacing.md,
   },
   sectionDivider: {
@@ -585,15 +716,15 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.bold,
     color: colors.textTertiary,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     marginHorizontal: spacing.lg,
     marginBottom: spacing.sm,
     letterSpacing: 0.5,
   },
   screenContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: colors.background,
   },
   screenTitle: {

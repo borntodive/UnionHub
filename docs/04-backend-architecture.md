@@ -1,4 +1,5 @@
 # UnionConnect — Backend Architecture
+
 ## NestJS + TypeORM + PostgreSQL
 
 > **v1.3:** All UI, API messages, code comments, and documentation translated to English. Grade names in English. Contract names in English. Extensible architecture for future Tools section.
@@ -327,42 +328,42 @@ npm run migration:show
 
 ```typescript
 // src/database/migrations/1772784961186-InitialMigration.ts
-import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm'
+import { MigrationInterface, QueryRunner, Table, TableIndex } from "typeorm";
 
 export class InitialMigration1772784961186 implements MigrationInterface {
-  name = 'InitialMigration1772784961186'
+  name = "InitialMigration1772784961186";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create grades table
     await queryRunner.createTable(
       new Table({
-        name: 'grades',
+        name: "grades",
         columns: [
           {
-            name: 'id',
-            type: 'uuid',
+            name: "id",
+            type: "uuid",
             isPrimary: true,
-            generationStrategy: 'uuid',
-            default: 'gen_random_uuid()',
+            generationStrategy: "uuid",
+            default: "gen_random_uuid()",
           },
-          { name: 'codice', type: 'varchar', length: '20', isUnique: true },
-          { name: 'nome', type: 'varchar', length: '255' },
-          { name: 'ruolo', type: 'enum', enum: ['pilot', 'cabin_crew'] },
-          { name: 'created_at', type: 'timestamptz', default: 'now()' },
-          { name: 'updated_at', type: 'timestamptz', default: 'now()' },
+          { name: "codice", type: "varchar", length: "20", isUnique: true },
+          { name: "nome", type: "varchar", length: "255" },
+          { name: "ruolo", type: "enum", enum: ["pilot", "cabin_crew"] },
+          { name: "created_at", type: "timestamptz", default: "now()" },
+          { name: "updated_at", type: "timestamptz", default: "now()" },
         ],
       }),
-      true
-    )
+      true,
+    );
 
     await queryRunner.createIndex(
-      'grades',
-      new TableIndex({ name: 'idx_grades_codice', columnNames: ['codice'] })
-    )
+      "grades",
+      new TableIndex({ name: "idx_grades_codice", columnNames: ["codice"] }),
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('grades')
+    await queryRunner.dropTable("grades");
   }
 }
 ```
@@ -371,85 +372,107 @@ export class InitialMigration1772784961186 implements MigrationInterface {
 
 ```typescript
 // src/database/migrations/1772784961186-InitialMigration.ts (excerpt)
-import { MigrationInterface, QueryRunner, Table, TableIndex, TableForeignKey } from 'typeorm'
+import {
+  MigrationInterface,
+  QueryRunner,
+  Table,
+  TableIndex,
+  TableForeignKey,
+} from "typeorm";
 
 export class InitialMigration1772784961186 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create users table (unified: auth + member data)
     await queryRunner.createTable(
       new Table({
-        name: 'users',
+        name: "users",
         columns: [
           {
-            name: 'id',
-            type: 'uuid',
+            name: "id",
+            type: "uuid",
             isPrimary: true,
-            generationStrategy: 'uuid',
-            default: 'gen_random_uuid()',
+            generationStrategy: "uuid",
+            default: "gen_random_uuid()",
           },
           // Authentication
-          { name: 'crewcode', type: 'varchar', length: '50', isUnique: true },
-          { name: 'password', type: 'varchar', length: '255' },
-          { name: 'role', type: 'enum', enum: ['superadmin', 'admin', 'user'], default: "'user'" },
-          { name: 'must_change_password', type: 'boolean', default: true },
-          { name: 'is_active', type: 'boolean', default: true },
+          { name: "crewcode", type: "varchar", length: "50", isUnique: true },
+          { name: "password", type: "varchar", length: "255" },
+          {
+            name: "role",
+            type: "enum",
+            enum: ["superadmin", "admin", "user"],
+            default: "'user'",
+          },
+          { name: "must_change_password", type: "boolean", default: true },
+          { name: "is_active", type: "boolean", default: true },
           // Professional data
-          { name: 'ruolo', type: 'enum', enum: ['pilot', 'cabin_crew'], isNullable: true },
-          { name: 'nome', type: 'varchar', length: '100' },
-          { name: 'cognome', type: 'varchar', length: '100' },
-          { name: 'email', type: 'varchar', length: '255', isUnique: true },
-          { name: 'telefono', type: 'varchar', length: '30', isNullable: true },
-          { name: 'base_id', type: 'uuid', isNullable: true },
-          { name: 'contratto_id', type: 'uuid', isNullable: true },
-          { name: 'grade_id', type: 'uuid', isNullable: true },
+          {
+            name: "ruolo",
+            type: "enum",
+            enum: ["pilot", "cabin_crew"],
+            isNullable: true,
+          },
+          { name: "nome", type: "varchar", length: "100" },
+          { name: "cognome", type: "varchar", length: "100" },
+          { name: "email", type: "varchar", length: "255", isUnique: true },
+          { name: "telefono", type: "varchar", length: "30", isNullable: true },
+          { name: "base_id", type: "uuid", isNullable: true },
+          { name: "contratto_id", type: "uuid", isNullable: true },
+          { name: "grade_id", type: "uuid", isNullable: true },
           // Sensitive fields
-          { name: 'note', type: 'text', isNullable: true },
-          { name: 'itud', type: 'boolean', default: false },
-          { name: 'rsa', type: 'boolean', default: false },
+          { name: "note", type: "text", isNullable: true },
+          { name: "itud", type: "boolean", default: false },
+          { name: "rsa", type: "boolean", default: false },
           // Timestamps
-          { name: 'created_at', type: 'timestamptz', default: 'now()' },
-          { name: 'updated_at', type: 'timestamptz', default: 'now()' },
+          { name: "created_at", type: "timestamptz", default: "now()" },
+          { name: "updated_at", type: "timestamptz", default: "now()" },
         ],
       }),
-      true
-    )
+      true,
+    );
 
     // Foreign keys
     await queryRunner.createForeignKey(
-      'users',
+      "users",
       new TableForeignKey({
-        columnNames: ['base_id'],
-        referencedColumnNames: ['id'],
-        referencedTableName: 'bases',
-        onDelete: 'SET NULL',
-      })
-    )
+        columnNames: ["base_id"],
+        referencedColumnNames: ["id"],
+        referencedTableName: "bases",
+        onDelete: "SET NULL",
+      }),
+    );
     await queryRunner.createForeignKey(
-      'users',
+      "users",
       new TableForeignKey({
-        columnNames: ['contratto_id'],
-        referencedColumnNames: ['id'],
-        referencedTableName: 'contracts',
-        onDelete: 'SET NULL',
-      })
-    )
+        columnNames: ["contratto_id"],
+        referencedColumnNames: ["id"],
+        referencedTableName: "contracts",
+        onDelete: "SET NULL",
+      }),
+    );
     await queryRunner.createForeignKey(
-      'users',
+      "users",
       new TableForeignKey({
-        columnNames: ['grade_id'],
-        referencedColumnNames: ['id'],
-        referencedTableName: 'grades',
-        onDelete: 'SET NULL',
-      })
-    )
+        columnNames: ["grade_id"],
+        referencedColumnNames: ["id"],
+        referencedTableName: "grades",
+        onDelete: "SET NULL",
+      }),
+    );
 
     // Indexes
-    await queryRunner.createIndex('users', new TableIndex({ name: 'idx_users_crewcode', columnNames: ['crewcode'] }))
-    await queryRunner.createIndex('users', new TableIndex({ name: 'idx_users_email', columnNames: ['email'] }))
+    await queryRunner.createIndex(
+      "users",
+      new TableIndex({ name: "idx_users_crewcode", columnNames: ["crewcode"] }),
+    );
+    await queryRunner.createIndex(
+      "users",
+      new TableIndex({ name: "idx_users_email", columnNames: ["email"] }),
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('users')
+    await queryRunner.dropTable("users");
   }
 }
 ```
@@ -457,23 +480,34 @@ export class InitialMigration1772784961186 implements MigrationInterface {
 ### `1700000002_create_refresh_tokens_table.ts`
 
 ```typescript
-import { BaseSchema } from '@adonisjs/lucid/schema'
+import { BaseSchema } from "@adonisjs/lucid/schema";
 
 export default class extends BaseSchema {
-  protected tableName = 'refresh_tokens'
+  protected tableName = "refresh_tokens";
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
-      table.uuid('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
-      table.text('token').notNullable().unique()
-      table.timestamp('expires_at', { useTz: true }).notNullable()
-      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
-    })
+      table
+        .uuid("id")
+        .primary()
+        .defaultTo(this.db.rawQuery("gen_random_uuid()").knexQuery);
+      table
+        .uuid("user_id")
+        .notNullable()
+        .references("id")
+        .inTable("users")
+        .onDelete("CASCADE");
+      table.text("token").notNullable().unique();
+      table.timestamp("expires_at", { useTz: true }).notNullable();
+      table
+        .timestamp("created_at", { useTz: true })
+        .notNullable()
+        .defaultTo(this.now());
+    });
   }
 
   async down() {
-    this.schema.dropTable(this.tableName)
+    this.schema.dropTable(this.tableName);
   }
 }
 ```
@@ -481,23 +515,32 @@ export default class extends BaseSchema {
 ### `1700000003_create_bases_table.ts`
 
 ```typescript
-import { BaseSchema } from '@adonisjs/lucid/schema'
+import { BaseSchema } from "@adonisjs/lucid/schema";
 
 export default class extends BaseSchema {
-  protected tableName = 'bases'
+  protected tableName = "bases";
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
-      table.string('codice', 20).notNullable().unique()
-      table.string('nome', 255).notNullable()
-      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
-      table.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())
-    })
+      table
+        .uuid("id")
+        .primary()
+        .defaultTo(this.db.rawQuery("gen_random_uuid()").knexQuery);
+      table.string("codice", 20).notNullable().unique();
+      table.string("nome", 255).notNullable();
+      table
+        .timestamp("created_at", { useTz: true })
+        .notNullable()
+        .defaultTo(this.now());
+      table
+        .timestamp("updated_at", { useTz: true })
+        .notNullable()
+        .defaultTo(this.now());
+    });
   }
 
   async down() {
-    this.schema.dropTable(this.tableName)
+    this.schema.dropTable(this.tableName);
   }
 }
 ```
@@ -505,23 +548,32 @@ export default class extends BaseSchema {
 ### `1700000004_create_contracts_table.ts`
 
 ```typescript
-import { BaseSchema } from '@adonisjs/lucid/schema'
+import { BaseSchema } from "@adonisjs/lucid/schema";
 
 export default class extends BaseSchema {
-  protected tableName = 'contracts'
+  protected tableName = "contracts";
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
-      table.string('codice', 20).notNullable().unique()
-      table.string('nome', 255).notNullable()
-      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
-      table.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())
-    })
+      table
+        .uuid("id")
+        .primary()
+        .defaultTo(this.db.rawQuery("gen_random_uuid()").knexQuery);
+      table.string("codice", 20).notNullable().unique();
+      table.string("nome", 255).notNullable();
+      table
+        .timestamp("created_at", { useTz: true })
+        .notNullable()
+        .defaultTo(this.now());
+      table
+        .timestamp("updated_at", { useTz: true })
+        .notNullable()
+        .defaultTo(this.now());
+    });
   }
 
   async down() {
-    this.schema.dropTable(this.tableName)
+    this.schema.dropTable(this.tableName);
   }
 }
 ```
@@ -533,27 +585,39 @@ export default class extends BaseSchema {
 ### `1700000006_create_pdf_field_mappings_table.ts` (v1.3)
 
 ```typescript
-import { BaseSchema } from '@adonisjs/lucid/schema'
+import { BaseSchema } from "@adonisjs/lucid/schema";
 
 export default class extends BaseSchema {
-  protected tableName = 'pdf_field_mappings'
+  protected tableName = "pdf_field_mappings";
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
-      table.enum('role', ['pilot', 'cabin_crew']).notNullable()
-      table.string('name', 255).notNullable()
-      table.boolean('is_default').notNullable().defaultTo(false)
-      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
-      table.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())
+      table
+        .uuid("id")
+        .primary()
+        .defaultTo(this.db.rawQuery("gen_random_uuid()").knexQuery);
+      table.enum("role", ["pilot", "cabin_crew"]).notNullable();
+      table.string("name", 255).notNullable();
+      table.boolean("is_default").notNullable().defaultTo(false);
+      table
+        .timestamp("created_at", { useTz: true })
+        .notNullable()
+        .defaultTo(this.now());
+      table
+        .timestamp("updated_at", { useTz: true })
+        .notNullable()
+        .defaultTo(this.now());
 
       // Only one default mapping per role
-      table.unique(['role'], { indexName: 'idx_pdf_mappings_default', whereRaw: 'is_default = true' })
-    })
+      table.unique(["role"], {
+        indexName: "idx_pdf_mappings_default",
+        whereRaw: "is_default = true",
+      });
+    });
   }
 
   async down() {
-    this.schema.dropTable(this.tableName)
+    this.schema.dropTable(this.tableName);
   }
 }
 ```
@@ -561,30 +625,40 @@ export default class extends BaseSchema {
 ### `1700000007_create_pdf_field_mapping_items_table.ts` (v1.3)
 
 ```typescript
-import { BaseSchema } from '@adonisjs/lucid/schema'
+import { BaseSchema } from "@adonisjs/lucid/schema";
 
 export default class extends BaseSchema {
-  protected tableName = 'pdf_field_mapping_items'
+  protected tableName = "pdf_field_mapping_items";
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
-      table.uuid('pdf_field_mapping_id').notNullable()
-        .references('id').inTable('pdf_field_mappings').onDelete('CASCADE')
-      table.string('pdf_field_name', 255).notNullable()
-      table.string('member_field', 255).notNullable()
-      table.enum('extraction_type', ['pdf_field', 'ocr_pattern']).notNullable()
-      table.text('ocr_pattern').nullable()
-      table.boolean('is_required').notNullable().defaultTo(false)
-      table.integer('sort_order').notNullable().defaultTo(0)
-      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
+      table
+        .uuid("id")
+        .primary()
+        .defaultTo(this.db.rawQuery("gen_random_uuid()").knexQuery);
+      table
+        .uuid("pdf_field_mapping_id")
+        .notNullable()
+        .references("id")
+        .inTable("pdf_field_mappings")
+        .onDelete("CASCADE");
+      table.string("pdf_field_name", 255).notNullable();
+      table.string("member_field", 255).notNullable();
+      table.enum("extraction_type", ["pdf_field", "ocr_pattern"]).notNullable();
+      table.text("ocr_pattern").nullable();
+      table.boolean("is_required").notNullable().defaultTo(false);
+      table.integer("sort_order").notNullable().defaultTo(0);
+      table
+        .timestamp("created_at", { useTz: true })
+        .notNullable()
+        .defaultTo(this.now());
 
-      table.index('pdf_field_mapping_id', 'idx_pdf_mapping_items_mapping')
-    })
+      table.index("pdf_field_mapping_id", "idx_pdf_mapping_items_mapping");
+    });
   }
 
   async down() {
-    this.schema.dropTable(this.tableName)
+    this.schema.dropTable(this.tableName);
   }
 }
 ```
@@ -592,28 +666,40 @@ export default class extends BaseSchema {
 ### `1700000008_create_excel_field_mappings_table.ts` (v1.3)
 
 ```typescript
-import { BaseSchema } from '@adonisjs/lucid/schema'
+import { BaseSchema } from "@adonisjs/lucid/schema";
 
 export default class extends BaseSchema {
-  protected tableName = 'excel_field_mappings'
+  protected tableName = "excel_field_mappings";
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
-      table.enum('role', ['pilot', 'cabin_crew']).notNullable()
-      table.string('name', 255).notNullable()
-      table.boolean('is_default').notNullable().defaultTo(false)
-      table.specificType('headers', 'text[]').nullable()  // PostgreSQL array
-      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
-      table.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(this.now())
+      table
+        .uuid("id")
+        .primary()
+        .defaultTo(this.db.rawQuery("gen_random_uuid()").knexQuery);
+      table.enum("role", ["pilot", "cabin_crew"]).notNullable();
+      table.string("name", 255).notNullable();
+      table.boolean("is_default").notNullable().defaultTo(false);
+      table.specificType("headers", "text[]").nullable(); // PostgreSQL array
+      table
+        .timestamp("created_at", { useTz: true })
+        .notNullable()
+        .defaultTo(this.now());
+      table
+        .timestamp("updated_at", { useTz: true })
+        .notNullable()
+        .defaultTo(this.now());
 
       // Only one default mapping per role
-      table.unique(['role'], { indexName: 'idx_excel_mappings_default', whereRaw: 'is_default = true' })
-    })
+      table.unique(["role"], {
+        indexName: "idx_excel_mappings_default",
+        whereRaw: "is_default = true",
+      });
+    });
   }
 
   async down() {
-    this.schema.dropTable(this.tableName)
+    this.schema.dropTable(this.tableName);
   }
 }
 ```
@@ -621,31 +707,41 @@ export default class extends BaseSchema {
 ### `1700000009_create_excel_field_mapping_items_table.ts` (v1.3)
 
 ```typescript
-import { BaseSchema } from '@adonisjs/lucid/schema'
+import { BaseSchema } from "@adonisjs/lucid/schema";
 
 export default class extends BaseSchema {
-  protected tableName = 'excel_field_mapping_items'
+  protected tableName = "excel_field_mapping_items";
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
-      table.uuid('excel_field_mapping_id').notNullable()
-        .references('id').inTable('excel_field_mappings').onDelete('CASCADE')
-      table.integer('column_index').notNullable()
-      table.string('header_name', 255).notNullable()
-      table.string('member_field', 255).notNullable()
-      table.boolean('is_required').notNullable().defaultTo(false)
-      table.string('validation', 50).nullable()  // lookup_base, lookup_grade, email, etc.
-      table.integer('sort_order').notNullable().defaultTo(0)
-      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
+      table
+        .uuid("id")
+        .primary()
+        .defaultTo(this.db.rawQuery("gen_random_uuid()").knexQuery);
+      table
+        .uuid("excel_field_mapping_id")
+        .notNullable()
+        .references("id")
+        .inTable("excel_field_mappings")
+        .onDelete("CASCADE");
+      table.integer("column_index").notNullable();
+      table.string("header_name", 255).notNullable();
+      table.string("member_field", 255).notNullable();
+      table.boolean("is_required").notNullable().defaultTo(false);
+      table.string("validation", 50).nullable(); // lookup_base, lookup_grade, email, etc.
+      table.integer("sort_order").notNullable().defaultTo(0);
+      table
+        .timestamp("created_at", { useTz: true })
+        .notNullable()
+        .defaultTo(this.now());
 
-      table.index('excel_field_mapping_id', 'idx_excel_mapping_items_mapping')
-      table.index('member_field', 'idx_excel_mapping_items_field')
-    })
+      table.index("excel_field_mapping_id", "idx_excel_mapping_items_mapping");
+      table.index("member_field", "idx_excel_mapping_items_field");
+    });
   }
 
   async down() {
-    this.schema.dropTable(this.tableName)
+    this.schema.dropTable(this.tableName);
   }
 }
 ```
@@ -653,46 +749,63 @@ export default class extends BaseSchema {
 ### `1700000010_create_bulk_import_jobs_table.ts` (v1.3)
 
 ```typescript
-import { BaseSchema } from '@adonisjs/lucid/schema'
+import { BaseSchema } from "@adonisjs/lucid/schema";
 
 export default class extends BaseSchema {
-  protected tableName = 'bulk_import_jobs'
+  protected tableName = "bulk_import_jobs";
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
-      table.uuid('uploaded_by').notNullable().references('id').inTable('users')
-      table.enum('role', ['pilot', 'cabin_crew']).notNullable()
-      table.uuid('excel_field_mapping_id').nullable()
-        .references('id').inTable('excel_field_mappings')
-      table.string('filename', 255).notNullable()
-      table.text('filepath').notNullable()
-      table.enum('file_type', ['xlsx', 'xls', 'csv']).notNullable()
-      table.integer('total_rows').nullable()
-      table.integer('processed_rows').notNullable().defaultTo(0)
-      table.integer('valid_rows').notNullable().defaultTo(0)
-      table.integer('invalid_rows').notNullable().defaultTo(0)
-      table.integer('created_count').notNullable().defaultTo(0)
-      table.integer('updated_count').notNullable().defaultTo(0)
-      table.integer('skipped_count').notNullable().defaultTo(0)
-      table.integer('failed_count').notNullable().defaultTo(0)
-      table.enum('status', ['pending', 'preview_ready', 'processing', 'completed', 'failed'])
-        .notNullable().defaultTo('pending')
-      table.jsonb('preview_data').nullable()
-      table.jsonb('results').nullable()
-      table.jsonb('error_log').nullable()
-      table.jsonb('options').nullable()
-      table.timestamp('started_at', { useTz: true }).nullable()
-      table.timestamp('completed_at', { useTz: true }).nullable()
-      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
+      table
+        .uuid("id")
+        .primary()
+        .defaultTo(this.db.rawQuery("gen_random_uuid()").knexQuery);
+      table.uuid("uploaded_by").notNullable().references("id").inTable("users");
+      table.enum("role", ["pilot", "cabin_crew"]).notNullable();
+      table
+        .uuid("excel_field_mapping_id")
+        .nullable()
+        .references("id")
+        .inTable("excel_field_mappings");
+      table.string("filename", 255).notNullable();
+      table.text("filepath").notNullable();
+      table.enum("file_type", ["xlsx", "xls", "csv"]).notNullable();
+      table.integer("total_rows").nullable();
+      table.integer("processed_rows").notNullable().defaultTo(0);
+      table.integer("valid_rows").notNullable().defaultTo(0);
+      table.integer("invalid_rows").notNullable().defaultTo(0);
+      table.integer("created_count").notNullable().defaultTo(0);
+      table.integer("updated_count").notNullable().defaultTo(0);
+      table.integer("skipped_count").notNullable().defaultTo(0);
+      table.integer("failed_count").notNullable().defaultTo(0);
+      table
+        .enum("status", [
+          "pending",
+          "preview_ready",
+          "processing",
+          "completed",
+          "failed",
+        ])
+        .notNullable()
+        .defaultTo("pending");
+      table.jsonb("preview_data").nullable();
+      table.jsonb("results").nullable();
+      table.jsonb("error_log").nullable();
+      table.jsonb("options").nullable();
+      table.timestamp("started_at", { useTz: true }).nullable();
+      table.timestamp("completed_at", { useTz: true }).nullable();
+      table
+        .timestamp("created_at", { useTz: true })
+        .notNullable()
+        .defaultTo(this.now());
 
-      table.index('status', 'idx_bulk_import_status')
-      table.index('uploaded_by', 'idx_bulk_import_uploaded_by')
-    })
+      table.index("status", "idx_bulk_import_status");
+      table.index("uploaded_by", "idx_bulk_import_uploaded_by");
+    });
   }
 
   async down() {
-    this.schema.dropTable(this.tableName)
+    this.schema.dropTable(this.tableName);
   }
 }
 ```
@@ -700,27 +813,41 @@ export default class extends BaseSchema {
 ### `1700000011_create_user_pdf_uploads_table.ts`
 
 ```typescript
-import { BaseSchema } from '@adonisjs/lucid/schema'
+import { BaseSchema } from "@adonisjs/lucid/schema";
 
 export default class extends BaseSchema {
-  protected tableName = 'user_pdf_uploads'
+  protected tableName = "user_pdf_uploads";
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.uuid('id').primary().defaultTo(this.db.rawQuery('gen_random_uuid()').knexQuery)
-      table.uuid('user_id').nullable().references('id').inTable('users').onDelete('CASCADE')
-      table.string('filename', 255).notNullable()
-      table.text('filepath').notNullable()
-      table.jsonb('parsed_data').nullable()
-      table.enum('status', ['pending', 'processed', 'failed']).notNullable().defaultTo('pending')
-      table.text('error_msg').nullable()
-      table.uuid('uploaded_by').notNullable().references('id').inTable('users')
-      table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(this.now())
-    })
+      table
+        .uuid("id")
+        .primary()
+        .defaultTo(this.db.rawQuery("gen_random_uuid()").knexQuery);
+      table
+        .uuid("user_id")
+        .nullable()
+        .references("id")
+        .inTable("users")
+        .onDelete("CASCADE");
+      table.string("filename", 255).notNullable();
+      table.text("filepath").notNullable();
+      table.jsonb("parsed_data").nullable();
+      table
+        .enum("status", ["pending", "processed", "failed"])
+        .notNullable()
+        .defaultTo("pending");
+      table.text("error_msg").nullable();
+      table.uuid("uploaded_by").notNullable().references("id").inTable("users");
+      table
+        .timestamp("created_at", { useTz: true })
+        .notNullable()
+        .defaultTo(this.now());
+    });
   }
 
   async down() {
-    this.schema.dropTable(this.tableName)
+    this.schema.dropTable(this.tableName);
   }
 }
 ```
@@ -734,6 +861,7 @@ export default class extends BaseSchema {
 ### Response Conventions
 
 **Success:**
+
 ```json
 {
   "success": true,
@@ -743,15 +871,14 @@ export default class extends BaseSchema {
 ```
 
 **Error:**
+
 ```json
 {
   "success": false,
   "error": {
     "code": "VALIDATION_ERROR",
     "message": "Invalid data",
-    "details": [
-      { "field": "email", "message": "Invalid email" }
-    ]
+    "details": [{ "field": "email", "message": "Invalid email" }]
   }
 }
 ```
@@ -763,6 +890,7 @@ export default class extends BaseSchema {
 #### `POST /api/v1/auth/login`
 
 **Request:**
+
 ```json
 {
   "crewcode": "AB1234",
@@ -771,6 +899,7 @@ export default class extends BaseSchema {
 ```
 
 **Response 200:**
+
 ```json
 {
   "success": true,
@@ -794,10 +923,14 @@ export default class extends BaseSchema {
 > **NOTE:** If `mustChangePassword: true`, the frontend must redirect to `POST /auth/change-password` before allowing any other action.
 
 **Response 401:**
+
 ```json
 {
   "success": false,
-  "error": { "code": "INVALID_CREDENTIALS", "message": "Invalid crewcode or password" }
+  "error": {
+    "code": "INVALID_CREDENTIALS",
+    "message": "Invalid crewcode or password"
+  }
 }
 ```
 
@@ -806,11 +939,13 @@ export default class extends BaseSchema {
 #### `POST /api/v1/auth/refresh`
 
 **Request:**
+
 ```json
 { "refreshToken": "a1b2c3d4-..." }
 ```
 
 **Response 200:**
+
 ```json
 {
   "success": true,
@@ -828,11 +963,13 @@ export default class extends BaseSchema {
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 { "refreshToken": "a1b2c3d4-..." }
 ```
 
 **Response 200:**
+
 ```json
 { "success": true, "data": { "message": "Logged out successfully" } }
 ```
@@ -844,6 +981,7 @@ export default class extends BaseSchema {
 **Headers:** `Authorization: Bearer <token>`
 
 **Response 200:**
+
 ```json
 {
   "success": true,
@@ -873,6 +1011,7 @@ export default class extends BaseSchema {
 **Headers:** `Authorization: Bearer <token>`
 
 **Request:**
+
 ```json
 {
   "currentPassword": "password",
@@ -881,6 +1020,7 @@ export default class extends BaseSchema {
 ```
 
 **Response 200:**
+
 ```json
 {
   "success": true,
@@ -895,6 +1035,7 @@ export default class extends BaseSchema {
 ### 3.2 Users Endpoints (ex Members — unified table)
 
 **Roles:**
+
 - `GET /members` — admin, superadmin
 - `GET /members/:id` — admin, superadmin, user (only own profile)
 - `POST /members` — admin, superadmin
@@ -909,6 +1050,7 @@ export default class extends BaseSchema {
 **Headers:** `Authorization: Bearer <token>` (admin/superadmin)
 
 **Query params:**
+
 - `page` (default: 1)
 - `perPage` (default: 20, max: 100)
 - `search` — full-text on nome/cognome
@@ -917,6 +1059,7 @@ export default class extends BaseSchema {
 - `grade` — filter by grade
 
 **Response 200:**
+
 ```json
 {
   "success": true,
@@ -929,7 +1072,11 @@ export default class extends BaseSchema {
       "crewcode": "CR001",
       "telefono": "+39 333 1234567",
       "base": { "id": "uuid", "codice": "MXP", "nome": "Milano Malpensa" },
-      "contratto": { "id": "uuid", "codice": "AZ-PI", "nome": "Pilots Alitalia" },
+      "contratto": {
+        "id": "uuid",
+        "codice": "AZ-PI",
+        "nome": "Pilots Alitalia"
+      },
       "grade": { "id": "uuid", "codice": "CMD", "nome": "Commander" },
       "note": "Admin note",
       "itud": true,
@@ -949,6 +1096,7 @@ export default class extends BaseSchema {
 #### `GET /api/v1/members/:id`
 
 **Response 200 (admin/superadmin):**
+
 ```json
 {
   "success": true,
@@ -972,6 +1120,7 @@ export default class extends BaseSchema {
 ```
 
 **Response 200 (user — own profile only, sensitive fields removed):**
+
 ```json
 {
   "success": true,
@@ -996,6 +1145,7 @@ export default class extends BaseSchema {
 **Headers:** `Authorization: Bearer <token>` (admin/superadmin)
 
 **Request:**
+
 ```json
 {
   "nome": "Mario",
@@ -1013,6 +1163,7 @@ export default class extends BaseSchema {
 ```
 
 **Response 201:**
+
 ```json
 {
   "success": true,
@@ -1042,6 +1193,7 @@ export default class extends BaseSchema {
 #### `PUT /api/v1/members/:id`
 
 **Request (admin/superadmin — all fields):**
+
 ```json
 {
   "nome": "Mario",
@@ -1059,6 +1211,7 @@ export default class extends BaseSchema {
 ```
 
 **Request (user — non-sensitive fields only):**
+
 ```json
 {
   "telefono": "+39 333 9876543"
@@ -1076,6 +1229,7 @@ export default class extends BaseSchema {
 **Headers:** `Authorization: Bearer <token>` (superadmin only)
 
 **Response 200:**
+
 ```json
 { "success": true, "data": { "message": "Member deleted" } }
 ```
@@ -1090,12 +1244,14 @@ Extract member data from uploaded PDF using three-tier extraction strategy.
 **Content-Type:** `multipart/form-data`
 
 **Request:**
+
 ```
 file: <PDF file>
 role: "pilot" | "cabin_crew"  // Hint for field mapping selection
 ```
 
 **Response 200 (form fields extracted):**
+
 ```json
 {
   "success": true,
@@ -1119,6 +1275,7 @@ role: "pilot" | "cabin_crew"  // Hint for field mapping selection
 ```
 
 **Response 200 (OCR fallback):**
+
 ```json
 {
   "success": true,
@@ -1143,6 +1300,7 @@ role: "pilot" | "cabin_crew"  // Hint for field mapping selection
 ```
 
 **Response 200 (manual input required):**
+
 ```json
 {
   "success": true,
@@ -1168,6 +1326,7 @@ Configure PDF field extraction mappings per role.
 #### `GET /api/v1/pdf-field-mappings`
 
 **Response 200:**
+
 ```json
 {
   "success": true,
@@ -1197,6 +1356,7 @@ Configure PDF field extraction mappings per role.
 #### `GET /api/v1/pdf-field-mappings/:id`
 
 **Response 200:**
+
 ```json
 {
   "success": true,
@@ -1243,17 +1403,49 @@ Configure PDF field extraction mappings per role.
 #### `POST /api/v1/pdf-field-mappings`
 
 **Request:**
+
 ```json
 {
   "role": "pilot",
   "name": "Pilot Registration Form 2024",
   "isDefault": true,
   "items": [
-    { "pdfFieldName": "nome", "memberField": "nome", "extractionType": "pdf_field", "isRequired": true, "sortOrder": 1 },
-    { "pdfFieldName": "cognome", "memberField": "cognome", "extractionType": "pdf_field", "isRequired": true, "sortOrder": 2 },
-    { "pdfFieldName": "crew_code", "memberField": "crewcode", "extractionType": "ocr_pattern", "ocrPattern": "Crew Code:\\\s*([A-Z0-9]{3,15})", "isRequired": true, "sortOrder": 3 },
-    { "pdfFieldName": "email", "memberField": "email", "extractionType": "pdf_field", "isRequired": true, "sortOrder": 4 },
-    { "pdfFieldName": "telefono", "memberField": "telefono", "extractionType": "pdf_field", "isRequired": false, "sortOrder": 5 }
+    {
+      "pdfFieldName": "nome",
+      "memberField": "nome",
+      "extractionType": "pdf_field",
+      "isRequired": true,
+      "sortOrder": 1
+    },
+    {
+      "pdfFieldName": "cognome",
+      "memberField": "cognome",
+      "extractionType": "pdf_field",
+      "isRequired": true,
+      "sortOrder": 2
+    },
+    {
+      "pdfFieldName": "crew_code",
+      "memberField": "crewcode",
+      "extractionType": "ocr_pattern",
+      "ocrPattern": "Crew Code:\\\s*([A-Z0-9]{3,15})",
+      "isRequired": true,
+      "sortOrder": 3
+    },
+    {
+      "pdfFieldName": "email",
+      "memberField": "email",
+      "extractionType": "pdf_field",
+      "isRequired": true,
+      "sortOrder": 4
+    },
+    {
+      "pdfFieldName": "telefono",
+      "memberField": "telefono",
+      "extractionType": "pdf_field",
+      "isRequired": false,
+      "sortOrder": 5
+    }
   ]
 }
 ```
@@ -1261,12 +1453,19 @@ Configure PDF field extraction mappings per role.
 #### `PUT /api/v1/pdf-field-mappings/:id`
 
 **Request:**
+
 ```json
 {
   "name": "Updated Pilot Form",
   "isDefault": true,
   "items": [
-    { "pdfFieldName": "first_name", "memberField": "nome", "extractionType": "pdf_field", "isRequired": true, "sortOrder": 1 }
+    {
+      "pdfFieldName": "first_name",
+      "memberField": "nome",
+      "extractionType": "pdf_field",
+      "isRequired": true,
+      "sortOrder": 1
+    }
   ]
 }
 ```
@@ -1274,6 +1473,7 @@ Configure PDF field extraction mappings per role.
 #### `DELETE /api/v1/pdf-field-mappings/:id`
 
 **Response 200:**
+
 ```json
 { "success": true, "data": { "message": "Mapping deleted" } }
 ```
@@ -1289,6 +1489,7 @@ Configure Excel/CSV column mappings per role for bulk import.
 #### `GET /api/v1/excel-field-mappings`
 
 **Response 200:**
+
 ```json
 {
   "success": true,
@@ -1320,6 +1521,7 @@ Configure Excel/CSV column mappings per role for bulk import.
 #### `GET /api/v1/excel-field-mappings/:id`
 
 **Response 200:**
+
 ```json
 {
   "success": true,
@@ -1328,7 +1530,15 @@ Configure Excel/CSV column mappings per role for bulk import.
     "role": "pilot",
     "name": "Pilot Import Template",
     "isDefault": true,
-    "headers": ["Nome", "Cognome", "Crewcode", "Email", "Telefono", "Base", "Grado"],
+    "headers": [
+      "Nome",
+      "Cognome",
+      "Crewcode",
+      "Email",
+      "Telefono",
+      "Base",
+      "Grado"
+    ],
     "items": [
       {
         "id": "uuid-item-1",
@@ -1371,7 +1581,7 @@ Configure Excel/CSV column mappings per role for bulk import.
         "headerName": "Base",
         "memberField": "baseCode",
         "isRequired": false,
-        "validation": "lookup_base"  // Validates against bases table
+        "validation": "lookup_base" // Validates against bases table
       },
       {
         "id": "uuid-item-7",
@@ -1379,7 +1589,7 @@ Configure Excel/CSV column mappings per role for bulk import.
         "headerName": "Grado",
         "memberField": "gradeCode",
         "isRequired": false,
-        "validation": "lookup_grade"  // Validates against grades table
+        "validation": "lookup_grade" // Validates against grades table
       }
     ],
     "createdAt": "2024-01-01T00:00:00Z",
@@ -1391,20 +1601,66 @@ Configure Excel/CSV column mappings per role for bulk import.
 #### `POST /api/v1/excel-field-mappings`
 
 **Request:**
+
 ```json
 {
   "role": "pilot",
   "name": "Pilot Import Template",
   "isDefault": true,
-  "headers": ["Nome", "Cognome", "Crewcode", "Email", "Telefono", "Base", "Grado"],
+  "headers": [
+    "Nome",
+    "Cognome",
+    "Crewcode",
+    "Email",
+    "Telefono",
+    "Base",
+    "Grado"
+  ],
   "items": [
-    { "columnIndex": 0, "headerName": "Nome", "memberField": "nome", "isRequired": true },
-    { "columnIndex": 1, "headerName": "Cognome", "memberField": "cognome", "isRequired": true },
-    { "columnIndex": 2, "headerName": "Crewcode", "memberField": "crewcode", "isRequired": true },
-    { "columnIndex": 3, "headerName": "Email", "memberField": "email", "isRequired": true },
-    { "columnIndex": 4, "headerName": "Telefono", "memberField": "telefono", "isRequired": false },
-    { "columnIndex": 5, "headerName": "Base", "memberField": "baseCode", "isRequired": false, "validation": "lookup_base" },
-    { "columnIndex": 6, "headerName": "Grado", "memberField": "gradeCode", "isRequired": false, "validation": "lookup_grade" }
+    {
+      "columnIndex": 0,
+      "headerName": "Nome",
+      "memberField": "nome",
+      "isRequired": true
+    },
+    {
+      "columnIndex": 1,
+      "headerName": "Cognome",
+      "memberField": "cognome",
+      "isRequired": true
+    },
+    {
+      "columnIndex": 2,
+      "headerName": "Crewcode",
+      "memberField": "crewcode",
+      "isRequired": true
+    },
+    {
+      "columnIndex": 3,
+      "headerName": "Email",
+      "memberField": "email",
+      "isRequired": true
+    },
+    {
+      "columnIndex": 4,
+      "headerName": "Telefono",
+      "memberField": "telefono",
+      "isRequired": false
+    },
+    {
+      "columnIndex": 5,
+      "headerName": "Base",
+      "memberField": "baseCode",
+      "isRequired": false,
+      "validation": "lookup_base"
+    },
+    {
+      "columnIndex": 6,
+      "headerName": "Grado",
+      "memberField": "gradeCode",
+      "isRequired": false,
+      "validation": "lookup_grade"
+    }
   ]
 }
 ```
@@ -1412,13 +1668,19 @@ Configure Excel/CSV column mappings per role for bulk import.
 #### `PUT /api/v1/excel-field-mappings/:id`
 
 **Request:**
+
 ```json
 {
   "name": "Updated Pilot Template",
   "isDefault": true,
   "headers": ["First_Name", "Last_Name", "Crew_Code", "Email"],
   "items": [
-    { "columnIndex": 0, "headerName": "First_Name", "memberField": "nome", "isRequired": true }
+    {
+      "columnIndex": 0,
+      "headerName": "First_Name",
+      "memberField": "nome",
+      "isRequired": true
+    }
   ]
 }
 ```
@@ -1426,6 +1688,7 @@ Configure Excel/CSV column mappings per role for bulk import.
 #### `DELETE /api/v1/excel-field-mappings/:id`
 
 **Response 200:**
+
 ```json
 { "success": true, "data": { "message": "Excel mapping deleted" } }
 ```
@@ -1442,6 +1705,7 @@ Upload Excel/CSV and get preview of data to be imported with validation errors.
 **Content-Type:** `multipart/form-data`
 
 **Request:**
+
 ```
 file: <Excel/CSV file>
 role: "pilot" | "cabin_crew"  // Determines which mapping to use
@@ -1449,6 +1713,7 @@ mappingId: "uuid"  // Optional: specific mapping (uses default if not provided)
 ```
 
 **Response 200:**
+
 ```json
 {
   "success": true,
@@ -1516,20 +1781,22 @@ Execute the import after preview review.
 **Headers:** `Authorization: Bearer <token>` (admin/superadmin)
 
 **Request:**
+
 ```json
 {
   "previewId": "uuid",
   "options": {
-    "skipInvalid": true,           // Skip rows with validation errors
-    "skipDuplicates": true,          // Skip duplicate crewcodes
-    "updateExisting": false,         // If false, duplicates are skipped; if true, existing members are updated
-    "notifyNewMembers": true,        // Send welcome emails/WhatsApp
-    "dryRun": false                  // If true, only simulates without saving
+    "skipInvalid": true, // Skip rows with validation errors
+    "skipDuplicates": true, // Skip duplicate crewcodes
+    "updateExisting": false, // If false, duplicates are skipped; if true, existing members are updated
+    "notifyNewMembers": true, // Send welcome emails/WhatsApp
+    "dryRun": false // If true, only simulates without saving
   }
 }
 ```
 
 **Response 200 (success):**
+
 ```json
 {
   "success": true,
@@ -1557,6 +1824,7 @@ Execute the import after preview review.
 ```
 
 **Response 202 (async processing for large files):**
+
 ```json
 {
   "success": true,
@@ -1574,16 +1842,17 @@ Execute the import after preview review.
 Check status of async bulk import job.
 
 **Response 200:**
+
 ```json
 {
   "success": true,
   "data": {
     "jobId": "uuid",
-    "status": "processing",  // "pending" | "processing" | "completed" | "failed"
-    "progress": 75,          // Percentage
+    "status": "processing", // "pending" | "processing" | "completed" | "failed"
+    "progress": 75, // Percentage
     "processedRows": 112,
     "totalRows": 150,
-    "results": null          // Populated when completed
+    "results": null // Populated when completed
   }
 }
 ```
@@ -1595,6 +1864,7 @@ Check status of async bulk import job.
 #### `GET /api/v1/bases`
 
 **Response 200:**
+
 ```json
 {
   "success": true,
@@ -1608,6 +1878,7 @@ Check status of async bulk import job.
 #### `POST /api/v1/bases`
 
 **Request:**
+
 ```json
 { "codice": "NAP", "nome": "Napoli Capodichino" }
 ```
@@ -1615,6 +1886,7 @@ Check status of async bulk import job.
 #### `PUT /api/v1/bases/:id`
 
 **Request:**
+
 ```json
 { "codice": "NAP", "nome": "Napoli Capodichino - Updated" }
 ```
@@ -1622,6 +1894,7 @@ Check status of async bulk import job.
 #### `DELETE /api/v1/bases/:id`
 
 **Response 200:**
+
 ```json
 { "success": true, "data": { "message": "Base deleted" } }
 ```
@@ -1646,16 +1919,23 @@ Same schema as Bases:
 #### `GET /api/v1/grades`
 
 **Query params:**
+
 - `ruolo` (optional) — filter by role: `pilot` | `cabin_crew`
 
 **Response 200:**
+
 ```json
 {
   "success": true,
   "data": [
     { "id": "uuid", "codice": "CMD", "nome": "Commander", "ruolo": "pilot" },
     { "id": "uuid", "codice": "FO", "nome": "First Officer", "ruolo": "pilot" },
-    { "id": "uuid", "codice": "RDC", "nome": "Cabin Manager", "ruolo": "cabin_crew" }
+    {
+      "id": "uuid",
+      "codice": "RDC",
+      "nome": "Cabin Manager",
+      "ruolo": "cabin_crew"
+    }
   ]
 }
 ```
@@ -1663,6 +1943,7 @@ Same schema as Bases:
 #### `POST /api/v1/grades`
 
 **Request:**
+
 ```json
 { "codice": "SO", "nome": "Second Officer", "ruolo": "pilot" }
 ```
@@ -1670,6 +1951,7 @@ Same schema as Bases:
 #### `PUT /api/v1/grades/:id`
 
 **Request:**
+
 ```json
 { "codice": "SO", "nome": "Second Officer (updated)", "ruolo": "pilot" }
 ```
@@ -1677,6 +1959,7 @@ Same schema as Bases:
 #### `DELETE /api/v1/grades/:id`
 
 **Response 200:**
+
 ```json
 { "success": true, "data": { "message": "Grade deleted" } }
 ```
@@ -1692,6 +1975,7 @@ Same schema as Bases:
 **Headers:** `Authorization: Bearer <token>` (admin/superadmin)
 
 **Response 200:**
+
 ```json
 {
   "success": true,
@@ -1736,31 +2020,31 @@ Same schema as Bases:
 
 ```typescript
 // src/auth/strategies/jwt.strategy.ts
-import { Injectable, UnauthorizedException } from '@nestjs/common'
-import { PassportStrategy } from '@nestjs/passport'
-import { ExtractJwt, Strategy } from 'passport-jwt'
-import { ConfigService } from '@nestjs/config'
-import { UsersService } from '../../users/users.service'
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { PassportStrategy } from "@nestjs/passport";
+import { ExtractJwt, Strategy } from "passport-jwt";
+import { ConfigService } from "@nestjs/config";
+import { UsersService } from "../../users/users.service";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private configService: ConfigService,
-    private usersService: UsersService
+    private usersService: UsersService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get('jwt.secret'),
-    })
+      secretOrKey: configService.get("jwt.secret"),
+    });
   }
 
   async validate(payload: { sub: string; email: string; role: string }) {
-    const user = await this.usersService.findOne(payload.sub)
+    const user = await this.usersService.findOne(payload.sub);
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Account disabled')
+      throw new UnauthorizedException("Account disabled");
     }
-    return user
+    return user;
   }
 }
 ```
@@ -1769,40 +2053,40 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
 ```typescript
 // src/auth/guards/roles.guard.ts
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common'
-import { Reflector } from '@nestjs/core'
-import { ROLES_KEY } from '../decorators/roles.decorator'
+import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { ROLES_KEY } from "../decorators/roles.decorator";
 
 export enum UserRole {
-  USER = 'user',
-  ADMIN = 'admin',
-  SUPERADMIN = 'superadmin',
+  USER = "user",
+  ADMIN = "admin",
+  SUPERADMIN = "superadmin",
 }
 
 const roleHierarchy: Record<UserRole, number> = {
   [UserRole.SUPERADMIN]: 3,
   [UserRole.ADMIN]: 2,
   [UserRole.USER]: 1,
-}
+};
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ])
+    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     if (!requiredRoles) {
-      return true
+      return true;
     }
 
-    const { user } = context.switchToHttp().getRequest()
+    const { user } = context.switchToHttp().getRequest();
     return requiredRoles.some(
-      (role) => roleHierarchy[user.role as UserRole] >= roleHierarchy[role]
-    )
+      (role) => roleHierarchy[user.role as UserRole] >= roleHierarchy[role],
+    );
   }
 }
 ```
@@ -1811,81 +2095,92 @@ export class RolesGuard implements CanActivate {
 
 ```typescript
 // start/routes.ts
-import router from '@adonisjs/core/services/router'
-import { middleware } from '#start/kernel'
+import router from "@adonisjs/core/services/router";
+import { middleware } from "#start/kernel";
 
 // Auth (public)
-router.group(() => {
-  router.post('/login', [AuthController, 'login'])
-  router.post('/refresh', [AuthController, 'refresh'])
-}).prefix('/api/v1/auth')
+router
+  .group(() => {
+    router.post("/login", [AuthController, "login"]);
+    router.post("/refresh", [AuthController, "refresh"]);
+  })
+  .prefix("/api/v1/auth");
 
 // Auth (protected)
-router.group(() => {
-  router.post('/logout', [AuthController, 'logout'])
-  router.get('/me', [AuthController, 'me'])
-}).prefix('/api/v1/auth').use(middleware.auth())
+router
+  .group(() => {
+    router.post("/logout", [AuthController, "logout"]);
+    router.get("/me", [AuthController, "me"]);
+  })
+  .prefix("/api/v1/auth")
+  .use(middleware.auth());
 
 // Members (authenticated)
-router.group(() => {
-  router.post('/upload-pdf', [MembersController, 'uploadPdf'])
-  router.get('/', [MembersController, 'index'])
-  router.post('/', [MembersController, 'store'])
-  router.get('/:id', [MembersController, 'show'])
-  router.put('/:id', [MembersController, 'update'])
-  router.delete('/:id', [MembersController, 'destroy'])
-})
-  .prefix('/api/v1/members')
-  .use(middleware.auth())
+router
+  .group(() => {
+    router.post("/upload-pdf", [MembersController, "uploadPdf"]);
+    router.get("/", [MembersController, "index"]);
+    router.post("/", [MembersController, "store"]);
+    router.get("/:id", [MembersController, "show"]);
+    router.put("/:id", [MembersController, "update"]);
+    router.delete("/:id", [MembersController, "destroy"]);
+  })
+  .prefix("/api/v1/members")
+  .use(middleware.auth());
 
 // Bases, Contracts & Grades (superadmin only)
-router.resource('/api/v1/bases', BasesController)
-  .use('*', [middleware.auth(), middleware.role({ roles: ['superadmin'] })])
+router
+  .resource("/api/v1/bases", BasesController)
+  .use("*", [middleware.auth(), middleware.role({ roles: ["superadmin"] })]);
 
-router.resource('/api/v1/contracts', ContractsController)
-  .use('*', [middleware.auth(), middleware.role({ roles: ['superadmin'] })])
+router
+  .resource("/api/v1/contracts", ContractsController)
+  .use("*", [middleware.auth(), middleware.role({ roles: ["superadmin"] })]);
 
-router.resource('/api/v1/grades', GradesController)
-  .use('*', [middleware.auth(), middleware.role({ roles: ['superadmin'] })])
+router
+  .resource("/api/v1/grades", GradesController)
+  .use("*", [middleware.auth(), middleware.role({ roles: ["superadmin"] })]);
 
 // GET /grades is also accessible by admin (for the select in the member form)
-router.get('/api/v1/grades', [GradesController, 'index'])
-  .use([middleware.auth()])
+router
+  .get("/api/v1/grades", [GradesController, "index"])
+  .use([middleware.auth()]);
 
 // Dashboard
-router.get('/api/v1/dashboard/stats', [DashboardController, 'stats'])
-  .use([middleware.auth(), middleware.role({ roles: ['admin'] })])
+router
+  .get("/api/v1/dashboard/stats", [DashboardController, "stats"])
+  .use([middleware.auth(), middleware.role({ roles: ["admin"] })]);
 ```
 
 ### 4.5 UserPolicy (ex MemberPolicy — v1.1+)
 
 ```typescript
 // app/policies/user_policy.ts
-import User from '#models/user'
-import { BasePolicy } from '@adonisjs/bouncer'
-import { AuthorizerResponse } from '@adonisjs/bouncer/types'
+import User from "#models/user";
+import { BasePolicy } from "@adonisjs/bouncer";
+import { AuthorizerResponse } from "@adonisjs/bouncer/types";
 
 export default class UserPolicy extends BasePolicy {
   view(authUser: User, targetUser: User): AuthorizerResponse {
-    if (authUser.role === 'superadmin') return true
+    if (authUser.role === "superadmin") return true;
     // Admin can only view members of their own role
-    if (authUser.role === 'admin') {
-      return authUser.ruolo === targetUser.ruolo
+    if (authUser.role === "admin") {
+      return authUser.ruolo === targetUser.ruolo;
     }
     // User can only view themselves
-    return authUser.id === targetUser.id
+    return authUser.id === targetUser.id;
   }
 
   update(authUser: User, targetUser: User): AuthorizerResponse {
-    if (authUser.role === 'superadmin') return true
-    if (authUser.role === 'admin') {
-      return authUser.ruolo === targetUser.ruolo
+    if (authUser.role === "superadmin") return true;
+    if (authUser.role === "admin") {
+      return authUser.ruolo === targetUser.ruolo;
     }
-    return authUser.id === targetUser.id
+    return authUser.id === targetUser.id;
   }
 
   delete(authUser: User): AuthorizerResponse {
-    return authUser.role === 'superadmin'
+    return authUser.role === "superadmin";
   }
 }
 ```
@@ -1931,12 +2226,12 @@ PDF Upload
 
 ### 5.2 Recommended Libraries
 
-| Library | Pros | Cons | Recommendation |
-|---------|------|------|----------------|
-| **pdf-parse** | Simple, lightweight, extracts raw text | No form fields support | For OCR fallback |
-| **pdf-lib** | Reads/writes PDFs, accesses AcroForm fields | Does not extract free text | **Primary choice** for filled PDFs |
-| **tesseract.js** | Client-side OCR, no server cost | Slower, less accurate | Optional client-side fallback |
-| **sharp** + **tesseract** | Server OCR, more accurate | Adds latency/cost | For scanned PDFs |
+| Library                   | Pros                                        | Cons                       | Recommendation                     |
+| ------------------------- | ------------------------------------------- | -------------------------- | ---------------------------------- |
+| **pdf-parse**             | Simple, lightweight, extracts raw text      | No form fields support     | For OCR fallback                   |
+| **pdf-lib**               | Reads/writes PDFs, accesses AcroForm fields | Does not extract free text | **Primary choice** for filled PDFs |
+| **tesseract.js**          | Client-side OCR, no server cost             | Slower, less accurate      | Optional client-side fallback      |
+| **sharp** + **tesseract** | Server OCR, more accurate                   | Adds latency/cost          | For scanned PDFs                   |
 
 **Recommended strategy:** `pdf-lib` (form fields) → pattern matching (raw text) → manual entry.
 
@@ -1949,177 +2244,284 @@ New table for SuperAdmin to configure field mappings per role:
 // create_pdf_field_mappings_table.ts
 
 export async function up(db: Knex) {
-  await db.schema.createTable('pdf_field_mappings', (table) => {
-    table.uuid('id').primary().defaultTo(db.raw('uuid_generate_v4()'))
-    table.enum('role', ['pilot', 'cabin_crew']).notNullable()
-    table.string('pdf_field_name').notNullable()      // e.g., "nome", "first_name"
-    table.string('member_field').notNullable()        // e.g., "nome", "cognome", "crewcode"
-    table.enum('extraction_type', ['pdf_field', 'ocr_pattern']).notNullable()
-    table.string('ocr_pattern').nullable()            // Regex for OCR, e.g., "Crew Code:\\s*(\\w+)"
-    table.boolean('required').defaultTo(false)
-    table.timestamps(true, true)
+  await db.schema.createTable("pdf_field_mappings", (table) => {
+    table.uuid("id").primary().defaultTo(db.raw("uuid_generate_v4()"));
+    table.enum("role", ["pilot", "cabin_crew"]).notNullable();
+    table.string("pdf_field_name").notNullable(); // e.g., "nome", "first_name"
+    table.string("member_field").notNullable(); // e.g., "nome", "cognome", "crewcode"
+    table.enum("extraction_type", ["pdf_field", "ocr_pattern"]).notNullable();
+    table.string("ocr_pattern").nullable(); // Regex for OCR, e.g., "Crew Code:\\s*(\\w+)"
+    table.boolean("required").defaultTo(false);
+    table.timestamps(true, true);
 
     // Unique constraint: one mapping per role + pdf_field_name
-    table.unique(['role', 'pdf_field_name'])
-  })
+    table.unique(["role", "pdf_field_name"]);
+  });
 }
 ```
 
 **Default seed data for pilot forms:**
+
 ```typescript
 const pilotMappings = [
-  { role: 'pilot', pdf_field_name: 'nome', member_field: 'nome', extraction_type: 'pdf_field', required: true },
-  { role: 'pilot', pdf_field_name: 'cognome', member_field: 'cognome', extraction_type: 'pdf_field', required: true },
-  { role: 'pilot', pdf_field_name: 'crewcode', member_field: 'crewcode', extraction_type: 'pdf_field', required: true },
-  { role: 'pilot', pdf_field_name: 'email', member_field: 'email', extraction_type: 'pdf_field', required: true },
-  { role: 'pilot', pdf_field_name: 'telefono', member_field: 'telefono', extraction_type: 'pdf_field', required: false },
-  { role: 'pilot', pdf_field_name: 'base', member_field: 'baseCode', extraction_type: 'pdf_field', required: false },
+  {
+    role: "pilot",
+    pdf_field_name: "nome",
+    member_field: "nome",
+    extraction_type: "pdf_field",
+    required: true,
+  },
+  {
+    role: "pilot",
+    pdf_field_name: "cognome",
+    member_field: "cognome",
+    extraction_type: "pdf_field",
+    required: true,
+  },
+  {
+    role: "pilot",
+    pdf_field_name: "crewcode",
+    member_field: "crewcode",
+    extraction_type: "pdf_field",
+    required: true,
+  },
+  {
+    role: "pilot",
+    pdf_field_name: "email",
+    member_field: "email",
+    extraction_type: "pdf_field",
+    required: true,
+  },
+  {
+    role: "pilot",
+    pdf_field_name: "telefono",
+    member_field: "telefono",
+    extraction_type: "pdf_field",
+    required: false,
+  },
+  {
+    role: "pilot",
+    pdf_field_name: "base",
+    member_field: "baseCode",
+    extraction_type: "pdf_field",
+    required: false,
+  },
   // OCR patterns for scanned forms
-  { role: 'pilot', pdf_field_name: 'ocr_crewcode', member_field: 'crewcode', extraction_type: 'ocr_pattern', ocr_pattern: 'Crew Code:\\s*([A-Z0-9]{3,10})', required: false },
-  { role: 'pilot', pdf_field_name: 'ocr_nome', member_field: 'nome', extraction_type: 'ocr_pattern', ocr_pattern: 'Nome:\\s*([A-Za-z\\s]+)', required: false },
-]
+  {
+    role: "pilot",
+    pdf_field_name: "ocr_crewcode",
+    member_field: "crewcode",
+    extraction_type: "ocr_pattern",
+    ocr_pattern: "Crew Code:\\s*([A-Z0-9]{3,10})",
+    required: false,
+  },
+  {
+    role: "pilot",
+    pdf_field_name: "ocr_nome",
+    member_field: "nome",
+    extraction_type: "ocr_pattern",
+    ocr_pattern: "Nome:\\s*([A-Za-z\\s]+)",
+    required: false,
+  },
+];
 ```
 
 **Default seed data for cabin crew forms:**
+
 ```typescript
 const cabinCrewMappings = [
-  { role: 'cabin_crew', pdf_field_name: 'first_name', member_field: 'nome', extraction_type: 'pdf_field', required: true },
-  { role: 'cabin_crew', pdf_field_name: 'last_name', member_field: 'cognome', extraction_type: 'pdf_field', required: true },
-  { role: 'cabin_crew', pdf_field_name: 'employee_id', member_field: 'crewcode', extraction_type: 'pdf_field', required: true },
-  { role: 'cabin_crew', pdf_field_name: 'email', member_field: 'email', extraction_type: 'pdf_field', required: true },
-  { role: 'cabin_crew', pdf_field_name: 'phone', member_field: 'telefono', extraction_type: 'pdf_field', required: false },
+  {
+    role: "cabin_crew",
+    pdf_field_name: "first_name",
+    member_field: "nome",
+    extraction_type: "pdf_field",
+    required: true,
+  },
+  {
+    role: "cabin_crew",
+    pdf_field_name: "last_name",
+    member_field: "cognome",
+    extraction_type: "pdf_field",
+    required: true,
+  },
+  {
+    role: "cabin_crew",
+    pdf_field_name: "employee_id",
+    member_field: "crewcode",
+    extraction_type: "pdf_field",
+    required: true,
+  },
+  {
+    role: "cabin_crew",
+    pdf_field_name: "email",
+    member_field: "email",
+    extraction_type: "pdf_field",
+    required: true,
+  },
+  {
+    role: "cabin_crew",
+    pdf_field_name: "phone",
+    member_field: "telefono",
+    extraction_type: "pdf_field",
+    required: false,
+  },
   // OCR patterns
-  { role: 'cabin_crew', pdf_field_name: 'ocr_employee_id', member_field: 'crewcode', extraction_type: 'ocr_pattern', ocr_pattern: 'Employee ID:\\s*([A-Z0-9]{3,10})', required: false },
-]
+  {
+    role: "cabin_crew",
+    pdf_field_name: "ocr_employee_id",
+    member_field: "crewcode",
+    extraction_type: "ocr_pattern",
+    ocr_pattern: "Employee ID:\\s*([A-Z0-9]{3,10})",
+    required: false,
+  },
+];
 ```
 
 ### 5.4 PdfParserService
 
 ```typescript
 // app/services/pdf_parser_service.ts
-import { PDFDocument } from 'pdf-lib'
-import pdfParse from 'pdf-parse'
-import { readFile } from 'node:fs/promises'
+import { PDFDocument } from "pdf-lib";
+import pdfParse from "pdf-parse";
+import { readFile } from "node:fs/promises";
 
 export interface ParsedMemberData {
-  nome?: string
-  cognome?: string
-  email?: string
-  crewcode?: string
-  telefono?: string
-  grade?: string
-  baseCode?: string
-  contrattoCode?: string
-  confidence: number
+  nome?: string;
+  cognome?: string;
+  email?: string;
+  crewcode?: string;
+  telefono?: string;
+  grade?: string;
+  baseCode?: string;
+  contrattoCode?: string;
+  confidence: number;
 }
 
 // Maps PDF field names to model fields
 // Adapt based on the actual PDF
 const FIELD_MAP: Record<string, keyof ParsedMemberData> = {
-  'Nome': 'nome',
-  'Cognome': 'cognome',
-  'Email': 'email',
-  'Matricola': 'crewcode',
-  'Telefono': 'telefono',
-  'Qualifica': 'grade',
-  'Base': 'baseCode',
-  'Contratto': 'contrattoCode',
+  Nome: "nome",
+  Cognome: "cognome",
+  Email: "email",
+  Matricola: "crewcode",
+  Telefono: "telefono",
+  Qualifica: "grade",
+  Base: "baseCode",
+  Contratto: "contrattoCode",
   // Common variants
-  'first_name': 'nome',
-  'last_name': 'cognome',
-  'crew_code': 'crewcode',
-  'phone': 'telefono',
-}
+  first_name: "nome",
+  last_name: "cognome",
+  crew_code: "crewcode",
+  phone: "telefono",
+};
 
 export default class PdfParserService {
   async parse(filePath: string): Promise<ParsedMemberData> {
-    const buffer = await readFile(filePath)
+    const buffer = await readFile(filePath);
 
     // Attempt 1: read AcroForm fields (filled PDF)
-    const fromForm = await this.parseFormFields(buffer)
-    if (fromForm.confidence > 0.5) return fromForm
+    const fromForm = await this.parseFormFields(buffer);
+    if (fromForm.confidence > 0.5) return fromForm;
 
     // Attempt 2: extract raw text and use regex
-    const fromText = await this.parseRawText(buffer)
-    return fromText
+    const fromText = await this.parseRawText(buffer);
+    return fromText;
   }
 
   private async parseFormFields(buffer: Buffer): Promise<ParsedMemberData> {
-    const result: ParsedMemberData = { confidence: 0 }
-    let filledFields = 0
-    let totalFields = 0
+    const result: ParsedMemberData = { confidence: 0 };
+    let filledFields = 0;
+    let totalFields = 0;
 
     try {
-      const pdfDoc = await PDFDocument.load(buffer, { ignoreEncryption: true })
-      const form = pdfDoc.getForm()
-      const fields = form.getFields()
-      totalFields = fields.length
+      const pdfDoc = await PDFDocument.load(buffer, { ignoreEncryption: true });
+      const form = pdfDoc.getForm();
+      const fields = form.getFields();
+      totalFields = fields.length;
 
       for (const field of fields) {
-        const fieldName = field.getName()
-        const mappedKey = FIELD_MAP[fieldName]
+        const fieldName = field.getName();
+        const mappedKey = FIELD_MAP[fieldName];
 
-        if (!mappedKey) continue
+        if (!mappedKey) continue;
 
-        let value: string | undefined
+        let value: string | undefined;
 
         try {
-          if (field.constructor.name === 'PDFTextField') {
-            value = (field as any).getText()?.trim()
-          } else if (field.constructor.name === 'PDFDropdown') {
-            value = (field as any).getSelected()?.[0]?.trim()
+          if (field.constructor.name === "PDFTextField") {
+            value = (field as any).getText()?.trim();
+          } else if (field.constructor.name === "PDFDropdown") {
+            value = (field as any).getSelected()?.[0]?.trim();
           }
         } catch {
-          continue
+          continue;
         }
 
         if (value) {
-          (result as any)[mappedKey] = value
-          filledFields++
+          (result as any)[mappedKey] = value;
+          filledFields++;
         }
       }
 
-      result.confidence = totalFields > 0 ? filledFields / totalFields : 0
+      result.confidence = totalFields > 0 ? filledFields / totalFields : 0;
     } catch (err) {
-      result.confidence = 0
+      result.confidence = 0;
     }
 
-    return result
+    return result;
   }
 
   private async parseRawText(buffer: Buffer): Promise<ParsedMemberData> {
-    const result: ParsedMemberData = { confidence: 0 }
+    const result: ParsedMemberData = { confidence: 0 };
 
     try {
-      const data = await pdfParse(buffer)
-      const text = data.text
+      const data = await pdfParse(buffer);
+      const text = data.text;
 
       // Regex patterns for extracting data from structured text
       const patterns: Array<{ key: keyof ParsedMemberData; regex: RegExp }> = [
-        { key: 'nome',     regex: /(?:Nome|First Name)[:\s]+([A-Za-zÀ-ÿ\s]+?)(?:\n|$)/i },
-        { key: 'cognome',  regex: /(?:Cognome|Last Name)[:\s]+([A-Za-zÀ-ÿ\s]+?)(?:\n|$)/i },
-        { key: 'email',    regex: /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i },
-        { key: 'crewcode', regex: /(?:Matricola|Crew Code)[:\s]+([A-Z0-9]{3,15})/i },
-        { key: 'telefono', regex: /(?:Tel|Telefono|Phone)[:\s]+(\+?[\d\s\-().]{8,20})/i },
-        { key: 'grade',    regex: /(?:Qualifica|Grado|Rank)[:\s]+([A-Za-zÀ-ÿ\s]+?)(?:\n|$)/i },
-        { key: 'baseCode', regex: /(?:Base)[:\s]+([A-Z]{3})/i },
-      ]
+        {
+          key: "nome",
+          regex: /(?:Nome|First Name)[:\s]+([A-Za-zÀ-ÿ\s]+?)(?:\n|$)/i,
+        },
+        {
+          key: "cognome",
+          regex: /(?:Cognome|Last Name)[:\s]+([A-Za-zÀ-ÿ\s]+?)(?:\n|$)/i,
+        },
+        {
+          key: "email",
+          regex: /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
+        },
+        {
+          key: "crewcode",
+          regex: /(?:Matricola|Crew Code)[:\s]+([A-Z0-9]{3,15})/i,
+        },
+        {
+          key: "telefono",
+          regex: /(?:Tel|Telefono|Phone)[:\s]+(\+?[\d\s\-().]{8,20})/i,
+        },
+        {
+          key: "grade",
+          regex: /(?:Qualifica|Grado|Rank)[:\s]+([A-Za-zÀ-ÿ\s]+?)(?:\n|$)/i,
+        },
+        { key: "baseCode", regex: /(?:Base)[:\s]+([A-Z]{3})/i },
+      ];
 
-      let matched = 0
+      let matched = 0;
       for (const { key, regex } of patterns) {
-        const match = text.match(regex)
+        const match = text.match(regex);
         if (match?.[1]) {
-          (result as any)[key] = match[1].trim()
-          matched++
+          (result as any)[key] = match[1].trim();
+          matched++;
         }
       }
 
-      result.confidence = matched / patterns.length
+      result.confidence = matched / patterns.length;
     } catch {
-      result.confidence = 0
+      result.confidence = 0;
     }
 
-    return result
+    return result;
   }
 }
 ```
@@ -2177,28 +2579,28 @@ npm install resend
 
 ```typescript
 // app/services/email_service.ts
-import { Resend } from 'resend'
-import env from '#start/env'
+import { Resend } from "resend";
+import env from "#start/env";
 
-const resend = new Resend(env.get('RESEND_API_KEY'))
+const resend = new Resend(env.get("RESEND_API_KEY"));
 
 interface WelcomeEmailData {
-  to: string
-  nome: string
-  cognome: string
-  email: string
-  crewcode?: string
-  baseName?: string
+  to: string;
+  nome: string;
+  cognome: string;
+  email: string;
+  crewcode?: string;
+  baseName?: string;
 }
 
 export default class EmailService {
   async sendWelcome(data: WelcomeEmailData): Promise<void> {
     await resend.emails.send({
-      from: 'UnionConnect <noreply@unionconnect.it>',
+      from: "UnionConnect <noreply@unionconnect.it>",
       to: data.to,
-      subject: 'Welcome to UnionConnect!',
+      subject: "Welcome to UnionConnect!",
       html: this.welcomeTemplate(data),
-    })
+    });
   }
 
   private welcomeTemplate(data: WelcomeEmailData): string {
@@ -2227,14 +2629,14 @@ export default class EmailService {
     <p>Dear <strong>${data.nome} ${data.cognome}</strong>,</p>
     <p>We are pleased to confirm your union membership registration.</p>
     <div class="field"><span class="label">Email:</span> ${data.email}</div>
-    ${data.crewcode ? `<div class="field"><span class="label">Crew Code:</span> ${data.crewcode}</div>` : ''}
-    ${data.baseName ? `<div class="field"><span class="label">Base:</span> ${data.baseName}</div>` : ''}
+    ${data.crewcode ? `<div class="field"><span class="label">Crew Code:</span> ${data.crewcode}</div>` : ""}
+    ${data.baseName ? `<div class="field"><span class="label">Base:</span> ${data.baseName}</div>` : ""}
     <p>For assistance, please contact your union representative.</p>
     <div class="footer">UnionConnect — Union Membership Management</div>
   </div>
 </body>
 </html>
-    `.trim()
+    `.trim();
   }
 }
 ```
@@ -2254,33 +2656,33 @@ npm install twilio
 
 ```typescript
 // app/services/whatsapp_service.ts
-import twilio from 'twilio'
-import env from '#start/env'
+import twilio from "twilio";
+import env from "#start/env";
 
 const client = twilio(
-  env.get('TWILIO_ACCOUNT_SID'),
-  env.get('TWILIO_AUTH_TOKEN')
-)
+  env.get("TWILIO_ACCOUNT_SID"),
+  env.get("TWILIO_AUTH_TOKEN"),
+);
 
 interface WelcomeWhatsAppData {
-  telefono: string
-  nome: string
-  cognome: string
-  crewcode?: string
+  telefono: string;
+  nome: string;
+  cognome: string;
+  crewcode?: string;
 }
 
 export default class WhatsAppService {
   async sendWelcome(data: WelcomeWhatsAppData): Promise<void> {
-    if (!data.telefono) return
+    if (!data.telefono) return;
 
-    const normalizedPhone = this.normalizePhone(data.telefono)
-    if (!normalizedPhone) return
+    const normalizedPhone = this.normalizePhone(data.telefono);
+    if (!normalizedPhone) return;
 
     await client.messages.create({
-      from: `whatsapp:${env.get('TWILIO_WHATSAPP_NUMBER')}`,
+      from: `whatsapp:${env.get("TWILIO_WHATSAPP_NUMBER")}`,
       to: `whatsapp:${normalizedPhone}`,
       body: this.welcomeMessage(data),
-    })
+    });
   }
 
   private welcomeMessage(data: WelcomeWhatsAppData): string {
@@ -2288,22 +2690,24 @@ export default class WhatsAppService {
       `Hi ${data.nome} ${data.cognome}! 👋`,
       ``,
       `Your membership with *UnionConnect* has been successfully registered.`,
-      data.crewcode ? `Crew Code: *${data.crewcode}*` : '',
+      data.crewcode ? `Crew Code: *${data.crewcode}*` : "",
       ``,
       `For assistance, please contact your union representative.`,
       ``,
       `_UnionConnect — Union Membership Management_`,
-    ].filter(Boolean).join('\n')
+    ]
+      .filter(Boolean)
+      .join("\n");
   }
 
   private normalizePhone(phone: string): string | null {
     // Remove spaces, hyphens, parentheses
-    const cleaned = phone.replace(/[\s\-().]/g, '')
+    const cleaned = phone.replace(/[\s\-().]/g, "");
     // Ensure it starts with +
-    if (cleaned.startsWith('+')) return cleaned
-    if (cleaned.startsWith('0039')) return '+39' + cleaned.slice(4)
-    if (cleaned.startsWith('39')) return '+' + cleaned
-    return null
+    if (cleaned.startsWith("+")) return cleaned;
+    if (cleaned.startsWith("0039")) return "+39" + cleaned.slice(4);
+    if (cleaned.startsWith("39")) return "+" + cleaned;
+    return null;
   }
 }
 ```
@@ -2322,67 +2726,69 @@ npm install bullmq ioredis
 
 ```typescript
 // app/queues/notification_queue.ts
-import { Queue, Worker, Job } from 'bullmq'
-import IORedis from 'ioredis'
-import env from '#start/env'
-import EmailService from '#services/email_service'
-import WhatsAppService from '#services/whatsapp_service'
+import { Queue, Worker, Job } from "bullmq";
+import IORedis from "ioredis";
+import env from "#start/env";
+import EmailService from "#services/email_service";
+import WhatsAppService from "#services/whatsapp_service";
 
-const connection = new IORedis(env.get('REDIS_URL'), { maxRetriesPerRequest: null })
+const connection = new IORedis(env.get("REDIS_URL"), {
+  maxRetriesPerRequest: null,
+});
 
-export const notificationQueue = new Queue('notifications', {
+export const notificationQueue = new Queue("notifications", {
   connection,
   defaultJobOptions: {
     attempts: 3,
-    backoff: { type: 'exponential', delay: 2000 },
+    backoff: { type: "exponential", delay: 2000 },
   },
-})
+});
 
 // Separate worker (started in a dedicated process or via AdonisJS commands)
 export const notificationWorker = new Worker(
-  'notifications',
+  "notifications",
   async (job: Job) => {
-    const emailService = new EmailService()
-    const whatsappService = new WhatsAppService()
+    const emailService = new EmailService();
+    const whatsappService = new WhatsAppService();
 
     switch (job.name) {
-      case 'welcome-email':
-        await emailService.sendWelcome(job.data)
-        break
-      case 'welcome-whatsapp':
-        await whatsappService.sendWelcome(job.data)
-        break
+      case "welcome-email":
+        await emailService.sendWelcome(job.data);
+        break;
+      case "welcome-whatsapp":
+        await whatsappService.sendWelcome(job.data);
+        break;
       default:
-        throw new Error(`Unknown job: ${job.name}`)
+        throw new Error(`Unknown job: ${job.name}`);
     }
   },
-  { connection }
-)
+  { connection },
+);
 
-notificationWorker.on('failed', (job, err) => {
-  console.error(`Job ${job?.id} failed:`, err.message)
-})
+notificationWorker.on("failed", (job, err) => {
+  console.error(`Job ${job?.id} failed:`, err.message);
+});
 ```
 
 #### Usage in MembersService
 
 ```typescript
 // After member creation
-await notificationQueue.add('welcome-email', {
+await notificationQueue.add("welcome-email", {
   to: member.email,
   nome: member.nome,
   cognome: member.cognome,
   email: member.email,
   crewcode: member.crewcode,
   baseName: member.base?.nome,
-})
+});
 
-await notificationQueue.add('welcome-whatsapp', {
+await notificationQueue.add("welcome-whatsapp", {
   telefono: member.telefono,
   nome: member.nome,
   cognome: member.cognome,
   crewcode: member.crewcode,
-})
+});
 ```
 
 ---
@@ -2580,27 +2986,27 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-} from 'typeorm'
+} from "typeorm";
 
-@Entity('grades')
+@Entity("grades")
 export class Grade {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
   @Column({ unique: true, length: 20 })
-  codice: string
+  codice: string;
 
   @Column({ length: 255 })
-  nome: string
+  nome: string;
 
-  @Column({ type: 'enum', enum: ['pilot', 'cabin_crew'] })
-  ruolo: 'pilot' | 'cabin_crew'
+  @Column({ type: "enum", enum: ["pilot", "cabin_crew"] })
+  ruolo: "pilot" | "cabin_crew";
 
-  @CreateDateColumn({ type: 'timestamptz' })
-  created_at: Date
+  @CreateDateColumn({ type: "timestamptz" })
+  created_at: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz' })
-  updated_at: Date
+  @UpdateDateColumn({ type: "timestamptz" })
+  updated_at: Date;
 }
 ```
 
@@ -2789,18 +3195,18 @@ NestJS uses `class-validator` and `class-transformer` for input validation. Appl
 
 ```typescript
 // src/main.ts
-import { ValidationPipe } from '@nestjs/common'
+import { ValidationPipe } from "@nestjs/common";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule)
+  const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-    })
-  )
-  await app.listen(3000)
+    }),
+  );
+  await app.listen(3000);
 }
 ```
 
@@ -2816,55 +3222,55 @@ import {
   IsUUID,
   MinLength,
   MaxLength,
-} from 'class-validator'
+} from "class-validator";
 
 export class CreateUserDto {
   @IsString()
   @MinLength(2)
   @MaxLength(100)
-  nome: string
+  nome: string;
 
   @IsString()
   @MinLength(2)
   @MaxLength(100)
-  cognome: string
+  cognome: string;
 
   @IsEmail()
-  email: string
+  email: string;
 
   @IsString()
   @MaxLength(50)
-  crewcode: string
+  crewcode: string;
 
   @IsString()
   @IsOptional()
   @MaxLength(30)
-  telefono?: string
+  telefono?: string;
 
-  @IsEnum(['pilot', 'cabin_crew'])
-  ruolo: 'pilot' | 'cabin_crew'
-
-  @IsUUID()
-  @IsOptional()
-  base_id?: string
+  @IsEnum(["pilot", "cabin_crew"])
+  ruolo: "pilot" | "cabin_crew";
 
   @IsUUID()
   @IsOptional()
-  contratto_id?: string
+  base_id?: string;
 
   @IsUUID()
   @IsOptional()
-  grade_id?: string
+  contratto_id?: string;
+
+  @IsUUID()
+  @IsOptional()
+  grade_id?: string;
 
   @IsString()
   @IsOptional()
-  note?: string
+  note?: string;
 
   @IsOptional()
-  itud?: boolean
+  itud?: boolean;
 
   @IsOptional()
-  rsa?: boolean
+  rsa?: boolean;
 }
 ```
 
@@ -2872,8 +3278,8 @@ export class CreateUserDto {
 
 ```typescript
 // src/users/dto/update-user.dto.ts
-import { PartialType } from '@nestjs/mapped-types'
-import { CreateUserDto } from './create-user.dto'
+import { PartialType } from "@nestjs/mapped-types";
+import { CreateUserDto } from "./create-user.dto";
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {}
 ```
@@ -2882,15 +3288,15 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {}
 
 ```typescript
 // src/auth/dto/login.dto.ts
-import { IsString, MaxLength } from 'class-validator'
+import { IsString, MaxLength } from "class-validator";
 
 export class LoginDto {
   @IsString()
   @MaxLength(50)
-  crewcode: string
+  crewcode: string;
 
   @IsString()
-  password: string
+  password: string;
 }
 ```
 
@@ -2898,16 +3304,16 @@ export class LoginDto {
 
 ```typescript
 // src/bases/dto/create-base.dto.ts
-import { IsString, MaxLength } from 'class-validator'
+import { IsString, MaxLength } from "class-validator";
 
 export class CreateBaseDto {
   @IsString()
   @MaxLength(20)
-  codice: string
+  codice: string;
 
   @IsString()
   @MaxLength(255)
-  nome: string
+  nome: string;
 }
 ```
 
@@ -2919,53 +3325,68 @@ export class CreateBaseDto {
 
 ```typescript
 // config/limiter.ts (usando @adonisjs/limiter)
-import { defineConfig } from '@adonisjs/limiter'
+import { defineConfig } from "@adonisjs/limiter";
 
 export default defineConfig({
-  default: 'redis',
+  default: "redis",
   stores: {
     redis: {
-      client: 'redis',
-      connectionName: 'main',
+      client: "redis",
+      connectionName: "main",
     },
   },
-})
+});
 ```
 
 ```typescript
 // start/routes.ts — apply rate limiting to auth endpoints
-import limiter from '@adonisjs/limiter/services/main'
+import limiter from "@adonisjs/limiter/services/main";
 
 router.group(() => {
-  router.post('/login', [AuthController, 'login'])
-    .use(limiter.use({ requests: 10, duration: '15 minutes', limitExceeded: 'exception' }))
-  router.post('/refresh', [AuthController, 'refresh'])
-    .use(limiter.use({ requests: 30, duration: '15 minutes', limitExceeded: 'exception' }))
-})
+  router.post("/login", [AuthController, "login"]).use(
+    limiter.use({
+      requests: 10,
+      duration: "15 minutes",
+      limitExceeded: "exception",
+    }),
+  );
+  router.post("/refresh", [AuthController, "refresh"]).use(
+    limiter.use({
+      requests: 30,
+      duration: "15 minutes",
+      limitExceeded: "exception",
+    }),
+  );
+});
 
 // PDF upload: limit to prevent abuse
-router.post('/api/v1/members/upload-pdf', [MembersController, 'uploadPdf'])
+router
+  .post("/api/v1/members/upload-pdf", [MembersController, "uploadPdf"])
   .use([
     middleware.auth(),
-    limiter.use({ requests: 20, duration: '1 hour', limitExceeded: 'exception' }),
-  ])
+    limiter.use({
+      requests: 20,
+      duration: "1 hour",
+      limitExceeded: "exception",
+    }),
+  ]);
 ```
 
 ### 9.2 CORS
 
 ```typescript
 // config/cors.ts
-import { defineConfig } from '@adonisjs/cors'
+import { defineConfig } from "@adonisjs/cors";
 
 export default defineConfig({
   enabled: true,
-  origin: [process.env.FRONTEND_URL ?? 'http://localhost:3000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  headers: ['Content-Type', 'Authorization'],
+  origin: [process.env.FRONTEND_URL ?? "http://localhost:3000"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  headers: ["Content-Type", "Authorization"],
   exposeHeaders: [],
   credentials: true,
   maxAge: 90,
-})
+});
 ```
 
 ### 9.3 Helmet (Security Headers)
@@ -2976,17 +3397,17 @@ npm install helmet
 
 ```typescript
 // start/kernel.ts
-import helmet from 'helmet'
-import server from '@adonisjs/core/services/server'
+import helmet from "helmet";
+import server from "@adonisjs/core/services/server";
 
 server.use([
-  () => import('#middleware/container_bindings_middleware'),
-  () => import('@adonisjs/core/bodyparser_middleware'),
+  () => import("#middleware/container_bindings_middleware"),
+  () => import("@adonisjs/core/bodyparser_middleware"),
   async () => {
-    const { default: h } = await import('helmet')
-    return h()
+    const { default: h } = await import("helmet");
+    return h();
   },
-])
+]);
 ```
 
 ### 9.4 Input Sanitization
@@ -3039,64 +3460,64 @@ TypeORM seeding is implemented using a custom seed runner that uses the NestJS D
 ### `src/database/seeds/initial.seed.ts`
 
 ```typescript
-import { DataSource } from 'typeorm'
-import { Base } from '../../bases/entities/base.entity'
-import { Contract } from '../../contracts/entities/contract.entity'
-import { Grade } from '../../grades/entities/grade.entity'
-import { User } from '../../users/entities/user.entity'
-import { Role } from '../../common/enums/role.enum'
-import * as bcrypt from 'bcrypt'
+import { DataSource } from "typeorm";
+import { Base } from "../../bases/entities/base.entity";
+import { Contract } from "../../contracts/entities/contract.entity";
+import { Grade } from "../../grades/entities/grade.entity";
+import { User } from "../../users/entities/user.entity";
+import { Role } from "../../common/enums/role.enum";
+import * as bcrypt from "bcrypt";
 
 export class InitialSeed {
   async run(dataSource: DataSource): Promise<void> {
     // Seed bases
-    const baseRepository = dataSource.getRepository(Base)
+    const baseRepository = dataSource.getRepository(Base);
     await baseRepository.save([
-      { codice: 'MXP', nome: 'Milano Malpensa' },
-      { codice: 'LIN', nome: 'Milano Linate' },
-      { codice: 'FCO', nome: 'Roma Fiumicino' },
-      { codice: 'NAP', nome: 'Napoli Capodichino' },
-      { codice: 'BLQ', nome: 'Bologna Guglielmo Marconi' },
-      { codice: 'VCE', nome: 'Venezia Marco Polo' },
-      { codice: 'TRN', nome: 'Torino Caselle' },
-      { codice: 'CTA', nome: 'Catania Fontanarossa' },
-      { codice: 'PMO', nome: 'Palermo Falcone e Borsellino' },
-      { codice: 'BRI', nome: 'Bari Karol Wojtyla' },
-    ])
+      { codice: "MXP", nome: "Milano Malpensa" },
+      { codice: "LIN", nome: "Milano Linate" },
+      { codice: "FCO", nome: "Roma Fiumicino" },
+      { codice: "NAP", nome: "Napoli Capodichino" },
+      { codice: "BLQ", nome: "Bologna Guglielmo Marconi" },
+      { codice: "VCE", nome: "Venezia Marco Polo" },
+      { codice: "TRN", nome: "Torino Caselle" },
+      { codice: "CTA", nome: "Catania Fontanarossa" },
+      { codice: "PMO", nome: "Palermo Falcone e Borsellino" },
+      { codice: "BRI", nome: "Bari Karol Wojtyla" },
+    ]);
 
     // Seed contracts
-    const contractRepository = dataSource.getRepository(Contract)
+    const contractRepository = dataSource.getRepository(Contract);
     await contractRepository.save([
-      { codice: 'AZ-PI', nome: 'ITA Airways — Pilots' },
-      { codice: 'AZ-ADV', nome: 'ITA Airways — Cabin Crew' },
-      { codice: 'RY-PI', nome: 'Ryanair — Pilots' },
-      { codice: 'RY-ADV', nome: 'Ryanair — Cabin Crew' },
-    ])
+      { codice: "AZ-PI", nome: "ITA Airways — Pilots" },
+      { codice: "AZ-ADV", nome: "ITA Airways — Cabin Crew" },
+      { codice: "RY-PI", nome: "Ryanair — Pilots" },
+      { codice: "RY-ADV", nome: "Ryanair — Cabin Crew" },
+    ]);
 
     // Seed grades
-    const gradeRepository = dataSource.getRepository(Grade)
+    const gradeRepository = dataSource.getRepository(Grade);
     await gradeRepository.save([
       // Pilots
-      { codice: 'CMD', nome: 'Commander', ruolo: 'pilot' },
-      { codice: 'FO', nome: 'First Officer', ruolo: 'pilot' },
-      { codice: 'SO', nome: 'Second Officer', ruolo: 'pilot' },
-      { codice: 'ALL', nome: 'Cadet', ruolo: 'pilot' },
+      { codice: "CMD", nome: "Commander", ruolo: "pilot" },
+      { codice: "FO", nome: "First Officer", ruolo: "pilot" },
+      { codice: "SO", nome: "Second Officer", ruolo: "pilot" },
+      { codice: "ALL", nome: "Cadet", ruolo: "pilot" },
       // Cabin Crew
-      { codice: 'RDC', nome: 'Cabin Manager', ruolo: 'cabin_crew' },
-      { codice: 'SEN', nome: 'Senior Cabin Crew', ruolo: 'cabin_crew' },
-      { codice: 'ADV', nome: 'Flight Attendant', ruolo: 'cabin_crew' },
-    ])
+      { codice: "RDC", nome: "Cabin Manager", ruolo: "cabin_crew" },
+      { codice: "SEN", nome: "Senior Cabin Crew", ruolo: "cabin_crew" },
+      { codice: "ADV", nome: "Flight Attendant", ruolo: "cabin_crew" },
+    ]);
 
     // Seed admin users
-    const userRepository = dataSource.getRepository(User)
-    const hashedPassword = await bcrypt.hash('ChangeMe2024!', 10)
+    const userRepository = dataSource.getRepository(User);
+    const hashedPassword = await bcrypt.hash("ChangeMe2024!", 10);
 
     await userRepository.save([
       {
-        crewcode: 'SADMIN01',
-        nome: 'Admin',
-        cognome: 'Super',
-        email: 'superadmin@unionconnect.it',
+        crewcode: "SADMIN01",
+        nome: "Admin",
+        cognome: "Super",
+        email: "superadmin@unionconnect.it",
         password: hashedPassword,
         role: Role.SUPERADMIN,
         ruolo: null,
@@ -3104,17 +3525,17 @@ export class InitialSeed {
         mustChangePassword: true,
       },
       {
-        crewcode: 'ADMIN01',
-        nome: 'Marco',
-        cognome: 'Rossi',
-        email: 'admin.piloti@unionconnect.it',
+        crewcode: "ADMIN01",
+        nome: "Marco",
+        cognome: "Rossi",
+        email: "admin.piloti@unionconnect.it",
         password: hashedPassword,
         role: Role.ADMIN,
-        ruolo: 'pilot',
+        ruolo: "pilot",
         isActive: true,
         mustChangePassword: true,
       },
-    ])
+    ]);
   }
 }
 ```
@@ -3122,26 +3543,26 @@ export class InitialSeed {
 ### `src/database/seeds/run-seed.ts`
 
 ```typescript
-import { DataSource } from 'typeorm'
-import { databaseConfig } from '../../config/database.config'
-import { InitialSeed } from './initial.seed'
+import { DataSource } from "typeorm";
+import { databaseConfig } from "../../config/database.config";
+import { InitialSeed } from "./initial.seed";
 
 async function runSeed() {
-  const dataSource = new DataSource(databaseConfig)
-  await dataSource.initialize()
+  const dataSource = new DataSource(databaseConfig);
+  await dataSource.initialize();
 
-  const seeder = new InitialSeed()
-  await seeder.run(dataSource)
+  const seeder = new InitialSeed();
+  await seeder.run(dataSource);
 
-  console.log('✅ Seeding completed successfully')
-  await dataSource.destroy()
-  process.exit(0)
+  console.log("✅ Seeding completed successfully");
+  await dataSource.destroy();
+  process.exit(0);
 }
 
 runSeed().catch((error) => {
-  console.error('❌ Seeding failed:', error)
-  process.exit(1)
-})
+  console.error("❌ Seeding failed:", error);
+  process.exit(1);
+});
 ```
 
 **Run the seeds:**
@@ -3194,5 +3615,5 @@ npm run seed
 
 ---
 
-*Document generated on: 2026-03-07*
-*Versione: 1.4*
+_Document generated on: 2026-03-07_
+_Versione: 1.4_

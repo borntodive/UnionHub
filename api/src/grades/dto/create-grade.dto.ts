@@ -1,5 +1,5 @@
-import { IsString, MinLength, MaxLength, IsEnum } from 'class-validator';
-import { Ruolo } from '../../common/enums/ruolo.enum';
+import { IsString, MinLength, MaxLength, IsEnum } from "class-validator";
+import { Ruolo } from "../../common/enums/ruolo.enum";
 
 export class CreateGradeDto {
   @IsString()

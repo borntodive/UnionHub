@@ -34,7 +34,7 @@ interface AdditionalItem {
   total: number;
   taxable: number;
   taxFree: number;
-  isSLR: boolean;        // Statutory Leave Refund
+  isSLR: boolean; // Statutory Leave Refund
   isConguaglio: boolean; // Adjustment
 }
 
@@ -42,22 +42,22 @@ interface AdditionalItem {
 interface Payslip {
   basic: PayslipItem;
   basic13th: PayslipItem;
-  ffp: PayslipItem;           // Fixed Flight Pay
-  flyDiaria: PayslipItem;     // Flying per diem
-  noFlyDiaria: PayslipItem;   // Non-flying per diem
-  ccTraining: PayslipItem;    // Cabin crew training
-  al: PayslipItem;            // Annual leave
-  woff: PayslipItem;          // Working days off
-  oob: PayslipItem;           // Out of base nights
-  rsa: PayslipItem;           // Rep allowance
-  oobUnplanned: PayslipItem;  // Unplanned OOB
-  ul: LeaveItem;              // Unpaid leave
-  simPay: PayslipItem;        // Simulator pay
-  trainingPay: PayslipItem;  // Training bonus
+  ffp: PayslipItem; // Fixed Flight Pay
+  flyDiaria: PayslipItem; // Flying per diem
+  noFlyDiaria: PayslipItem; // Non-flying per diem
+  ccTraining: PayslipItem; // Cabin crew training
+  al: PayslipItem; // Annual leave
+  woff: PayslipItem; // Working days off
+  oob: PayslipItem; // Out of base nights
+  rsa: PayslipItem; // Rep allowance
+  oobUnplanned: PayslipItem; // Unplanned OOB
+  ul: LeaveItem; // Unpaid leave
+  simPay: PayslipItem; // Simulator pay
+  trainingPay: PayslipItem; // Training bonus
   parentalLeave: LeaveItem;
-  leave104: LeaveItem;        // Law 104 leave
-  sbh: PayslipItem;           // Scheduled block hours
-  itud: PayslipItem;          // ITU days
+  leave104: LeaveItem; // Law 104 leave
+  sbh: PayslipItem; // Scheduled block hours
+  itud: PayslipItem; // ITU days
   additionalPayments: AdditionalItem[];
   additionalDeductions: AdditionalItem[];
   union: PayslipItem;
@@ -67,7 +67,7 @@ interface Payslip {
 
 // INPS (Social Security) Calculation
 interface INPS {
-  imponibile: number;           // Taxable amount
+  imponibile: number; // Taxable amount
   contribuzione: {
     ivs: number;
     ivsAdd: number;
@@ -87,11 +87,11 @@ interface INPS {
 // IRPEF (Income Tax) Calculation
 interface IRPEF {
   imponibile: number;
-  lordo: number;                    // Gross tax
+  lordo: number; // Gross tax
   detrazioniLavoroDipendente: number;
-  ritenute: number;                 // Net tax withheld
-  aliquotaMedia: number;            // Average tax rate
-  trattamentoIntegrativo: number;   // Bonus L. 21/2020
+  ritenute: number; // Net tax withheld
+  aliquotaMedia: number; // Average tax rate
+  trattamentoIntegrativo: number; // Bonus L. 21/2020
   taglioCuneoFiscale: {
     percentage: number;
     amount: number;
@@ -119,8 +119,8 @@ interface Payroll {
   areaINPS: INPS;
   areaIRPEF: IRPEF;
   netPayment: number;
-  totaleCompetenze: number;     // Total earnings
-  totaleTrattenute: number;     // Total deductions
+  totaleCompetenze: number; // Total earnings
+  totaleTrattenute: number; // Total deductions
 }
 ```
 
@@ -128,25 +128,25 @@ interface Payroll {
 
 ```typescript
 interface Input {
-  date: string;           // ISO date (reference month)
-  sbh: string;            // Scheduled block hours (format: "HH:MM")
+  date: string; // ISO date (reference month)
+  sbh: string; // Scheduled block hours (format: "HH:MM")
   flyDiaria: number;
   noFlyDiaria: number;
   onlyNationalFly: number;
-  al: number;             // Annual leave days
-  woff: number;           // Working days off
-  oob: number;            // Out of base nights
-  ul: number;             // Unpaid leave days
+  al: number; // Annual leave days
+  woff: number; // Working days off
+  oob: number; // Out of base nights
+  ul: number; // Unpaid leave days
   additional: AdditionalInput[];
   additionalDeductions: AdditionalDeductionInput[];
   parentalDays: number;
-  days104: number;         // Law 104 leave days
+  days104: number; // Law 104 leave days
   trainingSectors: number;
   simDays: number;
   itud: number;
   oobUnplanned: number;
   ccTrainingDays: number;
-  pregressoIrpef: number;  // Previous IRPEF balance
+  pregressoIrpef: number; // Previous IRPEF balance
   commissions: number;
   landingInOffDay: number;
   bankHolydays: number;
@@ -155,7 +155,7 @@ interface Input {
 
 interface AdditionalInput {
   amount: number;
-  tax: number;            // 0, 50, 100, or 999 (conguaglio)
+  tax: number; // 0, 50, 100, or 999 (conguaglio)
   isSLR: boolean;
   isConguaglio: boolean;
 }
@@ -171,22 +171,22 @@ interface AdditionalDeductionInput {
 
 ```typescript
 interface Settings {
-  company: string;        // e.g., 'RYR'
-  role: string;             // 'pil' | 'cc'
-  rank: string;             // e.g., 'cpt', 'fo', 'sepe'
-  union: number;          // Union fee
+  company: string; // e.g., 'RYR'
+  role: string; // 'pil' | 'cc'
+  rank: string; // e.g., 'cpt', 'fo', 'sepe'
+  union: number; // Union fee
   parttime: boolean;
-  parttimePercentage: number;  // 0.5, 0.66, 0.75
-  coniugeCarico: boolean;      // Spouse dependent
+  parttimePercentage: number; // 0.5, 0.66, 0.75
+  coniugeCarico: boolean; // Spouse dependent
   prevMonthLeavePayment: boolean;
   tfrContribution: number;
-  addComunali: number;           // Municipal taxes
+  addComunali: number; // Municipal taxes
   accontoAddComunali: number;
-  addRegionali: number;        // Regional taxes
+  addRegionali: number; // Regional taxes
   legacy: boolean;
-  triAndLtc: boolean;            // TRI acting as LTC
-  btc: boolean;                  // BTC-based contract
-  cu: boolean;                   // New captain
+  triAndLtc: boolean; // TRI acting as LTC
+  btc: boolean; // BTC-based contract
+  cu: boolean; // New captain
   voluntaryPensionContribution: number;
 }
 ```
@@ -203,23 +203,31 @@ class PayslipCalculator {
   async calculatePayroll(
     contractData: ContractData,
     input: Input,
-    settings: Settings
+    settings: Settings,
   ): Promise<Payroll> {
-    const payslipItems = this.calculatePayslipItems(contractData, input, settings);
+    const payslipItems = this.calculatePayslipItems(
+      contractData,
+      input,
+      settings,
+    );
     const sectorPay = this.calculateSectorPay(payslipItems);
     const taxAreas = this.calculateTaxAreas(payslipItems);
 
     const areaINPS = this.calculateINPS(
       taxAreas.taxArea,
       input.date,
-      contractData.inpsDays
+      contractData.inpsDays,
     );
 
-    const tfr = this.calculateTFR(payslipItems, settings.rank, areaINPS.imponibile);
+    const tfr = this.calculateTFR(
+      payslipItems,
+      settings.rank,
+      areaINPS.imponibile,
+    );
     const fondoPensione = this.calculateFondoPensione(
       tfr.retribuzioneUtileTFR,
       settings.tfrContribution,
-      contractData
+      contractData,
     );
 
     const areaIRPEF = this.calculateIRPEF(
@@ -227,7 +235,7 @@ class PayslipCalculator {
       areaINPS,
       payslipItems.additionalPayments,
       input.date,
-      settings
+      settings,
     );
 
     return this.buildPayrollResult(
@@ -235,7 +243,7 @@ class PayslipCalculator {
       sectorPay,
       taxAreas,
       areaINPS,
-      areaIRPEF
+      areaIRPEF,
     );
   }
 
@@ -243,7 +251,7 @@ class PayslipCalculator {
   private calculatePayslipItems(
     contractData: ContractData,
     input: Input,
-    settings: Settings
+    settings: Settings,
   ): Payslip {
     return {
       basic: this.calculateBasic(contractData),
@@ -262,6 +270,7 @@ class PayslipCalculator {
 ### 2.2 Key Calculation Rules
 
 #### Basic Pay Calculation
+
 ```typescript
 // Basic = monthly base salary (from contract data based on rank)
 // 13th Month = only in December, average of previous 12 months
@@ -274,19 +283,17 @@ function calculateBasic(contractData: ContractData): PayslipItem {
     isDeduction: false,
     quantity: contractData.basicDays || 1,
     unit: contractData.basic / (contractData.basicDays || 1),
-    isSectorPay: false
+    isSectorPay: false,
   };
 }
 ```
 
 #### FFP (Fixed Flight Pay)
+
 ```typescript
 // FFP = base FFP + allowance + training allowance
 // Different rates for instructors
-function calculateFFP(
-  contractData: ContractData,
-  settings: Settings
-): number {
+function calculateFFP(contractData: ContractData, settings: Settings): number {
   let ffp = contractData.ffp + contractData.allowance;
 
   if (isInstructor(settings.rank)) {
@@ -298,6 +305,7 @@ function calculateFFP(
 ```
 
 #### Diaria (Per Diem) Calculation
+
 ```typescript
 // Flying diaria: tax-free up to €46.48/day, rest taxable
 // Non-flying diaria: fully taxable
@@ -306,7 +314,7 @@ const MAX_TAX_FREE_DIARIA = 46.48;
 function calculateDiaria(
   flyDays: number,
   noFlyDays: number,
-  diariaRate: number
+  diariaRate: number,
 ): { flyDiaria: PayslipItem; noFlyDiaria: PayslipItem } {
   const flyTotal = flyDays * diariaRate;
   const taxFree = Math.min(flyTotal, flyDays * MAX_TAX_FREE_DIARIA);
@@ -323,18 +331,19 @@ function calculateDiaria(
       taxable: noFlyDays * diariaRate,
       taxFree: 0,
       // ...
-    }
+    },
   };
 }
 ```
 
 #### SBH (Scheduled Block Hours)
+
 ```typescript
 // Decimal hours to HH:MM conversion
 // Pay = hours * hourly rate
 function calculateSBH(
   sbhDecimal: number,
-  contractData: ContractData
+  contractData: ContractData,
 ): PayslipItem {
   const total = sbhDecimal * contractData.sbh;
   return createPayslipItem(total, 50, sbhDecimal, false, true);
@@ -344,11 +353,12 @@ function calculateSBH(
 function formatSbh(decimalHours: number): string {
   const hours = Math.floor(decimalHours);
   const minutes = Math.round((decimalHours - hours) * 60);
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 }
 ```
 
 #### Leave Calculations (Unpaid, Parental, 104)
+
 ```typescript
 function calculateLeave(
   days: number,
@@ -356,7 +366,7 @@ function calculateLeave(
   ffp: number,
   isStatutory: boolean,
   date: Date,
-  settings: Settings
+  settings: Settings,
 ): LeaveItem {
   if (isStatutory) {
     // Statutory leave: calculated on actual month days
@@ -367,18 +377,18 @@ function calculateLeave(
     return {
       basicQuota: createPayslipItem(basicQuota, 100, days, true),
       ffpQuota: createPayslipItem(ffpQuota, 50, days, true),
-      total: createPayslipItem(basicQuota + ffpQuota, 100, days, true)
+      total: createPayslipItem(basicQuota + ffpQuota, 100, days, true),
     };
   } else {
     // Contractual leave: uses contract-defined unpaid leave days
     const ulDays = settings.unpayedLeaveDays;
-    const basicQuota = ((basic + basic/12) * days) / ulDays;
+    const basicQuota = ((basic + basic / 12) * days) / ulDays;
     const ffpQuota = (ffp * days) / ulDays;
 
     return {
       basicQuota: createPayslipItem(basicQuota, 100, days, true),
       ffpQuota: createPayslipItem(ffpQuota, 50, days, true),
-      total: createPayslipItem(basicQuota + ffpQuota, 100, days, true)
+      total: createPayslipItem(basicQuota + ffpQuota, 100, days, true),
     };
   }
 }
@@ -390,7 +400,7 @@ function calculateLeave(
 function calculateINPS(
   taxableAmount: number,
   year: number,
-  inpsDays: number
+  inpsDays: number,
 ): INPS {
   // Minimum daily taxable amount
   const minDailyAmount = getMinImponibile(year); // e.g., €56.87 for 2024/2025
@@ -404,7 +414,7 @@ function calculateINPS(
     ivsAdd: 0.0359,
     cigs: 0.003,
     fsta: 0.00167,
-    fis: 0.0026667
+    fis: 0.0026667,
   };
 
   const contribuzione = {
@@ -412,7 +422,7 @@ function calculateINPS(
     ivsAdd: imponibile * rates.ivsAdd,
     fis: imponibile * rates.fis,
     cigs: imponibile * rates.cigs,
-    fsta: imponibile * rates.fsta
+    fsta: imponibile * rates.fsta,
   };
 
   return {
@@ -420,7 +430,7 @@ function calculateINPS(
     contribuzione,
     contribuzioneTotale: sumValues(contribuzione),
     pensionAcc: imponibile * 0.33,
-    esenzioneIVS: calculateIVSExemption(imponibile, year)
+    esenzioneIVS: calculateIVSExemption(imponibile, year),
   };
 }
 ```
@@ -433,14 +443,14 @@ function calculateIRPEF(
   inps: INPS,
   additionalPayments: AdditionalItem[],
   date: Date,
-  settings: Settings
+  settings: Settings,
 ): IRPEF {
   const year = date.getFullYear();
   const inpsContribution = sumValues(inps.contribuzione);
 
   // Taxable income after INPS
-  const imponibile = taxableArea - inpsContribution +
-                     calculateSLRPayments(additionalPayments);
+  const imponibile =
+    taxableArea - inpsContribution + calculateSLRPayments(additionalPayments);
 
   // Annual projection
   const annualIncome = imponibile * 12;
@@ -450,14 +460,16 @@ function calculateIRPEF(
 
   // Apply deductions
   const detrazioniLavoro = calculateWorkDeductions(annualIncome, year, date);
-  const detrazioniConiuge = settings.coniugeCarico ?
-    calculateSpouseDeductions(annualIncome, year) : 0;
+  const detrazioniConiuge = settings.coniugeCarico
+    ? calculateSpouseDeductions(annualIncome, year)
+    : 0;
 
   // Tax cut (cuneo fiscale)
   const taglioCuneo = calculateCuneoFiscale(imponibile, year);
 
   // Net tax
-  const ritenute = irpefLorda - detrazioniLavoro - detrazioniConiuge - taglioCuneo.amount;
+  const ritenute =
+    irpefLorda - detrazioniLavoro - detrazioniConiuge - taglioCuneo.amount;
 
   return {
     imponibile,
@@ -465,7 +477,12 @@ function calculateIRPEF(
     detrazioniLavoroDipendente: detrazioniLavoro,
     ritenute: Math.max(0, ritenute),
     aliquotaMedia: ritenute / imponibile,
-    trattamentoIntegrativo: calculateBonus(annualIncome, irpefLorda, detrazioniLavoro, date),
+    trattamentoIntegrativo: calculateBonus(
+      annualIncome,
+      irpefLorda,
+      detrazioniLavoro,
+      date,
+    ),
     taglioCuneoFiscale: taglioCuneo,
     // ... other fields
   };
@@ -475,7 +492,7 @@ function calculateIRPEF(
 const TAX_BRACKETS_2024 = [
   { limit: 28000, rate: 0.23 },
   { limit: 50000, rate: 0.35 },
-  { limit: Infinity, rate: 0.43 }
+  { limit: Infinity, rate: 0.43 },
 ];
 
 function calculateTaxBrackets(annualIncome: number, year: number): number {
@@ -503,7 +520,7 @@ function calculateTaxBrackets(annualIncome: number, year: number): number {
 function calculateTFR(
   payslip: Payslip,
   rank: string,
-  imponibileINPS: number
+  imponibileINPS: number,
 ): { retribuzioneUtileTFR: number; tfr: number } {
   const retribuzioneUtileTFR =
     payslip.basic.total +
@@ -516,7 +533,7 @@ function calculateTFR(
     payslip.ul.ffpQuota.total;
 
   // TFR = (RUT / 13.5) - (INPS imponibile * 0.5%)
-  const tfr = (retribuzioneUtileTFR / 13.5) - (imponibileINPS * 0.005);
+  const tfr = retribuzioneUtileTFR / 13.5 - imponibileINPS * 0.005;
 
   return { retribuzioneUtileTFR, tfr };
 }
@@ -528,20 +545,21 @@ function calculateTFR(
 function calculateFondoPensione(
   retribuzioneUtileTFR: number,
   contributionPercent: number,
-  contractData: ContractData
+  contractData: ContractData,
 ): FondoPensione {
   const volontaria = (retribuzioneUtileTFR * contributionPercent) / 100;
 
   // Company matches up to maxContributoAziendaleTfr
-  const percAziendale = contributionPercent >= contractData.maxContributoAziendaleTfr
-    ? contractData.maxContributoAziendaleTfr
-    : 0;
+  const percAziendale =
+    contributionPercent >= contractData.maxContributoAziendaleTfr
+      ? contractData.maxContributoAziendaleTfr
+      : 0;
   const aziendale = (retribuzioneUtileTFR * percAziendale) / 100;
 
   return {
     totale: volontaria + aziendale,
     volontaria,
-    aziendale
+    aziendale,
   };
 }
 ```
@@ -554,44 +572,47 @@ function calculateFondoPensione(
 
 ```typescript
 interface CompanyConfig {
-  maxContributoAziendaleTfr: number;  // Max company TFR contribution %
-  cuReduction: number;                 // New captain reduction
+  maxContributoAziendaleTfr: number; // Max company TFR contribution %
+  cuReduction: number; // New captain reduction
   unpayedLeaveDays: {
-    pil: number;                       // 17 for pilots
-    cc: number;                        // 19 for cabin crew
+    pil: number; // 17 for pilots
+    cc: number; // 19 for cabin crew
   };
-  inpsDays: number;                    // 26
+  inpsDays: number; // 26
   unionFees: {
-    cpt: number;                       // 40
-    fo: number;                        // 20
-    cc: number;                        // 5
+    cpt: number; // 40
+    fo: number; // 20
+    cc: number; // 5
   };
-  claRanks: {                          // CLA rank mappings
+  claRanks: {
+    // CLA rank mappings
     cpt: string[];
     fo: string[];
     cc: string[];
   };
-  claTables: {                         // Pay tables by role/rank
+  claTables: {
+    // Pay tables by role/rank
     pil: Record<Rank, RankContract>;
     cc: Record<Rank, RankContract>;
   };
-  claCorrection: {                     // Annual corrections
+  claCorrection: {
+    // Annual corrections
     pil: ClaCorrection[];
     cc: ClaCorrection[];
   };
 }
 
 interface RankContract {
-  basic: number;           // Monthly base
-  ffp: number;             // Monthly FFP
-  sbh: number;             // Per hour rate
-  al: number;              // Per day rate
-  oob: number;             // Per night rate
-  woff: number;            // Per day rate
-  allowance: number;       // Monthly allowance
-  diaria: number;          // Per day rate
+  basic: number; // Monthly base
+  ffp: number; // Monthly FFP
+  sbh: number; // Per hour rate
+  al: number; // Per day rate
+  oob: number; // Per night rate
+  woff: number; // Per day rate
+  allowance: number; // Monthly allowance
+  diaria: number; // Per day rate
   training: TrainingConfig | null;
-  rsa: number;             // Monthly
+  rsa: number; // Monthly
 }
 
 interface TrainingConfig {
@@ -607,11 +628,11 @@ interface TrainingConfig {
 ### 3.2 Rank-Specific Examples (Ryanair)
 
 | Rank | Basic/Month | FFP/Month | SBH/Hour | Diaria/Day |
-|------|-------------|-----------|----------|------------|
-| CPT | €1,153.85 | €6,587 | €42.20 | €46.48 |
-| FO | €384.62 | €3,177.67 | €18.21 | €46.48 |
-| SEPE | €384.62 | €1,105.23 | €6.88 | €72.29 |
-| PU | €384.62 | €938.50 | €6.88 | €40.00 |
+| ---- | ----------- | --------- | -------- | ---------- |
+| CPT  | €1,153.85   | €6,587    | €42.20   | €46.48     |
+| FO   | €384.62     | €3,177.67 | €18.21   | €46.48     |
+| SEPE | €384.62     | €1,105.23 | €6.88    | €72.29     |
+| PU   | €384.62     | €938.50   | €6.88    | €40.00     |
 
 ---
 
@@ -698,6 +719,7 @@ Use React Navigation with bottom tabs:
 ### 4.3 Input Screen
 
 **Layout:**
+
 - Scrollable form with collapsible sections
 - Cards for grouping related inputs
 - FAB (Floating Action Button) for "Calculate"
@@ -756,6 +778,7 @@ Use React Navigation with bottom tabs:
 ```
 
 **SBH Picker Component:**
+
 ```typescript
 // Custom HH:MM picker using @react-native-picker/picker
 function SbhPicker({ value, onChange }) {
@@ -787,6 +810,7 @@ function SbhPicker({ value, onChange }) {
 ### 4.4 Results Screen
 
 **Layout:**
+
 - Scrollable list with expandable cards
 - Color-coded sections
 - Currency formatting
@@ -870,6 +894,7 @@ function SbhPicker({ value, onChange }) {
 ```
 
 **Payslip Item Row Component:**
+
 ```typescript
 function PayslipItemRow({ label, item, showDetails, onShowDetails }) {
   return (
@@ -1005,9 +1030,9 @@ function PayslipItemRow({ label, item, showDetails, onShowDetails }) {
 
 ```typescript
 // store/usePayrollStore.ts
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface PayrollState {
   // Input form state
@@ -1024,14 +1049,20 @@ interface PayrollState {
 
   // Actions
   setDate: (date: string) => void;
-  setSbh: (value: string) => void;  // HH:MM format
+  setSbh: (value: string) => void; // HH:MM format
   setNumeric: (key: keyof Input, value: number) => void;
   addAdditionalPayment: () => void;
   removeAdditionalPayment: (index: number) => void;
-  updateAdditionalPayment: (index: number, updates: Partial<AdditionalInput>) => void;
+  updateAdditionalPayment: (
+    index: number,
+    updates: Partial<AdditionalInput>,
+  ) => void;
   addAdditionalDeduction: () => void;
   removeAdditionalDeduction: (index: number) => void;
-  updateAdditionalDeduction: (index: number, updates: Partial<AdditionalDeductionInput>) => void;
+  updateAdditionalDeduction: (
+    index: number,
+    updates: Partial<AdditionalDeductionInput>,
+  ) => void;
   updateSettings: (updates: Partial<Settings>) => void;
   calculate: () => Promise<void>;
   reset: () => void;
@@ -1039,7 +1070,7 @@ interface PayrollState {
 
 const DEFAULT_INPUT: Input = {
   date: getDefaultReferenceMonth(),
-  sbh: '0:00',
+  sbh: "0:00",
   flyDiaria: 0,
   noFlyDiaria: 0,
   onlyNationalFly: 0,
@@ -1060,7 +1091,7 @@ const DEFAULT_INPUT: Input = {
   commissions: 0,
   landingInOffDay: 0,
   bankHolydays: 0,
-  inpsDays: 0
+  inpsDays: 0,
 };
 
 export const usePayrollStore = create<PayrollState>()(
@@ -1088,7 +1119,10 @@ export const usePayrollStore = create<PayrollState>()(
       },
 
       addAdditionalPayment: () => {
-        const payments = [...get().input.additional, { amount: 0, tax: 100, isSLR: false, isConguaglio: false }];
+        const payments = [
+          ...get().input.additional,
+          { amount: 0, tax: 100, isSLR: false, isConguaglio: false },
+        ];
         set({ input: { ...get().input, additional: payments } });
       },
 
@@ -1099,7 +1133,7 @@ export const usePayrollStore = create<PayrollState>()(
 
       updateAdditionalPayment: (index, updates) => {
         const payments = get().input.additional.map((p, i) =>
-          i === index ? { ...p, ...updates } : p
+          i === index ? { ...p, ...updates } : p,
         );
         set({ input: { ...get().input, additional: payments } });
       },
@@ -1114,7 +1148,11 @@ export const usePayrollStore = create<PayrollState>()(
           const { input, settings } = get();
           const contractData = await getContractData(settings);
           const calculator = new PayslipCalculator();
-          const payroll = await calculator.calculatePayroll(contractData, input, settings);
+          const payroll = await calculator.calculatePayroll(
+            contractData,
+            input,
+            settings,
+          );
           set({ payroll, isCalculating: false });
         } catch (err) {
           set({ error: err.message, isCalculating: false });
@@ -1125,19 +1163,19 @@ export const usePayrollStore = create<PayrollState>()(
         set({
           input: DEFAULT_INPUT,
           payroll: null,
-          workingDaysInMonth: 0
+          workingDaysInMonth: 0,
         });
-      }
+      },
     }),
     {
-      name: 'payroll-storage',
+      name: "payroll-storage",
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         input: state.input,
-        settings: state.settings
-      })
-    }
-  )
+        settings: state.settings,
+      }),
+    },
+  ),
 );
 ```
 
@@ -1254,41 +1292,45 @@ payslip-calculator-expo/
 ## 8. Key Implementation Notes
 
 ### 8.1 Date Handling
+
 - Always use ISO 8601 format for storage: `YYYY-MM-DD`
 - Display dates in Italian format: `MM/YYYY` for reference month
 - Use `date-fns` for all date manipulation
 
 ### 8.2 Number Formatting
+
 ```typescript
 // Currency
 const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('it-IT', {
-    style: 'currency',
-    currency: 'EUR'
+  new Intl.NumberFormat("it-IT", {
+    style: "currency",
+    currency: "EUR",
   }).format(value);
 
 // Percentage
 const formatPercent = (value: number): string =>
-  new Intl.NumberFormat('it-IT', {
-    style: 'percent',
-    minimumFractionDigits: 1
+  new Intl.NumberFormat("it-IT", {
+    style: "percent",
+    minimumFractionDigits: 1,
   }).format(value);
 
 // Hours (HH:MM)
 const formatHours = (decimalHours: number): string => {
   const hours = Math.floor(decimalHours);
   const minutes = Math.round((decimalHours - hours) * 60);
-  return `${hours}:${minutes.toString().padStart(2, '0')}`;
+  return `${hours}:${minutes.toString().padStart(2, "0")}`;
 };
 ```
 
 ### 8.3 Validation
+
 - All numeric inputs should have min/max validation
 - SBH: max 150 hours
 - Days inputs: max 31
 - Percentage inputs: 0-100
 
 ### 8.4 Performance
+
 - Use `useMemo` for expensive calculations
 - Debounce settings saves
 - Lazy load contract data
@@ -1298,6 +1340,7 @@ const formatHours = (decimalHours: number): string => {
 ## 9. Testing Checklist
 
 ### Unit Tests
+
 - [ ] PayslipCalculator.calculatePayroll()
 - [ ] INPS calculation with minimum thresholds
 - [ ] IRPEF bracket calculations
@@ -1306,11 +1349,13 @@ const formatHours = (decimalHours: number): string => {
 - [ ] Leave calculations (statutory vs contractual)
 
 ### Integration Tests
+
 - [ ] Complete flow: Input → Calculate → Display Results
 - [ ] Settings persistence
 - [ ] Contract data loading
 
 ### UI Tests
+
 - [ ] SBH picker conversion
 - [ ] Month picker default value
 - [ ] Additional payments add/remove
@@ -1320,17 +1365,17 @@ const formatHours = (decimalHours: number): string => {
 
 ## 10. Appendix: Italian Tax Terms
 
-| Term | English | Description |
-|------|---------|-------------|
-| INPS | Social Security | Social security contributions (IVS, FIS, CIGS, FSTA) |
-| IRPEF | Income Tax | Personal income tax with progressive brackets |
-| TFR | Severance Pay | Trattamento di Fine Rapporto - severance pay |
-| Diaria | Per Diem | Daily allowance for travel |
-| FFP | Flight Pay | Fixed flight pay component |
-| SBH | Block Hours | Scheduled flight hours |
-| AL | Annual Leave | Paid vacation days |
-| OOB | Out of Base | Nights spent away from base |
-| Imponibile | Taxable Amount | Amount subject to taxation |
-| Detrazione | Deduction | Tax deduction/credit |
-| Ritenuta | Withholding | Tax withheld from paycheck |
-| Conguaglio | Adjustment | Year-end tax adjustment |
+| Term       | English         | Description                                          |
+| ---------- | --------------- | ---------------------------------------------------- |
+| INPS       | Social Security | Social security contributions (IVS, FIS, CIGS, FSTA) |
+| IRPEF      | Income Tax      | Personal income tax with progressive brackets        |
+| TFR        | Severance Pay   | Trattamento di Fine Rapporto - severance pay         |
+| Diaria     | Per Diem        | Daily allowance for travel                           |
+| FFP        | Flight Pay      | Fixed flight pay component                           |
+| SBH        | Block Hours     | Scheduled flight hours                               |
+| AL         | Annual Leave    | Paid vacation days                                   |
+| OOB        | Out of Base     | Nights spent away from base                          |
+| Imponibile | Taxable Amount  | Amount subject to taxation                           |
+| Detrazione | Deduction       | Tax deduction/credit                                 |
+| Ritenuta   | Withholding     | Tax withheld from paycheck                           |
+| Conguaglio | Adjustment      | Year-end tax adjustment                              |

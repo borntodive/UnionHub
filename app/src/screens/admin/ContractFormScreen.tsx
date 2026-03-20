@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,25 +8,28 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp, DrawerActions } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+} from "react-native";
 import {
-  Menu,
-  Save,
-  Briefcase,
-  Hash,
-} from 'lucide-react-native';
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import {
+  useNavigation,
+  useRoute,
+  RouteProp,
+  DrawerActions,
+} from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Menu, Save, Briefcase, Hash } from "lucide-react-native";
 
-import { colors, spacing, typography, borderRadius } from '../../theme';
-import { Button } from '../../components/Button';
-import { Card } from '../../components/Card';
-import { contractsApi } from '../../api/contracts';
-import { RootStackParamList } from '../../navigation/types';
+import { colors, spacing, typography, borderRadius } from "../../theme";
+import { Button } from "../../components/Button";
+import { Card } from "../../components/Card";
+import { contractsApi } from "../../api/contracts";
+import { RootStackParamList } from "../../navigation/types";
 
-type ContractFormRouteProp = RouteProp<RootStackParamList, 'ContractForm'>;
+type ContractFormRouteProp = RouteProp<RootStackParamList, "ContractForm">;
 type ContractFormNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const ContractFormScreen: React.FC = () => {
@@ -38,13 +41,13 @@ export const ContractFormScreen: React.FC = () => {
   const isEditing = !!contractId;
 
   const [formData, setFormData] = useState({
-    codice: '',
-    nome: '',
+    codice: "",
+    nome: "",
   });
 
   // Fetch contract data if editing
   const { data: contract, isLoading: isLoadingContract } = useQuery({
-    queryKey: ['contract', contractId],
+    queryKey: ["contract", contractId],
     queryFn: () => contractsApi.getContractById(contractId!),
     enabled: isEditing,
   });
@@ -62,35 +65,42 @@ export const ContractFormScreen: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (data: typeof formData) => contractsApi.createContract(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contracts'] });
-      Alert.alert('Success', 'Contract created successfully');
+      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      Alert.alert("Success", "Contract created successfully");
       navigation.goBack();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to create contract');
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to create contract",
+      );
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: typeof formData) => contractsApi.updateContract(contractId!, data),
+    mutationFn: (data: typeof formData) =>
+      contractsApi.updateContract(contractId!, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contracts'] });
-      queryClient.invalidateQueries({ queryKey: ['contract', contractId] });
-      Alert.alert('Success', 'Contract updated successfully');
+      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["contract", contractId] });
+      Alert.alert("Success", "Contract updated successfully");
       navigation.goBack();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to update contract');
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to update contract",
+      );
     },
   });
 
   const validateForm = (): boolean => {
     if (!formData.codice.trim()) {
-      Alert.alert('Error', 'Code is required');
+      Alert.alert("Error", "Code is required");
       return false;
     }
     if (!formData.nome.trim()) {
-      Alert.alert('Error', 'Name is required');
+      Alert.alert("Error", "Name is required");
       return false;
     }
     return true;
@@ -111,12 +121,16 @@ export const ContractFormScreen: React.FC = () => {
     }
   };
 
-  const isLoading = createMutation.isPending || updateMutation.isPending || isLoadingContract;
+  const isLoading =
+    createMutation.isPending || updateMutation.isPending || isLoadingContract;
 
   return (
     <View style={styles.wrapper}>
       <View style={[styles.statusBarHack, { height: insets.top }]} />
-      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <SafeAreaView
+        style={styles.container}
+        edges={["bottom", "left", "right"]}
+      >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
@@ -127,7 +141,7 @@ export const ContractFormScreen: React.FC = () => {
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>
-            {isEditing ? 'Edit Contract' : 'New Contract'}
+            {isEditing ? "Edit Contract" : "New Contract"}
           </Text>
           <TouchableOpacity
             onPress={handleSave}
@@ -156,7 +170,9 @@ export const ContractFormScreen: React.FC = () => {
                 <TextInput
                   style={styles.input}
                   value={formData.codice}
-                  onChangeText={(text) => setFormData({ ...formData, codice: text.toUpperCase() })}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, codice: text.toUpperCase() })
+                  }
                   placeholder="e.g. MAY-PI, CC-AFA"
                   placeholderTextColor={colors.textTertiary}
                   autoCapitalize="characters"
@@ -179,14 +195,14 @@ export const ContractFormScreen: React.FC = () => {
                 <TextInput
                   style={styles.input}
                   value={formData.nome}
-                  onChangeText={(text) => setFormData({ ...formData, nome: text })}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, nome: text })
+                  }
                   placeholder="e.g. CCNL Naviganti Piloti"
                   placeholderTextColor={colors.textTertiary}
                 />
               </View>
-              <Text style={styles.hint}>
-                Full name of the contract
-              </Text>
+              <Text style={styles.hint}>Full name of the contract</Text>
             </View>
           </Card>
 
@@ -198,7 +214,7 @@ export const ContractFormScreen: React.FC = () => {
               style={styles.actionButton}
             />
             <Button
-              title={isEditing ? 'Update Contract' : 'Create Contract'}
+              title={isEditing ? "Update Contract" : "Create Contract"}
               onPress={handleSave}
               loading={isLoading}
               style={styles.actionButton}
@@ -225,9 +241,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     backgroundColor: colors.primary,
@@ -236,21 +252,21 @@ const styles = StyleSheet.create({
   menuButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
     color: colors.textInverse,
     flex: 1,
-    textAlign: 'center',
+    textAlign: "center",
   },
   saveButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   content: {
     flex: 1,
@@ -272,8 +288,8 @@ const styles = StyleSheet.create({
     color: colors.error,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
@@ -295,7 +311,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   actionsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.md,
     margin: spacing.md,
     marginTop: spacing.lg,

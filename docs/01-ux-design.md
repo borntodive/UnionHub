@@ -36,27 +36,28 @@ There is no distinction between "user" and "member": they are the **same entity*
 
 ### Permissions Matrix
 
-| Feature                                   | SuperAdmin | Admin | User |
-|-------------------------------------------|:----------:|:-----:|:----:|
-| Login (crewcode + password)               | ✓          | ✓     | ✓    |
-| View own data                             | ✓          | ✓     | ✓    |
-| Edit own basic data                       | ✓          | ✓     | ✓    |
-| Members list (own role only)              | ✓ (all)    | ✓ *   | ✗    |
-| Search members                            | ✓ (all)    | ✓ *   | ✗    |
-| Create member (manual/PDF)                | ✓          | ✓ *   | ✗    |
-| Edit member                               | ✓          | ✓ *   | ✗    |
-| View notes, ITUD flag, RSA                | ✓          | ✓     | ✗    |
-| Manage bases (code + name)                | ✓          | ✗     | ✗    |
-| Manage contracts (code + name)            | ✓          | ✗     | ✗    |
-| Manage grades (code + name + role)        | ✓          | ✗     | ✗    |
-| Manage other Admins                       | ✓          | ✗     | ✗    |
-| Email / WhatsApp notifications            | ✓          | ✓ *   | ✗    |
+| Feature                            | SuperAdmin | Admin | User |
+| ---------------------------------- | :--------: | :---: | :--: |
+| Login (crewcode + password)        |     ✓      |   ✓   |  ✓   |
+| View own data                      |     ✓      |   ✓   |  ✓   |
+| Edit own basic data                |     ✓      |   ✓   |  ✓   |
+| Members list (own role only)       |  ✓ (all)   | ✓ \*  |  ✗   |
+| Search members                     |  ✓ (all)   | ✓ \*  |  ✗   |
+| Create member (manual/PDF)         |     ✓      | ✓ \*  |  ✗   |
+| Edit member                        |     ✓      | ✓ \*  |  ✗   |
+| View notes, ITUD flag, RSA         |     ✓      |   ✓   |  ✗   |
+| Manage bases (code + name)         |     ✓      |   ✗   |  ✗   |
+| Manage contracts (code + name)     |     ✓      |   ✗   |  ✗   |
+| Manage grades (code + name + role) |     ✓      |   ✗   |  ✗   |
+| Manage other Admins                |     ✓      |   ✗   |  ✗   |
+| Email / WhatsApp notifications     |     ✓      | ✓ \*  |  ✗   |
 
 > **\* Admin scoped by role:** The Admin has an assigned professional role (Pilot or Cabin Crew) and can see/manage **only the members of their own role**. The SuperAdmin sees and manages all members regardless of role.
 
 ### Member Fields
 
 **Visible to all (including User):**
+
 - First name, Last name
 - Email
 - Crewcode (also used for login)
@@ -72,17 +73,18 @@ Grades are managed by the SuperAdmin via CRUD (like bases and contracts). Each g
 
 Default grades (inserted via seeder):
 
-| Role         | Code   | Name                   |
-|--------------|--------|------------------------|
-| Pilot        | CMD    | Commander              |
-| Pilot        | FO     | First Officer          |
-| Pilot        | SO     | Second Officer         |
-| Pilot        | ALL    | Cadet                  |
-| Cabin Crew   | RDC    | Cabin Manager          |
-| Cabin Crew   | SEN    | CC Senior              |
-| Cabin Crew   | ADV    | Cabin Crew             |
+| Role       | Code | Name           |
+| ---------- | ---- | -------------- |
+| Pilot      | CMD  | Commander      |
+| Pilot      | FO   | First Officer  |
+| Pilot      | SO   | Second Officer |
+| Pilot      | ALL  | Cadet          |
+| Cabin Crew | RDC  | Cabin Manager  |
+| Cabin Crew | SEN  | CC Senior      |
+| Cabin Crew | ADV  | Cabin Crew     |
 
 **Visible to Admin / SuperAdmin only:**
+
 - Notes
 - ITUD flag (boolean)
 - RSA flag (boolean)
@@ -147,6 +149,7 @@ UnionConnect
 > **\* Admin Scoping:** The Admin accesses only the members of their own professional role (Pilot OR Cabin Crew). The SuperAdmin has no such restriction and sees all members.
 
 > **Note on extensibility:** The tab bar is designed to accommodate up to **5 tabs**. If sections grow beyond 5 in the future, the **"More" overflow** pattern is adopted (an extra tab that opens a menu with the additional items). For now:
+>
 > - **User:** Profile + Tools (2 tabs, with the ability to add items to Tools in the future)
 > - **Admin:** Home + Members + Profile (3 tabs, Tools becomes the 4th tab when active)
 > - **SuperAdmin:** Home + Members + Settings + Profile (4 tabs, Tools becomes the 5th tab or an item in "More")
@@ -388,28 +391,28 @@ Border radius:
 
 ### 4.4 React Native Components Reference
 
-| Context                               | React Native / Expo Component         | Notes                                             |
-|---------------------------------------|---------------------------------------|---------------------------------------------------|
-| Main navigation                       | `@react-navigation/bottom-tabs`       | Max 4-5 tabs, icons + labels                        |
-| Page header                           | Custom Header with `SafeAreaView`     | Native stack navigator header                     |
-| Members list                          | `FlatList` with `refreshControl`      | Virtualized for performance on long lists         |
-| Member card                           | `TouchableOpacity` + `Card`           | With colored initials avatar                      |
-| Search                                | `TextInput` with `Search` icon        | With 300ms debounce                               |
-| Form fields                           | `TextInput` + `react-hook-form`       | Floating label (custom)                           |
-| Selectors (base/contract/role/grade)  | `@react-native-picker/picker`         | Native picker on iOS/Android                      |
-| Toggle (ITUD, RSA)                    | `Switch`                              | Primary color                                     |
-| Textarea (notes)                      | `TextInput` multiline                 | Auto-grow                                         |
-| PDF upload                            | `expo-document-picker`                | Native file picker                                |
-| Creation modal                        | `@react-navigation/native-stack`      | Full screen modal presentation                    |
-| Confirmation alert                    | `Alert.alert()`                       | Native alert dialog                               |
-| Toast notifications                   | `react-native-toast-message`          | Bottom position, 3s duration                      |
-| Loading overlay                       | `ActivityIndicator`                   | Spinner overlay                                   |
-| Refresh                               | `RefreshControl`                      | Pull-to-refresh on FlatList                       |
-| Add FAB                               | `TouchableOpacity` (FAB style)        | Secondary red, `+` icon                           |
-| Filter chip                           | `TouchableOpacity` (Chip style)       | Quick filters (by role, by base)                  |
-| Skeleton loading                      | `react-native-skeleton-placeholder`   | Placeholder while list is loading                 |
-| Segmented control                     | `SegmentedControl` (custom)           | For alternative views (e.g. OCR/Manual)           |
-| Accordion (detail)                    | `react-native-collapsible`            | For collapsible sections in detail view           |
+| Context                              | React Native / Expo Component       | Notes                                     |
+| ------------------------------------ | ----------------------------------- | ----------------------------------------- |
+| Main navigation                      | `@react-navigation/bottom-tabs`     | Max 4-5 tabs, icons + labels              |
+| Page header                          | Custom Header with `SafeAreaView`   | Native stack navigator header             |
+| Members list                         | `FlatList` with `refreshControl`    | Virtualized for performance on long lists |
+| Member card                          | `TouchableOpacity` + `Card`         | With colored initials avatar              |
+| Search                               | `TextInput` with `Search` icon      | With 300ms debounce                       |
+| Form fields                          | `TextInput` + `react-hook-form`     | Floating label (custom)                   |
+| Selectors (base/contract/role/grade) | `@react-native-picker/picker`       | Native picker on iOS/Android              |
+| Toggle (ITUD, RSA)                   | `Switch`                            | Primary color                             |
+| Textarea (notes)                     | `TextInput` multiline               | Auto-grow                                 |
+| PDF upload                           | `expo-document-picker`              | Native file picker                        |
+| Creation modal                       | `@react-navigation/native-stack`    | Full screen modal presentation            |
+| Confirmation alert                   | `Alert.alert()`                     | Native alert dialog                       |
+| Toast notifications                  | `react-native-toast-message`        | Bottom position, 3s duration              |
+| Loading overlay                      | `ActivityIndicator`                 | Spinner overlay                           |
+| Refresh                              | `RefreshControl`                    | Pull-to-refresh on FlatList               |
+| Add FAB                              | `TouchableOpacity` (FAB style)      | Secondary red, `+` icon                   |
+| Filter chip                          | `TouchableOpacity` (Chip style)     | Quick filters (by role, by base)          |
+| Skeleton loading                     | `react-native-skeleton-placeholder` | Placeholder while list is loading         |
+| Segmented control                    | `SegmentedControl` (custom)         | For alternative views (e.g. OCR/Manual)   |
+| Accordion (detail)                   | `react-native-collapsible`          | For collapsible sections in detail view   |
 
 ### 4.5 Iconography
 
@@ -808,51 +811,52 @@ Grade Create/Edit Form:
 
 PDF Field Mapping Configuration Form (SuperAdmin):
 ┌─────────────────────────────────────────────────────────────┐
-│ ←  New PDF Field Mapping                                    │
+│ ← New PDF Field Mapping │
 ├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  Mapping Name *                                             │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ Pilot Registration Form 2024                        │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                             │
-│  Role *                                                     │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ Pilot                                               │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                             │
-│  [✓] Set as default for this role                          │
-│                                                             │
-│  ─────────── Field Mappings ───────────                     │
-│                                                             │
-│  ┌──────────────────┬──────────────────┬──────────┐        │
-│  │ PDF Field        │ Member Field     │ Type     │        │
-│  ├──────────────────┼──────────────────┼──────────┤        │
-│  │ nome             │ nome             │ Form  ▼  │        │
-│  │ cognome          │ cognome          │ Form  ▼  │        │
-│  │ email            │ email            │ Form  ▼  │        │
-│  │ crew_code        │ crewcode         │ OCR   ▼  │        │
-│  │ telefono         │ phone            │ Form  ▼  │        │
-│  └──────────────────┴──────────────────┴──────────┘        │
-│                                                             │
-│  [+ Add Mapping]                                           │
-│                                                             │
-│  ──── OCR Pattern Configuration (for OCR type) ────         │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ Pattern:                                            │    │
-│  │ Crew Code:\s*([A-Z0-9]{3,15})                       │    │
-│  │                                                     │    │
-│  │ Test: AB1234 ✓ Match                               │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │                    SAVE                             │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                             │
+│ │
+│ Mapping Name _ │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ Pilot Registration Form 2024 │ │
+│ └─────────────────────────────────────────────────────┘ │
+│ │
+│ Role _ │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ Pilot │ │
+│ └─────────────────────────────────────────────────────┘ │
+│ │
+│ [✓] Set as default for this role │
+│ │
+│ ─────────── Field Mappings ─────────── │
+│ │
+│ ┌──────────────────┬──────────────────┬──────────┐ │
+│ │ PDF Field │ Member Field │ Type │ │
+│ ├──────────────────┼──────────────────┼──────────┤ │
+│ │ nome │ nome │ Form ▼ │ │
+│ │ cognome │ cognome │ Form ▼ │ │
+│ │ email │ email │ Form ▼ │ │
+│ │ crew_code │ crewcode │ OCR ▼ │ │
+│ │ telefono │ phone │ Form ▼ │ │
+│ └──────────────────┴──────────────────┴──────────┘ │
+│ │
+│ [+ Add Mapping] │
+│ │
+│ ──── OCR Pattern Configuration (for OCR type) ──── │
+│ │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ Pattern: │ │
+│ │ Crew Code:\s\*([A-Z0-9]{3,15}) │ │
+│ │ │ │
+│ │ Test: AB1234 ✓ Match │ │
+│ └─────────────────────────────────────────────────────┘ │
+│ │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ SAVE │ │
+│ └─────────────────────────────────────────────────────┘ │
+│ │
 └─────────────────────────────────────────────────────────────┘
 
 > **Field Types:**
+>
 > - **Form Field**: Reads value from fillable PDF AcroForm fields
 > - **OCR Pattern**: Uses regex pattern to extract from scanned text
 >
@@ -863,65 +867,66 @@ PDF Field Mapping Configuration Form (SuperAdmin):
 
 Excel Field Mapping Configuration Form (SuperAdmin):
 ┌─────────────────────────────────────────────────────────────┐
-│ ←  New Excel Import Template                                │
+│ ← New Excel Import Template │
 ├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  Template Name *                                            │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ Pilot Import Template 2024                          │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                             │
-│  Role *                                                     │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ Pilot                                               │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                             │
-│  [✓] Set as default for this role                          │
-│                                                             │
-│  Expected Headers (auto-detected from sample)              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ Nome, Cognome, Crewcode, Email, Telefono, Base     │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                             │
-│  ─────────── Column Mappings ───────────                  │
-│                                                             │
-│  ┌─────────┬─────────────┬────────────┬──────────┬────────┐│
-│  │ Column  │ Header      │ Member     │ Required │Valid.  ││
-│  │ Index   │ Name        │ Field      │          │Rule   ││
-│  ├─────────┼─────────────┼────────────┼──────────┼────────┤│
-│  │ 0       │ Nome        │ nome       │ ✓        │       ││
-│  │ 1       │ Cognome     │ cognome    │ ✓        │       ││
-│  │ 2       │ Crewcode    │ crewcode   │ ✓        │unique ││
-│  │ 3       │ Email       │ email      │ ✓        │email  ││
-│  │ 4       │ Telefono    │ telefono   │          │phone  ││
-│  │ 5       │ Base        │ baseCode   │          │lookup ││
-│  │ 6       │ Grado       │ gradeCode  │          │lookup ││
-│  └─────────┴─────────────┴────────────┴──────────┴────────┘│
-│                                                             │
-│  [+ Add Column Mapping]                                    │
-│                                                             │
-│  ──── Validation Rules Reference ────                       │
-│                                                             │
-│  • **unique**: Check for duplicate values in file          │
-│  • **email**: Validate email format                         │
-│  • **phone**: Normalize and validate phone format           │
-│  • **lookup**: Verify against database (bases, grades)      │
-│  • **date**: Validate date format                          │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │  [Download Sample]        [Preview Mapping]         │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │                    SAVE                             │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                             │
+│ │
+│ Template Name _ │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ Pilot Import Template 2024 │ │
+│ └─────────────────────────────────────────────────────┘ │
+│ │
+│ Role _ │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ Pilot │ │
+│ └─────────────────────────────────────────────────────┘ │
+│ │
+│ [✓] Set as default for this role │
+│ │
+│ Expected Headers (auto-detected from sample) │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ Nome, Cognome, Crewcode, Email, Telefono, Base │ │
+│ └─────────────────────────────────────────────────────┘ │
+│ │
+│ ─────────── Column Mappings ─────────── │
+│ │
+│ ┌─────────┬─────────────┬────────────┬──────────┬────────┐│
+│ │ Column │ Header │ Member │ Required │Valid. ││
+│ │ Index │ Name │ Field │ │Rule ││
+│ ├─────────┼─────────────┼────────────┼──────────┼────────┤│
+│ │ 0 │ Nome │ nome │ ✓ │ ││
+│ │ 1 │ Cognome │ cognome │ ✓ │ ││
+│ │ 2 │ Crewcode │ crewcode │ ✓ │unique ││
+│ │ 3 │ Email │ email │ ✓ │email ││
+│ │ 4 │ Telefono │ telefono │ │phone ││
+│ │ 5 │ Base │ baseCode │ │lookup ││
+│ │ 6 │ Grado │ gradeCode │ │lookup ││
+│ └─────────┴─────────────┴────────────┴──────────┴────────┘│
+│ │
+│ [+ Add Column Mapping] │
+│ │
+│ ──── Validation Rules Reference ──── │
+│ │
+│ • **unique**: Check for duplicate values in file │
+│ • **email**: Validate email format │
+│ • **phone**: Normalize and validate phone format │
+│ • **lookup**: Verify against database (bases, grades) │
+│ • **date**: Validate date format │
+│ │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ [Download Sample] [Preview Mapping] │ │
+│ └─────────────────────────────────────────────────────┘ │
+│ │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ SAVE │ │
+│ └─────────────────────────────────────────────────────┘ │
+│ │
 └─────────────────────────────────────────────────────────────┘
 
 > **Member Fields:** nome, cognome, email, crewcode, telefono, baseCode,
 > contrattoCode, gradeCode, itud, rsa, note
 >
 > **Lookup Validations:**
+>
 > - `lookup_base` - Validates against bases.codice
 > - `lookup_grade` - Validates against grades.codice for the selected role
 > - `lookup_contract` - Validates against contracts.codice
@@ -989,98 +994,101 @@ STEP 1: File Selection + Role Selection
 File picker: DocumentPicker.getDocumentAsync({ type: 'application/pdf' })
 ```
 
-
 STEP 2: Processing + Preview
 ┌─────────────────────────────┐
-│ ←  Processing PDF...        │
+│ ← Processing PDF... │
 ├─────────────────────────────┤
-│                             │
-│   ┌─────────────────────┐   │
-│   │                     │   │
-│   │   ⏳                │   │  ← ActivityIndicator
-│   │                     │   │
-│   │  Extracting data    │   │
-│   │  from PDF...        │   │
-│   │                     │   │
-│   │  [====>    ] 45%    │   │  ← Progress bar
-│   │                     │   │
-│   └─────────────────────┘   │
-│                             │
-│  Method: PDF Form Fields    │  ← Status badge updates
-│  Confidence: 92%            │
-│                             │
+│ │
+│ ┌─────────────────────┐ │
+│ │ │ │
+│ │ ⏳ │ │ ← ActivityIndicator
+│ │ │ │
+│ │ Extracting data │ │
+│ │ from PDF... │ │
+│ │ │ │
+│ │ [====> ] 45% │ │ ← Progress bar
+│ │ │ │
+│ └─────────────────────┘ │
+│ │
+│ Method: PDF Form Fields │ ← Status badge updates
+│ Confidence: 92% │
+│ │
 └─────────────────────────────┘
 
 Extraction Result Badge colors:
-  - Form Fields: green (#2E7D32) — "Extracted from form fields"
-  - OCR: orange (#E65100) — "Extracted via OCR - please verify"
-  - Manual: gray (#6C757D) — "Manual entry required"
+
+- Form Fields: green (#2E7D32) — "Extracted from form fields"
+- OCR: orange (#E65100) — "Extracted via OCR - please verify"
+- Manual: gray (#6C757D) — "Manual entry required"
 
 STEP 3: Verification Screen (Split View)
 ┌─────────────────────────────┐
-│ ←  Verify Member Data       │
+│ ← Verify Member Data │
 ├─────────────────────────────┤
-│ ⚠ OCR Result - Please verify│  ← Warning banner if OCR/manual
+│ ⚠ OCR Result - Please verify│ ← Warning banner if OCR/manual
 ├─────────────────────────────┤
-│  ┌──────────┬────────────┐  │
-│  │          │  Nome *    │  │
-│  │   📄     │ ┌────────┐ │  │
-│  │          │ │ Marco  │ │  │
-│  │  PDF     │ └────────┘ │  │
-│  │  Preview │            │  │
-│  │  (tap    │  Cognome * │  │
-│  │   to     │ ┌────────┐ │  │
-│  │  zoom)   │ │Bianchi │ │  │
-│  │          │ └────────┘ │  │
-│  │          │            │  │
-│  │ [View    │  Crewcode* │  │
-│  │  PDF]    │ ┌────────┐ │  │
-│  │          │ │AB1234  │ │  │
-│  │          │ └────────┘ │  │
-│  └──────────┴────────────┘  │
-│                             │
-│  [← PDF  Form →]            │  ← Toggle between PDF and form
-│                             │
-│  ┌─────────────────────┐    │
-│  │     SAVE MEMBER     │    │
-│  └─────────────────────┘    │
-│                             │
+│ ┌──────────┬────────────┐ │
+│ │ │ Nome _ │ │
+│ │ 📄 │ ┌────────┐ │ │
+│ │ │ │ Marco │ │ │
+│ │ PDF │ └────────┘ │ │
+│ │ Preview │ │ │
+│ │ (tap │ Cognome _ │ │
+│ │ to │ ┌────────┐ │ │
+│ │ zoom) │ │Bianchi │ │ │
+│ │ │ └────────┘ │ │
+│ │ │ │ │
+│ │ [View │ Crewcode* │ │
+│ │ PDF] │ ┌────────┐ │ │
+│ │ │ │AB1234 │ │ │
+│ │ │ └────────┘ │ │
+│ └──────────┴────────────┘ │
+│ │
+│ [← PDF Form →] │ ← Toggle between PDF and form
+│ │
+│ ┌─────────────────────┐ │
+│ │ SAVE MEMBER │ │
+│ └─────────────────────┘ │
+│ │
 └─────────────────────────────┘
 
 On tablet/iPad: Side-by-side view
 On phone: Tab toggle or swipe between PDF and form
+
 ```
 
 ### 6.3 Data Validation Errors
 
 ```
+
 ┌─────────────────────────────┐
-│ ←  Verify Member Data       │
+│ ← Verify Member Data │
 ├─────────────────────────────┤
-│                             │
-│  ┌─────────────────────┐    │
-│  │ ⚠ Validation Errors │    │  ← Alert banner
-│  │                     │    │
-│  │ • Email format      │    │
-│  │   invalid           │    │
-│  │ • Base code 'XYZ'   │    │
-│  │   not found         │    │
-│  └─────────────────────┘    │
-│                             │
-│  Email *                    │
-│  ┌─────────────────────┐    │
-│  │ marco.bianchi@      │    │  ← Red border for invalid
-│  └─────────────────────┘    │
-│  ⚠ Invalid email format     │  ← Inline error message
-│                             │
-│  Base *                     │
-│  ┌─────────────────────┐    │
-│  │ XYZ                 │    │  ← Red border
-│  └─────────────────────┘    │
-│  ⚠ Base 'XYZ' not found.    │
-│    Available: FCO, MXP...   │
-│                             │
+│ │
+│ ┌─────────────────────┐ │
+│ │ ⚠ Validation Errors │ │ ← Alert banner
+│ │ │ │
+│ │ • Email format │ │
+│ │ invalid │ │
+│ │ • Base code 'XYZ' │ │
+│ │ not found │ │
+│ └─────────────────────┘ │
+│ │
+│ Email _ │
+│ ┌─────────────────────┐ │
+│ │ marco.bianchi@ │ │ ← Red border for invalid
+│ └─────────────────────┘ │
+│ ⚠ Invalid email format │ ← Inline error message
+│ │
+│ Base _ │
+│ ┌─────────────────────┐ │
+│ │ XYZ │ │ ← Red border
+│ └─────────────────────┘ │
+│ ⚠ Base 'XYZ' not found. │
+│ Available: FCO, MXP... │
+│ │
 └─────────────────────────────┘
+
 ```
 
 ---
@@ -1090,86 +1098,90 @@ On phone: Tab toggle or swipe between PDF and form
 ### 7.1 Loading States
 
 ```
+
 Initial Load (Full Screen):
 ┌─────────────────────────────┐
-│                             │
-│         [Logo]              │
-│                             │
-│      UnionConnect           │
-│                             │
-│        ⏳                   │  ← ActivityIndicator
-│                             │
-│    Loading members...       │
-│                             │
+│ │
+│ [Logo] │
+│ │
+│ UnionConnect │
+│ │
+│ ⏳ │ ← ActivityIndicator
+│ │
+│ Loading members... │
+│ │
 └─────────────────────────────┘
 
 List Loading (Skeleton):
 ┌─────────────────────────────┐
-│                             │
+│ │
 │ ┌─────────────────────────┐ │
-│ │ ▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓ │ │  ← Skeleton placeholder
+│ │ ▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓ │ │ ← Skeleton placeholder
 │ │ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │ │
 │ └─────────────────────────┘ │
 │ ┌─────────────────────────┐ │
-│ │ ▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓ │ │
+│ │ ▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓ │ │
 │ │ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │ │
 │ └─────────────────────────┘ │
-│ ...                         │
+│ ... │
 └─────────────────────────────┘
 
 Pull-to-Refresh:
-  ↓ Pull down to refresh indicator
+↓ Pull down to refresh indicator
+
 ```
 
 ### 7.2 Error States
 
 ```
+
 Network Error:
 ┌─────────────────────────────┐
-│                             │
-│           ⚠️               │
-│                             │
-│    Connection Error         │
-│                             │
-│  Unable to connect to       │
-│  the server. Please check   │
-│  your internet connection.  │
-│                             │
-│  ┌─────────────────────┐    │
-│  │    RETRY            │    │
-│  └─────────────────────┘    │
-│                             │
+│ │
+│ ⚠️ │
+│ │
+│ Connection Error │
+│ │
+│ Unable to connect to │
+│ the server. Please check │
+│ your internet connection. │
+│ │
+│ ┌─────────────────────┐ │
+│ │ RETRY │ │
+│ └─────────────────────┘ │
+│ │
 └─────────────────────────────┘
 
 Empty State (No members):
 ┌─────────────────────────────┐
-│                             │
-│         👤                │
-│                             │
-│      No members yet         │
-│                             │
-│  Start by adding your       │
-│  first member.              │
-│                             │
-│  ┌─────────────────────┐    │
-│  │  + ADD MEMBER       │    │
-│  └─────────────────────┘    │
-│                             │
+│ │
+│ 👤 │
+│ │
+│ No members yet │
+│ │
+│ Start by adding your │
+│ first member. │
+│ │
+│ ┌─────────────────────┐ │
+│ │ + ADD MEMBER │ │
+│ └─────────────────────┘ │
+│ │
 └─────────────────────────────┘
 
 Empty State (Search results):
 ┌─────────────────────────────┐
-│                             │
-│         🔍                │
-│                             │
-│   No members found          │
-│                             │
-│  Try a different search     │
-│  term or filter.            │
-│                             │
-│  [Clear filters]            │
-│                             │
+│ │
+│ 🔍 │
+│ │
+│ No members found │
+│ │
+│ Try a different search │
+│ term or filter. │
+│ │
+│ [Clear filters] │
+│ │
 └─────────────────────────────┘
+
 ```
 
 ---
@@ -1179,83 +1191,89 @@ Empty State (Search results):
 ### 8.1 Toast Messages (react-native-toast-message)
 
 ```
+
 Success:
 ┌─────────────────────────────────────┐
-│  ✅  Member created successfully    │
+│ ✅ Member created successfully │
 └─────────────────────────────────────┘
 
 Error:
 ┌─────────────────────────────────────┐
-│  ❌  Failed to save member          │
-│      Please try again               │
+│ ❌ Failed to save member │
+│ Please try again │
 └─────────────────────────────────────┘
 
 Warning:
 ┌─────────────────────────────────────┐
-│  ⚠️  PDF quality may affect OCR     │
-│      Please verify extracted data   │
+│ ⚠️ PDF quality may affect OCR │
+│ Please verify extracted data │
 └─────────────────────────────────────┘
 
 Info:
 ┌─────────────────────────────────────┐
-│  ℹ️  New version available          │
-│      Update now for latest features │
+│ ℹ️ New version available │
+│ Update now for latest features │
 └─────────────────────────────────────┘
 
 Position: Bottom of screen
 Duration: 3 seconds (5 seconds for errors)
 Dismiss: Swipe up or tap
+
 ```
 
 ### 8.2 Push Notifications (Expo Notifications)
 
 ```
+
 Foreground notification (in-app banner):
 ┌─────────────────────────────┐
-│ 📬 New Member Registered    │
-│ Marco Bianchi - FCO         │
-│ [View]        [Dismiss]     │
+│ 📬 New Member Registered │
+│ Marco Bianchi - FCO │
+│ [View] [Dismiss] │
 └─────────────────────────────┘
 
 Background notification (system):
-  UnionConnect
-  "New member registered: Marco Bianchi"
+UnionConnect
+"New member registered: Marco Bianchi"
 
 Notification types:
-  • Welcome message sent
-  • Base transfer completed
-  • Urgent assembly notice
-  • New document available
-  • Password reset requested
+• Welcome message sent
+• Base transfer completed
+• Urgent assembly notice
+• New document available
+• Password reset requested
+
 ```
 
 ### 8.3 Confirmation Dialogs
 
 ```
+
 Destructive Action (Delete):
 ┌─────────────────────────────┐
-│ Delete Member?              │
-│                             │
-│ This action cannot be       │
-│ undone. Marco Bianchi will  │
-│ be permanently deleted.     │
-│                             │
-│ [Cancel]     [Delete]       │
-│              (red)          │
+│ Delete Member? │
+│ │
+│ This action cannot be │
+│ undone. Marco Bianchi will │
+│ be permanently deleted. │
+│ │
+│ [Cancel] [Delete] │
+│ (red) │
 └─────────────────────────────┘
 
 Confirmation (Logout):
 ┌─────────────────────────────┐
-│ Logout                      │
-│                             │
-│ Are you sure you want to    │
-│ logout?                     │
-│                             │
-│ [Cancel]     [Logout]       │
+│ Logout │
+│ │
+│ Are you sure you want to │
+│ logout? │
+│ │
+│ [Cancel] [Logout] │
 └─────────────────────────────┘
 
 Native Alert.alert() API
-```
+
+````
 
 ---
 
@@ -1290,18 +1308,18 @@ import { AccessibilityInfo } from 'react-native';
 AccessibilityInfo.announceForAccessibility(
   'Member created successfully'
 );
-```
+````
 
 ### 9.2 Accessibility Requirements
 
-| Requirement | Implementation |
-|-------------|----------------|
-| Screen reader support | All interactive elements labeled |
-| Minimum touch target | 44x44 dp (React Native default) |
-| Color contrast | WCAG AA compliant (4.5:1 minimum) |
-| Focus indicators | Visible focus on all interactive elements |
-| Reduce motion | Respect system accessibility settings |
-| Dynamic type | Support system font size changes |
+| Requirement           | Implementation                            |
+| --------------------- | ----------------------------------------- |
+| Screen reader support | All interactive elements labeled          |
+| Minimum touch target  | 44x44 dp (React Native default)           |
+| Color contrast        | WCAG AA compliant (4.5:1 minimum)         |
+| Focus indicators      | Visible focus on all interactive elements |
+| Reduce motion         | Respect system accessibility settings     |
+| Dynamic type          | Support system font size changes          |
 
 ### 9.3 Testing with Screen Readers
 
@@ -1326,15 +1344,15 @@ Test checklist:
 
 ### 10.1 Native App Advantages (Expo)
 
-| Feature | Implementation | UX Benefit |
-|---------|----------------|------------|
-| Native performance | React Native native modules | 60fps smooth scrolling |
-| Offline support | TanStack Query + AsyncStorage | View cached data without connection |
-| Push notifications | Expo Notifications | Instant member notifications |
-| Biometric auth | expo-local-authentication | Quick secure login with Face ID |
-| Camera integration | expo-camera | Direct document scanning |
-| File system | expo-file-system | PDF caching and management |
-| OTA updates | Expo Updates | Bug fixes without app store review |
+| Feature            | Implementation                | UX Benefit                          |
+| ------------------ | ----------------------------- | ----------------------------------- |
+| Native performance | React Native native modules   | 60fps smooth scrolling              |
+| Offline support    | TanStack Query + AsyncStorage | View cached data without connection |
+| Push notifications | Expo Notifications            | Instant member notifications        |
+| Biometric auth     | expo-local-authentication     | Quick secure login with Face ID     |
+| Camera integration | expo-camera                   | Direct document scanning            |
+| File system        | expo-file-system              | PDF caching and management          |
+| OTA updates        | Expo Updates                  | Bug fixes without app store review  |
 
 ### 10.2 Responsive Patterns
 
@@ -1381,7 +1399,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const Screen = () => {
   const insets = useSafeAreaInsets();
-  
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Content respects notch/status bar */}
@@ -1423,9 +1441,9 @@ import { useColorScheme } from 'react-native';
 const App = () => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  
+
   const colors = isDark ? darkColors : lightColors;
-  
+
   return (
     <ThemeProvider theme={colors}>
       <NavigationContainer>
@@ -1437,12 +1455,13 @@ const App = () => {
 ```
 
 Dark mode colors:
+
 ```
 Light mode:
   background: #F8F9FA
   surface: #FFFFFF
   text: #212529
-  
+
 Dark mode:
   background: #121212
   surface: #1E1E1E
@@ -1455,15 +1474,15 @@ Dark mode:
 
 ### 11.1 Standard React Navigation Gestures
 
-| Gesture | Action |
-|---------|--------|
-| Swipe from left edge | Go back (iOS) |
-| Hardware back button | Go back (Android) |
-| Pull down | Refresh list |
-| Long press | Show context menu |
-| Swipe left on item | Reveal actions (edit/delete) |
-| Pinch | Zoom on PDF |
-| Double tap | Zoom reset on PDF |
+| Gesture              | Action                       |
+| -------------------- | ---------------------------- |
+| Swipe from left edge | Go back (iOS)                |
+| Hardware back button | Go back (Android)            |
+| Pull down            | Refresh list                 |
+| Long press           | Show context menu            |
+| Swipe left on item   | Reveal actions (edit/delete) |
+| Pinch                | Zoom on PDF                  |
+| Double tap           | Zoom reset on PDF            |
 
 ### 11.2 Custom Gestures
 
@@ -1489,4 +1508,4 @@ Dark mode:
 
 ---
 
-*This document describes the UX/UI design for UnionConnect mobile app built with Expo and React Native. For technical implementation details, see `03-frontend-architecture.md`.*
+_This document describes the UX/UI design for UnionConnect mobile app built with Expo and React Native. For technical implementation details, see `03-frontend-architecture.md`._

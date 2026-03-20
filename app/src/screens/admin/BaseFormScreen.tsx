@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,25 +8,23 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+} from "react-native";
 import {
-  ArrowLeft,
-  Save,
-  Building2,
-  Hash,
-} from 'lucide-react-native';
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Save, Building2, Hash } from "lucide-react-native";
 
-import { colors, spacing, typography, borderRadius } from '../../theme';
-import { Button } from '../../components/Button';
-import { Card } from '../../components/Card';
-import { basesApi } from '../../api/bases';
-import { RootStackParamList } from '../../navigation/types';
+import { colors, spacing, typography, borderRadius } from "../../theme";
+import { Button } from "../../components/Button";
+import { Card } from "../../components/Card";
+import { basesApi } from "../../api/bases";
+import { RootStackParamList } from "../../navigation/types";
 
-type BaseFormRouteProp = RouteProp<RootStackParamList, 'BaseForm'>;
+type BaseFormRouteProp = RouteProp<RootStackParamList, "BaseForm">;
 type BaseFormNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const BaseFormScreen: React.FC = () => {
@@ -38,13 +36,13 @@ export const BaseFormScreen: React.FC = () => {
   const isEditing = !!baseId;
 
   const [formData, setFormData] = useState({
-    codice: '',
-    nome: '',
+    codice: "",
+    nome: "",
   });
 
   // Fetch base data if editing
   const { data: base, isLoading: isLoadingBase } = useQuery({
-    queryKey: ['base', baseId],
+    queryKey: ["base", baseId],
     queryFn: () => basesApi.getBaseById(baseId!),
     enabled: isEditing,
   });
@@ -62,35 +60,41 @@ export const BaseFormScreen: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (data: typeof formData) => basesApi.createBase(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bases'] });
-      Alert.alert('Success', 'Base created successfully');
+      queryClient.invalidateQueries({ queryKey: ["bases"] });
+      Alert.alert("Success", "Base created successfully");
       navigation.goBack();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to create base');
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to create base",
+      );
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: (data: typeof formData) => basesApi.updateBase(baseId!, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bases'] });
-      queryClient.invalidateQueries({ queryKey: ['base', baseId] });
-      Alert.alert('Success', 'Base updated successfully');
+      queryClient.invalidateQueries({ queryKey: ["bases"] });
+      queryClient.invalidateQueries({ queryKey: ["base", baseId] });
+      Alert.alert("Success", "Base updated successfully");
       navigation.goBack();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to update base');
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to update base",
+      );
     },
   });
 
   const validateForm = (): boolean => {
     if (!formData.codice.trim()) {
-      Alert.alert('Error', 'Code is required');
+      Alert.alert("Error", "Code is required");
       return false;
     }
     if (!formData.nome.trim()) {
-      Alert.alert('Error', 'Name is required');
+      Alert.alert("Error", "Name is required");
       return false;
     }
     return true;
@@ -111,12 +115,16 @@ export const BaseFormScreen: React.FC = () => {
     }
   };
 
-  const isLoading = createMutation.isPending || updateMutation.isPending || isLoadingBase;
+  const isLoading =
+    createMutation.isPending || updateMutation.isPending || isLoadingBase;
 
   return (
     <View style={styles.wrapper}>
       <View style={[styles.statusBarHack, { height: insets.top }]} />
-      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <SafeAreaView
+        style={styles.container}
+        edges={["bottom", "left", "right"]}
+      >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
@@ -127,7 +135,7 @@ export const BaseFormScreen: React.FC = () => {
             <ArrowLeft size={24} color={colors.textInverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>
-            {isEditing ? 'Edit Base' : 'New Base'}
+            {isEditing ? "Edit Base" : "New Base"}
           </Text>
           <TouchableOpacity
             onPress={handleSave}
@@ -156,7 +164,9 @@ export const BaseFormScreen: React.FC = () => {
                 <TextInput
                   style={styles.input}
                   value={formData.codice}
-                  onChangeText={(text) => setFormData({ ...formData, codice: text.toUpperCase() })}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, codice: text.toUpperCase() })
+                  }
                   placeholder="e.g. FCO, MXP, VCE"
                   placeholderTextColor={colors.textTertiary}
                   autoCapitalize="characters"
@@ -179,14 +189,14 @@ export const BaseFormScreen: React.FC = () => {
                 <TextInput
                   style={styles.input}
                   value={formData.nome}
-                  onChangeText={(text) => setFormData({ ...formData, nome: text })}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, nome: text })
+                  }
                   placeholder="e.g. Roma Fiumicino"
                   placeholderTextColor={colors.textTertiary}
                 />
               </View>
-              <Text style={styles.hint}>
-                Full name of the base
-              </Text>
+              <Text style={styles.hint}>Full name of the base</Text>
             </View>
           </Card>
 
@@ -198,7 +208,7 @@ export const BaseFormScreen: React.FC = () => {
               style={styles.actionButton}
             />
             <Button
-              title={isEditing ? 'Update Base' : 'Create Base'}
+              title={isEditing ? "Update Base" : "Create Base"}
               onPress={handleSave}
               loading={isLoading}
               style={styles.actionButton}
@@ -225,9 +235,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     backgroundColor: colors.primary,
@@ -236,21 +246,21 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
     color: colors.textInverse,
     flex: 1,
-    textAlign: 'center',
+    textAlign: "center",
   },
   saveButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   content: {
     flex: 1,
@@ -272,8 +282,8 @@ const styles = StyleSheet.create({
     color: colors.error,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
@@ -295,7 +305,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   actionsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.md,
     margin: spacing.md,
     marginTop: spacing.lg,

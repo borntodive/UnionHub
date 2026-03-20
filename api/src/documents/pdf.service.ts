@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as puppeteer from 'puppeteer-core';
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import * as fs from 'fs';
-import * as path from 'path';
-import { Document } from './entities/document.entity';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import * as puppeteer from "puppeteer-core";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import * as fs from "fs";
+import * as path from "path";
+import { Document } from "./entities/document.entity";
 
 @Injectable()
 export class PdfService {
@@ -14,22 +14,32 @@ export class PdfService {
   private readonly qrImagePath: string;
 
   constructor(private configService: ConfigService) {
-    this.fitCislTemplatePath = path.join(process.cwd(), 'templates', 'letterhead.pdf');
-    this.jointTemplatePath = path.join(process.cwd(), 'templates', 'letterhead-joint.pdf');
-    this.qrImagePath = path.join(process.cwd(), 'templates', 'whatsapp-qr.png');
+    this.fitCislTemplatePath = path.join(
+      process.cwd(),
+      "templates",
+      "letterhead.pdf",
+    );
+    this.jointTemplatePath = path.join(
+      process.cwd(),
+      "templates",
+      "letterhead-joint.pdf",
+    );
+    this.qrImagePath = path.join(process.cwd(), "templates", "whatsapp-qr.png");
   }
 
   /**
    * Get template path based on union type
    */
   private getTemplatePath(union: string): string {
-    return union === 'joint' ? this.jointTemplatePath : this.fitCislTemplatePath;
+    return union === "joint"
+      ? this.jointTemplatePath
+      : this.fitCislTemplatePath;
   }
 
   /**
    * Check if custom template exists for union
    */
-  hasCustomTemplate(union: string = 'fit-cisl'): boolean {
+  hasCustomTemplate(union: string = "fit-cisl"): boolean {
     const templatePath = this.getTemplatePath(union);
     return fs.existsSync(templatePath);
   }
@@ -38,48 +48,39 @@ export class PdfService {
    * Generate PDF with custom letterhead template
    */
   async generateDocumentPdf(document: Document): Promise<Buffer> {
-    const union = document.union || 'fit-cisl';
-    const templatePath = this.getTemplatePath(union);
-    
-    this.logger.debug(`Union: ${union}, Template path: ${templatePath}`);
-    this.logger.debug(`Template exists: ${this.hasCustomTemplate(union)}`);
-    
-    if (this.hasCustomTemplate(union)) {
-      this.logger.debug('Using custom template');
-      return this.generateWithTemplate(document, templatePath);
-    } else {
-      this.logger.debug('Using HTML fallback');
-      return this.generateWithHtml(document);
-    }
+    return this.generateWithHtml(document);
   }
 
   /**
    * Generate PDF using custom template PDF
    */
-  private async generateWithTemplate(document: Document, templatePath: string): Promise<Buffer> {
+  private async generateWithTemplate(
+    document: Document,
+    templatePath: string,
+  ): Promise<Buffer> {
     try {
       // Load template
       const templateBytes = fs.readFileSync(templatePath);
       const pdfDoc = await PDFDocument.load(templateBytes);
-      
+
       // Get first page
       const pages = pdfDoc.getPages();
       const firstPage = pages[0];
-      
+
       // Add text to the page
       const { width, height } = firstPage.getSize();
-      
+
       // Embed font
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-      
+
       // Add date (top right)
-      const today = new Date().toLocaleDateString('it-IT', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
+      const today = new Date().toLocaleDateString("it-IT", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
       });
-      
+
       firstPage.drawText(today, {
         x: width - 150,
         y: height - 100,
@@ -87,9 +88,9 @@ export class PdfService {
         font,
         color: rgb(0.4, 0.4, 0.4),
       });
-      
+
       // Add title (remove newlines for PDF rendering)
-      const title = document.title.replace(/\n/g, ' ');
+      const title = document.title.replace(/\n/g, " ");
       const titleWidth = boldFont.widthOfTextAtSize(title, 16);
       firstPage.drawText(title, {
         x: (width - titleWidth) / 2,
@@ -98,12 +99,14 @@ export class PdfService {
         font: boldFont,
         color: rgb(0.09, 0.45, 0.27), // CISL green
       });
-      
+
       // Add content (wrapped text)
-      const content = document.aiReviewedContent || document.originalContent;
+      const content = this.normalizeLineBreaks(
+        document.aiReviewedContent || document.originalContent,
+      );
       const lines = this.wrapText(content, 70);
       let yPosition = height - 220;
-      
+
       let currentPage = firstPage;
       for (const line of lines) {
         if (yPosition < 100) {
@@ -113,7 +116,7 @@ export class PdfService {
           currentPage = pdfDoc.addPage(templatePage);
           yPosition = height - 100;
         }
-        
+
         currentPage.drawText(line, {
           x: 60,
           y: yPosition,
@@ -123,16 +126,16 @@ export class PdfService {
         });
         yPosition -= 16;
       }
-      
+
       // Add English translation if available (on new page with template)
       if (document.englishTranslation) {
         // Add new page from template for English
         const templatePdf = await PDFDocument.load(templateBytes);
         const [templatePage] = await pdfDoc.copyPages(templatePdf, [0]);
         const engPage = pdfDoc.addPage(templatePage);
-        
+
         // English header (right aligned)
-        const headerText = 'English Translation / Traduzione Inglese';
+        const headerText = "English Translation / Traduzione Inglese";
         const headerWidth = boldFont.widthOfTextAtSize(headerText, 12);
         engPage.drawText(headerText, {
           x: width - headerWidth - 60,
@@ -141,9 +144,12 @@ export class PdfService {
           font: boldFont,
           color: rgb(0.85, 0.05, 0.2), // CISL red
         });
-        
+
         // English title (use translated title or fallback to Italian, remove newlines)
-        const engTitle = (document.englishTitle || document.title).replace(/\n/g, ' ');
+        const engTitle = (document.englishTitle || document.title).replace(
+          /\n/g,
+          " ",
+        );
         const engTitleWidth = boldFont.widthOfTextAtSize(engTitle, 16);
         engPage.drawText(engTitle, {
           x: (width - engTitleWidth) / 2,
@@ -152,12 +158,15 @@ export class PdfService {
           font: boldFont,
           color: rgb(0.09, 0.45, 0.27),
         });
-        
+
         // English content (same margin as Italian)
-        const engLines = this.wrapText(document.englishTranslation, 70);
+        const engLines = this.wrapText(
+          this.normalizeLineBreaks(document.englishTranslation),
+          70,
+        );
         let engYPosition = height - 220;
         let currentEngPage = engPage;
-        
+
         for (const line of engLines) {
           if (engYPosition < 100) {
             // Add new page from template
@@ -166,7 +175,7 @@ export class PdfService {
             currentEngPage = pdfDoc.addPage(newTemplatePage);
             engYPosition = height - 100;
           }
-          
+
           currentEngPage.drawText(line, {
             x: 60,
             y: engYPosition,
@@ -176,20 +185,37 @@ export class PdfService {
           });
           engYPosition -= 14;
         }
-        
+
         // Add English closing text
-        await this.addClosingText(currentEngPage, pdfDoc, width, engYPosition - 15, true, boldFont, font, document.union);
+        await this.addClosingText(
+          currentEngPage,
+          pdfDoc,
+          width,
+          engYPosition - 15,
+          true,
+          boldFont,
+          font,
+          document.union,
+        );
       }
-      
+
       // Add Italian closing text
-      await this.addClosingText(currentPage, pdfDoc, width, yPosition - 15, false, boldFont, font, document.union);
-      
+      await this.addClosingText(
+        currentPage,
+        pdfDoc,
+        width,
+        yPosition - 15,
+        false,
+        boldFont,
+        font,
+        document.union,
+      );
+
       // Save PDF
       const pdfBytes = await pdfDoc.save();
       return Buffer.from(pdfBytes);
-      
     } catch (error) {
-      this.logger.error('Failed to generate PDF with template:', error);
+      this.logger.error("Failed to generate PDF with template:", error);
       // Fallback to HTML generation
       return this.generateWithHtml(document);
     }
@@ -206,31 +232,31 @@ export class PdfService {
     isEnglish: boolean,
     boldFont: any,
     font: any,
-    union: string = 'fit-cisl',
+    union: string = "fit-cisl",
   ): Promise<void> {
-    const isJoint = union === 'joint';
-    
+    const isJoint = union === "joint";
+
     let yPos = startY;
-    
+
     // Check if we need a new page
     if (yPos < 150) {
       // Not enough space, will be handled by caller
       return;
     }
-    
+
     if (isJoint) {
       // For joint communications - only show the two boards side by side
       const leftText = "FIT-CISL Malta Air Pilot Board";
       const rightText = "ANPAC Malta Air Company Council";
-      
+
       const leftWidth = boldFont.widthOfTextAtSize(leftText, 10);
       const rightWidth = boldFont.widthOfTextAtSize(rightText, 10);
-      
+
       // Position them side by side with some spacing
       const spacing = 60;
       const totalWidth = leftWidth + spacing + rightWidth;
       const startX = (width - totalWidth) / 2;
-      
+
       page.drawText(leftText, {
         x: startX,
         y: yPos,
@@ -238,7 +264,7 @@ export class PdfService {
         font: boldFont,
         color: rgb(0, 0, 0),
       });
-      
+
       page.drawText(rightText, {
         x: startX + leftWidth + spacing,
         y: yPos,
@@ -248,12 +274,12 @@ export class PdfService {
       });
     } else {
       // Single union - FIT-CISL only - full closing section
-      
+
       // Closing text
       const closingText = isEnglish
         ? "As always, your FIT-CISL representatives remain available for any questions or clarifications."
         : "Come sempre, i vostri rappresentanti FIT-CISL restano a disposizione per qualsiasi dubbio o chiarimento.";
-      
+
       page.drawText(closingText, {
         x: 60,
         y: yPos,
@@ -261,9 +287,9 @@ export class PdfService {
         font,
         color: rgb(0.3, 0.3, 0.3),
       });
-      
+
       yPos -= 30;
-      
+
       // RSA FIT-CISL PILOTI MALTA AIR
       const rsaText = "RSA FIT-CISL PILOTI MALTA AIR";
       const rsaWidth = boldFont.widthOfTextAtSize(rsaText, 12);
@@ -274,9 +300,9 @@ export class PdfService {
         font: boldFont,
         color: rgb(0, 0, 0),
       });
-      
+
       yPos -= 20;
-      
+
       // READY2B FIT-CISL (in green)
       const readyText = "READY2B FIT-CISL";
       const readyWidth = boldFont.widthOfTextAtSize(readyText, 11);
@@ -287,9 +313,9 @@ export class PdfService {
         font: boldFont,
         color: rgb(0.09, 0.45, 0.27), // CISL green
       });
-      
+
       yPos -= 25;
-      
+
       // Stay updated / Resta aggiornato
       const stayUpdated = isEnglish ? "Stay updated:" : "Resta aggiornato:";
       const stayWidth = font.widthOfTextAtSize(stayUpdated, 10);
@@ -300,11 +326,13 @@ export class PdfService {
         font,
         color: rgb(0.4, 0.4, 0.4),
       });
-      
+
       yPos -= 18;
-      
+
       // enter Whatsapp group / entra nel gruppo Whatsapp
-      const whatsappText = isEnglish ? "enter Whatsapp group" : "entra nel gruppo Whatsapp";
+      const whatsappText = isEnglish
+        ? "enter Whatsapp group"
+        : "entra nel gruppo Whatsapp";
       const whatsappWidth = font.widthOfTextAtSize(whatsappText, 9);
       page.drawText(whatsappText, {
         x: (width - whatsappWidth) / 2,
@@ -313,7 +341,7 @@ export class PdfService {
         font,
         color: rgb(0.09, 0.45, 0.27),
       });
-      
+
       // Add QR code image if available
       try {
         if (fs.existsSync(this.qrImagePath)) {
@@ -337,24 +365,53 @@ export class PdfService {
   }
 
   /**
-   * Generate PDF using HTML (fallback)
+   * Read a file as base64, returning null if not found
+   */
+  private readBase64(filePath: string): string | null {
+    try {
+      return fs.existsSync(filePath)
+        ? fs.readFileSync(filePath).toString("base64")
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Generate PDF using HTML + Puppeteer (supports text justification)
    */
   private async generateWithHtml(document: Document): Promise<Buffer> {
+    const templatesDir = path.join(process.cwd(), "templates");
+    const isJoint = document.union === "joint";
+
+    const logos = isJoint
+      ? {
+          left: this.readBase64(
+            path.join(templatesDir, "logo-joint-left.jpeg"),
+          ),
+          leftMime: "jpeg",
+          right: this.readBase64(
+            path.join(templatesDir, "logo-joint-right.png"),
+          ),
+          rightMime: "png",
+        }
+      : {
+          single: this.readBase64(path.join(templatesDir, "logo.png")),
+          singleMime: "png",
+        };
+
+    const qrBase64 = this.readBase64(this.qrImagePath);
+
     const browser = await this.launchBrowser();
-    
     try {
       const page = await browser.newPage();
-      
-      const html = this.generateHtml(document);
-      
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      
+      const html = this.generateHtml(document, logos, qrBase64);
+      await page.setContent(html, { waitUntil: "networkidle0" });
       const pdf = await page.pdf({
-        format: 'A4',
+        format: "A4",
         printBackground: true,
-        margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' },
+        margin: { top: "0", right: "0", bottom: "0", left: "0" },
       });
-      
       return Buffer.from(pdf);
     } finally {
       await browser.close();
@@ -365,13 +422,14 @@ export class PdfService {
    * Launch browser
    */
   private async launchBrowser(): Promise<puppeteer.Browser> {
-    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || 
-      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-    
+    const executablePath =
+      process.env.PUPPETEER_EXECUTABLE_PATH ||
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+
     return puppeteer.launch({
       executablePath,
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
   }
 
@@ -380,194 +438,358 @@ export class PdfService {
    */
   private wrapText(text: string, maxChars: number): string[] {
     const lines: string[] = [];
-    const paragraphs = text.split('\n');
-    
+    const paragraphs = text.split("\n");
+
     for (const paragraph of paragraphs) {
-      const words = paragraph.split(' ');
-      let currentLine = '';
-      
+      const words = paragraph.split(" ");
+      let currentLine = "";
+
       for (const word of words) {
         if ((currentLine + word).length > maxChars) {
           lines.push(currentLine.trim());
-          currentLine = word + ' ';
+          currentLine = word + " ";
         } else {
-          currentLine += word + ' ';
+          currentLine += word + " ";
         }
       }
-      
+
       if (currentLine.trim()) {
         lines.push(currentLine.trim());
       }
-      
+
       // Add empty line between paragraphs
-      lines.push('');
+      lines.push("");
     }
-    
+
     return lines;
   }
 
   /**
-   * Generate HTML with CISL letterhead (fallback)
+   * Normalize line breaks: join soft wraps (single \n) into spaces,
+   * preserve real paragraph breaks (\n\n or more). Text content is unchanged.
    */
-  private generateHtml(document: Document): string {
-    const today = new Date().toLocaleDateString('it-IT', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
+  private normalizeLineBreaks(text: string): string {
+    return text
+      .split(/\n{2,}/) // split on real paragraph breaks
+      .map((para) => para.replace(/\n/g, " ").replace(/  +/g, " ").trim())
+      .filter(Boolean)
+      .join("\n\n");
+  }
 
-    return `
-<!DOCTYPE html>
+  /**
+   * Convert content to HTML paragraphs for PDF rendering.
+   * If the content is already HTML (from the rich text editor), inject the
+   * body-paragraph class on every <p> tag and pass through directly.
+   * Otherwise treat as plain text and convert paragraphs.
+   */
+  private contentToHtml(text: string): string {
+    const trimmed = text.trim();
+
+    // Detect HTML content: check for any HTML tag anywhere in the string.
+    // Handles cases like "Gentili Colleghe,<div>..." where text precedes the first tag.
+    const hasHtmlTags = /<[a-z][\s\S]*?>/i.test(trimmed);
+
+    if (hasHtmlTags) {
+      // If the content doesn't start with a tag, wrap the leading text in a <p> first
+      const normalised = trimmed.startsWith("<")
+        ? trimmed
+        : trimmed.replace(/^([^<]+)/, (leadingText) => {
+            const escaped = leadingText
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;");
+            return `<p class="body-paragraph">${escaped.trim()}</p>`;
+          });
+
+      // Inject body-paragraph class on every <p> tag
+      return normalised.replace(/<p(\s[^>]*)?>/gi, (_, attrs) => {
+        if (attrs && /class=/i.test(attrs)) {
+          return `<p${attrs.replace(/class="([^"]*)"/i, 'class="$1 body-paragraph"')}>`;
+        }
+        return `<p${attrs || ""} class="body-paragraph">`;
+      });
+    }
+
+    // Plain-text fallback (legacy documents)
+    const normalized = this.normalizeLineBreaks(trimmed);
+    return normalized
+      .split("\n\n")
+      .map((para) => {
+        const p = para.trim();
+        if (!p) return "";
+        const escaped = p
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        return `<p class="body-paragraph">${escaped}</p>`;
+      })
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  /**
+   * Escape HTML special characters
+   */
+  private esc(text: string): string {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  /**
+   * Generate HTML faithful to the letterhead PDF (fit-cisl or joint).
+   *
+   * FIT-CISL geometry (letterhead.meta-2.json, 595.4×841.8pt):
+   *   Logo:          left 6.550%  top 3.273%  width 30.215%  height 5.660%
+   *   Top rule:      top ~10.4%
+   *   Bottom rule:   top ~89.5%
+   *   Footer:        top 91.72%  (Times New Roman 10.7px, centered)
+   *
+   * Joint geometry (letterhead-joint.meta.json, 595×842pt):
+   *   Logo left  (FIT-CISL): left 9.529%  top 4.500%  width 27.328%  height 5.130%
+   *   Logo right (ANPAC):    left 46.202%  top 4.489%  width 40.394%  height 4.179%
+   *   Top rule:  top ~11.5%  (below both logos)
+   *   No institutional footer (clean joint header only)
+   *
+   * position:fixed makes elements repeat on every PDF page.
+   */
+  private generateHtml(
+    document: Document,
+    logos: Record<string, string | null | undefined>,
+    qrBase64: string | null = null,
+  ): string {
+    const isJoint = document.union === "joint";
+
+    const now = new Date();
+    // Joint uses compact "Roma dd.MM.yy" format (matches letterhead-joint.html reference)
+    const today = isJoint
+      ? `Roma ${String(now.getDate()).padStart(2, "0")}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getFullYear()).slice(-2)}`
+      : now.toLocaleDateString("it-IT", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+
+    const italianContent = this.contentToHtml(
+      document.aiReviewedContent || document.originalContent,
+    );
+    const englishContent = document.englishTranslation
+      ? this.contentToHtml(document.englishTranslation)
+      : "";
+    const englishTitle = document.englishTitle || document.title;
+
+    const qrImg = qrBase64
+      ? `<img src="data:image/png;base64,${qrBase64}" width="110" height="110" style="display:block;margin:8px auto 0;">`
+      : "";
+
+    // ── Letterhead HTML (fixed elements) ──────────────────────────────────
+    let letterheadHtml: string;
+    let topPadding: string;
+
+    if (isJoint) {
+      // Two logos side by side, no footer
+      const leftImg = logos.left
+        ? `<img src="data:image/${logos.leftMime};base64,${logos.left}" alt="Logo FIT-CISL" style="width:100%;height:100%;object-fit:contain;">`
+        : "";
+      const rightImg = logos.right
+        ? `<img src="data:image/${logos.rightMime};base64,${logos.right}" alt="Logo ANPAC" style="width:100%;height:100%;object-fit:contain;">`
+        : "";
+
+      letterheadHtml = `
+  <!-- Joint: FIT-CISL logo (left) — bbox_pt [56.7, 37.9, 219.3, 81.09] on 595×842 -->
+  <div aria-hidden="true" style="position:fixed;left:9.529%;top:4.500%;width:27.328%;height:5.130%;">${leftImg}</div>
+  <!-- Joint: ANPAC logo (right) — bbox_pt [274.9, 37.8, 515.25, 73.0] on 595×842 -->
+  <div aria-hidden="true" style="position:fixed;left:46.202%;top:4.489%;width:40.394%;height:4.179%;">${rightImg}</div>
+  `;
+
+      // top: 11.5% of 297mm ≈ 34.2mm → use 36mm; no bottom footer rule needed
+      topPadding = "36mm";
+    } else {
+      // Single FIT-CISL logo + institutional footer
+      const singleImg = logos.single
+        ? `<img src="data:image/${logos.singleMime};base64,${logos.single}" alt="Logo FIT CISL – Trasporto Aereo" style="width:100%;height:100%;object-fit:contain;">`
+        : "";
+
+      letterheadHtml = `
+  <!-- FIT-CISL logo — bbox_pt [39, 27.55, 218.9, 75.2] on 595.4×841.8 -->
+  <div aria-hidden="true" style="position:fixed;left:6.550%;top:3.273%;width:30.215%;height:5.660%;">${singleImg}</div>
+  <!-- Separator below logo — CISL green, aligned to content margins (left 22mm, right 22mm) -->
+  <div aria-hidden="true" style="position:fixed;top:10.4%;left:10.476%;width:79.048%;height:1pt;background:#177246;"></div>
+  <!-- Separator above footer — CISL green, full width -->
+  <div aria-hidden="true" style="position:fixed;top:89.5%;left:0;width:100%;height:1pt;background:#177246;"></div>
+  <!-- Institutional footer — top 91.72% from letterhead.meta-2.json -->
+  <footer aria-hidden="true" style="position:fixed;top:91.72%;left:0;width:100%;text-align:center;font-family:'Times New Roman',Times,serif;font-size:10.7px;line-height:1.15;color:#000;">
+    <p style="font-weight:bold;color:#CC0000;">Dipartimento Trasporto Aereo</p>
+    <p style="font-weight:bold;margin-top:5px;color:#CC0000;">Sede di Roma: Via A. Musa, 4 - 00161 ROMA - Tel. 06/44286354 Fax 06/44286410</p>
+    <p style="font-weight:bold;margin-top:5px;color:#CC0000;">Sede di Fiumicino: Aeroporto L. Da Vinci Tel./Fax 06/659550339</p>
+    <p style="margin-top:5px;color:#177246;"><span>C.F. 80421120587 - </span><span style="font-weight:bold;">e-mail: fit.trasportoaereo@cisl.it – PEC: fitcislnazionale@postecert.it - </span><span>Website: www.fitcisl.org</span></p>
+    <p style="margin-top:5px;color:#177246;">Aderente a: International Transport Workers' Federation ITF - European Transport Workers' Federation ETF</p>
+  </footer>`;
+
+      // top 10.4% of 297mm ≈ 30.9mm → 33mm; bottom 10.5% ≈ 31.2mm → 34mm
+      topPadding = "33mm";
+    }
+
+    const bottomPadding = isJoint ? "20mm" : "34mm";
+
+    // ── Closing sections ──────────────────────────────────────────────────
+    const jointSignatures = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:16mm;font-size:11pt;">
+        <strong>FIT-CISL Malta Air Pilot Board</strong>
+        <strong>ANPAC Malta Air Company Council</strong>
+      </div>`;
+
+    const closingIt = isJoint
+      ? jointSignatures
+      : `<p class="closing-text">Come sempre, i vostri rappresentanti FIT-CISL restano a disposizione per qualsiasi dubbio o chiarimento.</p>
+         <p class="closing-center"><strong>RSA FIT-CISL PILOTI MALTA AIR</strong></p>
+         <p class="closing-center" style="color:#177246;"><strong>READY2B FIT-CISL</strong></p>
+         ${qrBase64 ? `<p class="closing-center" style="font-size:9pt;color:#666;margin-top:8px;">Resta aggiornato — entra nel gruppo WhatsApp:</p>${qrImg}` : ""}`;
+
+    const closingEn = isJoint
+      ? jointSignatures
+      : `<p class="closing-text">As always, your FIT-CISL representatives remain available for any questions or clarifications.</p>
+         <p class="closing-center"><strong>RSA FIT-CISL PILOTI MALTA AIR</strong></p>
+         <p class="closing-center" style="color:#177246;"><strong>READY2B FIT-CISL</strong></p>
+         ${qrBase64 ? `<p class="closing-center" style="font-size:9pt;color:#666;margin-top:8px;">Stay updated — join the WhatsApp group:</p>${qrImg}` : ""}`;
+
+    return `<!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${document.title}</title>
+  <title>${this.esc(document.title)}</title>
   <style>
-    @page {
-      margin: 0;
-    }
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: 'Times New Roman', Georgia, serif;
-      font-size: 12pt;
-      line-height: 1.6;
-      color: #333;
-    }
-    
-    .letterhead {
-      background: linear-gradient(135deg, #177246 0%, #0f5735 100%);
-      color: white;
-      padding: 30px 40px;
-      text-align: center;
-    }
-    
-    .letterhead-logo {
-      font-size: 28pt;
-      font-weight: bold;
-      margin-bottom: 10px;
-      letter-spacing: 2px;
-    }
-    
-    .letterhead-org {
-      font-size: 14pt;
-      font-weight: 600;
-      margin-bottom: 5px;
-    }
-    
-    .letterhead-dept {
+    @page { size: A4; margin: 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 210mm;
+      /* FIT-CISL: Times New Roman / Tinos (per letterhead.meta-2.json font detection)
+         Joint:    Avenir (per letterhead-joint.meta.json AvenirLT detection) */
+      font-family: ${
+        isJoint
+          ? "'Avenir', 'Avenir Next', system-ui, -apple-system, Helvetica, sans-serif"
+          : "'Times New Roman', Tinos, Georgia, serif"
+      };
       font-size: 11pt;
-      opacity: 0.9;
+      line-height: 1.6;
+      color: #000;
     }
-    
-    .content {
-      padding: 40px;
-      max-width: 100%;
-    }
-    
+
+    .page     { padding: ${topPadding} 22mm ${bottomPadding}; }
+    .page-en  { padding: ${topPadding} 22mm ${bottomPadding}; page-break-before: always; }
+
     .date {
       text-align: right;
-      margin-bottom: 30px;
-      font-style: italic;
-      color: #666;
+      margin-bottom: ${isJoint ? "4mm" : "6mm"};
+      font-size: 10pt;
+      ${isJoint ? "" : "font-style: italic;"}
+      color: #333;
+      line-height: 1.6;
     }
-    
-    .title {
-      font-size: 16pt;
+
+    /* Title: black, bold, centered — no uppercase, no green */
+    .doc-title {
+      font-size: 12pt;
       font-weight: bold;
-      margin-bottom: 30px;
+      margin-bottom: 8mm;
       text-align: center;
-      color: #177246;
-      text-transform: uppercase;
+      color: #000;
     }
-    
-    .body-text {
+
+    /* Paragraphs: justified, generous spacing to match letterhead reference */
+    .body-paragraph {
       text-align: justify;
-      white-space: pre-wrap;
+      hyphens: auto;
+      word-break: break-word;
+      margin-bottom: 12pt;
+      line-height: 1.6;
     }
-    
-    .footer {
-      margin-top: 50px;
-      padding-top: 20px;
-      border-top: 2px solid #177246;
-      font-size: 10pt;
-      color: #666;
+
+    /* Rich text editor elements */
+    strong, b { font-weight: bold; }
+    em, i { font-style: italic; }
+    u { text-decoration: underline; }
+
+    ul, ol {
+      margin: 0 0 12pt 1.6em;
+      padding: 0;
+      text-align: justify;
     }
-    
-    .footer-contact {
-      text-align: center;
+    li {
+      margin-bottom: 4pt;
+      line-height: 1.6;
     }
-    
-    .english-version {
-      page-break-before: always;
-      padding: 40px;
+    li p { margin: 0; }
+
+    /* Headings from rich editor */
+    h1, h2, h3 {
+      font-weight: bold;
+      margin-bottom: 4pt;
+      line-height: 1.3;
     }
-    
-    .english-header {
-      background: #f5f5f5;
-      padding: 15px 20px;
-      margin-bottom: 30px;
-      border-left: 4px solid #DA0E32;
-    }
-    
-    .english-label {
-      font-size: 10pt;
-      color: #666;
+    h1 { font-size: 13pt; }
+    h2 { font-size: 12pt; }
+    h3 { font-size: 11pt; }
+
+    .en-label {
+      font-size: 8pt;
+      color: #DA0E32;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      border-left: 3px solid #DA0E32;
+      padding-left: 8px;
+      margin-bottom: 7mm;
+    }
+
+    /* Closing paragraph — same font and spacing as body paragraphs */
+    .closing-text {
+      text-align: justify;
+      hyphens: auto;
+      word-break: break-word;
+      font-size: 11pt;
+      line-height: 1.6;
+      margin-top: 12pt;
+      margin-bottom: 6pt;
+      color: #000;
+    }
+
+    .closing-center {
+      text-align: center;
+      margin-top: 6pt;
+      font-size: 11pt;
     }
   </style>
 </head>
 <body>
-  <!-- Italian Version -->
-  <div class="letterhead">
-    <div class="letterhead-logo">CISL</div>
-    <div class="letterhead-org">Confederazione Italiana Sindacati Lavoratori</div>
-    <div class="letterhead-dept">Trasporti - Sezione Aerea</div>
-  </div>
-  
-  <div class="content">
-    <div class="date">${today}</div>
-    
-    <h1 class="title">${document.title}</h1>
-    
-    <div class="body-text">${document.aiReviewedContent || document.originalContent}</div>
-    
-    <div class="footer">
-      <div class="footer-contact">
-        <strong>CISL Trasporti</strong> | Via dei Frentani, 4 - 00185 Roma<br>
-        Tel: +39 06 4425.1 | Email: trasporti@cisl.it | www.cisl.it
-      </div>
+${letterheadHtml}
+
+  <!-- Italian content -->
+  <div class="page">
+    <div class="date">
+      ${today}
+      ${isJoint ? `<br><span style="font-style:italic;font-size:9pt;color:#555;">___English text at the bottom___</span>` : ""}
     </div>
+    ${isJoint ? "" : `<h1 class="doc-title">${this.esc(document.title)}</h1>`}
+${italianContent}
+${closingIt}
   </div>
-  
-  ${document.englishTranslation ? `
-  <!-- English Version -->
-  <div class="english-version">
-    <div class="english-header">
-      <div class="english-label">English Translation / Traduzione Inglese</div>
-    </div>
-    
-    <h1 class="title">${document.title}</h1>
-    
-    <div class="body-text">${document.englishTranslation}</div>
-    
-    <div class="footer">
-      <div class="footer-contact">
-        <strong>CISL Transport</strong> | Via dei Frentani, 4 - 00185 Rome, Italy<br>
-        Phone: +39 06 4425.1 | Email: trasporti@cisl.it | www.cisl.it
-      </div>
-    </div>
-  </div>
-  ` : ''}
+
+  ${
+    document.englishTranslation
+      ? `<!-- English translation -->
+  <div class="page-en">
+    <div class="en-label">English Translation / Traduzione Inglese</div>
+    ${isJoint ? "" : `<h1 class="doc-title">${this.esc(englishTitle)}</h1>`}
+${englishContent}
+${closingEn}
+  </div>`
+      : ""
+  }
+
 </body>
-</html>
-    `;
+</html>`;
   }
 }

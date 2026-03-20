@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { DeviceToken } from './entities/device-token.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { DeviceToken } from "./entities/device-token.entity";
 
 interface ExpoPushMessage {
   to: string;
@@ -18,7 +18,11 @@ export class NotificationsService {
     private deviceTokenRepository: Repository<DeviceToken>,
   ) {}
 
-  async registerToken(userId: string, token: string, platform: string = 'expo'): Promise<DeviceToken> {
+  async registerToken(
+    userId: string,
+    token: string,
+    platform: string = "expo",
+  ): Promise<DeviceToken> {
     // Check if token already exists
     const existingToken = await this.deviceTokenRepository.findOne({
       where: { token },
@@ -47,17 +51,14 @@ export class NotificationsService {
   }
 
   async unregisterToken(token: string): Promise<void> {
-    await this.deviceTokenRepository.update(
-      { token },
-      { isActive: false }
-    );
+    await this.deviceTokenRepository.update({ token }, { isActive: false });
   }
 
   async sendPushNotification(
     userId: string,
     title: string,
     body: string,
-    data?: Record<string, any>
+    data?: Record<string, any>,
   ): Promise<void> {
     const tokens = await this.deviceTokenRepository.find({
       where: { userId, isActive: true },
@@ -67,7 +68,7 @@ export class NotificationsService {
 
     const messages: ExpoPushMessage[] = tokens.map((t) => ({
       to: t.token,
-      sound: 'default',
+      sound: "default",
       title,
       body,
       data,
@@ -79,7 +80,7 @@ export class NotificationsService {
   async broadcastNotification(
     title: string,
     body: string,
-    data?: Record<string, any>
+    data?: Record<string, any>,
   ): Promise<void> {
     const tokens = await this.deviceTokenRepository.find({
       where: { isActive: true },
@@ -93,7 +94,7 @@ export class NotificationsService {
       const batch = tokens.slice(i, i + batchSize);
       const messages: ExpoPushMessage[] = batch.map((t) => ({
         to: t.token,
-        sound: 'default',
+        sound: "default",
         title,
         body,
         data,
@@ -103,12 +104,40 @@ export class NotificationsService {
     }
   }
 
-  private async sendExpoNotifications(messages: ExpoPushMessage[]): Promise<void> {
+  /**
+   * Broadcast a silent data-only notification to all active devices.
+   * No alert, no sound — used to trigger client-side cache invalidation.
+   */
+  async broadcastSilent(
+    type: string,
+    extra?: Record<string, any>,
+  ): Promise<void> {
+    const tokens = await this.deviceTokenRepository.find({
+      where: { isActive: true },
+    });
+
+    if (tokens.length === 0) return;
+
+    const batchSize = 100;
+    for (let i = 0; i < tokens.length; i += batchSize) {
+      const batch = tokens.slice(i, i + batchSize);
+      const messages: ExpoPushMessage[] = batch.map((t) => ({
+        to: t.token,
+        data: { type, ...extra },
+        // No title/body → silent on Expo
+      }));
+      await this.sendExpoNotifications(messages);
+    }
+  }
+
+  private async sendExpoNotifications(
+    messages: ExpoPushMessage[],
+  ): Promise<void> {
     try {
-      const response = await fetch('https://exp.host/--/api/v2/push/send', {
-        method: 'POST',
+      const response = await fetch("https://exp.host/--/api/v2/push/send", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(messages),
       });
@@ -119,17 +148,20 @@ export class NotificationsService {
       if (result.data && Array.isArray(result.data)) {
         for (let i = 0; i < result.data.length; i++) {
           const item = result.data[i];
-          if (item.status === 'error' && item.details?.error === 'DeviceNotRegistered') {
+          if (
+            item.status === "error" &&
+            item.details?.error === "DeviceNotRegistered"
+          ) {
             // Deactivate invalid token
             await this.deviceTokenRepository.update(
               { token: messages[i].to },
-              { isActive: false }
+              { isActive: false },
             );
           }
         }
       }
     } catch (error) {
-      console.error('Failed to send push notification:', error);
+      console.error("Failed to send push notification:", error);
     }
   }
 }

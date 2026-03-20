@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class AddRuoloToDocuments1773655000000 implements MigrationInterface {
-  name = 'AddRuoloToDocuments1773655000000';
+  name = "AddRuoloToDocuments1773655000000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create enum type if not exists
@@ -14,7 +14,7 @@ export class AddRuoloToDocuments1773655000000 implements MigrationInterface {
       END
       $$;
     `);
-    
+
     // Add column if not exists
     await queryRunner.query(`
       ALTER TABLE "documents" 
@@ -26,7 +26,7 @@ export class AddRuoloToDocuments1773655000000 implements MigrationInterface {
     await queryRunner.query(`
       ALTER TABLE "documents" DROP COLUMN "ruolo"
     `);
-    
+
     await queryRunner.query(`
       DROP TYPE "documents_ruolo_enum"
     `);

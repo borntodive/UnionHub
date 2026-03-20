@@ -1,5 +1,5 @@
-import apiClient from './client';
-import { Contract } from '../types';
+import apiClient from "./client";
+import { Contract } from "../types";
 
 export interface CreateContractData {
   codice: string;
@@ -13,7 +13,7 @@ export interface UpdateContractData {
 
 export const contractsApi = {
   getContracts: async (): Promise<Contract[]> => {
-    const response = await apiClient.get<Contract[]>('/contracts');
+    const response = await apiClient.get<Contract[]>("/contracts");
     return response.data;
   },
 
@@ -23,11 +23,14 @@ export const contractsApi = {
   },
 
   createContract: async (data: CreateContractData): Promise<Contract> => {
-    const response = await apiClient.post<Contract>('/contracts', data);
+    const response = await apiClient.post<Contract>("/contracts", data);
     return response.data;
   },
 
-  updateContract: async (id: string, data: UpdateContractData): Promise<Contract> => {
+  updateContract: async (
+    id: string,
+    data: UpdateContractData,
+  ): Promise<Contract> => {
     const response = await apiClient.put<Contract>(`/contracts/${id}`, data);
     return response.data;
   },

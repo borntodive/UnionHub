@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,10 +8,10 @@ import {
   RefreshControl,
   TextInput,
   ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   Search,
   Users,
@@ -22,53 +22,62 @@ import {
   ChevronRight,
   X,
   Plus,
-} from 'lucide-react-native';
+} from "lucide-react-native";
 
-import { colors, spacing, typography, borderRadius } from '../../theme';
-import { Card } from '../../components/Card';
-import { usersApi } from '../../api/users';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../navigation/types';
-import { basesApi } from '../../api/bases';
-import { contractsApi } from '../../api/contracts';
-import { gradesApi } from '../../api/grades';
-import { useAuthStore } from '../../store/authStore';
-import { FilterSheet } from './FilterSheet';
-import { User as UserType, Ruolo, UserRole } from '../../types';
+import { colors, spacing, typography, borderRadius } from "../../theme";
+import { Card } from "../../components/Card";
+import { usersApi } from "../../api/users";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../../navigation/types";
+import { basesApi } from "../../api/bases";
+import { contractsApi } from "../../api/contracts";
+import { gradesApi } from "../../api/grades";
+import { useAuthStore } from "../../store/authStore";
+import { FilterSheet } from "./FilterSheet";
+import { User as UserType, Ruolo, UserRole } from "../../types";
 
 const ITEMS_PER_PAGE = 20;
 
-type MembersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type MembersScreenNavigationProp =
+  NativeStackNavigationProp<RootStackParamList>;
 
 export const MembersScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<MembersScreenNavigationProp>();
   const currentUser = useAuthStore((state) => state.user);
   const isSuperAdmin = currentUser?.role === UserRole.SUPERADMIN;
-  
-  const [searchQuery, setSearchQuery] = useState('');
+
+  const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Filters state
-  const [selectedRuolo, setSelectedRuolo] = useState<Ruolo | undefined>(undefined);
-  const [selectedBaseId, setSelectedBaseId] = useState<string | undefined>(undefined);
-  const [selectedContrattoId, setSelectedContrattoId] = useState<string | undefined>(undefined);
-  const [selectedGradeId, setSelectedGradeId] = useState<string | undefined>(undefined);
+  const [selectedRuolo, setSelectedRuolo] = useState<Ruolo | undefined>(
+    undefined,
+  );
+  const [selectedBaseId, setSelectedBaseId] = useState<string | undefined>(
+    undefined,
+  );
+  const [selectedContrattoId, setSelectedContrattoId] = useState<
+    string | undefined
+  >(undefined);
+  const [selectedGradeId, setSelectedGradeId] = useState<string | undefined>(
+    undefined,
+  );
 
   // Fetch filter options
   const { data: bases } = useQuery({
-    queryKey: ['bases'],
+    queryKey: ["bases"],
     queryFn: basesApi.getBases,
   });
 
   const { data: contracts } = useQuery({
-    queryKey: ['contracts'],
+    queryKey: ["contracts"],
     queryFn: contractsApi.getContracts,
   });
 
   const { data: grades } = useQuery({
-    queryKey: ['grades'],
+    queryKey: ["grades"],
     queryFn: gradesApi.getGrades,
   });
 
@@ -81,7 +90,13 @@ export const MembersScreen: React.FC = () => {
     if (selectedContrattoId) f.contrattoId = selectedContrattoId;
     if (selectedGradeId) f.gradeId = selectedGradeId;
     return f;
-  }, [searchQuery, selectedRuolo, selectedBaseId, selectedContrattoId, selectedGradeId]);
+  }, [
+    searchQuery,
+    selectedRuolo,
+    selectedBaseId,
+    selectedContrattoId,
+    selectedGradeId,
+  ]);
 
   // Infinite scroll query with filters
   const {
@@ -92,10 +107,15 @@ export const MembersScreen: React.FC = () => {
     fetchNextPage,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ['users', filters],
-    queryFn: ({ pageParam = 1 }) => usersApi.getUsersPaginated(pageParam as number, ITEMS_PER_PAGE, filters),
+    queryKey: ["users", filters],
+    queryFn: ({ pageParam = 1 }) =>
+      usersApi.getUsersPaginated(pageParam as number, ITEMS_PER_PAGE, filters),
     getNextPageParam: (lastPage) => {
-      if (!lastPage || typeof lastPage.total !== 'number' || typeof lastPage.page !== 'number') {
+      if (
+        !lastPage ||
+        typeof lastPage.total !== "number" ||
+        typeof lastPage.page !== "number"
+      ) {
         return undefined;
       }
       const totalPages = Math.ceil(lastPage.total / ITEMS_PER_PAGE);
@@ -132,7 +152,8 @@ export const MembersScreen: React.FC = () => {
     setSelectedGradeId(undefined);
   };
 
-  const hasActiveFilters = selectedRuolo || selectedBaseId || selectedContrattoId || selectedGradeId;
+  const hasActiveFilters =
+    selectedRuolo || selectedBaseId || selectedContrattoId || selectedGradeId;
 
   // Count active filters
   const activeFiltersCount = [
@@ -145,38 +166,41 @@ export const MembersScreen: React.FC = () => {
   const getRuoloLabel = (ruolo: Ruolo | null) => {
     switch (ruolo) {
       case Ruolo.PILOT:
-        return t('members.pilots');
+        return t("members.pilots");
       case Ruolo.CABIN_CREW:
-        return t('members.cabinCrew');
+        return t("members.cabinCrew");
       default:
-        return t('common.none');
+        return t("common.none");
     }
   };
 
   const getRuoloColor = (ruolo: Ruolo | null) => {
     switch (ruolo) {
       case Ruolo.PILOT:
-        return '#3b82f6';
+        return "#3b82f6";
       case Ruolo.CABIN_CREW:
-        return '#8b5cf6';
+        return "#8b5cf6";
       default:
         return colors.textTertiary;
     }
   };
 
   const renderMember = ({ item }: { item: UserType }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.memberCard}
-      onPress={() => navigation.navigate('MemberDetail', { memberId: item.id })}
+      onPress={() => navigation.navigate("MemberDetail", { memberId: item.id })}
     >
       <View style={styles.memberHeader}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
-            {item.nome?.[0]}{item.cognome?.[0]}
+            {item.nome?.[0]}
+            {item.cognome?.[0]}
           </Text>
         </View>
         <View style={styles.memberInfo}>
-          <Text style={styles.memberName}>{item.nome} {item.cognome}</Text>
+          <Text style={styles.memberName}>
+            {item.nome} {item.cognome}
+          </Text>
           <Text style={styles.memberCrewcode}>{item.crewcode}</Text>
         </View>
         <ChevronRight size={20} color={colors.textTertiary} />
@@ -185,7 +209,9 @@ export const MembersScreen: React.FC = () => {
       <View style={styles.memberDetails}>
         <View style={styles.detailRow}>
           <Briefcase size={14} color={getRuoloColor(item.ruolo)} />
-          <Text style={[styles.detailText, { color: getRuoloColor(item.ruolo) }]}>
+          <Text
+            style={[styles.detailText, { color: getRuoloColor(item.ruolo) }]}
+          >
             {getRuoloLabel(item.ruolo)}
           </Text>
         </View>
@@ -194,7 +220,9 @@ export const MembersScreen: React.FC = () => {
           <View style={styles.detailRow}>
             <Briefcase size={14} color={colors.textSecondary} />
             <Text style={styles.detailText}>
-              {isSuperAdmin ? item.contratto.codice : item.contratto.codice.replace(/-(PI|CC)$/, '')}
+              {isSuperAdmin
+                ? item.contratto.codice
+                : item.contratto.codice.replace(/-(PI|CC)$/, "")}
             </Text>
           </View>
         )}
@@ -218,11 +246,11 @@ export const MembersScreen: React.FC = () => {
 
   const renderFooter = () => {
     if (!isFetchingNextPage) return null;
-    
+
     return (
       <View style={styles.footerLoader}>
         <ActivityIndicator size="small" color={colors.primary} />
-        <Text style={styles.footerText}>{t('common.loading')}</Text>
+        <Text style={styles.footerText}>{t("common.loading")}</Text>
       </View>
     );
   };
@@ -230,37 +258,52 @@ export const MembersScreen: React.FC = () => {
   // Get active filter labels for chips
   const getFilterChips = () => {
     const chips = [];
-    
+
     if (selectedRuolo) {
-      chips.push({ label: getRuoloLabel(selectedRuolo), onRemove: () => setSelectedRuolo(undefined) });
+      chips.push({
+        label: getRuoloLabel(selectedRuolo),
+        onRemove: () => setSelectedRuolo(undefined),
+      });
     }
     if (selectedBaseId) {
-      const base = bases?.find(b => b.id === selectedBaseId);
-      if (base) chips.push({ label: base.codice, onRemove: () => setSelectedBaseId(undefined) });
+      const base = bases?.find((b) => b.id === selectedBaseId);
+      if (base)
+        chips.push({
+          label: base.codice,
+          onRemove: () => setSelectedBaseId(undefined),
+        });
     }
     if (selectedContrattoId) {
-      const contract = contracts?.find(c => c.id === selectedContrattoId);
-      if (contract) chips.push({ label: contract.codice, onRemove: () => setSelectedContrattoId(undefined) });
+      const contract = contracts?.find((c) => c.id === selectedContrattoId);
+      if (contract)
+        chips.push({
+          label: contract.codice,
+          onRemove: () => setSelectedContrattoId(undefined),
+        });
     }
     if (selectedGradeId) {
-      const grade = grades?.find(g => g.id === selectedGradeId);
-      if (grade) chips.push({ label: grade.codice, onRemove: () => setSelectedGradeId(undefined) });
+      const grade = grades?.find((g) => g.id === selectedGradeId);
+      if (grade)
+        chips.push({
+          label: grade.codice,
+          onRemove: () => setSelectedGradeId(undefined),
+        });
     }
-    
+
     return chips;
   };
 
   const filterChips = getFilterChips();
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
       {/* Header Stats */}
       <View style={styles.statsContainer}>
         <Card style={styles.statCard}>
           <Users size={24} color={colors.primary} />
           <View style={styles.statInfo}>
             <Text style={styles.statNumber}>{total}</Text>
-            <Text style={styles.statLabel}>{t('members.title')}</Text>
+            <Text style={styles.statLabel}>{t("members.title")}</Text>
           </View>
         </Card>
       </View>
@@ -271,23 +314,29 @@ export const MembersScreen: React.FC = () => {
           <Search size={20} color={colors.textTertiary} />
           <TextInput
             style={styles.searchInput}
-            placeholder={t('members.searchPlaceholder')}
+            placeholder={t("members.searchPlaceholder")}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor={colors.textTertiary}
           />
-          {searchQuery !== '' && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+          {searchQuery !== "" && (
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
               <X size={18} color={colors.textTertiary} />
             </TouchableOpacity>
           )}
         </View>
-        
-        <TouchableOpacity 
-          style={[styles.filterButton, hasActiveFilters && styles.filterButtonActive]} 
+
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            hasActiveFilters && styles.filterButtonActive,
+          ]}
           onPress={() => setShowFilters(true)}
         >
-          <SlidersHorizontal size={20} color={hasActiveFilters ? colors.textInverse : colors.text} />
+          <SlidersHorizontal
+            size={20}
+            color={hasActiveFilters ? colors.textInverse : colors.text}
+          />
           {activeFiltersCount > 0 && (
             <View style={styles.filterBadge}>
               <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
@@ -295,9 +344,9 @@ export const MembersScreen: React.FC = () => {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.addButton}
-          onPress={() => navigation.navigate('MemberCreate')}
+          onPress={() => navigation.navigate("MemberCreate")}
         >
           <Plus size={20} color={colors.textInverse} />
         </TouchableOpacity>
@@ -315,7 +364,7 @@ export const MembersScreen: React.FC = () => {
             </View>
           ))}
           <TouchableOpacity onPress={clearFilters}>
-            <Text style={styles.clearAllText}>{t('common.cancel')}</Text>
+            <Text style={styles.clearAllText}>{t("common.cancel")}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -323,7 +372,9 @@ export const MembersScreen: React.FC = () => {
       {/* Results Count */}
       <View style={styles.resultsHeader}>
         <Text style={styles.resultsText}>
-          {isLoading ? t('common.loading') : `${total} ${t('members.title').toLowerCase()}`}
+          {isLoading
+            ? t("common.loading")
+            : `${total} ${t("members.title").toLowerCase()}`}
         </Text>
       </View>
 
@@ -348,8 +399,8 @@ export const MembersScreen: React.FC = () => {
                 <Users size={48} color={colors.textTertiary} />
                 <Text style={styles.emptyText}>
                   {hasActiveFilters || searchQuery
-                    ? t('errors.notFound')
-                    : t('errors.notFound')}
+                    ? t("errors.notFound")
+                    : t("errors.notFound")}
                 </Text>
               </>
             )}
@@ -389,8 +440,8 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   statCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: spacing.md,
     gap: spacing.md,
   },
@@ -407,15 +458,15 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   searchContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,
     gap: spacing.sm,
   },
   searchInputContainer: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
@@ -435,8 +486,8 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: borderRadius.md,
     backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -449,20 +500,20 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: borderRadius.md,
     backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginLeft: spacing.sm,
   },
   filterBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: -4,
     right: -4,
     backgroundColor: colors.secondary,
     borderRadius: borderRadius.full,
     minWidth: 20,
     height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 4,
   },
   filterBadgeText: {
@@ -471,16 +522,16 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold,
   },
   chipsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,
     gap: spacing.sm,
   },
   chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.md,
@@ -520,8 +571,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   memberHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: spacing.sm,
   },
   avatar: {
@@ -529,8 +580,8 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: borderRadius.full,
     backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarText: {
     fontSize: typography.sizes.md,
@@ -551,13 +602,13 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   memberDetails: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.md,
   },
   detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
   },
   detailText: {
@@ -565,9 +616,9 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   footerLoader: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: spacing.lg,
     gap: spacing.sm,
   },
@@ -576,14 +627,14 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: spacing.xl,
   },
   emptyText: {
     fontSize: typography.sizes.base,
     color: colors.textTertiary,
     marginTop: spacing.md,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

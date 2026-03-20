@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   RefreshControl,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { usePayslipStore } from '../store/usePayslipStore';
-import { useAuthStore } from '../../store/authStore';
-import { fetchClaContract } from '../services/claContractsApi';
-import { getContractData as getStaticContractData } from '../data/contractData';
-import { colors, spacing, typography } from '../../theme';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { usePayslipStore } from "../store/usePayslipStore";
+import { useAuthStore } from "../../store/authStore";
+import { fetchClaContract } from "../services/claContractsApi";
+import { getContractData as getStaticContractData } from "../data/contractData";
+import { colors, spacing, typography } from "../../theme";
 
 export default function DebugContractScreen() {
   const { settings, input } = usePayslipStore();
@@ -30,7 +30,7 @@ export default function DebugContractScreen() {
         settings.role,
         settings.rank,
         date.getFullYear(),
-        date.getMonth() + 1
+        date.getMonth() + 1,
       );
       setDbContract(dbResult);
 
@@ -38,11 +38,11 @@ export default function DebugContractScreen() {
       const staticResult = getStaticContractData(
         settings.company,
         settings.role,
-        settings.rank
+        settings.rank,
       );
       setStaticContract(staticResult);
     } catch (error) {
-      console.error('Error fetching contracts:', error);
+      console.error("Error fetching contracts:", error);
     } finally {
       setLoading(false);
     }
@@ -65,26 +65,31 @@ export default function DebugContractScreen() {
     return (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>
-          {title} {isDb && contract.id && <Text style={styles.dbBadge}>DB</Text>}
+          {title}{" "}
+          {isDb && contract.id && <Text style={styles.dbBadge}>DB</Text>}
         </Text>
-        
+
         {isDb && (
           <View style={styles.row}>
             <Text style={styles.label}>Contract ID:</Text>
-            <Text style={styles.value}>{contract.id || 'N/A'}</Text>
+            <Text style={styles.value}>{contract.id || "N/A"}</Text>
           </View>
         )}
-        
+
         <View style={styles.row}>
           <Text style={styles.label}>Source:</Text>
-          <Text style={[styles.value, isDb ? styles.dbSource : styles.staticSource]}>
-            {isDb ? 'Database' : 'Static File'}
+          <Text
+            style={[styles.value, isDb ? styles.dbSource : styles.staticSource]}
+          >
+            {isDb ? "Database" : "Static File"}
           </Text>
         </View>
 
         <View style={styles.row}>
           <Text style={styles.label}>Company:</Text>
-          <Text style={styles.value}>{contract.company || settings.company}</Text>
+          <Text style={styles.value}>
+            {contract.company || settings.company}
+          </Text>
         </View>
 
         <View style={styles.row}>
@@ -102,7 +107,8 @@ export default function DebugContractScreen() {
             <Text style={styles.label}>Effective:</Text>
             <Text style={styles.value}>
               {contract.effectiveMonth}/{contract.effectiveYear}
-              {contract.endYear && ` - ${contract.endMonth}/${contract.endYear}`}
+              {contract.endYear &&
+                ` - ${contract.endMonth}/${contract.endYear}`}
             </Text>
           </View>
         )}
@@ -113,54 +119,74 @@ export default function DebugContractScreen() {
 
         <View style={styles.row}>
           <Text style={styles.label}>Basic:</Text>
-          <Text style={styles.value}>€{Number(contract.basic || 0).toFixed(2)}</Text>
+          <Text style={styles.value}>
+            €{Number(contract.basic || 0).toFixed(2)}
+          </Text>
         </View>
 
         <View style={styles.row}>
           <Text style={styles.label}>FFP:</Text>
-          <Text style={styles.value}>€{Number(contract.ffp || 0).toFixed(2)}</Text>
+          <Text style={styles.value}>
+            €{Number(contract.ffp || 0).toFixed(2)}
+          </Text>
         </View>
 
         <View style={styles.row}>
           <Text style={styles.label}>Allowance:</Text>
-          <Text style={styles.value}>€{Number(contract.allowance || 0).toFixed(2)}</Text>
+          <Text style={styles.value}>
+            €{Number(contract.allowance || 0).toFixed(2)}
+          </Text>
         </View>
 
         <View style={styles.row}>
           <Text style={styles.label}>SBH:</Text>
-          <Text style={styles.value}>€{Number(contract.sbh || 0).toFixed(4)}</Text>
+          <Text style={styles.value}>
+            €{Number(contract.sbh || 0).toFixed(4)}
+          </Text>
         </View>
 
         <View style={styles.row}>
           <Text style={styles.label}>AL:</Text>
-          <Text style={styles.value}>€{Number(contract.al || 0).toFixed(2)}</Text>
+          <Text style={styles.value}>
+            €{Number(contract.al || 0).toFixed(2)}
+          </Text>
         </View>
 
         <View style={styles.row}>
           <Text style={styles.label}>WOFF:</Text>
-          <Text style={styles.value}>€{Number(contract.woff || 0).toFixed(2)}</Text>
+          <Text style={styles.value}>
+            €{Number(contract.woff || 0).toFixed(2)}
+          </Text>
         </View>
 
         <View style={styles.row}>
           <Text style={styles.label}>OOB:</Text>
-          <Text style={styles.value}>€{Number(contract.oob || 0).toFixed(2)}</Text>
+          <Text style={styles.value}>
+            €{Number(contract.oob || 0).toFixed(2)}
+          </Text>
         </View>
 
         <View style={styles.row}>
           <Text style={styles.label}>Diaria:</Text>
-          <Text style={styles.value}>€{Number(contract.diaria || 0).toFixed(4)}</Text>
+          <Text style={styles.value}>
+            €{Number(contract.diaria || 0).toFixed(4)}
+          </Text>
         </View>
 
         <View style={styles.row}>
           <Text style={styles.label}>RSA:</Text>
-          <Text style={styles.value}>€{Number(contract.rsa || 0).toFixed(2)}</Text>
+          <Text style={styles.value}>
+            €{Number(contract.rsa || 0).toFixed(2)}
+          </Text>
         </View>
 
         {contract.trainingConfig && (
           <>
             <View style={styles.divider} />
             <Text style={styles.subSectionTitle}>Training Config</Text>
-            <Text style={styles.json}>{JSON.stringify(contract.trainingConfig, null, 2)}</Text>
+            <Text style={styles.json}>
+              {JSON.stringify(contract.trainingConfig, null, 2)}
+            </Text>
           </>
         )}
 
@@ -173,12 +199,16 @@ export default function DebugContractScreen() {
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>Active:</Text>
-              <Text style={styles.value}>{contract.isActive ? 'Yes' : 'No'}</Text>
+              <Text style={styles.value}>
+                {contract.isActive ? "Yes" : "No"}
+              </Text>
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>Updated:</Text>
               <Text style={styles.value}>
-                {contract.updatedAt ? new Date(contract.updatedAt).toLocaleDateString() : 'N/A'}
+                {contract.updatedAt
+                  ? new Date(contract.updatedAt).toLocaleDateString()
+                  : "N/A"}
               </Text>
             </View>
           </>
@@ -205,11 +235,15 @@ export default function DebugContractScreen() {
           </Text>
         </View>
 
-        {renderContractData('Database Contract', dbContract, true)}
-        
+        {renderContractData("Database Contract", dbContract, true)}
+
         <View style={styles.spacer} />
-        
-        {renderContractData('Static Contract (Fallback)', staticContract, false)}
+
+        {renderContractData(
+          "Static Contract (Fallback)",
+          staticContract,
+          false,
+        )}
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
@@ -236,7 +270,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: typography.sizes.xl,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colors.textInverse,
   },
   subtitle: {
@@ -260,13 +294,13 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: typography.sizes.lg,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colors.text,
     marginBottom: spacing.md,
   },
   subSectionTitle: {
     fontSize: typography.sizes.md,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.text,
     marginTop: spacing.md,
     marginBottom: spacing.sm,
@@ -278,11 +312,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: 4,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingVertical: spacing.xs,
   },
   label: {
@@ -292,20 +326,20 @@ const styles = StyleSheet.create({
   value: {
     fontSize: typography.sizes.sm,
     color: colors.text,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   dbSource: {
     color: colors.success,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   staticSource: {
     color: colors.warning,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   notFound: {
     fontSize: typography.sizes.base,
     color: colors.error,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   divider: {
     height: 1,
@@ -318,14 +352,14 @@ const styles = StyleSheet.create({
   json: {
     fontSize: typography.sizes.xs,
     color: colors.textSecondary,
-    fontFamily: 'monospace',
+    fontFamily: "monospace",
     backgroundColor: colors.background,
     padding: spacing.sm,
     borderRadius: 4,
   },
   footer: {
     padding: spacing.md,
-    alignItems: 'center',
+    alignItems: "center",
   },
   footerText: {
     fontSize: typography.sizes.xs,

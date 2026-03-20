@@ -1,26 +1,28 @@
-import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
-import { colors, spacing, borderRadius, shadows } from '../theme';
+import React from "react";
+import { View, StyleSheet, ViewStyle } from "react-native";
+import { colors, spacing, borderRadius, shadows } from "../theme";
 
 interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
-  variant?: 'default' | 'outlined' | 'elevated';
-  padding?: 'none' | 'sm' | 'md' | 'lg';
+  variant?: "default" | "outlined" | "elevated";
+  padding?: "none" | "sm" | "md" | "lg";
 }
 
 export const Card: React.FC<CardProps> = ({
   children,
   style,
-  variant = 'elevated',
-  padding = 'md',
+  variant = "elevated",
+  padding = "md",
 }) => {
   return (
     <View
       style={[
         styles.base,
         styles[variant],
-        styles[(`padding${padding.charAt(0).toUpperCase()}${padding.slice(1)}`) as keyof typeof styles],
+        styles[
+          `padding${padding.charAt(0).toUpperCase()}${padding.slice(1)}` as keyof typeof styles
+        ],
         style,
       ]}
     >

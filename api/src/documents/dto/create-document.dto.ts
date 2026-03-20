@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum } from "class-validator";
 
 export class CreateDocumentDto {
   @IsString()
@@ -9,13 +9,13 @@ export class CreateDocumentDto {
   @IsNotEmpty()
   content: string;
 
-  @IsEnum(['fit-cisl', 'joint'])
+  @IsEnum(["fit-cisl", "joint"])
   @IsOptional()
-  union?: 'fit-cisl' | 'joint';
+  union?: "fit-cisl" | "joint";
 
-  @IsEnum(['pilot', 'cabin_crew'])
+  @IsEnum(["pilot", "cabin_crew"])
   @IsOptional()
-  ruolo?: 'pilot' | 'cabin_crew';
+  ruolo?: "pilot" | "cabin_crew";
 }
 
 export class ReviewDocumentDto {
@@ -28,4 +28,16 @@ export class ApproveDocumentDto {
   @IsString()
   @IsOptional()
   reviewedContent?: string;
+}
+
+export class UpdateTranslationDto {
+  @IsString()
+  @IsNotEmpty()
+  englishTranslation: string;
+}
+
+export class RejectDocumentDto {
+  @IsString()
+  @IsOptional()
+  rejectionReason?: string;
 }

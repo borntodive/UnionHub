@@ -1,10 +1,14 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ClaContract } from './entities/cla-contract.entity';
-import { ClaContractHistory } from './entities/cla-contract-history.entity';
-import { CreateClaContractDto } from './dto/create-cla-contract.dto';
-import { UpdateClaContractDto } from './dto/update-cla-contract.dto';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { ClaContract } from "./entities/cla-contract.entity";
+import { ClaContractHistory } from "./entities/cla-contract-history.entity";
+import { CreateClaContractDto } from "./dto/create-cla-contract.dto";
+import { UpdateClaContractDto } from "./dto/update-cla-contract.dto";
 
 interface UserInfo {
   userId: string;
@@ -22,14 +26,15 @@ export class ClaContractsService {
 
   // Find all contracts (optionally filter by year)
   async findAll(year?: number): Promise<ClaContract[]> {
-    const query = this.claContractRepository.createQueryBuilder('contract')
-      .orderBy('contract.role', 'ASC')
-      .addOrderBy('contract.rank', 'ASC');
+    const query = this.claContractRepository
+      .createQueryBuilder("contract")
+      .orderBy("contract.role", "ASC")
+      .addOrderBy("contract.rank", "ASC");
 
     if (year) {
-      query.where('contract.effectiveYear = :year', { year });
+      query.where("contract.effectiveYear = :year", { year });
     } else {
-      query.where('contract.isActive = true');
+      query.where("contract.isActive = true");
     }
 
     return query.getMany();
@@ -42,7 +47,7 @@ export class ClaContractsService {
     });
 
     if (!contract) {
-      throw new NotFoundException('CLA Contract not found');
+      throw new NotFoundException("CLA Contract not found");
     }
 
     return contract;
@@ -50,10 +55,10 @@ export class ClaContractsService {
 
   // Find contract by company, role, rank for a specific date
   async findByRank(
-    company: string, 
-    role: string, 
-    rank: string, 
-    date?: Date
+    company: string,
+    role: string,
+    rank: string,
+    date?: Date,
   ): Promise<ClaContract | null> {
     const targetDate = date || new Date();
     const year = targetDate.getFullYear();
@@ -63,24 +68,25 @@ export class ClaContractsService {
     // A contract is valid if:
     // - effectiveYear < year OR (effectiveYear == year AND effectiveMonth <= month)
     // - AND (endYear is NULL OR endYear > year OR (endYear == year AND endMonth >= month))
-    const query = this.claContractRepository.createQueryBuilder('contract')
-      .where('contract.company = :company', { company })
-      .andWhere('contract.role = :role', { role })
-      .andWhere('contract.rank = :rank', { rank })
-      .andWhere('contract.isActive = true')
+    const query = this.claContractRepository
+      .createQueryBuilder("contract")
+      .where("contract.company = :company", { company })
+      .andWhere("contract.role = :role", { role })
+      .andWhere("contract.rank = :rank", { rank })
+      .andWhere("contract.isActive = true")
       .andWhere(
-        '(contract.effectiveYear < :year OR (contract.effectiveYear = :year AND contract.effectiveMonth <= :month))',
-        { year, month }
+        "(contract.effectiveYear < :year OR (contract.effectiveYear = :year AND contract.effectiveMonth <= :month))",
+        { year, month },
       )
       .andWhere(
-        '(contract.endYear IS NULL OR contract.endYear > :year OR (contract.endYear = :year AND contract.endMonth >= :month))',
-        { year, month }
+        "(contract.endYear IS NULL OR contract.endYear > :year OR (contract.endYear = :year AND contract.endMonth >= :month))",
+        { year, month },
       );
 
     // Order by effective date descending to get the most recent applicable contract
     return query
-      .orderBy('contract.effectiveYear', 'DESC')
-      .addOrderBy('contract.effectiveMonth', 'DESC')
+      .orderBy("contract.effectiveYear", "DESC")
+      .addOrderBy("contract.effectiveMonth", "DESC")
       .getOne();
   }
 
@@ -88,7 +94,7 @@ export class ClaContractsService {
   async getHistory(contractId: string): Promise<ClaContractHistory[]> {
     return this.historyRepository.find({
       where: { contractId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -110,7 +116,7 @@ export class ClaContractsService {
 
     if (existing) {
       throw new ConflictException(
-        `Active contract already exists for ${createDto.company}/${createDto.role}/${createDto.rank} in year ${createDto.effectiveYear || new Date().getFullYear()}`
+        `Active contract already exists for ${createDto.company}/${createDto.role}/${createDto.rank} in year ${createDto.effectiveYear || new Date().getFullYear()}`,
       );
     }
 
@@ -122,7 +128,7 @@ export class ClaContractsService {
     const saved = await this.claContractRepository.save(contract);
 
     // Log to history
-    await this.logHistory(saved, 'CREATE', user);
+    await this.logHistory(saved, "CREATE", user);
 
     return saved;
   }
@@ -146,7 +152,7 @@ export class ClaContractsService {
     const saved = await this.claContractRepository.save(contract);
 
     // Log to history with changes
-    await this.logHistory(saved, 'UPDATE', user, changes);
+    await this.logHistory(saved, "UPDATE", user, changes);
 
     return saved;
   }
@@ -159,7 +165,7 @@ export class ClaContractsService {
     contract.updatedBy = user.userId;
 
     await this.claContractRepository.save(contract);
-    await this.logHistory(contract, 'DEACTIVATE', user);
+    await this.logHistory(contract, "DEACTIVATE", user);
   }
 
   // Reactivate
@@ -170,7 +176,7 @@ export class ClaContractsService {
     contract.updatedBy = user.userId;
 
     const saved = await this.claContractRepository.save(contract);
-    await this.logHistory(saved, 'ACTIVATE', user);
+    await this.logHistory(saved, "ACTIVATE", user);
 
     return saved;
   }
@@ -197,7 +203,7 @@ export class ClaContractsService {
 
     if (existing) {
       throw new ConflictException(
-        `Contract already exists for year ${targetYear}`
+        `Contract already exists for year ${targetYear}`,
       );
     }
 
@@ -223,8 +229,14 @@ export class ClaContractsService {
     });
 
     const saved = await this.claContractRepository.save(clone);
-    const statusNote = isActive ? '' : ' (INACTIVE - pending review)';
-    await this.logHistory(saved, 'CREATE', user, undefined, `Cloned from ${source.id}${statusNote} [Starts: ${effectiveMonth}/${targetYear}]`);
+    const statusNote = isActive ? "" : " (INACTIVE - pending review)";
+    await this.logHistory(
+      saved,
+      "CREATE",
+      user,
+      undefined,
+      `Cloned from ${source.id}${statusNote} [Starts: ${effectiveMonth}/${targetYear}]`,
+    );
 
     return saved;
   }
@@ -239,9 +251,11 @@ export class ClaContractsService {
     const contract = await this.findById(id);
 
     // Validate end date is after effective date
-    if (endYear < contract.effectiveYear || 
-        (endYear === contract.effectiveYear && endMonth < contract.effectiveMonth)) {
-      throw new ConflictException('End date must be after effective date');
+    if (
+      endYear < contract.effectiveYear ||
+      (endYear === contract.effectiveYear && endMonth < contract.effectiveMonth)
+    ) {
+      throw new ConflictException("End date must be after effective date");
     }
 
     const oldValues = {
@@ -256,17 +270,26 @@ export class ClaContractsService {
 
     const saved = await this.claContractRepository.save(contract);
 
-    await this.logHistory(saved, 'UPDATE', user, [
-      { field: 'endYear', oldValue: oldValues.endYear, newValue: endYear },
-      { field: 'endMonth', oldValue: oldValues.endMonth, newValue: endMonth },
-      { field: 'isActive', oldValue: oldValues.isActive, newValue: false },
-    ], 'Contract closed');
+    await this.logHistory(
+      saved,
+      "UPDATE",
+      user,
+      [
+        { field: "endYear", oldValue: oldValues.endYear, newValue: endYear },
+        { field: "endMonth", oldValue: oldValues.endMonth, newValue: endMonth },
+        { field: "isActive", oldValue: oldValues.isActive, newValue: false },
+      ],
+      "Contract closed",
+    );
 
     return saved;
   }
 
   // Delete all contracts for a specific year
-  async deleteAllForYear(year: number, user: UserInfo): Promise<{ deleted: number }> {
+  async deleteAllForYear(
+    year: number,
+    user: UserInfo,
+  ): Promise<{ deleted: number }> {
     // Find all contracts for the year
     const contracts = await this.claContractRepository.find({
       where: { effectiveYear: year },
@@ -278,11 +301,19 @@ export class ClaContractsService {
 
     // Log deletion for each contract before removing
     for (const contract of contracts) {
-      await this.logHistory(contract, 'DELETE', user, undefined, `Bulk delete for year ${year}`);
+      await this.logHistory(
+        contract,
+        "DELETE",
+        user,
+        undefined,
+        `Bulk delete for year ${year}`,
+      );
     }
 
     // Delete all contracts
-    const result = await this.claContractRepository.delete({ effectiveYear: year });
+    const result = await this.claContractRepository.delete({
+      effectiveYear: year,
+    });
 
     return { deleted: result.affected || 0 };
   }
@@ -296,7 +327,7 @@ export class ClaContractsService {
     note?: string,
   ): Promise<void> {
     const history = this.historyRepository.create({
-      contractId: action === 'DELETE' ? null : contract.id,
+      contractId: action === "DELETE" ? null : contract.id,
       action,
       performedBy: user.userId,
       performerCrewcode: user.crewcode,
@@ -331,8 +362,17 @@ export class ClaContractsService {
   ): { field: string; oldValue: any; newValue: any }[] {
     const changes: { field: string; oldValue: any; newValue: any }[] = [];
     const fieldsToCompare: (keyof UpdateClaContractDto)[] = [
-      'basic', 'ffp', 'sbh', 'al', 'oob', 'woff',
-      'allowance', 'diaria', 'rsa', 'trainingConfig', 'isActive'
+      "basic",
+      "ffp",
+      "sbh",
+      "al",
+      "oob",
+      "woff",
+      "allowance",
+      "diaria",
+      "rsa",
+      "trainingConfig",
+      "isActive",
     ];
 
     for (const field of fieldsToCompare) {

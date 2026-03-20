@@ -9,7 +9,10 @@ import {
   ActivityIndicator,
   Modal,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "@tanstack/react-query";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -44,6 +47,7 @@ const formatDate = (date: Date): string => {
 
 export const CompleteProfileScreen: React.FC = () => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
 
@@ -90,141 +94,148 @@ export const CompleteProfileScreen: React.FC = () => {
     activePicker === "dateOfEntry" ? dateOfEntry : dateOfCaptaincy;
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerIcon}>
-          <CheckCircle size={40} color={colors.textInverse} />
-        </View>
-        <Text style={styles.headerTitle}>{t("completeProfile.title")}</Text>
-        <Text style={styles.headerSubtitle}>
-          {t("completeProfile.description")}
-        </Text>
-      </View>
-
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        <Card style={styles.card}>
-          <Text style={styles.sectionTitle}>
-            {t("members.professionalDates")}
-          </Text>
-
-          {/* Date of Entry */}
-          <Text style={styles.fieldLabel}>
-            {t("members.dateOfEntry")}
-            <Text style={styles.required}> *</Text>
-          </Text>
-          <TouchableOpacity
-            style={styles.datePickerButton}
-            onPress={() => setActivePicker("dateOfEntry")}
-          >
-            <View style={styles.datePickerIcon}>
-              <Calendar size={20} color={colors.primary} />
-            </View>
-            <View style={styles.datePickerContent}>
-              <Text
-                style={[
-                  styles.datePickerValue,
-                  !dateOfEntry && styles.datePickerPlaceholder,
-                ]}
-              >
-                {dateOfEntry || t("completeProfile.selectDate")}
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Date of Captaincy — only for captain grades */}
-          {isCaptainGrade && (
-            <>
-              <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>
-                {t("members.dateOfCaptaincy")}
-                <Text style={styles.required}> *</Text>
-              </Text>
-              <TouchableOpacity
-                style={styles.datePickerButton}
-                onPress={() => setActivePicker("dateOfCaptaincy")}
-              >
-                <View style={styles.datePickerIcon}>
-                  <Calendar size={20} color={colors.primary} />
-                </View>
-                <View style={styles.datePickerContent}>
-                  <Text
-                    style={[
-                      styles.datePickerValue,
-                      !dateOfCaptaincy && styles.datePickerPlaceholder,
-                    ]}
-                  >
-                    {dateOfCaptaincy || t("completeProfile.selectDate")}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </>
-          )}
-        </Card>
-
-        <Button
-          title={
-            mutation.isPending
-              ? t("common.pleaseWait")
-              : t("completeProfile.save")
-          }
-          onPress={handleSave}
-          loading={mutation.isPending}
-          style={styles.saveButton}
-        />
-      </ScrollView>
-
-      {/* Date Picker Modal */}
-      <Modal
-        visible={activePicker !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setActivePicker(null)}
-      >
-        <View style={styles.actionSheetOverlay}>
-          <View style={styles.actionSheetContainer}>
-            <View style={styles.actionSheetHeader}>
-              <Text style={styles.actionSheetTitle}>
-                {t("completeProfile.selectDate")}
-              </Text>
-              <TouchableOpacity
-                onPress={() => setActivePicker(null)}
-                style={styles.actionSheetDoneButton}
-              >
-                <Text style={styles.actionSheetDoneText}>
-                  {t("common.done")}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <DateTimePicker
-              value={parseDate(activeValue) || new Date()}
-              mode="date"
-              display="spinner"
-              onChange={(_, selectedDate) => {
-                if (selectedDate && activePicker) {
-                  const formatted = formatDate(selectedDate);
-                  if (activePicker === "dateOfEntry") {
-                    setDateOfEntry(formatted);
-                  } else {
-                    setDateOfCaptaincy(formatted);
-                  }
-                }
-              }}
-            />
+    <View style={styles.wrapper}>
+      <View style={[styles.statusBarHack, { height: insets.top }]} />
+      <SafeAreaView style={{ flex: 1 }} edges={["bottom", "left", "right"]}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerIcon}>
+            <CheckCircle size={40} color={colors.textInverse} />
           </View>
+          <Text style={styles.headerTitle}>{t("completeProfile.title")}</Text>
+          <Text style={styles.headerSubtitle}>
+            {t("completeProfile.description")}
+          </Text>
         </View>
-      </Modal>
-    </SafeAreaView>
+
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          <Card style={styles.card}>
+            <Text style={styles.sectionTitle}>
+              {t("members.professionalDates")}
+            </Text>
+
+            {/* Date of Entry */}
+            <Text style={styles.fieldLabel}>
+              {t("members.dateOfEntry")}
+              <Text style={styles.required}> *</Text>
+            </Text>
+            <TouchableOpacity
+              style={styles.datePickerButton}
+              onPress={() => setActivePicker("dateOfEntry")}
+            >
+              <View style={styles.datePickerIcon}>
+                <Calendar size={20} color={colors.primary} />
+              </View>
+              <View style={styles.datePickerContent}>
+                <Text
+                  style={[
+                    styles.datePickerValue,
+                    !dateOfEntry && styles.datePickerPlaceholder,
+                  ]}
+                >
+                  {dateOfEntry || t("completeProfile.selectDate")}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Date of Captaincy — only for captain grades */}
+            {isCaptainGrade && (
+              <>
+                <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>
+                  {t("members.dateOfCaptaincy")}
+                  <Text style={styles.required}> *</Text>
+                </Text>
+                <TouchableOpacity
+                  style={styles.datePickerButton}
+                  onPress={() => setActivePicker("dateOfCaptaincy")}
+                >
+                  <View style={styles.datePickerIcon}>
+                    <Calendar size={20} color={colors.primary} />
+                  </View>
+                  <View style={styles.datePickerContent}>
+                    <Text
+                      style={[
+                        styles.datePickerValue,
+                        !dateOfCaptaincy && styles.datePickerPlaceholder,
+                      ]}
+                    >
+                      {dateOfCaptaincy || t("completeProfile.selectDate")}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </>
+            )}
+          </Card>
+
+          <Button
+            title={
+              mutation.isPending
+                ? t("common.pleaseWait")
+                : t("completeProfile.save")
+            }
+            onPress={handleSave}
+            loading={mutation.isPending}
+            style={styles.saveButton}
+          />
+        </ScrollView>
+
+        {/* Date Picker Modal */}
+        <Modal
+          visible={activePicker !== null}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setActivePicker(null)}
+        >
+          <View style={styles.actionSheetOverlay}>
+            <View style={styles.actionSheetContainer}>
+              <View style={styles.actionSheetHeader}>
+                <Text style={styles.actionSheetTitle}>
+                  {t("completeProfile.selectDate")}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => setActivePicker(null)}
+                  style={styles.actionSheetDoneButton}
+                >
+                  <Text style={styles.actionSheetDoneText}>
+                    {t("common.done")}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={parseDate(activeValue) || new Date()}
+                mode="date"
+                display="spinner"
+                maximumDate={new Date()}
+                onChange={(_, selectedDate) => {
+                  if (selectedDate && activePicker) {
+                    const formatted = formatDate(selectedDate);
+                    if (activePicker === "dateOfEntry") {
+                      setDateOfEntry(formatted);
+                    } else {
+                      setDateOfCaptaincy(formatted);
+                    }
+                  }
+                }}
+              />
+            </View>
+          </View>
+        </Modal>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  statusBarHack: {
+    backgroundColor: colors.primary,
   },
   header: {
     backgroundColor: colors.primary,
@@ -251,6 +262,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   contentContainer: {
     padding: spacing.md,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,12 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import {
   ArrowLeft,
   Upload,
@@ -19,15 +23,15 @@ import {
   AlertTriangle,
   Plane,
   Users,
-} from 'lucide-react-native';
-import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
-import { colors, spacing, typography, borderRadius } from '../../theme';
-import { Button } from '../../components/Button';
-import { usersApi } from '../../api/users';
-import { useAuthStore } from '../../store/authStore';
-import { UserRole, Ruolo } from '../../types';
+} from "lucide-react-native";
+import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
+import { colors, spacing, typography, borderRadius } from "../../theme";
+import { Button } from "../../components/Button";
+import { usersApi } from "../../api/users";
+import { useAuthStore } from "../../store/authStore";
+import { UserRole, Ruolo } from "../../types";
 
 interface ImportResult {
   created: number;
@@ -37,10 +41,14 @@ interface ImportResult {
 
 export const BulkImportScreen: React.FC = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
-  
-  const [selectedFile, setSelectedFile] = useState<{ name: string; uri: string } | null>(null);
+
+  const [selectedFile, setSelectedFile] = useState<{
+    name: string;
+    uri: string;
+  } | null>(null);
   const [selectedRole, setSelectedRole] = useState<Ruolo | null>(null);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
@@ -48,7 +56,11 @@ export const BulkImportScreen: React.FC = () => {
   const handleSelectFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'],
+        type: [
+          "text/csv",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "application/vnd.ms-excel",
+        ],
         copyToCacheDirectory: true,
       });
 
@@ -60,8 +72,8 @@ export const BulkImportScreen: React.FC = () => {
         setResult(null);
       }
     } catch (error) {
-      console.error('Error selecting file:', error);
-      Alert.alert('Error', 'Failed to select file');
+      console.error("Error selecting file:", error);
+      Alert.alert("Error", "Failed to select file");
     }
   };
 
@@ -70,37 +82,43 @@ export const BulkImportScreen: React.FC = () => {
 
     // For SuperAdmin, require role selection
     if (isSuperAdmin && !selectedRole) {
-      Alert.alert('Select Role', 'Please select a role (Pilot or Cabin Crew) before importing.');
+      Alert.alert(
+        "Select Role",
+        "Please select a role (Pilot or Cabin Crew) before importing.",
+      );
       return;
     }
 
     Alert.alert(
-      'Confirm Import',
+      "Confirm Import",
       `Import ${selectedFile.name}?
 
-${isSuperAdmin && selectedRole ? `Role: ${selectedRole === Ruolo.PILOT ? 'Pilot' : 'Cabin Crew'}\n` : ''}This will create new member accounts with default password "password".`,
+${isSuperAdmin && selectedRole ? `Role: ${selectedRole === Ruolo.PILOT ? "Pilot" : "Cabin Crew"}\n` : ""}This will create new member accounts with default password "password".`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Import',
-          style: 'default',
+          text: "Import",
+          style: "default",
           onPress: async () => {
             try {
               setImporting(true);
               const response = await usersApi.bulkImport(
-                selectedFile.uri, 
+                selectedFile.uri,
                 selectedFile.name,
-                isSuperAdmin ? selectedRole : undefined
+                isSuperAdmin ? selectedRole : undefined,
               );
               setResult(response);
             } catch (error: any) {
-              Alert.alert('Error', error.response?.data?.message || 'Import failed');
+              Alert.alert(
+                "Error",
+                error.response?.data?.message || "Import failed",
+              );
             } finally {
               setImporting(false);
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -113,8 +131,8 @@ DEF456,Bianchi,Laura,laura.bianchi@email.com,+39987654321,MXP,Purser,`;
     const fileUri = `${FileSystem.cacheDirectory}template_import.csv`;
     FileSystem.writeAsStringAsync(fileUri, template).then(() => {
       Sharing.shareAsync(fileUri, {
-        mimeType: 'text/csv',
-        dialogTitle: 'Download Template',
+        mimeType: "text/csv",
+        dialogTitle: "Download Template",
       });
     });
   };
@@ -136,18 +154,24 @@ DEF456,Bianchi,Laura,laura.bianchi@email.com,+39987654321,MXP,Purser,`;
             ]}
             onPress={() => setSelectedRole(Ruolo.PILOT)}
           >
-            <Plane 
-              size={24} 
-              color={selectedRole === Ruolo.PILOT ? colors.textInverse : colors.primary} 
+            <Plane
+              size={24}
+              color={
+                selectedRole === Ruolo.PILOT
+                  ? colors.textInverse
+                  : colors.primary
+              }
             />
-            <Text style={[
-              styles.roleButtonText,
-              selectedRole === Ruolo.PILOT && styles.roleButtonTextActive,
-            ]}>
+            <Text
+              style={[
+                styles.roleButtonText,
+                selectedRole === Ruolo.PILOT && styles.roleButtonTextActive,
+              ]}
+            >
               Pilot
             </Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[
               styles.roleButton,
@@ -155,14 +179,21 @@ DEF456,Bianchi,Laura,laura.bianchi@email.com,+39987654321,MXP,Purser,`;
             ]}
             onPress={() => setSelectedRole(Ruolo.CABIN_CREW)}
           >
-            <Users 
-              size={24} 
-              color={selectedRole === Ruolo.CABIN_CREW ? colors.textInverse : colors.primary} 
+            <Users
+              size={24}
+              color={
+                selectedRole === Ruolo.CABIN_CREW
+                  ? colors.textInverse
+                  : colors.primary
+              }
             />
-            <Text style={[
-              styles.roleButtonText,
-              selectedRole === Ruolo.CABIN_CREW && styles.roleButtonTextActive,
-            ]}>
+            <Text
+              style={[
+                styles.roleButtonText,
+                selectedRole === Ruolo.CABIN_CREW &&
+                  styles.roleButtonTextActive,
+              ]}
+            >
               Cabin Crew
             </Text>
           </TouchableOpacity>
@@ -172,147 +203,180 @@ DEF456,Bianchi,Laura,laura.bianchi@email.com,+39987654321,MXP,Purser,`;
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft size={24} color={colors.textInverse} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Bulk Import</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      <ScrollView style={styles.content}>
-        {/* Template Download */}
-        <View style={styles.templateCard}>
-          <FileText size={32} color={colors.primary} />
-          <Text style={styles.templateTitle}>Import Template</Text>
-          <Text style={styles.templateDescription}>
-            Download the template file (CSV format) with the correct column format
-          </Text>
-          <Button
-            title="Download Template"
-            onPress={downloadTemplate}
-            variant="secondary"
-          />
+    <View style={styles.wrapper}>
+      <View style={[styles.statusBarHack, { height: insets.top }]} />
+      <SafeAreaView
+        style={styles.container}
+        edges={["bottom", "left", "right"]}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <ArrowLeft size={24} color={colors.textInverse} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Bulk Import</Text>
+          <View style={{ width: 40 }} />
         </View>
 
-        {/* Required Fields Info */}
-        <View style={styles.infoCard}>
-          <AlertTriangle size={20} color={colors.warning} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.infoTitle}>Required Fields</Text>
-            <Text style={styles.infoText}>
-              Crewcode, Nome, Cognome, Email{'\n'}
-              Optional: Telefono, Base, Qualifica, Note
+        <ScrollView style={styles.content}>
+          {/* Template Download */}
+          <View style={styles.templateCard}>
+            <FileText size={32} color={colors.primary} />
+            <Text style={styles.templateTitle}>Import Template</Text>
+            <Text style={styles.templateDescription}>
+              Download the template file (CSV format) with the correct column
+              format
             </Text>
-          </View>
-        </View>
-
-        {/* Role Selector (SuperAdmin only) */}
-        {renderRoleSelector()}
-
-        {/* File Selection */}
-        <TouchableOpacity style={styles.uploadArea} onPress={handleSelectFile}>
-          <Upload size={48} color={colors.primary} />
-          <Text style={styles.uploadText}>
-            {selectedFile ? selectedFile.name : 'Tap to select CSV or Excel file'}
-          </Text>
-          <Text style={styles.uploadHint}>
-            {selectedFile ? 'Tap to change file' : 'Supported formats: .csv, .xlsx, .xls'}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Import Button */}
-        {selectedFile && !result && (
-          <Button
-            title={importing ? 'Importing...' : 'Start Import'}
-            onPress={handleImport}
-            loading={importing}
-            disabled={importing || (isSuperAdmin && !selectedRole)}
-            size="lg"
-            style={styles.importButton}
-          />
-        )}
-
-        {/* Results */}
-        {result && (
-          <View style={styles.resultCard}>
-            <Text style={styles.resultTitle}>Import Results</Text>
-            
-            <View style={styles.resultStats}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{result.total}</Text>
-                <Text style={styles.statLabel}>Total</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={[styles.statNumber, { color: colors.success }]}>
-                  {result.created}
-                </Text>
-                <Text style={styles.statLabel}>Created</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={[styles.statNumber, { color: colors.error }]}>
-                  {result.errors.length}
-                </Text>
-                <Text style={styles.statLabel}>Errors</Text>
-              </View>
-            </View>
-
-            {result.errors.length > 0 && (
-              <View style={styles.errorsSection}>
-                <Text style={styles.errorsTitle}>Errors:</Text>
-                {result.errors.slice(0, 5).map((error, index) => (
-                  <View key={index} style={styles.errorItem}>
-                    <XCircle size={16} color={colors.error} />
-                    <Text style={styles.errorText}>
-                      Row {error.row}: {error.error}
-                    </Text>
-                  </View>
-                ))}
-                {result.errors.length > 5 && (
-                  <Text style={styles.moreErrors}>
-                    ...and {result.errors.length - 5} more errors
-                  </Text>
-                )}
-              </View>
-            )}
-
             <Button
-              title="Import Another File"
-              onPress={() => {
-                setSelectedFile(null);
-                setSelectedRole(null);
-                setResult(null);
-              }}
+              title="Download Template"
+              onPress={downloadTemplate}
               variant="secondary"
-              style={styles.newImportButton}
             />
           </View>
-        )}
-      </ScrollView>
+
+          {/* Required Fields Info */}
+          <View style={styles.infoCard}>
+            <AlertTriangle size={20} color={colors.warning} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.infoTitle}>Required Fields</Text>
+              <Text style={styles.infoText}>
+                Crewcode, Nome, Cognome, Email{"\n"}
+                Optional: Telefono, Base, Qualifica, Note
+              </Text>
+            </View>
+          </View>
+
+          {/* Role Selector (SuperAdmin only) */}
+          {renderRoleSelector()}
+
+          {/* File Selection */}
+          <TouchableOpacity
+            style={styles.uploadArea}
+            onPress={handleSelectFile}
+          >
+            <Upload size={48} color={colors.primary} />
+            <Text style={styles.uploadText}>
+              {selectedFile
+                ? selectedFile.name
+                : "Tap to select CSV or Excel file"}
+            </Text>
+            <Text style={styles.uploadHint}>
+              {selectedFile
+                ? "Tap to change file"
+                : "Supported formats: .csv, .xlsx, .xls"}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Import Button */}
+          {selectedFile && !result && (
+            <Button
+              title={importing ? "Importing..." : "Start Import"}
+              onPress={handleImport}
+              loading={importing}
+              disabled={importing || (isSuperAdmin && !selectedRole)}
+              size="lg"
+              style={styles.importButton}
+            />
+          )}
+
+          {/* Results */}
+          {result && (
+            <View style={styles.resultCard}>
+              <Text style={styles.resultTitle}>Import Results</Text>
+
+              <View style={styles.resultStats}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>{result.total}</Text>
+                  <Text style={styles.statLabel}>Total</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={[styles.statNumber, { color: colors.success }]}>
+                    {result.created}
+                  </Text>
+                  <Text style={styles.statLabel}>Created</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={[styles.statNumber, { color: colors.error }]}>
+                    {result.errors.length}
+                  </Text>
+                  <Text style={styles.statLabel}>Errors</Text>
+                </View>
+              </View>
+
+              {result.errors.length > 0 && (
+                <View style={styles.errorsSection}>
+                  <Text style={styles.errorsTitle}>Errors:</Text>
+                  {result.errors.slice(0, 5).map((error, index) => (
+                    <View key={index} style={styles.errorItem}>
+                      <XCircle size={16} color={colors.error} />
+                      <Text style={styles.errorText}>
+                        Row {error.row}: {error.error}
+                      </Text>
+                    </View>
+                  ))}
+                  {result.errors.length > 5 && (
+                    <Text style={styles.moreErrors}>
+                      ...and {result.errors.length - 5} more errors
+                    </Text>
+                  )}
+                </View>
+              )}
+
+              <Button
+                title="Import Another File"
+                onPress={() => {
+                  setSelectedFile(null);
+                  setSelectedRole(null);
+                  setResult(null);
+                }}
+                variant="secondary"
+                style={styles.newImportButton}
+              />
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: colors.primary,
+  },
+  statusBarHack: {
+    backgroundColor: colors.primary,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: colors.primary,
-    paddingTop: 50,
-    paddingBottom: spacing.md,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    minHeight: 56,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
-    fontSize: typography.sizes.lg,
+    fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
     color: colors.textInverse,
+    flex: 1,
+    textAlign: "center",
   },
   content: {
     flex: 1,
@@ -322,7 +386,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -336,14 +400,14 @@ const styles = StyleSheet.create({
   templateDescription: {
     fontSize: typography.sizes.sm,
     color: colors.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: spacing.xs,
     marginBottom: spacing.md,
   },
   infoCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: colors.warning + '15',
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: colors.warning + "15",
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginBottom: spacing.md,
@@ -379,14 +443,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   roleButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.md,
   },
   roleButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: spacing.sm,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
@@ -411,10 +475,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.xl,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 2,
     borderColor: colors.border,
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
     marginBottom: spacing.md,
   },
   uploadText: {
@@ -442,16 +506,16 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.lg,
     fontWeight: typography.weights.bold,
     color: colors.text,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: spacing.md,
   },
   resultStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     marginBottom: spacing.lg,
   },
   statItem: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   statNumber: {
     fontSize: 32,
@@ -476,8 +540,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   errorItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
     marginBottom: spacing.xs,
   },
@@ -489,7 +553,7 @@ const styles = StyleSheet.create({
   moreErrors: {
     fontSize: typography.sizes.sm,
     color: colors.textSecondary,
-    fontStyle: 'italic',
+    fontStyle: "italic",
     marginTop: spacing.xs,
   },
   newImportButton: {

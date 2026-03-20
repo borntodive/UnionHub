@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,11 +7,14 @@ import {
   TouchableOpacity,
   Alert,
   RefreshControl,
-} from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Plus,
@@ -19,14 +22,14 @@ import {
   Trash2,
   Edit3,
   MoreVertical,
-} from 'lucide-react-native';
+} from "lucide-react-native";
 
-import { colors, spacing, typography, borderRadius } from '../../theme';
-import { Button } from '../../components/Button';
-import { Card } from '../../components/Card';
-import { basesApi } from '../../api/bases';
-import { RootStackParamList } from '../../navigation/types';
-import { Base } from '../../types';
+import { colors, spacing, typography, borderRadius } from "../../theme";
+import { Button } from "../../components/Button";
+import { Card } from "../../components/Card";
+import { basesApi } from "../../api/bases";
+import { RootStackParamList } from "../../navigation/types";
+import { Base } from "../../types";
 
 type BasesScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -36,19 +39,26 @@ export const BasesScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: bases, isLoading, refetch } = useQuery({
-    queryKey: ['bases'],
+  const {
+    data: bases,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["bases"],
     queryFn: basesApi.getBases,
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => basesApi.deleteBase(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bases'] });
-      Alert.alert('Success', 'Base deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ["bases"] });
+      Alert.alert("Success", "Base deleted successfully");
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to delete base');
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to delete base",
+      );
     },
   });
 
@@ -59,25 +69,25 @@ export const BasesScreen: React.FC = () => {
   };
 
   const handleAdd = () => {
-    navigation.navigate('BaseForm', {});
+    navigation.navigate("BaseForm", {});
   };
 
   const handleEdit = (base: Base) => {
-    navigation.navigate('BaseForm', { baseId: base.id });
+    navigation.navigate("BaseForm", { baseId: base.id });
   };
 
   const handleDelete = (base: Base) => {
     Alert.alert(
-      'Confirm Delete',
+      "Confirm Delete",
       `Are you sure you want to delete "${base.codice} - ${base.nome}"?`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Delete',
-          style: 'destructive',
+          text: "Delete",
+          style: "destructive",
           onPress: () => deleteMutation.mutate(base.id),
         },
-      ]
+      ],
     );
   };
 
@@ -114,7 +124,10 @@ export const BasesScreen: React.FC = () => {
   return (
     <View style={styles.wrapper}>
       <View style={[styles.statusBarHack, { height: insets.top }]} />
-      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <SafeAreaView
+        style={styles.container}
+        edges={["bottom", "left", "right"]}
+      >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
@@ -171,9 +184,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     backgroundColor: colors.primary,
@@ -182,21 +195,21 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
     color: colors.textInverse,
     flex: 1,
-    textAlign: 'center',
+    textAlign: "center",
   },
   addButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   listContent: {
     padding: spacing.md,
@@ -206,16 +219,16 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   itemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   itemIcon: {
     width: 48,
     height: 48,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.primary + '10',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: colors.primary + "10",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: spacing.md,
   },
   itemInfo: {
@@ -232,20 +245,20 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   itemActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
   },
   actionButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: borderRadius.md,
     backgroundColor: colors.background,
   },
   emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: spacing.xl * 2,
   },
   emptyText: {

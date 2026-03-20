@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -7,9 +7,9 @@ import {
   Modal,
   Pressable,
   ScrollView,
-} from 'react-native';
-import { Clock, X, Check } from 'lucide-react-native';
-import { colors, spacing, typography, borderRadius } from '../../../theme';
+} from "react-native";
+import { Clock, X, Check } from "lucide-react-native";
+import { colors, spacing, typography, borderRadius } from "../../../theme";
 
 interface SbhPickerProps {
   value: string;
@@ -22,7 +22,7 @@ export const SbhPicker: React.FC<SbhPickerProps> = ({ value, onChange }) => {
   const [tempMinutes, setTempMinutes] = useState(0);
 
   const [hours, minutes] = useMemo(() => {
-    const [h, m] = value.split(':').map((v) => parseInt(v) || 0);
+    const [h, m] = value.split(":").map((v) => parseInt(v) || 0);
     return [h, m];
   }, [value]);
 
@@ -37,19 +37,16 @@ export const SbhPicker: React.FC<SbhPickerProps> = ({ value, onChange }) => {
   }, []);
 
   const handleConfirm = useCallback(() => {
-    const newValue = `${tempHours.toString().padStart(2, '0')}:${tempMinutes.toString().padStart(2, '0')}`;
+    const newValue = `${tempHours.toString().padStart(2, "0")}:${tempMinutes.toString().padStart(2, "0")}`;
     onChange(newValue);
     setModalVisible(false);
   }, [tempHours, tempMinutes, onChange]);
 
-  const hourItems = useMemo(() => 
-    Array.from({ length: 151 }, (_, i) => i),
-    []
-  );
+  const hourItems = useMemo(() => Array.from({ length: 151 }, (_, i) => i), []);
 
-  const minuteItems = useMemo(() => 
-    Array.from({ length: 60 }, (_, i) => i),
-    []
+  const minuteItems = useMemo(
+    () => Array.from({ length: 60 }, (_, i) => i),
+    [],
   );
 
   return (
@@ -78,14 +75,15 @@ export const SbhPicker: React.FC<SbhPickerProps> = ({ value, onChange }) => {
 
             <View style={styles.previewContainer}>
               <Text style={styles.previewText}>
-                {tempHours.toString().padStart(2, '0')}:{tempMinutes.toString().padStart(2, '0')}
+                {tempHours.toString().padStart(2, "0")}:
+                {tempMinutes.toString().padStart(2, "0")}
               </Text>
             </View>
 
             <View style={styles.pickersRow}>
               <View style={styles.pickerColumn}>
                 <Text style={styles.pickerLabel}>Hours</Text>
-                <ScrollView 
+                <ScrollView
                   style={styles.scrollView}
                   showsVerticalScrollIndicator={false}
                 >
@@ -94,15 +92,17 @@ export const SbhPicker: React.FC<SbhPickerProps> = ({ value, onChange }) => {
                       key={h}
                       style={[
                         styles.item,
-                        tempHours === h && styles.itemSelected
+                        tempHours === h && styles.itemSelected,
                       ]}
                       onPress={() => setTempHours(h)}
                     >
-                      <Text style={[
-                        styles.itemText,
-                        tempHours === h && styles.itemTextSelected
-                      ]}>
-                        {h.toString().padStart(2, '0')}
+                      <Text
+                        style={[
+                          styles.itemText,
+                          tempHours === h && styles.itemTextSelected,
+                        ]}
+                      >
+                        {h.toString().padStart(2, "0")}
                       </Text>
                       {tempHours === h && (
                         <Check size={16} color={colors.primary} />
@@ -114,7 +114,7 @@ export const SbhPicker: React.FC<SbhPickerProps> = ({ value, onChange }) => {
 
               <View style={styles.pickerColumn}>
                 <Text style={styles.pickerLabel}>Minutes</Text>
-                <ScrollView 
+                <ScrollView
                   style={styles.scrollView}
                   showsVerticalScrollIndicator={false}
                 >
@@ -123,15 +123,17 @@ export const SbhPicker: React.FC<SbhPickerProps> = ({ value, onChange }) => {
                       key={m}
                       style={[
                         styles.item,
-                        tempMinutes === m && styles.itemSelected
+                        tempMinutes === m && styles.itemSelected,
                       ]}
                       onPress={() => setTempMinutes(m)}
                     >
-                      <Text style={[
-                        styles.itemText,
-                        tempMinutes === m && styles.itemTextSelected
-                      ]}>
-                        {m.toString().padStart(2, '0')}
+                      <Text
+                        style={[
+                          styles.itemText,
+                          tempMinutes === m && styles.itemTextSelected,
+                        ]}
+                      >
+                        {m.toString().padStart(2, "0")}
                       </Text>
                       {tempMinutes === m && (
                         <Check size={16} color={colors.primary} />
@@ -142,7 +144,10 @@ export const SbhPicker: React.FC<SbhPickerProps> = ({ value, onChange }) => {
               </View>
             </View>
 
-            <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={handleConfirm}
+            >
               <Text style={styles.confirmButtonText}>Confirm</Text>
             </TouchableOpacity>
           </View>
@@ -162,8 +167,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     borderWidth: 1,
@@ -180,8 +185,8 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   backdrop: {
     flex: 1,
@@ -192,12 +197,12 @@ const styles = StyleSheet.create({
     borderTopRightRadius: borderRadius.xl,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
-    maxHeight: '80%',
+    maxHeight: "80%",
   },
   modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -211,17 +216,17 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
   },
   previewContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: spacing.lg,
   },
   previewText: {
     fontSize: 48,
     fontWeight: typography.weights.bold,
     color: colors.primary,
-    fontVariant: ['tabular-nums'],
+    fontVariant: ["tabular-nums"],
   },
   pickersRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.md,
     height: 250,
   },
@@ -232,16 +237,16 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.semibold,
     color: colors.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: spacing.sm,
   },
   scrollView: {
     flex: 1,
   },
   item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.md,
@@ -253,7 +258,7 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: typography.sizes.lg,
     color: colors.text,
-    fontVariant: ['tabular-nums'],
+    fontVariant: ["tabular-nums"],
   },
   itemTextSelected: {
     color: colors.primary,
@@ -263,7 +268,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: borderRadius.md,
     paddingVertical: spacing.md,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: spacing.lg,
   },
   confirmButtonText: {

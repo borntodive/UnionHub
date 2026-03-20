@@ -51,11 +51,11 @@ src/
 ### Key Features
 
 1. **Single User=Member Table**: Unified table for authentication and member data
-2. **Role-Based Access Control**: 
+2. **Role-Based Access Control**:
    - SuperAdmin: Full access
    - Admin: Scoped to own professional role (pilot/cabin_crew)
    - User: Own profile only
-3. **JWT Authentication**: 
+3. **JWT Authentication**:
    - Access tokens (15 min)
    - Refresh tokens (30 days)
    - Secure token rotation
@@ -117,54 +117,54 @@ NODE_ENV=development
 
 ### Authentication
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/v1/auth/login` | Login with crewcode + password | Public |
-| POST | `/api/v1/auth/refresh` | Refresh access token | Public |
-| POST | `/api/v1/auth/logout` | Logout (revoke refresh token) | JWT |
-| POST | `/api/v1/auth/logout-all` | Logout from all devices | JWT |
-| POST | `/api/v1/auth/change-password` | Change password | JWT |
-| POST | `/api/v1/auth/force-change-password` | Force password change (first login) | JWT |
-| GET | `/api/v1/auth/me` | Get current user profile | JWT |
+| Method | Endpoint                             | Description                         | Auth   |
+| ------ | ------------------------------------ | ----------------------------------- | ------ |
+| POST   | `/api/v1/auth/login`                 | Login with crewcode + password      | Public |
+| POST   | `/api/v1/auth/refresh`               | Refresh access token                | Public |
+| POST   | `/api/v1/auth/logout`                | Logout (revoke refresh token)       | JWT    |
+| POST   | `/api/v1/auth/logout-all`            | Logout from all devices             | JWT    |
+| POST   | `/api/v1/auth/change-password`       | Change password                     | JWT    |
+| POST   | `/api/v1/auth/force-change-password` | Force password change (first login) | JWT    |
+| GET    | `/api/v1/auth/me`                    | Get current user profile            | JWT    |
 
 ### Users (Members)
 
-| Method | Endpoint | Description | Roles |
-|--------|----------|-------------|-------|
-| GET | `/api/v1/users` | List users (scoped by role) | Admin, SuperAdmin |
-| GET | `/api/v1/users/:id` | Get user by ID | Any (with restrictions) |
-| POST | `/api/v1/users` | Create new member | Admin, SuperAdmin |
-| PUT | `/api/v1/users/:id` | Update member | Admin, SuperAdmin |
-| DELETE | `/api/v1/users/:id` | Deactivate member | Admin, SuperAdmin |
-| GET | `/api/v1/users/recent` | Get recently added users | Admin, SuperAdmin |
+| Method | Endpoint               | Description                 | Roles                   |
+| ------ | ---------------------- | --------------------------- | ----------------------- |
+| GET    | `/api/v1/users`        | List users (scoped by role) | Admin, SuperAdmin       |
+| GET    | `/api/v1/users/:id`    | Get user by ID              | Any (with restrictions) |
+| POST   | `/api/v1/users`        | Create new member           | Admin, SuperAdmin       |
+| PUT    | `/api/v1/users/:id`    | Update member               | Admin, SuperAdmin       |
+| DELETE | `/api/v1/users/:id`    | Deactivate member           | Admin, SuperAdmin       |
+| GET    | `/api/v1/users/recent` | Get recently added users    | Admin, SuperAdmin       |
 
 ### Bases (SuperAdmin only)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/bases` | List all bases |
-| GET | `/api/v1/bases/:id` | Get base by ID |
-| POST | `/api/v1/bases` | Create base |
-| PUT | `/api/v1/bases/:id` | Update base |
-| DELETE | `/api/v1/bases/:id` | Delete base |
+| Method | Endpoint            | Description    |
+| ------ | ------------------- | -------------- |
+| GET    | `/api/v1/bases`     | List all bases |
+| GET    | `/api/v1/bases/:id` | Get base by ID |
+| POST   | `/api/v1/bases`     | Create base    |
+| PUT    | `/api/v1/bases/:id` | Update base    |
+| DELETE | `/api/v1/bases/:id` | Delete base    |
 
 ### Contracts (SuperAdmin only)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/contracts` | List all contracts |
-| POST | `/api/v1/contracts` | Create contract |
-| PUT | `/api/v1/contracts/:id` | Update contract |
-| DELETE | `/api/v1/contracts/:id` | Delete contract |
+| Method | Endpoint                | Description        |
+| ------ | ----------------------- | ------------------ |
+| GET    | `/api/v1/contracts`     | List all contracts |
+| POST   | `/api/v1/contracts`     | Create contract    |
+| PUT    | `/api/v1/contracts/:id` | Update contract    |
+| DELETE | `/api/v1/contracts/:id` | Delete contract    |
 
 ### Grades
 
-| Method | Endpoint | Description | Roles |
-|--------|----------|-------------|-------|
-| GET | `/api/v1/grades` | List grades (filter by ruolo) | Any |
-| POST | `/api/v1/grades` | Create grade | SuperAdmin |
-| PUT | `/api/v1/grades/:id` | Update grade | SuperAdmin |
-| DELETE | `/api/v1/grades/:id` | Delete grade | SuperAdmin |
+| Method | Endpoint             | Description                   | Roles      |
+| ------ | -------------------- | ----------------------------- | ---------- |
+| GET    | `/api/v1/grades`     | List grades (filter by ruolo) | Any        |
+| POST   | `/api/v1/grades`     | Create grade                  | SuperAdmin |
+| PUT    | `/api/v1/grades/:id` | Update grade                  | SuperAdmin |
+| DELETE | `/api/v1/grades/:id` | Delete grade                  | SuperAdmin |
 
 ## Authentication Flow
 
@@ -180,6 +180,7 @@ curl -X POST http://localhost:3000/api/v1/auth/login \
 ```
 
 Response:
+
 ```json
 {
   "accessToken": "eyJhbGciOiJIUzI1NiIs...",
@@ -218,6 +219,7 @@ curl -X POST http://localhost:3000/api/v1/auth/refresh \
 After running `npm run seed`, the following data is created:
 
 ### Bases
+
 - FCO - Roma Fiumicino
 - MXP - Milano Malpensa
 - VCE - Venezia Marco Polo
@@ -226,24 +228,29 @@ After running `npm run seed`, the following data is created:
 - CTA - Catania Fontanarossa
 
 ### Contracts
+
 - AZ-PI - ITA Airways - Pilots
 - AZ-CC - ITA Airways - Cabin Crew
 - RY-PI - Ryanair - Pilots
 - RY-CC - Ryanair - Cabin Crew
 
 ### Grades
+
 **Pilots:**
+
 - CMD - Commander
 - FO - First Officer
 - SO - Second Officer
 - ALL - Cadet
 
 **Cabin Crew:**
+
 - RDC - Cabin Manager
 - SEN - Senior Cabin Crew
 - ADV - Flight Attendant
 
 ### SuperAdmin User
+
 - **Crewcode:** SUPERADMIN (or from env)
 - **Password:** changeme (or from env)
 - **Must change password on first login:** true

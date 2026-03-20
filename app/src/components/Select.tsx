@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
-} from 'react-native';
-import { ChevronDown, Check } from 'lucide-react-native';
-import { colors, spacing, typography, borderRadius } from '../theme';
+} from "react-native";
+import { ChevronDown, Check } from "lucide-react-native";
+import { colors, spacing, typography, borderRadius } from "../theme";
 
 interface SelectOption {
   label: string;
@@ -28,28 +28,33 @@ export const Select: React.FC<SelectProps> = ({
   value,
   onValueChange,
   options,
-  placeholder = 'Select...',
+  placeholder = "Select...",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const selectedOption = options.find(opt => opt.value === value);
+  const selectedOption = options.find((opt) => opt.value === value);
   const displayValue = selectedOption?.label || placeholder;
 
   const handleSelect = (selectedValue: string) => {
-    onValueChange(selectedValue === '' ? undefined : selectedValue);
+    onValueChange(selectedValue === "" ? undefined : selectedValue);
     setIsOpen(false);
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
-      
+
       <TouchableOpacity
         style={styles.trigger}
         onPress={() => setIsOpen(true)}
         activeOpacity={0.7}
       >
-        <Text style={[styles.triggerText, !selectedOption && styles.placeholderText]}>
+        <Text
+          style={[
+            styles.triggerText,
+            !selectedOption && styles.placeholderText,
+          ]}
+        >
           {displayValue}
         </Text>
         <ChevronDown size={20} color={colors.textSecondary} />
@@ -70,7 +75,7 @@ export const Select: React.FC<SelectProps> = ({
             <View style={styles.dropdownHeader}>
               <Text style={styles.dropdownTitle}>{label}</Text>
             </View>
-            
+
             <ScrollView style={styles.optionsList}>
               {options.map((option) => (
                 <TouchableOpacity
@@ -114,9 +119,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   trigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: colors.background,
     borderRadius: borderRadius.md,
     borderWidth: 1,
@@ -135,14 +140,14 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: colors.overlay,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: spacing.lg,
   },
   dropdown: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    maxHeight: '70%',
-    overflow: 'hidden',
+    maxHeight: "70%",
+    overflow: "hidden",
   },
   dropdownHeader: {
     padding: spacing.lg,
@@ -158,16 +163,16 @@ const styles = StyleSheet.create({
     maxHeight: 300,
   },
   option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   optionSelected: {
-    backgroundColor: colors.primary + '08',
+    backgroundColor: colors.primary + "08",
   },
   optionText: {
     fontSize: typography.sizes.base,

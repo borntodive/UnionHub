@@ -23,7 +23,12 @@ import { colors, spacing, typography, borderRadius } from "../../theme";
 import { useAuthStore } from "../../store/authStore";
 import { setLanguage, getLanguage } from "../../i18n";
 import { usePayslipStore } from "../../payslip/store/usePayslipStore";
-import { PayslipSettings } from "../../payslip/types";
+import { PayslipSettings, LegacyCustom } from "../../payslip/types";
+import {
+  getContractData,
+  getActiveCorrections,
+  applyCorrections,
+} from "../../payslip/data/contractData";
 
 const LANGUAGES = [
   { code: "en", label: "English" },
@@ -71,6 +76,41 @@ const PayslipForm: React.FC<PayslipFormProps> = ({
     s.accontoAddComunali.toString(),
   );
   const [regionaliText, setRegionaliText] = useState(s.addRegionali.toString());
+
+  // Legacy state
+  const lc = s.legacyCustom ?? { ffp: 0, sbh: 0, al: 0 };
+  const [legacyFfpText, setLegacyFfpText] = useState(
+    lc.ffp > 0 ? lc.ffp.toFixed(2) : "",
+  );
+  const [legacySbhText, setLegacySbhText] = useState(
+    lc.sbh > 0 ? lc.sbh.toFixed(4) : "",
+  );
+  const [legacyAlText, setLegacyAlText] = useState(
+    lc.al > 0 ? lc.al.toFixed(2) : "",
+  );
+
+  const getContractRef = () => {
+    const base = getContractData(s.company, s.role, s.rank);
+    if (!base) return null;
+    const today = new Date().toISOString().split("T")[0];
+    const corrections = getActiveCorrections(s.company, s.role, today);
+    return applyCorrections(base, corrections, s.rank);
+  };
+
+  const handleSaveLegacy = () => {
+    const cd = getContractRef();
+    if (!cd) return;
+    const ffp = parseFloat(legacyFfpText) || 0;
+    const sbh = parseFloat(legacySbhText.replace(",", ".")) || 0;
+    const al = parseFloat(legacyAlText) || 0;
+    const deltas: LegacyCustom = {
+      ffp: ffp - cd.ffp,
+      sbh: sbh - cd.sbh,
+      al: al - cd.al,
+    };
+    set({ legacyCustom: { ffp, sbh, al }, legacyDeltas: deltas });
+    Alert.alert(t("common.success"), t("payslip.legacySaved"));
+  };
 
   const handlePensionChange = (value: string) => {
     const num = parseFloat(value);
@@ -322,6 +362,134 @@ const PayslipForm: React.FC<PayslipFormProps> = ({
           />
           <Text style={styles.inputSuffix}>€</Text>
         </View>
+      </View>
+
+      {/* Legacy Contract */}
+      <View style={styles.card}>
+        <CheckboxRow
+          label={t("payslip.legacyContract")}
+          value={s.legacy}
+          onToggle={() => set({ legacy: !s.legacy })}
+        />
+        {s.legacy && (
+          <>
+            <Text style={[styles.hint, { marginBottom: spacing.md }]}>
+              {t("payslip.legacyDescription")}
+            </Text>
+
+            {/* FFP */}
+            <Text style={styles.fieldLabel}>{t("payslip.legacyFfp")}</Text>
+            {(() => {
+              const cd = getContractRef();
+              return cd ? (
+                <Text style={styles.hint}>
+                  {t("payslip.legacyContractRef", {
+                    value: cd.ffp.toFixed(2) + " €",
+                  })}
+                </Text>
+              ) : null;
+            })()}
+            <View style={[styles.inputRow, { marginTop: spacing.xs }]}>
+              <TextInput
+                style={styles.numInput}
+                value={legacyFfpText}
+                onChangeText={(v) => {
+                  setLegacyFfpText(v.replace(",", "."));
+                  set({
+                    legacyCustom: {
+                      ...lc,
+                      ffp: parseFloat(v.replace(",", ".")) || 0,
+                    },
+                  });
+                }}
+                keyboardType="decimal-pad"
+                maxLength={10}
+                placeholder="0.00"
+                placeholderTextColor={colors.textSecondary}
+              />
+              <Text style={styles.inputSuffix}>€</Text>
+            </View>
+
+            {/* SBH */}
+            <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>
+              {t("payslip.legacySbh")}
+            </Text>
+            {(() => {
+              const cd = getContractRef();
+              return cd ? (
+                <Text style={styles.hint}>
+                  {t("payslip.legacyContractRef", {
+                    value: cd.sbh.toFixed(4) + " €",
+                  })}
+                </Text>
+              ) : null;
+            })()}
+            <View style={[styles.inputRow, { marginTop: spacing.xs }]}>
+              <TextInput
+                style={styles.numInput}
+                value={legacySbhText}
+                onChangeText={(v) => {
+                  setLegacySbhText(v.replace(",", "."));
+                  set({
+                    legacyCustom: {
+                      ...lc,
+                      sbh: parseFloat(v.replace(",", ".")) || 0,
+                    },
+                  });
+                }}
+                keyboardType="decimal-pad"
+                maxLength={10}
+                placeholder="0.0000"
+                placeholderTextColor={colors.textSecondary}
+              />
+              <Text style={styles.inputSuffix}>€</Text>
+            </View>
+
+            {/* AL */}
+            <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>
+              {t("payslip.legacyAl")}
+            </Text>
+            {(() => {
+              const cd = getContractRef();
+              return cd ? (
+                <Text style={styles.hint}>
+                  {t("payslip.legacyContractRef", {
+                    value: cd.al.toFixed(2) + " €",
+                  })}
+                </Text>
+              ) : null;
+            })()}
+            <View style={[styles.inputRow, { marginTop: spacing.xs }]}>
+              <TextInput
+                style={styles.numInput}
+                value={legacyAlText}
+                onChangeText={(v) => {
+                  setLegacyAlText(v.replace(",", "."));
+                  set({
+                    legacyCustom: {
+                      ...lc,
+                      al: parseFloat(v.replace(",", ".")) || 0,
+                    },
+                  });
+                }}
+                keyboardType="decimal-pad"
+                maxLength={10}
+                placeholder="0.00"
+                placeholderTextColor={colors.textSecondary}
+              />
+              <Text style={styles.inputSuffix}>€</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.legacySaveBtn}
+              onPress={handleSaveLegacy}
+            >
+              <Text style={styles.legacySaveBtnText}>
+                {t("payslip.legacySave")}
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </>
   );
@@ -848,7 +1016,7 @@ const styles = StyleSheet.create({
   infoCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.primaryLighter,
+    backgroundColor: colors.primaryLight,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     gap: spacing.sm,
@@ -858,6 +1026,18 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: typography.sizes.sm,
     color: colors.primary,
+  },
+  legacySaveBtn: {
+    marginTop: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+  },
+  legacySaveBtnText: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+    color: colors.textInverse,
   },
 });
 

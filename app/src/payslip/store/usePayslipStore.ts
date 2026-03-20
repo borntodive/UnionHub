@@ -84,6 +84,8 @@ const defaultSettings: PayslipSettings = {
   accontoAddComunali: 0,
   addRegionali: 0,
   legacy: false,
+  legacyCustom: { ffp: 0, sbh: 0, al: 0 },
+  legacyDeltas: { ffp: 0, sbh: 0, al: 0 },
   triAndLtc: false,
   btc: false,
   cu: false,
@@ -120,7 +122,9 @@ export const usePayslipStore = create<PayslipState>()(
 
       calculate: async (userFlags = {}) => {
         const { input, settings, overrideActive, overrideSettings } = get();
-        const activeSettings = overrideActive ? overrideSettings : settings;
+        const activeSettings = overrideActive
+          ? { ...overrideSettings, legacyDirect: true }
+          : { ...settings, legacyDirect: false };
         set({ isCalculating: true, error: null });
 
         try {

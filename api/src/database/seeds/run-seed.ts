@@ -24,7 +24,16 @@ const dataSource = new DataSource({
   username: process.env.DB_USERNAME || "postgres",
   password: process.env.DB_PASSWORD || "password",
   database: process.env.DB_DATABASE || "unionhub",
-  entities: [User, Base, Contract, Grade, RefreshToken, UserStatusHistory, ClaContract, ClaContractHistory],
+  entities: [
+    User,
+    Base,
+    Contract,
+    Grade,
+    RefreshToken,
+    UserStatusHistory,
+    ClaContract,
+    ClaContractHistory,
+  ],
   synchronize: false,
 });
 
@@ -110,13 +119,21 @@ async function runSeed() {
       { codice: "FO", nome: "First Officer", ruolo: Ruolo.PILOT },
       { codice: "CPT", nome: "Captain", ruolo: Ruolo.PILOT },
       { codice: "LTC", nome: "Line Training Captain", ruolo: Ruolo.PILOT },
-      { codice: "SFI", nome: "Synthetic Flight Instructor", ruolo: Ruolo.PILOT },
+      {
+        codice: "SFI",
+        nome: "Synthetic Flight Instructor",
+        ruolo: Ruolo.PILOT,
+      },
       { codice: "LCC", nome: "Line Check Captain", ruolo: Ruolo.PILOT },
       { codice: "TRI", nome: "Type Rating Instructor", ruolo: Ruolo.PILOT },
       { codice: "TRE", nome: "Type Rating Examiner", ruolo: Ruolo.PILOT },
       // Cabin Crew grades
       { codice: "SEPE", nome: "Senior Purser Europe", ruolo: Ruolo.CABIN_CREW },
-      { codice: "SEPI", nome: "Senior Purser Intercontinental", ruolo: Ruolo.CABIN_CREW },
+      {
+        codice: "SEPI",
+        nome: "Senior Purser Intercontinental",
+        ruolo: Ruolo.CABIN_CREW,
+      },
       { codice: "CC", nome: "Cabin Crew", ruolo: Ruolo.CABIN_CREW },
       { codice: "JPU", nome: "Junior Purser", ruolo: Ruolo.CABIN_CREW },
       { codice: "JU", nome: "Junior", ruolo: Ruolo.CABIN_CREW },
@@ -150,7 +167,7 @@ async function runSeed() {
         crewcode: adminCrewcode,
         password: hashedPassword,
         role: UserRole.SUPERADMIN,
-        mustChangePassword: false,
+        mustChangePassword: true,
         isActive: true,
         nome: "Super",
         cognome: "Admin",
@@ -178,24 +195,26 @@ async function runSeed() {
 
     // Seed Role Admins
     console.log("Seeding Role Admins...");
-    
+
     // Admin Piloti
     const existingPilotAdmin = await usersRepository.findOne({
       where: { crewcode: "ADMINPILOT" },
     });
     if (!existingPilotAdmin) {
       const hashedPassword = await bcrypt.hash("password", 10);
-      await usersRepository.save(usersRepository.create({
-        crewcode: "ADMINPILOT",
-        password: hashedPassword,
-        role: UserRole.ADMIN,
-        ruolo: Ruolo.PILOT,
-        mustChangePassword: false,
-        isActive: true,
-        nome: "Admin",
-        cognome: "Piloti",
-        email: "admin.piloti@unionhub.app",
-      }));
+      await usersRepository.save(
+        usersRepository.create({
+          crewcode: "ADMINPILOT",
+          password: hashedPassword,
+          role: UserRole.ADMIN,
+          ruolo: Ruolo.PILOT,
+          mustChangePassword: true,
+          isActive: true,
+          nome: "Admin",
+          cognome: "Piloti",
+          email: "admin.piloti@unionhub.app",
+        }),
+      );
       console.log("  Created Admin Piloti: ADMINPILOT / password");
     } else {
       console.log("  Admin Piloti already exists");
@@ -207,17 +226,19 @@ async function runSeed() {
     });
     if (!existingCCAdmin) {
       const hashedPassword = await bcrypt.hash("password", 10);
-      await usersRepository.save(usersRepository.create({
-        crewcode: "ADMINCC",
-        password: hashedPassword,
-        role: UserRole.ADMIN,
-        ruolo: Ruolo.CABIN_CREW,
-        mustChangePassword: false,
-        isActive: true,
-        nome: "Admin",
-        cognome: "CabinCrew",
-        email: "admin.cc@unionhub.app",
-      }));
+      await usersRepository.save(
+        usersRepository.create({
+          crewcode: "ADMINCC",
+          password: hashedPassword,
+          role: UserRole.ADMIN,
+          ruolo: Ruolo.CABIN_CREW,
+          mustChangePassword: true,
+          isActive: true,
+          nome: "Admin",
+          cognome: "CabinCrew",
+          email: "admin.cc@unionhub.app",
+        }),
+      );
       console.log("  Created Admin Cabin Crew: ADMINCC / password");
     } else {
       console.log("  Admin Cabin Crew already exists");
@@ -236,50 +257,157 @@ async function runSeed() {
       ],
     });
     const ccContracts = await contractsRepository.find({
-      where: [
-        { codice: "MAY-CC" },
-        { codice: "CrewLink" },
-      ],
+      where: [{ codice: "MAY-CC" }, { codice: "CrewLink" }],
     });
 
-    const pilotGrades = allGrades.filter(g => g.ruolo === Ruolo.PILOT);
-    const ccGrades = allGrades.filter(g => g.ruolo === Ruolo.CABIN_CREW);
+    const pilotGrades = allGrades.filter((g) => g.ruolo === Ruolo.PILOT);
+    const ccGrades = allGrades.filter((g) => g.ruolo === Ruolo.CABIN_CREW);
 
-    console.log(`  Found ${allBases.length} bases, ${pilotContracts.length} pilot contracts, ${pilotGrades.length} pilot grades`);
-    console.log(`  Found ${ccContracts.length} CC contracts, ${ccGrades.length} CC grades`);
+    console.log(
+      `  Found ${allBases.length} bases, ${pilotContracts.length} pilot contracts, ${pilotGrades.length} pilot grades`,
+    );
+    console.log(
+      `  Found ${ccContracts.length} CC contracts, ${ccGrades.length} CC grades`,
+    );
 
     // Seed 100 Pilots
     console.log("Seeding 100 Pilots...");
     let pilotsCreated = 0;
-    const firstNames = ["Marco", "Luca", "Giuseppe", "Antonio", "Giovanni", "Roberto", "Mario", "Andrea", "Stefano", "Francesco", "Paolo", "Alessandro", "Davide", "Simone", "Matteo", "Fabio", "Claudio", "Daniele", "Alessio", "Federico", "Emanuele", "Riccardo", "Massimo", "Vincenzo", "Salvatore", "Enrico", "Gabriele", "Lorenzo", "Nicola", "Pietro", "Domenico", "Giorgio", "Angelo", "Cristian", "Michele", "Valerio", "Gianluca", "Tommaso", "Alberto", "Edoardo", "Filippo", "Raffaele", "Samuele", "Diego", "Jacopo", "Leonardo", "Mattia", "Nicolò", "Omar", "Patrick"];
-    const lastNames = ["Rossi", "Bianchi", "Ferrari", "Esposito", "Romano", "Gallo", "Costa", "Fontana", "Conti", "Ricci", "Bruno", "Greco", "Moretti", "Marino", "Rizzo", "Lombardi", "Barbieri", "Santoro", "Ferraro", "De Luca", "Leone", "D'Angelo", "Longo", "Gatti", "Serra", "Caruso", "Mariani", "Martini", "Marchetti", "Galli", "Ferri", "Testa", "Grasso", "Pellegrini", "Monti", "Palma", "Coppola", "Mazza", "Ferrera", "Battaglia", "Bellini", "Basile", "Benedetti", "Bernardi", "Berti", "Bianchini", "Bindi", "Blasi", "Bo", "Bondi"];
+    const firstNames = [
+      "Marco",
+      "Luca",
+      "Giuseppe",
+      "Antonio",
+      "Giovanni",
+      "Roberto",
+      "Mario",
+      "Andrea",
+      "Stefano",
+      "Francesco",
+      "Paolo",
+      "Alessandro",
+      "Davide",
+      "Simone",
+      "Matteo",
+      "Fabio",
+      "Claudio",
+      "Daniele",
+      "Alessio",
+      "Federico",
+      "Emanuele",
+      "Riccardo",
+      "Massimo",
+      "Vincenzo",
+      "Salvatore",
+      "Enrico",
+      "Gabriele",
+      "Lorenzo",
+      "Nicola",
+      "Pietro",
+      "Domenico",
+      "Giorgio",
+      "Angelo",
+      "Cristian",
+      "Michele",
+      "Valerio",
+      "Gianluca",
+      "Tommaso",
+      "Alberto",
+      "Edoardo",
+      "Filippo",
+      "Raffaele",
+      "Samuele",
+      "Diego",
+      "Jacopo",
+      "Leonardo",
+      "Mattia",
+      "Nicolò",
+      "Omar",
+      "Patrick",
+    ];
+    const lastNames = [
+      "Rossi",
+      "Bianchi",
+      "Ferrari",
+      "Esposito",
+      "Romano",
+      "Gallo",
+      "Costa",
+      "Fontana",
+      "Conti",
+      "Ricci",
+      "Bruno",
+      "Greco",
+      "Moretti",
+      "Marino",
+      "Rizzo",
+      "Lombardi",
+      "Barbieri",
+      "Santoro",
+      "Ferraro",
+      "De Luca",
+      "Leone",
+      "D'Angelo",
+      "Longo",
+      "Gatti",
+      "Serra",
+      "Caruso",
+      "Mariani",
+      "Martini",
+      "Marchetti",
+      "Galli",
+      "Ferri",
+      "Testa",
+      "Grasso",
+      "Pellegrini",
+      "Monti",
+      "Palma",
+      "Coppola",
+      "Mazza",
+      "Ferrera",
+      "Battaglia",
+      "Bellini",
+      "Basile",
+      "Benedetti",
+      "Bernardi",
+      "Berti",
+      "Bianchini",
+      "Bindi",
+      "Blasi",
+      "Bo",
+      "Bondi",
+    ];
 
     for (let i = 1; i <= 100; i++) {
-      const crewcode = `PIL${i.toString().padStart(4, '0')}`;
+      const crewcode = `PIL${i.toString().padStart(4, "0")}`;
       const existing = await usersRepository.findOne({ where: { crewcode } });
-      
+
       if (!existing) {
         const hashedPassword = await bcrypt.hash("password", 10);
         const nome = firstNames[Math.floor(Math.random() * firstNames.length)];
         const cognome = lastNames[Math.floor(Math.random() * lastNames.length)];
         const base = allBases[Math.floor(Math.random() * allBases.length)];
-        const contract = pilotContracts[Math.floor(Math.random() * pilotContracts.length)];
-        const grade = pilotGrades[Math.floor(Math.random() * pilotGrades.length)];
+        const contract =
+          pilotContracts[Math.floor(Math.random() * pilotContracts.length)];
+        const grade =
+          pilotGrades[Math.floor(Math.random() * pilotGrades.length)];
 
-        await usersRepository.save(usersRepository.create({
-          crewcode,
-          password: hashedPassword,
-          role: UserRole.USER,
-          ruolo: Ruolo.PILOT,
-          mustChangePassword: false,
-          isActive: true,
-          nome,
-          cognome,
-          email: `${nome.toLowerCase()}.${cognome.toLowerCase()}.${i}@test.com`,
-          base,
-          contratto: contract,
-          grade,
-        }));
+        await usersRepository.save(
+          usersRepository.create({
+            crewcode,
+            password: hashedPassword,
+            role: UserRole.USER,
+            ruolo: Ruolo.PILOT,
+            mustChangePassword: true,
+            isActive: true,
+            nome,
+            cognome,
+            email: `${nome.toLowerCase()}.${cognome.toLowerCase()}.${i}@test.com`,
+            base,
+            contratto: contract,
+            grade,
+          }),
+        );
         pilotsCreated++;
       }
     }
@@ -290,31 +418,34 @@ async function runSeed() {
     let ccCreated = 0;
 
     for (let i = 1; i <= 100; i++) {
-      const crewcode = `CC${i.toString().padStart(4, '0')}`;
+      const crewcode = `CC${i.toString().padStart(4, "0")}`;
       const existing = await usersRepository.findOne({ where: { crewcode } });
-      
+
       if (!existing) {
         const hashedPassword = await bcrypt.hash("password", 10);
         const nome = firstNames[Math.floor(Math.random() * firstNames.length)];
         const cognome = lastNames[Math.floor(Math.random() * lastNames.length)];
         const base = allBases[Math.floor(Math.random() * allBases.length)];
-        const contract = ccContracts[Math.floor(Math.random() * ccContracts.length)];
+        const contract =
+          ccContracts[Math.floor(Math.random() * ccContracts.length)];
         const grade = ccGrades[Math.floor(Math.random() * ccGrades.length)];
 
-        await usersRepository.save(usersRepository.create({
-          crewcode,
-          password: hashedPassword,
-          role: UserRole.USER,
-          ruolo: Ruolo.CABIN_CREW,
-          mustChangePassword: false,
-          isActive: true,
-          nome,
-          cognome,
-          email: `${nome.toLowerCase()}.${cognome.toLowerCase()}.${i}@test.com`,
-          base,
-          contratto: contract,
-          grade,
-        }));
+        await usersRepository.save(
+          usersRepository.create({
+            crewcode,
+            password: hashedPassword,
+            role: UserRole.USER,
+            ruolo: Ruolo.CABIN_CREW,
+            mustChangePassword: true,
+            isActive: true,
+            nome,
+            cognome,
+            email: `${nome.toLowerCase()}.${cognome.toLowerCase()}.${i}@test.com`,
+            base,
+            contratto: contract,
+            grade,
+          }),
+        );
         ccCreated++;
       }
     }

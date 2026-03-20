@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -7,9 +7,9 @@ import {
   Platform,
   Keyboard,
   InputAccessoryView,
-} from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { colors, spacing, typography } from '../theme';
+} from "react-native";
+import { useTranslation } from "react-i18next";
+import { colors, spacing, typography } from "../theme";
 
 interface KeyboardDismissProps {
   inputAccessoryViewID?: string;
@@ -18,17 +18,17 @@ interface KeyboardDismissProps {
 // Component to be used as InputAccessoryView for iOS
 export const KeyboardDismissAccessory: React.FC = () => {
   const { t } = useTranslation();
-  
-  if (Platform.OS !== 'ios') return null;
-  
+
+  if (Platform.OS !== "ios") return null;
+
   return (
     <InputAccessoryView nativeID="keyboardDismiss">
       <View style={styles.container}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.button}
           onPress={() => Keyboard.dismiss()}
         >
-          <Text style={styles.buttonText}>{t('common.done')}</Text>
+          <Text style={styles.buttonText}>{t("common.done")}</Text>
         </TouchableOpacity>
       </View>
     </InputAccessoryView>
@@ -36,8 +36,8 @@ export const KeyboardDismissAccessory: React.FC = () => {
 };
 
 // Hook to get the inputAccessoryViewID prop
-export const useKeyboardDismiss = (id: string = 'keyboardDismiss') => {
-  return Platform.OS === 'ios' ? { inputAccessoryViewID: id } : {};
+export const useKeyboardDismiss = (id: string = "keyboardDismiss") => {
+  return Platform.OS === "ios" ? { inputAccessoryViewID: id } : {};
 };
 
 const styles = StyleSheet.create({
@@ -47,8 +47,8 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
   },
   button: {
     paddingHorizontal: spacing.md,

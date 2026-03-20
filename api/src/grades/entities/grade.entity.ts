@@ -6,39 +6,39 @@ import {
   UpdateDateColumn,
   OneToMany,
   Index,
-} from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+} from "typeorm";
+import { User } from "../../users/entities/user.entity";
 
 export enum Ruolo {
-  PILOT = 'pilot',
-  CABIN_CREW = 'cabin_crew',
+  PILOT = "pilot",
+  CABIN_CREW = "cabin_crew",
 }
 
-@Entity('grades')
-@Index(['ruolo'])
+@Entity("grades")
+@Index(["ruolo"])
 export class Grade {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ type: "varchar", length: 20 })
   codice: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: "varchar", length: 100 })
   nome: string;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: Ruolo,
-    enumName: 'ruolo_enum',
+    enumName: "ruolo_enum",
   })
   ruolo: Ruolo;
 
   @OneToMany(() => User, (user) => user.grade)
   users: User[];
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ type: "timestamptz" })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz' })
+  @UpdateDateColumn({ type: "timestamptz" })
   updatedAt: Date;
 }

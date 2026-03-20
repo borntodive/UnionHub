@@ -8,8 +8,8 @@ import {
   Max,
   IsObject,
   ValidateNested,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+} from "class-validator";
+import { Type } from "class-transformer";
 
 class SimDiariaTierDto {
   @IsInt()
@@ -70,7 +70,7 @@ class TrainingConfigDto {
 
 export class CreateClaContractDto {
   @IsString()
-  company: string = 'RYR';
+  company: string = "RYR";
 
   @IsString()
   role: string; // 'pil' or 'cc'

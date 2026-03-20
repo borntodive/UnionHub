@@ -1,9 +1,13 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, ILike } from 'typeorm';
-import { Base } from './entities/base.entity';
-import { CreateBaseDto } from './dto/create-base.dto';
-import { UpdateBaseDto } from './dto/update-base.dto';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, ILike } from "typeorm";
+import { Base } from "./entities/base.entity";
+import { CreateBaseDto } from "./dto/create-base.dto";
+import { UpdateBaseDto } from "./dto/update-base.dto";
 
 @Injectable()
 export class BasesService {
@@ -14,7 +18,7 @@ export class BasesService {
 
   async findAll(): Promise<Base[]> {
     return this.basesRepository.find({
-      order: { codice: 'ASC' },
+      order: { codice: "ASC" },
     });
   }
 
@@ -24,7 +28,7 @@ export class BasesService {
     });
 
     if (!base) {
-      throw new NotFoundException('Base not found');
+      throw new NotFoundException("Base not found");
     }
 
     return base;
@@ -40,7 +44,7 @@ export class BasesService {
     // Check for duplicate codice
     const existing = await this.findByCodice(createBaseDto.codice);
     if (existing) {
-      throw new ConflictException('Base code already exists');
+      throw new ConflictException("Base code already exists");
     }
 
     const base = this.basesRepository.create({
@@ -55,14 +59,17 @@ export class BasesService {
     const base = await this.findById(id);
 
     if (!base) {
-      throw new NotFoundException('Base not found');
+      throw new NotFoundException("Base not found");
     }
 
     // Check for duplicate codice if changing
-    if (updateBaseDto.codice && updateBaseDto.codice.toUpperCase() !== base.codice) {
+    if (
+      updateBaseDto.codice &&
+      updateBaseDto.codice.toUpperCase() !== base.codice
+    ) {
       const existing = await this.findByCodice(updateBaseDto.codice);
       if (existing) {
-        throw new ConflictException('Base code already exists');
+        throw new ConflictException("Base code already exists");
       }
     }
 
@@ -78,7 +85,7 @@ export class BasesService {
     const base = await this.findById(id);
 
     if (!base) {
-      throw new NotFoundException('Base not found');
+      throw new NotFoundException("Base not found");
     }
 
     await this.basesRepository.remove(base);

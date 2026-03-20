@@ -11,7 +11,7 @@ import {
   INPS,
   IRPEF,
   AdditionalItem,
-} from '../types';
+} from "../types";
 import {
   getContractData,
   getActiveCorrections,
@@ -23,7 +23,7 @@ import {
   INPS_RATES,
   IRPEF_BRACKETS,
   MIN_IMPONIBILE_INPS,
-} from '../data/contractData';
+} from "../data/contractData";
 import {
   createPayslipItem,
   createLeaveItem,
@@ -38,8 +38,13 @@ import {
   calculateCuneoFiscale,
   calculateIVSExemption,
   calculateBonus,
-} from '../utils/calculations';
-import { parseSbh, isDecember, getYear, getDaysInMonth } from '../utils/formatters';
+} from "../utils/calculations";
+import {
+  parseSbh,
+  isDecember,
+  getYear,
+  getDaysInMonth,
+} from "../utils/formatters";
 
 export class PayslipCalculator {
   private contractData: ReturnType<typeof getContractData>;
@@ -50,9 +55,9 @@ export class PayslipCalculator {
   private month: number;
 
   constructor(
-    input: PayslipInput, 
+    input: PayslipInput,
     settings: PayslipSettings,
-    userFlags: { itud?: boolean; rsa?: boolean } = {}
+    userFlags: { itud?: boolean; rsa?: boolean } = {},
   ) {
     this.input = input;
     this.settings = settings;
@@ -61,10 +66,49 @@ export class PayslipCalculator {
     this.month = new Date(input.date).getMonth() + 1;
 
     // Load and apply corrections to contract data
-    const baseData = getContractData(settings.company, settings.role, settings.rank);
+    const baseData = getContractData(
+      settings.company,
+      settings.role,
+      settings.rank,
+    );
     if (baseData) {
-      const corrections = getActiveCorrections(settings.company, settings.role, input.date);
-      this.contractData = applyCorrections(baseData, corrections, settings.rank);
+      const corrections = getActiveCorrections(
+        settings.company,
+        settings.role,
+        input.date,
+      );
+      const corrected = applyCorrections(baseData, corrections, settings.rank);
+      if (!corrected) {
+        this.contractData = null;
+        return;
+      }
+
+      // Apply legacy contract overrides
+      if (settings.legacy) {
+        const lc = settings.legacyCustom;
+        const ld = settings.legacyDeltas;
+        if (settings.legacyDirect && lc) {
+          // Override mode: use custom values directly as contract rates
+          this.contractData = {
+            ...corrected,
+            ffp: lc.ffp > 0 ? lc.ffp : corrected.ffp,
+            sbh: lc.sbh > 0 ? lc.sbh : corrected.sbh,
+            al: lc.al > 0 ? lc.al : corrected.al,
+          };
+        } else if (ld) {
+          // General settings mode: apply saved deltas on top of current contract
+          this.contractData = {
+            ...corrected,
+            ffp: corrected.ffp + ld.ffp,
+            sbh: corrected.sbh + ld.sbh,
+            al: corrected.al + ld.al,
+          };
+        } else {
+          this.contractData = corrected;
+        }
+      } else {
+        this.contractData = corrected;
+      }
     } else {
       this.contractData = null;
     }
@@ -75,7 +119,8 @@ export class PayslipCalculator {
 
     const payslipItems = this.calculatePayslipItems();
     const sectorPay = this.calculateSectorPay(payslipItems);
-    const { taxArea, taxFreeArea, grossPay } = this.calculateTaxAreas(payslipItems);
+    const { taxArea, taxFreeArea, grossPay } =
+      this.calculateTaxAreas(payslipItems);
 
     const areaINPS = this.calculateINPS(taxArea);
     const tfr = this.calculateTFR(payslipItems, areaINPS.imponibile);
@@ -84,7 +129,7 @@ export class PayslipCalculator {
     const areaIRPEF = this.calculateIRPEF(
       taxArea,
       areaINPS,
-      payslipItems.additionalPayments
+      payslipItems.additionalPayments,
     );
 
     // Add pension fund to IRPEF
@@ -123,10 +168,10 @@ export class PayslipCalculator {
 
   private calculatePayslipItems(): Payslip {
     const cd = this.contractData!;
-    
+
     // Part-time percentage (1 = full time, 0.5 = 50%, etc.)
     const ptPct = this.settings.parttime ? this.settings.parttimePercentage : 1;
-    
+
     // New Captain reduction (10% reduction on most items, except diaria/oob/allowances)
     const cuPct = this.settings.cu ? 0.9 : 1;
 
@@ -147,7 +192,7 @@ export class PayslipCalculator {
     const flyDiariaData = calculateDiariaWithTaxFree(
       this.input.flyDiaria,
       cd.diaria,
-      MAX_TAX_FREE_DIARIA
+      MAX_TAX_FREE_DIARIA,
     );
     const flyDiaria: PayslipItem = {
       total: flyDiariaData.total,
@@ -162,28 +207,40 @@ export class PayslipCalculator {
     const noFlyDiaria = createPayslipItem(
       this.input.noFlyDiaria * cd.diaria,
       100,
-      this.input.noFlyDiaria
+      this.input.noFlyDiaria,
     );
 
     // AL (reduced by New Captain)
-    const al = createPayslipItem(this.input.al * cd.al * cuPct, 50, this.input.al);
+    const al = createPayslipItem(
+      this.input.al * cd.al * cuPct,
+      50,
+      this.input.al,
+    );
 
     // WOFF (pilots only, reduced by New Captain)
     const woff = cd.woff
-      ? createPayslipItem(cd.woff * this.input.woff * cuPct, 50, this.input.woff)
+      ? createPayslipItem(
+          cd.woff * this.input.woff * cuPct,
+          50,
+          this.input.woff,
+        )
       : createPayslipItem(0, 50);
 
     // OOB (NOT reduced by New Captain)
     const oob = createPayslipItem(this.input.oob * cd.oob, 100, this.input.oob);
 
     // RSA (only if user has RSA flag enabled, NOT reduced by New Captain)
-    const rsa = this.userFlags.rsa 
+    const rsa = this.userFlags.rsa
       ? createPayslipItem(cd.rsa, 100)
       : createPayslipItem(0, 100);
 
     // OOB Unplanned (CC only)
     const oobUnplanned = cd.oob
-      ? createPayslipItem(this.input.oobUnplanned * cd.oob, 100, this.input.oobUnplanned)
+      ? createPayslipItem(
+          this.input.oobUnplanned * cd.oob,
+          100,
+          this.input.oobUnplanned,
+        )
       : createPayslipItem(0, 100);
 
     // UL (Unpaid Leave)
@@ -191,17 +248,21 @@ export class PayslipCalculator {
       this.input.ul,
       basic.total,
       ffp.total,
-      false
+      false,
     );
 
     // Sim Pay (reduced by New Captain)
-    const simPay = createPayslipItem(this.calculateSimPay() * cuPct, 50, this.input.simDays);
+    const simPay = createPayslipItem(
+      this.calculateSimPay() * cuPct,
+      50,
+      this.input.simDays,
+    );
 
     // Training Pay (LTC only, reduced by New Captain)
     const trainingPay = createPayslipItem(
       this.calculateTrainingPay() * cuPct,
       50,
-      this.input.trainingSectors
+      this.input.trainingSectors,
     );
 
     // Parental Leave
@@ -209,7 +270,7 @@ export class PayslipCalculator {
       this.input.parentalDays,
       basic.total,
       ffp.total,
-      true
+      true,
     );
 
     // Leave 104
@@ -217,7 +278,7 @@ export class PayslipCalculator {
       this.input.days104,
       basic.total,
       ffp.total,
-      true
+      true,
     );
 
     // SBH
@@ -226,16 +287,20 @@ export class PayslipCalculator {
 
     // ITUD - use contract value or default 120
     const itudRate = cd.itud || 120;
-    const itud = createPayslipItem(this.input.itud * itudRate, 50, this.input.itud);
+    const itud = createPayslipItem(
+      this.input.itud * itudRate,
+      50,
+      this.input.itud,
+    );
 
     // Additional Payments
     const additionalPayments = this.input.additional.map((add) =>
-      createAdditionalItem(add.amount, add.tax, add.isSLR, add.isConguaglio)
+      createAdditionalItem(add.amount, add.tax, add.isSLR, add.isConguaglio),
     );
 
     // Additional Deductions
     const additionalDeductions = this.input.additionalDeductions.map((ded) =>
-      createAdditionalItem(ded.amount, ded.tax, false, ded.isConguaglio)
+      createAdditionalItem(ded.amount, ded.tax, false, ded.isConguaglio),
     );
 
     // Union Fee (positive value, will be subtracted in tax calculation)
@@ -250,14 +315,14 @@ export class PayslipCalculator {
     const bankHolydays = createPayslipItem(
       this.input.bankHolydays * cd.al,
       50,
-      this.input.bankHolydays
+      this.input.bankHolydays,
     );
 
     // CC Training (reduced by New Captain)
     const ccTraining = createPayslipItem(
       this.input.ccTrainingDays * (cd.training?.allowance || 0) * cuPct,
       50,
-      this.input.ccTrainingDays
+      this.input.ccTrainingDays,
     );
 
     return {
@@ -290,7 +355,7 @@ export class PayslipCalculator {
   private calculateFFP(partTimePct: number = 1, cuPct: number = 1): number {
     const cd = this.contractData!;
     // FFP is reduced by part-time and New Captain, but allowances are NOT
-    let ffp = (cd.ffp * partTimePct * cuPct) + cd.allowance;
+    let ffp = cd.ffp * partTimePct * cuPct + cd.allowance;
 
     // Training allowance (NOT reduced by part-time or New Captain)
     if (cd.training?.allowance) {
@@ -306,13 +371,17 @@ export class PayslipCalculator {
         ffp += training.nonBtc.allowance;
       }
     }
-    
+
     // LTC additional allowance for TRI acting as LTC or TRE (always LTC)
     // TRE is always considered LTC, TRI only when triAndLtc flag is set
-    const isLtc = this.settings.rank === 'tre' || this.settings.triAndLtc;
+    const isLtc = this.settings.rank === "tre" || this.settings.triAndLtc;
     if (isLtc) {
       // Get LTC contract data for the additional allowance
-      const ltcData = getContractData(this.settings.company, this.settings.role, 'ltc');
+      const ltcData = getContractData(
+        this.settings.company,
+        this.settings.role,
+        "ltc",
+      );
       if (ltcData?.training?.allowance) {
         // Add LTC training allowance (€14000/12 = €1166.67/month)
         ffp += ltcData.training.allowance;
@@ -326,7 +395,11 @@ export class PayslipCalculator {
     if (!this.isInstructor() || !this.contractData?.training) return 0;
 
     const training = this.contractData.training;
-    let simDiaria: { min: number; max: number; pay: { ffp: number; sectorPay: number } }[] = [];
+    let simDiaria: {
+      min: number;
+      max: number;
+      pay: { ffp: number; sectorPay: number };
+    }[] = [];
 
     if (this.settings.btc && training.btc) {
       simDiaria = training.btc.simDiaria;
@@ -349,7 +422,9 @@ export class PayslipCalculator {
 
     // Add sector equivalent from sim days
     if (this.contractData.training.bonus.sectorEquivalent) {
-      sectors += Math.floor(this.input.simDays / this.contractData.training.bonus.sectorEquivalent);
+      sectors += Math.floor(
+        this.input.simDays / this.contractData.training.bonus.sectorEquivalent,
+      );
     }
 
     return calculateTieredPay(sectors, this.contractData.training.bonus.pay);
@@ -359,7 +434,7 @@ export class PayslipCalculator {
     days: number,
     basic: number,
     ffp: number,
-    isStatutory: boolean
+    isStatutory: boolean,
   ): LeaveItem {
     if (days === 0) {
       return {
@@ -427,10 +502,10 @@ export class PayslipCalculator {
     ];
 
     for (const item of items) {
-      if ('isDeduction' in item && item.isDeduction) continue;
+      if ("isDeduction" in item && item.isDeduction) continue;
 
       const total = item.total;
-      const taxable = 'taxable' in item ? item.taxable : total;
+      const taxable = "taxable" in item ? item.taxable : total;
 
       taxArea += taxable;
       taxFreeArea += total - taxable;
@@ -481,7 +556,7 @@ export class PayslipCalculator {
   private calculateIRPEF(
     taxArea: number,
     inps: INPS,
-    additionalPayments: AdditionalItem[]
+    additionalPayments: AdditionalItem[],
   ): IRPEF {
     const inpsContribution = inps.contribuzioneTotale;
 
@@ -501,11 +576,12 @@ export class PayslipCalculator {
     const irpefLorda = calculateTaxBrackets(annualIncome, brackets);
 
     // Deductions
-    const detrazioniLavoro = calculateWorkDeductions(
-      annualIncome,
-      this.year,
-      new Date(this.input.date)
-    ) * 30; // Monthly
+    const detrazioniLavoro =
+      calculateWorkDeductions(
+        annualIncome,
+        this.year,
+        new Date(this.input.date),
+      ) * 30; // Monthly
 
     const detrazioniConiuge = this.settings.coniugeCarico
       ? calculateSpouseDeductions(annualIncome, this.year)
@@ -517,7 +593,7 @@ export class PayslipCalculator {
     // Net tax
     const ritenute = Math.max(
       0,
-      irpefLorda - detrazioniLavoro - detrazioniConiuge - taglioCuneo.amount
+      irpefLorda - detrazioniLavoro - detrazioniConiuge - taglioCuneo.amount,
     );
 
     // Average tax rate
@@ -528,7 +604,7 @@ export class PayslipCalculator {
       annualIncome,
       irpefLorda,
       detrazioniLavoro + detrazioniConiuge,
-      new Date(this.input.date)
+      new Date(this.input.date),
     );
 
     return {
@@ -551,7 +627,7 @@ export class PayslipCalculator {
 
   private calculateTFR(
     payslip: Payslip,
-    imponibileINPS: number
+    imponibileINPS: number,
   ): { retribuzioneUtileTFR: number; tfr: number } {
     const retribuzioneUtileTFR =
       payslip.basic.total +
@@ -569,16 +645,20 @@ export class PayslipCalculator {
     return { retribuzioneUtileTFR, tfr };
   }
 
-  private calculateFondoPensione(
-    retribuzioneUtileTFR: number
-  ): { totale: number; volontaria: number; aziendale: number } {
+  private calculateFondoPensione(retribuzioneUtileTFR: number): {
+    totale: number;
+    volontaria: number;
+    aziendale: number;
+  } {
     const volontaria =
       (retribuzioneUtileTFR * this.settings.voluntaryPensionContribution) / 100;
 
     // Company contribution: 2% if voluntary >= 2%, otherwise 0
     const maxAziendale = RYR_CONFIG.maxContributoAziendaleTfr; // 2%
     const percAziendale =
-      this.settings.voluntaryPensionContribution >= maxAziendale ? maxAziendale : 0;
+      this.settings.voluntaryPensionContribution >= maxAziendale
+        ? maxAziendale
+        : 0;
     const aziendale = (retribuzioneUtileTFR * percAziendale) / 100;
 
     return {
@@ -589,7 +669,7 @@ export class PayslipCalculator {
   }
 
   private isInstructor(): boolean {
-    return ['sfi', 'tri', 'tre'].includes(this.settings.rank);
+    return ["sfi", "tri", "tre"].includes(this.settings.rank);
   }
 }
 
@@ -597,7 +677,7 @@ export class PayslipCalculator {
 export async function calculatePayroll(
   input: PayslipInput,
   settings: PayslipSettings,
-  userFlags: { itud?: boolean; rsa?: boolean } = {}
+  userFlags: { itud?: boolean; rsa?: boolean } = {},
 ): Promise<Payroll | null> {
   const calculator = new PayslipCalculator(input, settings, userFlags);
   return calculator.calculatePayroll();

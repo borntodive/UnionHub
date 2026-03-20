@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,33 +8,30 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+} from "react-native";
 import {
-  ArrowLeft,
-  Save,
-  Award,
-  Hash,
-  User,
-} from 'lucide-react-native';
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Save, Award, Hash, User } from "lucide-react-native";
 
-import { colors, spacing, typography, borderRadius } from '../../theme';
-import { Button } from '../../components/Button';
-import { Card } from '../../components/Card';
-import { Select } from '../../components/Select';
-import { gradesApi } from '../../api/grades';
-import { RootStackParamList } from '../../navigation/types';
-import { Ruolo } from '../../types';
+import { colors, spacing, typography, borderRadius } from "../../theme";
+import { Button } from "../../components/Button";
+import { Card } from "../../components/Card";
+import { Select } from "../../components/Select";
+import { gradesApi } from "../../api/grades";
+import { RootStackParamList } from "../../navigation/types";
+import { Ruolo } from "../../types";
 
-type GradeFormRouteProp = RouteProp<RootStackParamList, 'GradeForm'>;
+type GradeFormRouteProp = RouteProp<RootStackParamList, "GradeForm">;
 type GradeFormNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const ROLE_OPTIONS = [
-  { label: 'Pilot', value: Ruolo.PILOT },
-  { label: 'Cabin Crew', value: Ruolo.CABIN_CREW },
+  { label: "Pilot", value: Ruolo.PILOT },
+  { label: "Cabin Crew", value: Ruolo.CABIN_CREW },
 ];
 
 export const GradeFormScreen: React.FC = () => {
@@ -46,14 +43,14 @@ export const GradeFormScreen: React.FC = () => {
   const isEditing = !!gradeId;
 
   const [formData, setFormData] = useState({
-    codice: '',
-    nome: '',
+    codice: "",
+    nome: "",
     ruolo: Ruolo.PILOT,
   });
 
   // Fetch grade data if editing
   const { data: grade, isLoading: isLoadingGrade } = useQuery({
-    queryKey: ['grade', gradeId],
+    queryKey: ["grade", gradeId],
     queryFn: () => gradesApi.getGradeById(gradeId!),
     enabled: isEditing,
   });
@@ -72,39 +69,46 @@ export const GradeFormScreen: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (data: typeof formData) => gradesApi.createGrade(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['grades'] });
-      Alert.alert('Success', 'Grade created successfully');
+      queryClient.invalidateQueries({ queryKey: ["grades"] });
+      Alert.alert("Success", "Grade created successfully");
       navigation.goBack();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to create grade');
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to create grade",
+      );
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: typeof formData) => gradesApi.updateGrade(gradeId!, data),
+    mutationFn: (data: typeof formData) =>
+      gradesApi.updateGrade(gradeId!, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['grades'] });
-      queryClient.invalidateQueries({ queryKey: ['grade', gradeId] });
-      Alert.alert('Success', 'Grade updated successfully');
+      queryClient.invalidateQueries({ queryKey: ["grades"] });
+      queryClient.invalidateQueries({ queryKey: ["grade", gradeId] });
+      Alert.alert("Success", "Grade updated successfully");
       navigation.goBack();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to update grade');
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to update grade",
+      );
     },
   });
 
   const validateForm = (): boolean => {
     if (!formData.codice.trim()) {
-      Alert.alert('Error', 'Code is required');
+      Alert.alert("Error", "Code is required");
       return false;
     }
     if (!formData.nome.trim()) {
-      Alert.alert('Error', 'Name is required');
+      Alert.alert("Error", "Name is required");
       return false;
     }
     if (!formData.ruolo) {
-      Alert.alert('Error', 'Role is required');
+      Alert.alert("Error", "Role is required");
       return false;
     }
     return true;
@@ -126,12 +130,16 @@ export const GradeFormScreen: React.FC = () => {
     }
   };
 
-  const isLoading = createMutation.isPending || updateMutation.isPending || isLoadingGrade;
+  const isLoading =
+    createMutation.isPending || updateMutation.isPending || isLoadingGrade;
 
   return (
     <View style={styles.wrapper}>
       <View style={[styles.statusBarHack, { height: insets.top }]} />
-      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <SafeAreaView
+        style={styles.container}
+        edges={["bottom", "left", "right"]}
+      >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
@@ -142,7 +150,7 @@ export const GradeFormScreen: React.FC = () => {
             <ArrowLeft size={24} color={colors.textInverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>
-            {isEditing ? 'Edit Grade' : 'New Grade'}
+            {isEditing ? "Edit Grade" : "New Grade"}
           </Text>
           <TouchableOpacity
             onPress={handleSave}
@@ -171,7 +179,9 @@ export const GradeFormScreen: React.FC = () => {
                 <TextInput
                   style={styles.input}
                   value={formData.codice}
-                  onChangeText={(text) => setFormData({ ...formData, codice: text.toUpperCase() })}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, codice: text.toUpperCase() })
+                  }
                   placeholder="e.g. CPT, FO, SCC"
                   placeholderTextColor={colors.textTertiary}
                   autoCapitalize="characters"
@@ -194,7 +204,9 @@ export const GradeFormScreen: React.FC = () => {
                 <TextInput
                   style={styles.input}
                   value={formData.nome}
-                  onChangeText={(text) => setFormData({ ...formData, nome: text })}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, nome: text })
+                  }
                   placeholder="e.g. Commander"
                   placeholderTextColor={colors.textTertiary}
                 />
@@ -216,7 +228,9 @@ export const GradeFormScreen: React.FC = () => {
                   <Select
                     label=""
                     value={formData.ruolo}
-                    onValueChange={(value) => setFormData({ ...formData, ruolo: value as Ruolo })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, ruolo: value as Ruolo })
+                    }
                     options={ROLE_OPTIONS}
                     placeholder="Select role"
                   />
@@ -236,7 +250,7 @@ export const GradeFormScreen: React.FC = () => {
               style={styles.actionButton}
             />
             <Button
-              title={isEditing ? 'Update Grade' : 'Create Grade'}
+              title={isEditing ? "Update Grade" : "Create Grade"}
               onPress={handleSave}
               loading={isLoading}
               style={styles.actionButton}
@@ -263,9 +277,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     backgroundColor: colors.primary,
@@ -274,21 +288,21 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
     color: colors.textInverse,
     flex: 1,
-    textAlign: 'center',
+    textAlign: "center",
   },
   saveButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   content: {
     flex: 1,
@@ -310,8 +324,8 @@ const styles = StyleSheet.create({
     color: colors.error,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
@@ -328,8 +342,8 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   selectWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
@@ -345,7 +359,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   actionsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.md,
     margin: spacing.md,
     marginTop: spacing.lg,

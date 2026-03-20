@@ -1,5 +1,11 @@
-import { IsString, IsOptional, IsEnum, MinLength, MaxLength } from 'class-validator';
-import { Ruolo } from '../../common/enums/ruolo.enum';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  MinLength,
+  MaxLength,
+} from "class-validator";
+import { Ruolo } from "../../common/enums/ruolo.enum";
 
 export class UpdateGradeDto {
   @IsOptional()

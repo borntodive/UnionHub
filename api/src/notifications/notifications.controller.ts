@@ -1,12 +1,6 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Request,
-  UseGuards,
-} from '@nestjs/common';
-import { NotificationsService } from './notifications.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Controller, Post, Body, Request, UseGuards } from "@nestjs/common";
+import { NotificationsService } from "./notifications.service";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 interface RequestWithUser extends Request {
   user: {
@@ -21,12 +15,12 @@ interface RegisterTokenDto {
   platform?: string;
 }
 
-@Controller('notifications')
+@Controller("notifications")
 @UseGuards(JwtAuthGuard)
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
-  @Post('register-token')
+  @Post("register-token")
   async registerToken(
     @Request() req: RequestWithUser,
     @Body() dto: RegisterTokenDto,
@@ -34,14 +28,14 @@ export class NotificationsController {
     await this.notificationsService.registerToken(
       req.user.userId,
       dto.token,
-      dto.platform || 'expo'
+      dto.platform || "expo",
     );
-    return { message: 'Token registered successfully' };
+    return { message: "Token registered successfully" };
   }
 
-  @Post('unregister-token')
+  @Post("unregister-token")
   async unregisterToken(@Body() dto: { token: string }) {
     await this.notificationsService.unregisterToken(dto.token);
-    return { message: 'Token unregistered successfully' };
+    return { message: "Token unregistered successfully" };
   }
 }

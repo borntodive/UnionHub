@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef } from "react";
 import {
   TextInput,
   View,
@@ -10,9 +10,9 @@ import {
   Keyboard,
   TouchableOpacity,
   InputAccessoryView,
-} from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { colors, spacing, borderRadius, typography } from '../theme';
+} from "react-native";
+import { useTranslation } from "react-i18next";
+import { colors, spacing, borderRadius, typography } from "../theme";
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -27,17 +27,17 @@ interface InputProps extends TextInputProps {
 // iOS Done Button Component
 const InputAccessoryDone: React.FC<{ id: string }> = ({ id }) => {
   const { t } = useTranslation();
-  
-  if (Platform.OS !== 'ios') return null;
-  
+
+  if (Platform.OS !== "ios") return null;
+
   return (
     <InputAccessoryView nativeID={id}>
       <View style={styles.accessoryContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.accessoryButton}
           onPress={() => Keyboard.dismiss()}
         >
-          <Text style={styles.accessoryButtonText}>{t('common.done')}</Text>
+          <Text style={styles.accessoryButtonText}>{t("common.done")}</Text>
         </TouchableOpacity>
       </View>
     </InputAccessoryView>
@@ -45,20 +45,25 @@ const InputAccessoryDone: React.FC<{ id: string }> = ({ id }) => {
 };
 
 export const Input = forwardRef<TextInput, InputProps>(
-  ({ 
-    label, 
-    error, 
-    containerStyle, 
-    leftIcon, 
-    rightIcon, 
-    showDoneButton = true,
-    inputAccessoryViewID,
-    style, 
-    ...props 
-  }, ref) => {
-    const accessoryId = inputAccessoryViewID || `input-accessory-${Math.random().toString(36).substr(2, 9)}`;
-    const shouldShowAccessory = showDoneButton && Platform.OS === 'ios';
-    
+  (
+    {
+      label,
+      error,
+      containerStyle,
+      leftIcon,
+      rightIcon,
+      showDoneButton = true,
+      inputAccessoryViewID,
+      style,
+      ...props
+    },
+    ref,
+  ) => {
+    const accessoryId =
+      inputAccessoryViewID ||
+      `input-accessory-${Math.random().toString(36).substr(2, 9)}`;
+    const shouldShowAccessory = showDoneButton && Platform.OS === "ios";
+
     return (
       <View style={[styles.container, containerStyle]}>
         {shouldShowAccessory && <InputAccessoryDone id={accessoryId} />}
@@ -74,8 +79,13 @@ export const Input = forwardRef<TextInput, InputProps>(
               style,
             ]}
             placeholderTextColor={colors.textTertiary}
-            returnKeyType={props.returnKeyType || (showDoneButton ? 'done' : undefined)}
-            onSubmitEditing={props.onSubmitEditing || (showDoneButton ? () => Keyboard.dismiss() : undefined)}
+            returnKeyType={
+              props.returnKeyType || (showDoneButton ? "done" : undefined)
+            }
+            onSubmitEditing={
+              props.onSubmitEditing ||
+              (showDoneButton ? () => Keyboard.dismiss() : undefined)
+            }
             blurOnSubmit={props.blurOnSubmit ?? showDoneButton}
             {...(shouldShowAccessory && { inputAccessoryViewID: accessoryId })}
             {...props}
@@ -85,7 +95,7 @@ export const Input = forwardRef<TextInput, InputProps>(
         {error && <Text style={styles.error}>{error}</Text>}
       </View>
     );
-  }
+  },
 );
 
 const styles = StyleSheet.create({
@@ -99,8 +109,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
@@ -141,8 +151,8 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
   },
   accessoryButton: {
     paddingHorizontal: spacing.md,

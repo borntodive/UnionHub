@@ -3,18 +3,21 @@ import {
   UnauthorizedException,
   BadRequestException,
   ConflictException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcrypt';
-import { UsersService } from '../users/users.service';
-import { RefreshToken } from '../refresh-tokens/entities/refresh-token.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { LoginDto } from './dto/login.dto';
-import { ChangePasswordDto, ForceChangePasswordDto } from './dto/change-password.dto';
-import { AuthResponseDto, TokenPayloadDto } from './dto/auth-response.dto';
-import { User } from '../users/entities/user.entity';
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
+import * as bcrypt from "bcrypt";
+import { UsersService } from "../users/users.service";
+import { RefreshToken } from "../refresh-tokens/entities/refresh-token.entity";
+import { Repository } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
+import { LoginDto } from "./dto/login.dto";
+import {
+  ChangePasswordDto,
+  ForceChangePasswordDto,
+} from "./dto/change-password.dto";
+import { AuthResponseDto, TokenPayloadDto } from "./dto/auth-response.dto";
+import { User } from "../users/entities/user.entity";
 
 @Injectable()
 export class AuthService {
@@ -26,29 +29,36 @@ export class AuthService {
     private refreshTokenRepository: Repository<RefreshToken>,
   ) {}
 
-  async login(loginDto: LoginDto, ipAddress?: string, userAgent?: string): Promise<AuthResponseDto> {
+  async login(
+    loginDto: LoginDto,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<AuthResponseDto> {
     const user = await this.usersService.findByCrewcode(loginDto.crewcode);
 
     if (!user) {
-      throw new UnauthorizedException('Invalid crewcode or password');
+      throw new UnauthorizedException("Invalid crewcode or password");
     }
 
-    const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.password,
+    );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid crewcode or password');
+      throw new UnauthorizedException("Invalid crewcode or password");
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
+      throw new UnauthorizedException("Account is deactivated");
     }
 
     const tokens = await this.generateTokens(user, ipAddress, userAgent);
 
     // In development mode, always set mustChangePassword to false
-    const isDev = process.env.NODE_ENV === 'development';
+    const isDev = process.env.NODE_ENV === "development";
     const serializedUser = user.serialize(user.role);
-    
+
     if (isDev) {
       serializedUser.mustChangePassword = false;
     }
@@ -59,26 +69,34 @@ export class AuthService {
     };
   }
 
-  async refreshTokens(refreshToken: string, ipAddress?: string, userAgent?: string): Promise<AuthResponseDto> {
+  async refreshTokens(
+    refreshToken: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<AuthResponseDto> {
     const tokenEntity = await this.refreshTokenRepository.findOne({
       where: { token: refreshToken },
-      relations: ['user'],
+      relations: ["user"],
     });
 
     if (!tokenEntity || !tokenEntity.isValid()) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException("Invalid or expired refresh token");
     }
 
     // Revoke old token
     tokenEntity.isRevoked = true;
     await this.refreshTokenRepository.save(tokenEntity);
 
-    const tokens = await this.generateTokens(tokenEntity.user, ipAddress, userAgent);
+    const tokens = await this.generateTokens(
+      tokenEntity.user,
+      ipAddress,
+      userAgent,
+    );
 
     // In development mode, always set mustChangePassword to false
-    const isDev = process.env.NODE_ENV === 'development';
+    const isDev = process.env.NODE_ENV === "development";
     const serializedUser = tokenEntity.user.serialize(tokenEntity.user.role);
-    
+
     if (isDev) {
       serializedUser.mustChangePassword = false;
     }
@@ -115,18 +133,18 @@ export class AuthService {
     const user = await this.usersService.findById(userId);
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException("User not found");
     }
 
     // If not forced change, verify current password
-    if (!isForced && 'currentPassword' in changePasswordDto) {
+    if (!isForced && "currentPassword" in changePasswordDto) {
       const isCurrentPasswordValid = await bcrypt.compare(
         changePasswordDto.currentPassword,
         user.password,
       );
 
       if (!isCurrentPasswordValid) {
-        throw new BadRequestException('Current password is incorrect');
+        throw new BadRequestException("Current password is incorrect");
       }
     }
 
@@ -143,15 +161,19 @@ export class AuthService {
 
   async getProfile(userId: string): Promise<Partial<User>> {
     const user = await this.usersService.findById(userId);
-    
+
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException("User not found");
     }
 
     return user.serialize(user.role);
   }
 
-  private async generateTokens(user: User, ipAddress?: string, userAgent?: string): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
+  private async generateTokens(
+    user: User,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
     const payload: TokenPayloadDto = {
       sub: user.id,
       crewcode: user.crewcode,
@@ -160,18 +182,20 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: '15m',
+      secret: this.configService.get<string>("JWT_SECRET"),
+      expiresIn: "15m",
     });
 
     const refreshToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: '30d',
+      secret: this.configService.get<string>("JWT_SECRET"),
+      expiresIn: "30d",
     });
 
     // Calculate expiration date for refresh token
     const refreshExpirationDays = parseInt(
-      this.configService.get<string>('JWT_REFRESH_EXPIRATION', '30d').replace('d', ''),
+      this.configService
+        .get<string>("JWT_REFRESH_EXPIRATION", "30d")
+        .replace("d", ""),
       10,
     );
     const expiresAt = new Date();
@@ -190,7 +214,9 @@ export class AuthService {
 
     // Calculate expiresIn for access token (in seconds)
     const accessExpirationMinutes = parseInt(
-      this.configService.get<string>('JWT_ACCESS_EXPIRATION', '15m').replace('m', ''),
+      this.configService
+        .get<string>("JWT_ACCESS_EXPIRATION", "15m")
+        .replace("m", ""),
       10,
     );
     const expiresIn = accessExpirationMinutes * 60;

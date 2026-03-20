@@ -5,10 +5,12 @@
 UnionConnect (also referred to as UnionHub) is a comprehensive union management platform for airline workers, specifically designed for CISL (Confederazione Italiana Sindacati Lavoratori) - an Italian trade union. The platform manages union members, documents, communications, and provides a payslip calculator for aviation workers.
 
 The project consists of two main components:
+
 - **Backend API**: NestJS 11 + TypeORM 0.3 + PostgreSQL
 - **Frontend Mobile App**: Expo 52 + React Native 0.83
 
 ### Key Features
+
 - Member management with role-based access (SuperAdmin, Admin, User)
 - Document generation with PDF templates and AI translation (Ollama integration)
 - CLA (Collective Labor Agreement) contract management
@@ -68,37 +70,40 @@ The project consists of two main components:
 ## Technology Stack
 
 ### Backend
-| Component | Technology | Version |
-|-----------|------------|---------|
-| Framework | NestJS | 11.x |
-| ORM | TypeORM | 0.3.x |
-| Database | PostgreSQL | 15+ |
-| Auth | Passport.js + JWT | - |
-| Validation | class-validator | - |
-| PDF Generation | pdf-lib, puppeteer-core | - |
-| AI Integration | Ollama (local/cloud) | - |
-| Excel Processing | xlsx | - |
+
+| Component        | Technology              | Version |
+| ---------------- | ----------------------- | ------- |
+| Framework        | NestJS                  | 11.x    |
+| ORM              | TypeORM                 | 0.3.x   |
+| Database         | PostgreSQL              | 15+     |
+| Auth             | Passport.js + JWT       | -       |
+| Validation       | class-validator         | -       |
+| PDF Generation   | pdf-lib, puppeteer-core | -       |
+| AI Integration   | Ollama (local/cloud)    | -       |
+| Excel Processing | xlsx                    | -       |
 
 ### Frontend
-| Component | Technology | Version |
-|-----------|------------|---------|
-| Framework | Expo | 52.x |
-| React Native | - | 0.83.x |
-| React | - | 19.2.x |
-| Navigation | React Navigation | v7 |
-| State (Client) | Zustand | 5.x |
-| State (Server) | TanStack Query | 5.x |
-| Forms | React Hook Form | 7.x |
-| Icons | lucide-react-native | - |
-| Storage | AsyncStorage (via Zustand persist) | - |
-| i18n | i18next + react-i18next | - |
-| PDF Viewer | react-native-pdf | - |
+
+| Component      | Technology                         | Version |
+| -------------- | ---------------------------------- | ------- |
+| Framework      | Expo                               | 52.x    |
+| React Native   | -                                  | 0.83.x  |
+| React          | -                                  | 19.2.x  |
+| Navigation     | React Navigation                   | v7      |
+| State (Client) | Zustand                            | 5.x     |
+| State (Server) | TanStack Query                     | 5.x     |
+| Forms          | React Hook Form                    | 7.x     |
+| Icons          | lucide-react-native                | -       |
+| Storage        | AsyncStorage (via Zustand persist) | -       |
+| i18n           | i18next + react-i18next            | -       |
+| PDF Viewer     | react-native-pdf                   | -       |
 
 ---
 
 ## Quick Start
 
 ### Prerequisites
+
 - Node.js 18+
 - PostgreSQL 15+ running locally
 - (Optional) Ollama for AI features
@@ -125,6 +130,7 @@ npm run start:dev
 API Base URL: `http://localhost:3000/api/v1`
 
 Default credentials after seed:
+
 - **SuperAdmin**: `SUPERADMIN` / `changeme` (must change on first login)
 - **Admin Piloti**: `ADMINPILOT` / `password`
 - **Admin Cabin Crew**: `ADMINCC` / `password`
@@ -150,6 +156,7 @@ npx expo start --ios
 ## Build Commands
 
 ### Backend
+
 ```bash
 npm run build          # Build for production
 npm run start:dev      # Development with hot reload
@@ -159,6 +166,7 @@ npm run lint           # ESLint with auto-fix
 ```
 
 ### Database
+
 ```bash
 npm run migration:generate -- -n MigrationName  # Generate migration
 npm run migration:run                           # Run pending migrations
@@ -167,6 +175,7 @@ npm run seed                                    # Run database seeds
 ```
 
 ### Frontend
+
 ```bash
 npm start              # Start Expo development server
 npm run android        # Run on Android
@@ -180,6 +189,7 @@ npm run lint           # ESLint check
 ## Testing
 
 ### Backend
+
 ```bash
 npm run test           # Unit tests
 npm run test:watch     # Watch mode
@@ -190,6 +200,7 @@ npm run test:e2e       # E2E tests
 **Note**: The `api/test/` directory is currently empty. Tests need to be implemented.
 
 ### Frontend
+
 ```bash
 npm test               # Run Jest tests
 ```
@@ -199,12 +210,14 @@ npm test               # Run Jest tests
 ## Code Style Guidelines
 
 ### TypeScript
+
 - Strict mode enabled
 - Use path aliases (`@/*`, `@api/*`, `@components/*`, etc.)
 - Prefer interfaces over types for object shapes
 - Use enums for fixed sets of values
 
 ### Backend Conventions
+
 - Follow NestJS module pattern (controller, service, module, entity, dto)
 - Use dependency injection
 - Implement DTOs with class-validator decorators
@@ -212,6 +225,7 @@ npm test               # Run Jest tests
 - Migrations: NEVER use `synchronize: true` in production
 
 ### Frontend Conventions
+
 - Use React Hook Form for all forms
 - Use TanStack Query for server state
 - Use Zustand for client state
@@ -220,6 +234,7 @@ npm test               # Run Jest tests
 - Keep screens in separate directories with index exports
 
 ### Naming Conventions
+
 - Files: kebab-case for services, PascalCase for components/classes
 - Classes: PascalCase
 - Interfaces: PascalCase (prefix with `I` optional)
@@ -232,6 +247,7 @@ npm test               # Run Jest tests
 ## Database Schema
 
 ### Core Tables
+
 - `users` - Unified auth + member data (crewcode is the login field)
 - `bases` - Operational bases (BRI, BGY, BLQ, FCO, MXP, etc.)
 - `contracts` - Contract types (MAY-PI, AFA, MAY-CC, etc.)
@@ -243,11 +259,12 @@ npm test               # Run Jest tests
 - `device_tokens` - Push notification tokens
 
 ### Key Enums
+
 ```typescript
-UserRole: 'superadmin' | 'admin' | 'user'
-Ruolo: 'pilot' | 'cabin_crew'
-DocumentStatus: 'draft' | 'reviewing' | 'approved' | 'verified' | 'published'
-UnionType: 'fit-cisl' | 'joint'
+UserRole: "superadmin" | "admin" | "user";
+Ruolo: "pilot" | "cabin_crew";
+DocumentStatus: "draft" | "reviewing" | "approved" | "verified" | "published";
+UnionType: "fit-cisl" | "joint";
 ```
 
 ---
@@ -267,6 +284,7 @@ UnionType: 'fit-cisl' | 'joint'
 ## API Endpoints
 
 ### Authentication
+
 - `POST /auth/login` - Login with crewcode/password
 - `POST /auth/logout` - Logout (requires refresh token)
 - `POST /auth/logout-all` - Logout from all devices
@@ -276,6 +294,7 @@ UnionType: 'fit-cisl' | 'joint'
 - `GET /auth/me` - Get current user profile
 
 ### Users
+
 - `GET /users` - List users (role-scoped: Admin only sees same ruolo)
 - `GET /users/:id` - Get user by ID
 - `POST /users` - Create user (Admin+)
@@ -283,11 +302,13 @@ UnionType: 'fit-cisl' | 'joint'
 - `DELETE /users/:id` - Delete/deactivate user (Admin+)
 
 ### Reference Data
+
 - `GET /bases` - List bases
 - `GET /contracts` - List contracts
 - `GET /grades` - List grades
 
 ### CLA Contracts
+
 - `GET /cla-contracts` - List contracts
 - `GET /cla-contracts/:id` - Get contract by ID
 - `POST /cla-contracts` - Create contract (Admin+)
@@ -297,6 +318,7 @@ UnionType: 'fit-cisl' | 'joint'
 - `POST /cla-contracts/:id/close` - Close contract
 
 ### Documents
+
 - `GET /documents` - List documents
 - `GET /documents/public` - Public documents (no auth)
 - `POST /documents` - Create document
@@ -308,6 +330,7 @@ UnionType: 'fit-cisl' | 'joint'
 ## Security Considerations
 
 ### Authentication & Authorization
+
 - JWT tokens with short access token lifetime (15 minutes)
 - Refresh tokens stored in database for revocation
 - Password hashing with bcrypt (10 rounds)
@@ -315,19 +338,23 @@ UnionType: 'fit-cisl' | 'joint'
 - Force password change on first login for new users
 
 ### Data Protection
+
 - GDPR compliance: User data serialization based on role
 - Sensitive fields (note, itud, rsa) only visible to Admin/SuperAdmin
 - Soft delete for users (deactivatedAt timestamp)
 - Status history tracking for audit trails
 
 ### API Security
+
 - CORS configured via environment variable
 - Input validation via class-validator
 - Request payload limits (50mb for JSON)
 - Rate limiting should be implemented for production
 
 ### Environment Variables
+
 Sensitive configuration in `.env`:
+
 - `JWT_SECRET` - Must be at least 32 characters
 - `DB_PASSWORD` - Database password
 - `OLLAMA_API_KEY` - If using cloud Ollama
@@ -337,6 +364,7 @@ Sensitive configuration in `.env`:
 ## Key Features Implementation
 
 ### PDF Generation
+
 - Custom letterhead templates in `api/templates/`
 - pdf-lib for template-based generation
 - Puppeteer fallback for HTML-based generation
@@ -344,12 +372,14 @@ Sensitive configuration in `.env`:
 - Bilingual support (Italian + English)
 
 ### AI Integration (Ollama)
+
 - Local or cloud Ollama instance
 - Model: configurable (mistral, llama3.2, etc.)
 - Features: Document rewriting, English translation
 - Health check endpoint for monitoring
 
 ### Payslip Calculator
+
 - Complex Italian tax calculations (INPS/IRPEF)
 - Role-specific calculations (pilot vs cabin_crew)
 - CLA contract data with versioning
@@ -357,6 +387,7 @@ Sensitive configuration in `.env`:
 - Real-time calculation in React Native
 
 ### Push Notifications
+
 - Expo Push API integration
 - Device token management
 - Broadcast and targeted notifications
@@ -367,6 +398,7 @@ Sensitive configuration in `.env`:
 ## Troubleshooting
 
 ### Backend Issues
+
 ```bash
 # Check if PostgreSQL is running
 pg_isready
@@ -381,6 +413,7 @@ lsof -ti:3000 | xargs kill -9
 ```
 
 ### Frontend Issues
+
 ```bash
 # Clear Expo cache
 npx expo start --clear
@@ -393,6 +426,7 @@ rm -rf node_modules && npm install
 ```
 
 ### Database Issues
+
 - Check `.env` configuration matches your PostgreSQL setup
 - Ensure migrations are run after schema changes
 - Never enable `synchronize: true` in production
@@ -402,6 +436,7 @@ rm -rf node_modules && npm install
 ## Development Notes
 
 ### Adding a New Module
+
 1. Backend: Create module folder in `api/src/` with entity, service, controller, module, DTOs
 2. Add module to `AppModule` imports
 3. Generate migration if schema changes: `npm run migration:generate -- -n Name`
@@ -410,11 +445,13 @@ rm -rf node_modules && npm install
 6. Create screens/components as needed
 
 ### Code Comments
+
 - Primary language for comments: **English**
 - API messages: **English**
 - User-facing text: Uses i18n (English/Italian)
 
 ### Git Workflow
+
 - Do not commit `node_modules/`, `dist/`, `.env`, or `uploads/`
 - Database migrations should be committed
 - Seed files should be committed
@@ -425,22 +462,22 @@ rm -rf node_modules && npm install
 
 ```typescript
 const colors = {
-  primary: '#177246',      // CISL Green
-  primaryDark: '#125a38',
-  primaryLight: '#1d8f57',
-  
-  secondary: '#DA0E32',    // CISL Red
-  secondaryDark: '#b00b29',
-  
-  background: '#F5F5F5',
-  surface: '#FFFFFF',
-  text: '#212121',
-  textSecondary: '#757575',
-  
-  success: '#4CAF50',
-  warning: '#FF9800',
-  error: '#F44336',
-  info: '#2196F3',
+  primary: "#177246", // CISL Green
+  primaryDark: "#125a38",
+  primaryLight: "#1d8f57",
+
+  secondary: "#DA0E32", // CISL Red
+  secondaryDark: "#b00b29",
+
+  background: "#F5F5F5",
+  surface: "#FFFFFF",
+  text: "#212121",
+  textSecondary: "#757575",
+
+  success: "#4CAF50",
+  warning: "#FF9800",
+  error: "#F44336",
+  info: "#2196F3",
 };
 ```
 

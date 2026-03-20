@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing, typography, borderRadius } from '../../../theme';
-import { formatCurrency } from '../../utils/formatters';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { colors, spacing, typography, borderRadius } from "../../../theme";
+import { formatCurrency } from "../../utils/formatters";
 
 interface TotalCardProps {
   totaleCompetenze: number;
@@ -55,19 +55,27 @@ export const TotalCard: React.FC<TotalCardProps> = ({
       {trattamentoIntegrativo !== undefined && trattamentoIntegrativo > 0 && (
         <View style={styles.row}>
           <Text style={styles.labelSmall}>+ Bonus (Tratt. Int.)</Text>
-          <Text style={styles.valueSmall}>{formatCurrency(trattamentoIntegrativo)}</Text>
+          <Text style={styles.valueSmall}>
+            {formatCurrency(trattamentoIntegrativo)}
+          </Text>
         </View>
       )}
-      {(grossPay !== undefined || taxArea !== undefined) && <View style={styles.divider} />}
+      {(grossPay !== undefined || taxArea !== undefined) && (
+        <View style={styles.divider} />
+      )}
 
       <View style={styles.row}>
         <Text style={styles.label}>Total Earnings</Text>
-        <Text style={styles.valuePositive}>{formatCurrency(totaleCompetenze)}</Text>
+        <Text style={styles.valuePositive}>
+          {formatCurrency(totaleCompetenze)}
+        </Text>
       </View>
 
       <View style={styles.row}>
         <Text style={styles.label}>Total Deductions</Text>
-        <Text style={styles.valueNegative}>{formatCurrency(-totaleTrattenute)}</Text>
+        <Text style={styles.valueNegative}>
+          {formatCurrency(-totaleTrattenute)}
+        </Text>
       </View>
 
       <View style={styles.divider} />
@@ -78,7 +86,7 @@ export const TotalCard: React.FC<TotalCardProps> = ({
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -96,9 +104,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,

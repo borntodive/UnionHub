@@ -1,4 +1,5 @@
 # UnionConnect — Use Case Analysis
+
 ## Perspective of the Union Representative (Aviation Sector)
 
 **Version:** 1.3
@@ -15,10 +16,10 @@
 
 ## 1. System Actors
 
-| Actor | Description |
-|--------|-------------|
-| **SuperAdmin** | Central system administrator (CISL national/regional headquarters). Manages structure, configurations, and all data across all roles. Has no assigned professional role. |
-| **Admin** | Local union representative (RSA/RSU). Has an assigned **professional role** (`pilot` or `cabin_crew`) and can view/manage **ONLY** members of their own role. |
+| Actor             | Description                                                                                                                                                                                                      |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **SuperAdmin**    | Central system administrator (CISL national/regional headquarters). Manages structure, configurations, and all data across all roles. Has no assigned professional role.                                         |
+| **Admin**         | Local union representative (RSA/RSU). Has an assigned **professional role** (`pilot` or `cabin_crew`) and can view/manage **ONLY** members of their own role.                                                    |
 | **User (Member)** | Worker registered with the union. Each member IS a user (single table). Login via **crewcode + password**. Default password: "password" (mandatory change on first login). Has limited access to their own data. |
 
 > **NOTE v1.1:** There is no separation between "member" and "user". Each member is a system user who logs in via crewcode. New field **role** (`pilot` / `cabin_crew`) with role-specific grades.
@@ -33,58 +34,58 @@
 
 ### 2.1 SuperAdmin
 
-| ID | Use Case | Description |
-|----|-----------|-------------|
-| SA-01 | Create Admin | Create accounts for new union representatives (RSA/RSU) |
-| SA-02 | Manage Admin | Edit, disable, or delete Admin accounts |
-| SA-03 | View all members | Full access to all members across all bases |
-| SA-04 | Configure bases | Manage the list of operational bases (FCO, MXP, VCE, NAP, CAT, etc.) |
-| SA-05 | Configure contracts | Manage contract types (CCNL Naviganti, CCNL Handling, etc.) |
-| SA-06 | Configure grades (CRUD) | Manage the list of grades/qualifications (code + name + belonging `role`). Full CRUD as for bases and contracts. Each grade belongs to a `role` (`pilot` or `cabin_crew`). |
-| SA-06a | Configure PDF field mappings | Manage extraction mappings per role: map PDF form fields to member fields, configure OCR patterns for scanned documents. Allows different mappings for pilots vs cabin crew. |
-| SA-06b | Configure Excel field mappings | Manage column mappings per role for bulk import: map Excel columns to member fields with validation rules. Allows different templates for pilots vs cabin crew. |
+| ID     | Use Case                            | Description                                                                                                                                                                                            |
+| ------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| SA-01  | Create Admin                        | Create accounts for new union representatives (RSA/RSU)                                                                                                                                                |
+| SA-02  | Manage Admin                        | Edit, disable, or delete Admin accounts                                                                                                                                                                |
+| SA-03  | View all members                    | Full access to all members across all bases                                                                                                                                                            |
+| SA-04  | Configure bases                     | Manage the list of operational bases (FCO, MXP, VCE, NAP, CAT, etc.)                                                                                                                                   |
+| SA-05  | Configure contracts                 | Manage contract types (CCNL Naviganti, CCNL Handling, etc.)                                                                                                                                            |
+| SA-06  | Configure grades (CRUD)             | Manage the list of grades/qualifications (code + name + belonging `role`). Full CRUD as for bases and contracts. Each grade belongs to a `role` (`pilot` or `cabin_crew`).                             |
+| SA-06a | Configure PDF field mappings        | Manage extraction mappings per role: map PDF form fields to member fields, configure OCR patterns for scanned documents. Allows different mappings for pilots vs cabin crew.                           |
+| SA-06b | Configure Excel field mappings      | Manage column mappings per role for bulk import: map Excel columns to member fields with validation rules. Allows different templates for pilots vs cabin crew.                                        |
 | SA-06b | Configure PDF field mappings (v1.3) | Set up field mappings for PDF extraction per role. Maps PDF form field names to member fields. Configure OCR patterns for scanned documents. Allows different mappings for pilots vs cabin crew forms. |
-| SA-07 | Global export | Export complete member list in CSV/Excel for national reporting |
-| SA-08 | National statistics | View dashboard with member distribution by base, contract, grade |
-| SA-09 | Manage communication templates | Create and edit email/WhatsApp templates for standard communications |
-| SA-10 | Audit log | View log of all operations (who did what and when) |
-| SA-11 | Backup and data restore | Perform periodic database backups |
-| SA-12 | Manage global deadlines | Configure contract expiries, membership renewals, membership fees |
+| SA-07  | Global export                       | Export complete member list in CSV/Excel for national reporting                                                                                                                                        |
+| SA-08  | National statistics                 | View dashboard with member distribution by base, contract, grade                                                                                                                                       |
+| SA-09  | Manage communication templates      | Create and edit email/WhatsApp templates for standard communications                                                                                                                                   |
+| SA-10  | Audit log                           | View log of all operations (who did what and when)                                                                                                                                                     |
+| SA-11  | Backup and data restore             | Perform periodic database backups                                                                                                                                                                      |
+| SA-12  | Manage global deadlines             | Configure contract expiries, membership renewals, membership fees                                                                                                                                      |
 
 ### 2.2 Admin (Union Representative — scoped by role)
 
 > **The Admin views and manages ONLY members of their own professional role.** A pilots Admin cannot see cabin crew members and vice versa. The filter is automatically applied by the backend.
 
-| ID | Use Case | Description |
-|----|-----------|-------------|
-| A-01 | Register new member | Upload PDF form and create member profile (for their own role) |
-| A-02 | Search member | Search by first name, last name, crewcode, email |
-| A-03 | Filter members | Filter by base, contract, grade, status |
-| A-04 | View member profile | See all details of a member |
-| A-05 | Edit member | Update data (base change, contract, grade, contact details) |
-| A-06 | Deactivate member | Mark as no longer a member (resignation, retirement) |
-| A-07 | Contact member | Send individual WhatsApp message or email |
-| A-08 | Mass communication | Send message to a filtered group (e.g. all FCO on contract X) |
-| A-09 | Create contact list | Create a WhatsApp group or broadcast list from a filtered selection |
-| A-10 | View base statistics | Dashboard with members in own area |
-| A-11 | Export list | Export filtered list in CSV/Excel/PDF |
-| A-12 | Manage notes | Add/edit private notes on a member |
-| A-13 | Manage RSA flag | Mark members who are also union representatives |
-| A-14 | Manage ITUD flag | Manage ITUD-specific flag (Member on Fixed-Term Unified Contract or similar) |
-| A-15 | Import member list | Bulk import from CSV/Excel file with preview, validation, and duplicate handling |
-| A-16 | View change history | See changes made to a profile over time |
+| ID   | Use Case             | Description                                                                      |
+| ---- | -------------------- | -------------------------------------------------------------------------------- |
+| A-01 | Register new member  | Upload PDF form and create member profile (for their own role)                   |
+| A-02 | Search member        | Search by first name, last name, crewcode, email                                 |
+| A-03 | Filter members       | Filter by base, contract, grade, status                                          |
+| A-04 | View member profile  | See all details of a member                                                      |
+| A-05 | Edit member          | Update data (base change, contract, grade, contact details)                      |
+| A-06 | Deactivate member    | Mark as no longer a member (resignation, retirement)                             |
+| A-07 | Contact member       | Send individual WhatsApp message or email                                        |
+| A-08 | Mass communication   | Send message to a filtered group (e.g. all FCO on contract X)                    |
+| A-09 | Create contact list  | Create a WhatsApp group or broadcast list from a filtered selection              |
+| A-10 | View base statistics | Dashboard with members in own area                                               |
+| A-11 | Export list          | Export filtered list in CSV/Excel/PDF                                            |
+| A-12 | Manage notes         | Add/edit private notes on a member                                               |
+| A-13 | Manage RSA flag      | Mark members who are also union representatives                                  |
+| A-14 | Manage ITUD flag     | Manage ITUD-specific flag (Member on Fixed-Term Unified Contract or similar)     |
+| A-15 | Import member list   | Bulk import from CSV/Excel file with preview, validation, and duplicate handling |
+| A-16 | View change history  | See changes made to a profile over time                                          |
 
 ### 2.3 User (Member)
 
-| ID | Use Case | Description |
-|----|-----------|-------------|
-| U-01 | View own profile | See own data registered in the system |
-| U-02 | Request data change | Notify the Admin of a change (base change, phone number, etc.) |
-| U-03 | View communications | Read received union communications |
-| U-04 | Download documents | Access relevant union documents (CCNL, circulars, etc.) |
-| U-05 | Contact the representative | Send a message to own Admin/RSA |
-| U-06 | Mandatory password change | On first login (password="password"), mandatory password change |
-| U-07 | Biometric login | Use Face ID/Touch ID for quick secure access (after first login) |
+| ID   | Use Case                   | Description                                                      |
+| ---- | -------------------------- | ---------------------------------------------------------------- |
+| U-01 | View own profile           | See own data registered in the system                            |
+| U-02 | Request data change        | Notify the Admin of a change (base change, phone number, etc.)   |
+| U-03 | View communications        | Read received union communications                               |
+| U-04 | Download documents         | Access relevant union documents (CCNL, circulars, etc.)          |
+| U-05 | Contact the representative | Send a message to own Admin/RSA                                  |
+| U-06 | Mandatory password change  | On first login (password="password"), mandatory password change  |
+| U-07 | Biometric login            | Use Face ID/Touch ID for quick secure access (after first login) |
 
 ---
 
@@ -93,67 +94,87 @@
 ### 3.1 User Stories — SuperAdmin
 
 **SA-US-01: Organisational structure management**
+
 > As a SuperAdmin, I want to configure the bases, contracts, and grades available in the system via CRUD (create, edit, delete), so that Admins can correctly classify members according to the real structure of the company. Grades must be associated with a `role` (`pilot` or `cabin_crew`), and the member form will show only the grades for the selected `role`.
 
 **SA-US-05: Grade management by role**
+
 > As a SuperAdmin, I want to be able to create, edit, and delete professional grades (e.g. Commander, First Officer, Senior Cabin Crew), associating them with the correct `role` (`pilot` or `cabin_crew`), so that qualifications are always aligned with operational and contractual reality.
 
 **SA-US-02: Macro overview**
+
 > As a SuperAdmin, I want to view a dashboard with the total number of members per base, contract, and monthly variation, so that I can monitor the health of the union at national level and identify growing or declining bases.
 
 **SA-US-03: Compliance and audit**
+
 > As a SuperAdmin, I want to access a complete log of all operations (creations, edits, deletions), so that I can respond to any legal or union audit request.
 
 **SA-US-04: Admin management**
+
 > As a SuperAdmin, I want to create and disable Admin accounts, so that only active and authorised representatives can access member data.
 
 ### 3.2 User Stories — Admin (Union Representative)
 
 **A-US-01: New member registration via PDF**
+
 > As an Admin, I want to upload the paper membership form (scanned/photographed) and have the system automatically pre-fill the fields via OCR, so that I can register a new colleague in a few minutes after collecting the physical form at the airport.
 
 **A-US-02: Quick search on the go**
+
 > As an Admin, I want to search for a member by typing the crewcode or last name on my smartphone while at the airport, so that I can immediately answer information requests during briefings or in the crew room.
 
 **A-US-03: Filter for base meeting (scoped by role)**
+
 > As a pilots Admin, I want to filter all enrolled pilots at the Rome Fiumicino (FCO) base, so that I can send a specific communication ahead of a pilots union assembly and prepare the list of expected attendees. I must not see cabin crew members.
 
 **A-US-11: Role separation**
+
 > As a pilots Admin, I must not see cabin crew members in my list, so that management is focused and there is no risk of contacting members outside my remit.
 
 **A-US-04: Base transfer update**
+
 > As an Admin, I want to update a member's base from FCO to MXP in a single operation, so that the colleague is correctly assigned to the new base and the Milan representative can see them in their list.
 
 **A-US-05: Urgent communication via WhatsApp**
+
 > As an Admin, I want to select all members at a base and send a WhatsApp broadcast message with an urgent communication (e.g. strike, assembly), so that I reach the maximum number of colleagues in the shortest time possible, bypassing company email anti-spam filters.
 
 **A-US-06: Resignation management**
+
 > As an Admin, I want to mark a member as "resigned" with a date and reason, so that they are excluded from future communications but their historical data remains accessible for any disputes or recovery.
 
 **A-US-07: Export for assembly minutes**
+
 > As an Admin, I want to export in PDF the list of FCO members with first name, last name, and an empty signature field, so that I can use it as an attendance sheet for the monthly union assembly.
 
 **A-US-08: Contract statistics**
+
 > As an Admin, I want to see how many members I have per contract type at my base, so that I can plan targeted communications and understand where to focus union activity.
 
 **A-US-09: Disciplinary proceeding notes**
+
 > As an Admin, I want to add private notes on a member (e.g. "disciplinary proceeding open", "legal assistance request sent on 15/01"), so that I can keep track of ongoing cases without the member themselves seeing them.
 
 **A-US-10: Identify RSA members for internal communications**
+
 > As an Admin, I want to filter all members with the RSA flag active, so that I can organise internal meetings of union representatives only.
 
 **A-US-15: Bulk import from Excel**
+
 > As an Admin, I want to upload an Excel file with multiple members and see a preview of the data before importing, so that I can correct any errors and avoid creating duplicate records. The system should validate crewcode uniqueness and show me which rows have problems before I confirm the import.
 
 **A-US-16: Offline member access**
+
 > As an Admin, I want to view member information even without internet connection (e.g., in the airport basement or in flight mode), so that I can always access critical data when needed. The app should sync automatically when connection returns.
 
 ### 3.2b User Stories — SuperAdmin (Configuration)
 
 **SA-US-06a: PDF field mapping configuration**
+
 > As a SuperAdmin, I want to configure field mappings for PDF extraction per role (pilots vs cabin crew), so that the system can correctly extract data from different membership form layouts. I need to map PDF form field names to member fields and configure OCR patterns for scanned documents.
 
 **SA-US-06b: Excel column mapping configuration**
+
 > As a SuperAdmin, I want to configure column mappings for Excel bulk import per role, so that Admins can import member lists from spreadsheets with different column layouts. I need to map Excel columns to member fields, mark required fields, and set validation rules (e.g., lookup base codes against the database).
 
 ---
@@ -165,6 +186,7 @@
 **06:30 — FCO crew room**
 
 Marco is the CISL RSA pilots representative for Fiumicino. He sees only enrolled pilots. While waiting for the briefing, he opens UnionConnect on his phone (Face ID unlock):
+
 - He checks notifications: 2 new members pending approval (PDF forms uploaded last night)
 - He checks contact requests: a member has flagged "data change - base transfer FCO→MXP"
 - He opens the member's profile, updates the base, saves: the colleague disappears from his list and appears in the Malpensa Admin's list
@@ -172,6 +194,7 @@ Marco is the CISL RSA pilots representative for Fiumicino. He sees only enrolled
 **09:15 — Receipt of paper form**
 
 A passing colleague hands Marco a handwritten membership form:
+
 - Marco opens the app, taps "+" → "Upload PDF"
 - He selects "Pilot" role and photographs the form using the native camera
 - The OCR system pre-fills the fields: First Name, Last Name, Crewcode, Base=FCO, Contract=Naviganti, Grade=First Officer
@@ -181,6 +204,7 @@ A passing colleague hands Marco a handwritten membership form:
 **11:00 — Urgent assembly**
 
 Management has announced an unexpected shift change. Marco needs to call an assembly:
+
 - He opens the filter: Base=FCO, Contract=Naviganti, Status=Active
 - Result: 143 members
 - He selects "Send WhatsApp broadcast"
@@ -192,6 +216,7 @@ Management has announced an unexpected shift change. Marco needs to call an asse
 **A member is summoned by management for a disciplinary proceeding**
 
 Giovanna, a flight attendant with 8 years of seniority, calls Marco in desperation:
+
 - Marco opens Giovanna's profile on UnionConnect (cached data loads instantly even with poor signal)
 - He adds a note: "12/02/2026 - Summoned for disciplinary proceeding regarding lateness on 04/01. Medical documentation submitted. CISL legal assistance requested. Case: CISL-2026-0089"
 - He checks the contract details: Naviganti, FCO, Senior Cabin Crew
@@ -201,6 +226,7 @@ Giovanna, a flight attendant with 8 years of seniority, calls Marco in desperati
 ### Scenario 3: Year-end — report for congress
 
 Marco must prepare the annual report for the CISL provincial congress:
+
 - He opens the statistics for his base (FCO)
 - He views: 143 active members, 12 new registrations in 2025, 5 resignations (3 retirements, 2 company changes), net change +7
 - He filters by contract: 98 Naviganti, 45 Handling
@@ -329,6 +355,7 @@ PHASE 5 — ARCHIVING
 ### 5.2 Alternative Flow (direct digital registration)
 
 For tech-savvy new members or remote registrations:
+
 1. Admin generates a personalised pre-registration link
 2. The member fills in the online form from their own device
 3. The member signs digitally (on-screen signature or OTP)
@@ -338,6 +365,7 @@ For tech-savvy new members or remote registrations:
 ### 5.3 Duplicate Management
 
 Before saving, the system checks:
+
 - **Crewcode already present** → blocking error (crewcode unique per company)
 - **Email already present** → warning with link to existing profile
 - **Similar first name + last name + base** → possible duplicate warning, admin confirms
@@ -349,6 +377,7 @@ Before saving, the system checks:
 ### 6.1 Quick Search (global search bar)
 
 The representative can search by:
+
 - **First Name / Last Name** (partial search, e.g. "Ros" finds Rossi, Rosato, Rosario)
 - **Crewcode** (unique company identifier)
 - **Email**
@@ -384,6 +413,7 @@ AVAILABLE FILTERS:
 ```
 
 **Typical combined filter examples:**
+
 - All CC (Cabin Crew) FCO → assembly communications
 - All members with ITUD flag → potentially on fixed-term contract, watch deadlines
 - RSA at all bases → national representatives meeting
@@ -419,6 +449,7 @@ For groups (after filter):
 **Trigger:** Employee transfer from one base to another (e.g. FCO → MXP)
 
 **Flow:**
+
 1. FCO Admin receives communication (phone call, WhatsApp, form)
 2. Opens member profile → Edit → Base field: FCO → MXP
 3. System notifies MXP Admin: "New transferred member: [Name]. Previously at FCO."
@@ -433,6 +464,7 @@ For groups (after filter):
 **Trigger:** Transition from fixed-term to permanent contract, profile change (from handling to navigante after training)
 
 **Flow:**
+
 1. Admin edits the Contract field
 2. System automatically updates the member's group for future communications
 3. Contract change history maintained
@@ -442,6 +474,7 @@ For groups (after filter):
 **Trigger:** Promotion from First Officer to Commander, from Cabin Crew to Senior
 
 **Flow:**
+
 1. Admin updates the Grade field
 2. System can automatically send a congratulations message (optional, configurable)
 3. Promotion history maintained
@@ -451,6 +484,7 @@ For groups (after filter):
 **Trigger:** Member communicates their wish to resign
 
 **Flow:**
+
 1. Admin opens profile → Status: Active → Resigned
 2. Enters resignation date and reason (optional: union change, retirement, company change, transfer abroad)
 3. Member is excluded from all future communications
@@ -466,6 +500,7 @@ Same as resignation, with reason "retirement". Optional management of membership
 ### 7.6 Death
 
 **Sensitive flow:**
+
 1. Admin marks as "deceased" (not "resigned")
 2. No automatic communication
 3. Data retained for any pension/insurance matters
@@ -476,6 +511,7 @@ Same as resignation, with reason "retirement". Optional management of membership
 **Trigger:** Discovery of an error in the crewcode entered at registration
 
 **Flow:**
+
 1. Admin edits the crewcode → system checks uniqueness
 2. Change log maintained (old crewcode, new crewcode, date, who made the change)
 3. Important: the crewcode is a company identifier, not a union one — possible cross-checks required
@@ -485,6 +521,7 @@ Same as resignation, with reason "retirement". Optional management of membership
 **Trigger:** WhatsApp number inactive, invalid email
 
 **Flow:**
+
 1. System marks the channel as "unreachable" after X failed attempts
 2. Admin receives notification: "Unable to deliver messages to [Name] — number inactive"
 3. Admin manually updates contact data
@@ -494,6 +531,7 @@ Same as resignation, with reason "retirement". Optional management of membership
 **Trigger:** Worker registered at both FCO and MXP (transfer with double registration)
 
 **Flow:**
+
 1. System detects potential duplicate (same first/last name or crewcode)
 2. Warning sent to Admins at both bases
 3. SuperAdmin decides which profile to keep and performs merge/deletion
@@ -504,17 +542,18 @@ Same as resignation, with reason "retirement". Optional management of membership
 
 ### 8.1 Export and Reporting
 
-| Feature | Format | Use |
-|-------------|---------|----------|
-| Member list export | CSV, Excel, PDF | Assembly minutes, reporting |
+| Feature                  | Format                   | Use                           |
+| ------------------------ | ------------------------ | ----------------------------- |
+| Member list export       | CSV, Excel, PDF          | Assembly minutes, reporting   |
 | Assembly attendance list | PDF with signature space | Print for physical assemblies |
-| Base statistical report | Illustrated PDF | Union congress, reports |
-| Label export | A4 PDF | Mailing of paper materials |
-| Full register | Excel | Backup, data migration |
+| Base statistical report  | Illustrated PDF          | Union congress, reports       |
+| Label export             | A4 PDF                   | Mailing of paper materials    |
+| Full register            | Excel                    | Backup, data migration        |
 
 ### 8.2 Statistics and Dashboard
 
 **Admin Dashboard:**
+
 - Total active members / change vs previous month
 - Distribution by contract (pie chart)
 - Distribution by grade (bar chart)
@@ -523,6 +562,7 @@ Same as resignation, with reason "retirement". Optional management of membership
 - Members not reached by communications (alert)
 
 **SuperAdmin Dashboard:**
+
 - Base map with member counts
 - National registration trend (12-month line chart)
 - Base comparison (which is growing, which is declining)
@@ -539,6 +579,7 @@ Same as resignation, with reason "retirement". Optional management of membership
 ### 8.4 Communications and Templates
 
 **Predefined templates (configurable):**
+
 - Welcome new member
 - Assembly summons
 - Strike notice
@@ -547,6 +588,7 @@ Same as resignation, with reason "retirement". Optional management of membership
 - Greetings (birthday, holidays — optional)
 
 **Communication management:**
+
 - Sent message history per member
 - WhatsApp delivery rate (read/delivered)
 - Scheduled sending (e.g. "send tomorrow at 08:00")
@@ -575,26 +617,31 @@ WhatsApp is the dominant communication tool in the aviation sector. Pilots and c
 ### 9.2 Types of WhatsApp Messages
 
 #### A) Individual Message
+
 **When:** Personal assistance, sensitive communication, response to a specific request
 
 **Flow:**
+
 1. Admin opens member profile
 2. Taps "WhatsApp" button
 3. WhatsApp (native) opens with pre-loaded number
 4. Admin writes personalised message
 
 **Or (with WhatsApp Business API):**
+
 1. Admin opens profile → "Send WhatsApp message"
 2. Chooses template or writes free text
 3. Sends from within the app
 4. Delivery status visible in member profile
 
 #### B) WhatsApp Broadcast (one to many, without creating a group)
+
 **When:** Urgent communications, notices, assembly summons
 
 **Characteristic:** The member receives the message as if from a private chat with the union representative, without seeing other recipients. Respects privacy.
 
 **Flow:**
+
 1. Admin applies filters (e.g. Base=FCO, Contract=Naviganti)
 2. Selects "Send WhatsApp broadcast"
 3. Writes or selects message template
@@ -606,9 +653,11 @@ WhatsApp is the dominant communication tool in the aviation sector. Pilots and c
 **WhatsApp Business API limitation:** Requires Meta pre-approved templates for outbound messages to users who have not written in the last 24h. Or requires the member to have consented to receive messages.
 
 #### C) Managed WhatsApp Group
+
 **When:** Ongoing communications with a stable group (e.g. RSA members at all bases, regional delegates)
 
 **Flow:**
+
 1. Admin creates a "List" in UnionConnect (e.g. "RSA Northern Bases")
 2. Adds members manually or via filter
 3. System creates a corresponding WhatsApp group (via API)
@@ -616,9 +665,11 @@ WhatsApp is the dominant communication tool in the aviation sector. Pilots and c
 5. UnionConnect list ↔ WhatsApp group synchronisation
 
 #### D) Automatic Reminders via WhatsApp
+
 **When:** Deadlines, scheduled assemblies, renewals
 
 **Flow:**
+
 1. Admin creates event/deadline in app calendar
 2. Configures reminder: "WhatsApp 24h before + 2h before"
 3. System sends automatically on the scheduled day/time
@@ -627,6 +678,7 @@ WhatsApp is the dominant communication tool in the aviation sector. Pilots and c
 ### 9.3 WhatsApp Consent and Opt-in
 
 To comply with WhatsApp Business policies and GDPR:
+
 - At the time of registration, the form includes **explicit consent** to receive union communications via WhatsApp
 - The consent flag is stored in the member profile
 - The member can revoke consent (flag deactivated → no automatic WA messages)
@@ -634,12 +686,12 @@ To comply with WhatsApp Business policies and GDPR:
 
 ### 9.4 Limitations and Fallback
 
-| Scenario | Behaviour |
-|----------|---------------|
-| Number not on WhatsApp | Automatic flag, fallback to SMS or email |
-| Number unreachable | Alert to Admin after 2 failed attempts |
+| Scenario                         | Behaviour                                    |
+| -------------------------------- | -------------------------------------------- |
+| Number not on WhatsApp           | Automatic flag, fallback to SMS or email     |
+| Number unreachable               | Alert to Admin after 2 failed attempts       |
 | Member blocks the representative | Admin notification, update preferred channel |
-| API message limit reached | Sending queue, staggered sending |
+| API message limit reached        | Sending queue, staggered sending             |
 
 ---
 
@@ -650,6 +702,7 @@ To comply with WhatsApp Business policies and GDPR:
 > **LEGAL WARNING:** Data on union membership is **special category data** under Art. 9 GDPR and Art. 9 of D.Lgs. 196/2003 (Italian Privacy Code, amended by D.Lgs. 101/2018). Its processing requires enhanced legal bases and elevated security measures.
 
 **Sensitive data present in UnionConnect:**
+
 - Union membership (special category data by definition)
 - Notes on disciplinary proceedings (judicial data)
 - Crewcode + name = certain identifier of the worker
@@ -657,17 +710,18 @@ To comply with WhatsApp Business policies and GDPR:
 
 ### 10.2 Legal Bases for Processing
 
-| Processing | Legal Basis | Regulatory Reference |
-|------------|---------------|----------------------|
-| Union membership management | Art. 9(2)(d) GDPR — legitimate union activity | + Art. 9 c. 2 lett. b) D.Lgs. 196/2003 |
-| Communications to members | Performance of the associative contract | Art. 6(1)(b) GDPR |
-| Sending communications via WA | Explicit consent | Art. 6(1)(a) + Art. 9(2)(a) GDPR |
-| Historical data retention | Legal obligations (fiscal, union) | Art. 6(1)(c) GDPR |
-| Notes on proceedings | Legitimate interest + consent | Art. 6(1)(f) + protection of workers' rights |
+| Processing                    | Legal Basis                                   | Regulatory Reference                         |
+| ----------------------------- | --------------------------------------------- | -------------------------------------------- |
+| Union membership management   | Art. 9(2)(d) GDPR — legitimate union activity | + Art. 9 c. 2 lett. b) D.Lgs. 196/2003       |
+| Communications to members     | Performance of the associative contract       | Art. 6(1)(b) GDPR                            |
+| Sending communications via WA | Explicit consent                              | Art. 6(1)(a) + Art. 9(2)(a) GDPR             |
+| Historical data retention     | Legal obligations (fiscal, union)             | Art. 6(1)(c) GDPR                            |
+| Notes on proceedings          | Legitimate interest + consent                 | Art. 6(1)(f) + protection of workers' rights |
 
 ### 10.3 Mandatory Technical Security Measures
 
 **Authentication and access:**
+
 - [x] Biometric authentication (Face ID/Touch ID) for quick secure access
 - [x] Password policy: minimum 12 characters, change every 90 days
 - [x] Automatic session timeout after inactivity (e.g. 15 minutes)
@@ -675,18 +729,21 @@ To comply with WhatsApp Business policies and GDPR:
 - [x] Secure token storage (iOS Keychain / Android Keystore via expo-secure-store)
 
 **Data transmission:**
+
 - [x] Mandatory HTTPS connections (TLS 1.2+)
 - [x] Valid SSL certificates
 - [x] APIs protected with Bearer token authentication
 - [x] Certificate pinning for production builds
 
 **Storage:**
+
 - [x] Database encrypted at-rest (AES-256 or equivalent)
 - [x] Encrypted backups
 - [x] Encrypted PDF membership forms
 - [x] Local app data encrypted (SecureStore / Keychain)
 
 **Application:**
+
 - [x] Minimisation principle: Admin sees only members of their own base
 - [x] Role-based access control (RBAC)
 - [x] No download/export without tracked log
@@ -694,18 +751,19 @@ To comply with WhatsApp Business policies and GDPR:
 
 ### 10.4 Members' Rights (Data Subjects)
 
-| Right | How to implement it in app |
-|---------|--------------------------|
-| **Access** (art. 15) | "My data" section in the user app — displays all stored data |
-| **Rectification** (art. 16) | Change request form → Admin notified and acts |
-| **Erasure** (art. 17) | Not immediate (retention obligations), but anonymisation after minimum period |
-| **Restriction** (art. 18) | "Data in dispute" flag — blocks marketing communications |
-| **Portability** (art. 20) | JSON/CSV export of own data upon request |
-| **Objection** (art. 21) | Opt-out from non-essential communications (e.g. WhatsApp broadcast) |
+| Right                       | How to implement it in app                                                    |
+| --------------------------- | ----------------------------------------------------------------------------- |
+| **Access** (art. 15)        | "My data" section in the user app — displays all stored data                  |
+| **Rectification** (art. 16) | Change request form → Admin notified and acts                                 |
+| **Erasure** (art. 17)       | Not immediate (retention obligations), but anonymisation after minimum period |
+| **Restriction** (art. 18)   | "Data in dispute" flag — blocks marketing communications                      |
+| **Portability** (art. 20)   | JSON/CSV export of own data upon request                                      |
+| **Objection** (art. 21)     | Opt-out from non-essential communications (e.g. WhatsApp broadcast)           |
 
 ### 10.5 Privacy Notice (to be implemented)
 
 At the time of registration (digital or via paper form), the member must receive:
+
 - Full privacy notice (Data Controller: [CISL Organisation])
 - Purposes of processing
 - Retention periods
@@ -717,14 +775,14 @@ The PDF registration form must include a dedicated section for privacy consent w
 
 ### 10.6 Data Retention
 
-| Data type | Retention period | Justification |
-|-------------|----------------------|-------------|
-| Active member | Until resignation + 10 years | Pension/fiscal obligations |
+| Data type            | Retention period               | Justification                    |
+| -------------------- | ------------------------------ | -------------------------------- |
+| Active member        | Until resignation + 10 years   | Pension/fiscal obligations       |
 | Resigned member data | 10 years from resignation date | Art. 2220 CC + union obligations |
-| System access logs | 1 year | Information security |
-| Communications sent | 5 years | Verification of union activity |
-| Proceeding notes | 10 years | Standard limitation period |
-| PDF membership forms | 10 years | Proof of consent |
+| System access logs   | 1 year                         | Information security             |
+| Communications sent  | 5 years                        | Verification of union activity   |
+| Proceeding notes     | 10 years                       | Standard limitation period       |
+| PDF membership forms | 10 years                       | Proof of consent                 |
 
 ### 10.7 Appointment of Data Processors
 
@@ -735,6 +793,7 @@ Individual Admins may be appointed as **Authorised Processors** with a specific 
 ### 10.8 Security Incidents (Data Breach)
 
 In the event of unauthorised access to data:
+
 - Notification to the Supervisory Authority within **72 hours** (Art. 33 GDPR)
 - Notification to data subjects if high risk (Art. 34 GDPR)
 - The app must include documented incident response procedures
@@ -764,6 +823,7 @@ The union representative works primarily from their phone, often in noisy enviro
 ## 12. Prioritised Functional Requirements Summary
 
 ### P0 — Essential (MVP)
+
 - [x] Member management (full CRUD)
 - [x] Registration via PDF upload
 - [x] Member search and filter
@@ -776,6 +836,7 @@ The union representative works primarily from their phone, often in noisy enviro
 - [x] Offline data access
 
 ### P1 — High Priority
+
 - [x] WhatsApp broadcast to filtered list
 - [x] CSV/Excel member list export
 - [x] Base statistics dashboard
@@ -786,6 +847,7 @@ The union representative works primarily from their phone, often in noisy enviro
 - [x] OTA updates without app store review
 
 ### P2 — Medium Priority
+
 - [ ] Automatic OCR from PDF
 - [ ] Deadline calendar with reminders
 - [ ] Customisable message templates
@@ -794,6 +856,7 @@ The union representative works primarily from their phone, often in noisy enviro
 - [ ] Document scanning with camera
 
 ### P3 — Future Enhancement
+
 - [ ] Airline HR API integration
 - [ ] Digital membership signature
 - [ ] Advanced member self-service portal
@@ -802,4 +865,4 @@ The union representative works primarily from their phone, often in noisy enviro
 
 ---
 
-*Document created on the basis of analysis of the UnionConnect app fields and the operational workflow of a union representative in the Italian aviation sector. Updated for Expo + React Native native mobile app architecture.*
+_Document created on the basis of analysis of the UnionConnect app fields and the operational workflow of a union representative in the Italian aviation sector. Updated for Expo + React Native native mobile app architecture._

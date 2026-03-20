@@ -1,7 +1,7 @@
 // Contract Data for Ryanair (RYR)
 // Based on PAYSLIP_CALCULATOR_EXPO_SPEC.md
 
-import { CompanyConfig, ClaCorrection } from '../types';
+import { CompanyConfig, ClaCorrection } from "../types";
 
 export const RYR_CONFIG: CompanyConfig = {
   maxContributoAziendaleTfr: 2,
@@ -17,9 +17,9 @@ export const RYR_CONFIG: CompanyConfig = {
     cc: 5,
   },
   claRanks: {
-    cpt: ['cpt', 'tre', 'tri', 'ltc', 'lcc'],
-    fo: ['fo', 'sfi', 'jfo', 'so'],
-    cc: ['sepe', 'sepi', 'pu', 'jpu', 'ju'],
+    cpt: ["cpt", "tre", "tri", "ltc", "lcc"],
+    fo: ["fo", "sfi", "jfo", "so"],
+    cc: ["sepe", "sepi", "pu", "jpu", "ju"],
   },
   claTables: {
     pil: {
@@ -275,16 +275,16 @@ export const RYR_CONFIG: CompanyConfig = {
   },
   claCorrection: {
     pil: [
-      { date: '2023-04-15', corrections: null },
+      { date: "2023-04-15", corrections: null },
       {
-        date: '2025-04-15',
+        date: "2025-04-15",
         corrections: {
           cpt: { ffp: 3000 / 12 },
           fo: { ffp: 1600 / 12 },
         },
       },
       {
-        date: '2026-04-15',
+        date: "2026-04-15",
         corrections: {
           cpt: { ffp: 3000 / 12 },
           fo: { ffp: 1600 / 12 },
@@ -292,9 +292,9 @@ export const RYR_CONFIG: CompanyConfig = {
       },
     ],
     cc: [
-      { date: '2023-04-15', corrections: null },
+      { date: "2023-04-15", corrections: null },
       {
-        date: '2025-04-15',
+        date: "2025-04-15",
         corrections: {
           ju: { ffp: 500 / 12 },
           pu: { ffp: 750 / 12 },
@@ -326,54 +326,57 @@ export const INPS_RATES = {
 };
 
 // IRPEF Tax Brackets
-export const IRPEF_BRACKETS: Record<number, { limit: number; rate: number }[]> = {
-  2023: [
-    { limit: 15000, rate: 0.23 },
-    { limit: 28000, rate: 0.25 },
-    { limit: 50000, rate: 0.35 },
-    { limit: Infinity, rate: 0.43 },
-  ],
-  2024: [
-    { limit: 28000, rate: 0.23 },
-    { limit: 50000, rate: 0.35 },
-    { limit: Infinity, rate: 0.43 },
-  ],
-  2025: [
-    { limit: 28000, rate: 0.23 },
-    { limit: 50000, rate: 0.35 },
-    { limit: Infinity, rate: 0.43 },
-  ],
-  2026: [
-    { limit: 28000, rate: 0.23 },
-    { limit: 50000, rate: 0.33 },  // Reduced from 35% to 33% in 2026
-    { limit: Infinity, rate: 0.43 },
-  ],
-};
+export const IRPEF_BRACKETS: Record<number, { limit: number; rate: number }[]> =
+  {
+    2023: [
+      { limit: 15000, rate: 0.23 },
+      { limit: 28000, rate: 0.25 },
+      { limit: 50000, rate: 0.35 },
+      { limit: Infinity, rate: 0.43 },
+    ],
+    2024: [
+      { limit: 28000, rate: 0.23 },
+      { limit: 50000, rate: 0.35 },
+      { limit: Infinity, rate: 0.43 },
+    ],
+    2025: [
+      { limit: 28000, rate: 0.23 },
+      { limit: 50000, rate: 0.35 },
+      { limit: Infinity, rate: 0.43 },
+    ],
+    2026: [
+      { limit: 28000, rate: 0.23 },
+      { limit: 50000, rate: 0.33 }, // Reduced from 35% to 33% in 2026
+      { limit: Infinity, rate: 0.43 },
+    ],
+  };
 
 // Helper functions
 export function getContractData(company: string, role: string, rank: string) {
-  if (company !== 'RYR') return null;
-  
+  if (company !== "RYR") return null;
+
   // Support both 'pil' and 'pilot' formats
-  const roleKey = (role === 'pilot' || role === 'pil') ? 'pil' : 'cc';
-  const companyData = RYR_CONFIG.claTables[roleKey as keyof typeof RYR_CONFIG.claTables];
+  const roleKey = role === "pilot" || role === "pil" ? "pil" : "cc";
+  const companyData =
+    RYR_CONFIG.claTables[roleKey as keyof typeof RYR_CONFIG.claTables];
   if (!companyData) return null;
-  
+
   return companyData[rank.toLowerCase()] || null;
 }
 
 export function getActiveCorrections(
   company: string,
   role: string,
-  date: string
+  date: string,
 ): ClaCorrection[] {
-  if (company !== 'RYR') return [];
-  
+  if (company !== "RYR") return [];
+
   // Support both 'pil' and 'pilot' formats
-  const roleKey = (role === 'pilot' || role === 'pil') ? 'pil' : 'cc';
-  const corrections = RYR_CONFIG.claCorrection[roleKey as keyof typeof RYR_CONFIG.claCorrection];
+  const roleKey = role === "pilot" || role === "pil" ? "pil" : "cc";
+  const corrections =
+    RYR_CONFIG.claCorrection[roleKey as keyof typeof RYR_CONFIG.claCorrection];
   if (!corrections) return [];
-  
+
   const targetDate = new Date(date);
   return corrections.filter((c) => new Date(c.date) <= targetDate);
 }
@@ -381,15 +384,15 @@ export function getActiveCorrections(
 export function applyCorrections(
   contractData: ReturnType<typeof getContractData>,
   corrections: ClaCorrection[],
-  rank: string
+  rank: string,
 ) {
   if (!contractData) return null;
-  
+
   const corrected = { ...contractData };
-  
+
   corrections.forEach((correction) => {
     if (!correction.corrections) return;
-    
+
     const rankCorrection = correction.corrections[rank.toLowerCase()];
     if (rankCorrection) {
       Object.entries(rankCorrection).forEach(([key, value]) => {
@@ -399,16 +402,25 @@ export function applyCorrections(
       });
     }
   });
-  
+
   return corrected;
 }
 
 export function getUnionFee(rank: string, role: string): number {
-  const key = (role === 'pilot' || role === 'pil') ? (['cpt', 'tre', 'tri', 'ltc', 'lcc'].includes(rank) ? 'cpt' : 'fo') : 'cc';
+  const key =
+    role === "pilot" || role === "pil"
+      ? ["cpt", "tre", "tri", "ltc", "lcc"].includes(rank)
+        ? "cpt"
+        : "fo"
+      : "cc";
   return RYR_CONFIG.unionFees[key as keyof typeof RYR_CONFIG.unionFees] || 0;
 }
 
 export function getUnpaidLeaveDays(role: string): number {
-  const key = (role === 'pilot' || role === 'pil') ? 'pil' : 'cc';
-  return RYR_CONFIG.unpayedLeaveDays[key as keyof typeof RYR_CONFIG.unpayedLeaveDays] || 17;
+  const key = role === "pilot" || role === "pil" ? "pil" : "cc";
+  return (
+    RYR_CONFIG.unpayedLeaveDays[
+      key as keyof typeof RYR_CONFIG.unpayedLeaveDays
+    ] || 17
+  );
 }
