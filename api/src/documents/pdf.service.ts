@@ -412,7 +412,135 @@ export class PdfService {
     try {
       const page = await browser.newPage();
       const html = this.generateHtml(document, qrBase64);
+      // Forward browser console output to NestJS logger so page.evaluate() logs are visible
+      page.on("console", (msg) =>
+        this.logger.debug(`[browser:${msg.type()}] ${msg.text()}`),
+      );
       await page.setContent(html, { waitUntil: "networkidle0" });
+
+      // Detect and fix closing block overflow.
+      // We shadow `document` with the browser DOM document to avoid the TS name
+      // conflict with the imported NestJS Document entity in this file.
+      await page.evaluate(
+        (topMarginMm: number, bottomMarginMm: number) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const doc: any = (globalThis as any).document;
+
+          // body has `width: 210mm` in CSS — use it to convert mm → px reliably.
+          // mm-ruler with position:absolute has offsetWidth=0 in headless Puppeteer.
+          const bodyWidthPx: number =
+            doc.body.clientWidth || doc.documentElement.clientWidth || 794; // fallback: 210mm @ 96dpi
+          const pxPerMm = bodyWidthPx / 210;
+          // Content area per page = physical A4 height minus Puppeteer pdf() margins
+          const pageHeightPx = (297 - topMarginMm - bottomMarginMm) * pxPerMm;
+          console.log(
+            `[overflow] bodyWidthPx=${bodyWidthPx} pxPerMm=${pxPerMm.toFixed(3)} pageHeightPx=${pageHeightPx.toFixed(1)}`,
+          );
+
+          const win: any = globalThis as any;
+          function getAbsTop(el: HTMLElement): number {
+            return el.getBoundingClientRect().top + win.scrollY;
+          }
+          function getPage(el: HTMLElement): number {
+            return Math.floor(getAbsTop(el) / pageHeightPx);
+          }
+
+          // Scope to the Italian section only (.page, not .page-en).
+          // querySelectorAll on the whole doc would include English paragraphs,
+          // making lastParaPage artificially large and breaking the comparison.
+          const italianSection = doc.querySelector(".page") as HTMLElement;
+          if (!italianSection) return;
+
+          const signature = italianSection.querySelector(
+            ".closing-signature",
+          ) as HTMLElement;
+          const qrSection = italianSection.querySelector(
+            ".qr-section",
+          ) as HTMLElement;
+          if (!signature) return;
+
+          const bodyParagraphs = Array.from(
+            italianSection.querySelectorAll(".body-paragraph"),
+          ) as HTMLElement[];
+          const lastPara = bodyParagraphs[bodyParagraphs.length - 1];
+          const lastParaPage = lastPara ? getPage(lastPara) : 0;
+          const sigPage = getPage(signature);
+          console.log(
+            `[overflow] lastParaPage=${lastParaPage}, sigPage=${sigPage}, qrPage=${qrSection ? getPage(qrSection) : "N/A"}, pageHeightPx=${pageHeightPx.toFixed(1)}`,
+          );
+          if (sigPage > lastParaPage) {
+            // Case 2: signature overflows → reduce line-height until it fits
+            let lh = 2.0;
+            const MIN_LH = 1.5;
+            while (
+              lh > MIN_LH &&
+              getPage(signature as HTMLElement) > lastParaPage
+            ) {
+              lh = Math.round((lh - 0.05) * 100) / 100;
+              bodyParagraphs.forEach((p) => {
+                p.style.lineHeight = String(lh);
+                p.style.marginBottom = lh * 0.4 + "em";
+              });
+            }
+            if (qrSection) qrSection.style.display = "none";
+          } else if (qrSection) {
+            const qrPage = getPage(qrSection);
+            console.debug(`sigPage=${sigPage}, qrPage=${qrPage}`);
+            if (qrPage > sigPage) {
+              // Case 1: only QR overflows → hide it
+              qrSection.style.display = "none";
+              console.debug(
+                `Hid QR section to prevent overflow (qrPage=${qrPage})`,
+              );
+            }
+          }
+
+          // ── Same logic for the English section (.page-en) ──────────────
+          const englishSection = doc.querySelector(".page-en") as HTMLElement;
+          if (!englishSection) return;
+
+          const sigEn = englishSection.querySelector(
+            ".closing-signature",
+          ) as HTMLElement;
+          const qrEn = englishSection.querySelector(
+            ".qr-section",
+          ) as HTMLElement;
+          if (!sigEn) return;
+
+          const parasEn = Array.from(
+            englishSection.querySelectorAll(".body-paragraph"),
+          ) as HTMLElement[];
+          const lastParaEn = parasEn[parasEn.length - 1];
+          const lastParaEnPage = lastParaEn ? getPage(lastParaEn) : 0;
+          const sigEnPage = getPage(sigEn);
+          console.log(
+            `[overflow:en] lastParaPage=${lastParaEnPage}, sigPage=${sigEnPage}, qrPage=${qrEn ? getPage(qrEn) : "N/A"}`,
+          );
+          if (sigEnPage > lastParaEnPage) {
+            // Case 2 EN: signature overflows → reduce line-height
+            let lh = 2.0;
+            const MIN_LH = 1.5;
+            while (lh > MIN_LH && getPage(sigEn) > lastParaEnPage) {
+              lh = Math.round((lh - 0.05) * 100) / 100;
+              parasEn.forEach((p) => {
+                p.style.lineHeight = String(lh);
+                p.style.marginBottom = lh * 0.4 + "em";
+              });
+            }
+            if (qrEn) qrEn.style.display = "none";
+          } else if (qrEn) {
+            const qrEnPage = getPage(qrEn);
+            if (qrEnPage > sigEnPage) {
+              // Case 1 EN: only QR overflows → hide it
+              qrEn.style.display = "none";
+              console.debug(`Hid EN QR section (qrPage=${qrEnPage})`);
+            }
+          }
+        },
+        isJoint ? 36 : 38, // Puppeteer margin.top (matches topMargin variable above)
+        isJoint ? 20 : 36, // Puppeteer margin.bottom (matches bottomMargin variable)
+      );
+
       const pdf = await page.pdf({
         format: "A4",
         printBackground: true,
@@ -662,16 +790,34 @@ export class PdfService {
       </div>`;
 
     const closingIt = isJoint
-      ? jointSignatures
-      : `<p class="closing-center"><strong>RSA FIT-CISL PILOTI MALTA AIR</strong></p>
-         <p class="closing-center" style="color:#177246;"><strong>READY2B FIT-CISL</strong></p>
-         ${qrBase64 ? `<p class="closing-center" style="font-size:9pt;color:#666;margin-top:8px;">Resta aggiornato — entra nel gruppo WhatsApp:</p>${qrImg}` : ""}`;
+      ? `<div class="closing-signature">${jointSignatures}</div>`
+      : `<div class="closing-signature">
+           <p class="closing-center"><strong>RSA FIT-CISL PILOTI MALTA AIR</strong></p>
+           <p class="closing-center" style="color:#177246;"><strong>READY2B FIT-CISL</strong></p>
+         </div>
+         ${
+           qrBase64
+             ? `<div class="qr-section">
+           <p class="closing-center" style="font-size:9pt;color:#666;margin-top:8px;">Resta aggiornato — entra nel gruppo WhatsApp:</p>
+           ${qrImg}
+         </div>`
+             : ""
+         }`;
 
     const closingEn = isJoint
-      ? jointSignatures
-      : `<p class="closing-center"><strong>RSA FIT-CISL PILOTI MALTA AIR</strong></p>
-         <p class="closing-center" style="color:#177246;"><strong>READY2B FIT-CISL</strong></p>
-         ${qrBase64 ? `<p class="closing-center" style="font-size:9pt;color:#666;margin-top:8px;">Stay updated — join the WhatsApp group:</p>${qrImg}` : ""}`;
+      ? `<div class="closing-signature">${jointSignatures}</div>`
+      : `<div class="closing-signature">
+           <p class="closing-center"><strong>RSA FIT-CISL PILOTI MALTA AIR</strong></p>
+           <p class="closing-center" style="color:#177246;"><strong>READY2B FIT-CISL</strong></p>
+         </div>
+         ${
+           qrBase64
+             ? `<div class="qr-section">
+           <p class="closing-center" style="font-size:9pt;color:#666;margin-top:8px;">Stay updated — join the WhatsApp group:</p>
+           ${qrImg}
+         </div>`
+             : ""
+         }`;
 
     return `<!DOCTYPE html>
 <html lang="it">
@@ -778,9 +924,12 @@ export class PdfService {
       margin-top: 6pt;
       font-size: 11pt;
     }
+
+    #mm-ruler { width: 10mm; height: 1px; position: absolute; visibility: hidden; }
   </style>
 </head>
 <body>
+  <div id="mm-ruler"></div>
   <!-- Italian content -->
   <div class="page">
     <div class="date">
