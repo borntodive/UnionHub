@@ -13,18 +13,21 @@ export class PdfService {
   private readonly jointTemplatePath: string;
   private readonly qrImagePath: string;
 
+  // Resolve templates relative to this file so it works regardless of cwd.
+  // __dirname = dist/documents/ (compiled) or src/documents/ (ts-node)
+  // ../../templates → api/templates/
+  private static readonly TEMPLATES_DIR = path.join(__dirname, "..", "..", "templates");
+
   constructor(private configService: ConfigService) {
     this.fitCislTemplatePath = path.join(
-      process.cwd(),
-      "templates",
+      PdfService.TEMPLATES_DIR,
       "letterhead.pdf",
     );
     this.jointTemplatePath = path.join(
-      process.cwd(),
-      "templates",
+      PdfService.TEMPLATES_DIR,
       "letterhead-joint.pdf",
     );
-    this.qrImagePath = path.join(process.cwd(), "templates", "whatsapp-qr.png");
+    this.qrImagePath = path.join(PdfService.TEMPLATES_DIR, "whatsapp-qr.png");
   }
 
   /**
@@ -381,7 +384,7 @@ export class PdfService {
    * Generate PDF using HTML + Puppeteer (supports text justification)
    */
   private async generateWithHtml(document: Document): Promise<Buffer> {
-    const templatesDir = path.join(process.cwd(), "templates");
+    const templatesDir = PdfService.TEMPLATES_DIR;
     const isJoint = document.union === "joint";
 
     const logos = isJoint
