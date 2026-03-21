@@ -39,12 +39,17 @@ import { useAuthStore } from "../store/authStore";
 import { SharedFileHandler } from "../components/SharedFileHandler";
 import { CompleteProfileScreen } from "../screens/CompleteProfileScreen/CompleteProfileScreen";
 import { UserRole } from "../types";
+import { useNotifications } from "../hooks/useNotifications";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const CAPTAIN_GRADES = ["CPT", "LTC", "LCC", "TRI", "TRE"];
 
 export const AppNavigator: React.FC = () => {
+  // Mount notification listeners at the root so push events (including silent
+  // CATEGORIES_UPDATED / URGENCIES_UPDATED) are handled across the whole app.
+  useNotifications();
+
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
   const user = useAuthStore((state) => state.user);
