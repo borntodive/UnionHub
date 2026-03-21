@@ -4,10 +4,12 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  KeyboardAvoidingView,
   TouchableOpacity,
   TextInput,
   Alert,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import {
   SafeAreaView,
@@ -157,72 +159,81 @@ export const ContractFormScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          <Card style={styles.formCard}>
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>
-                Code <Text style={styles.required}>*</Text>
-              </Text>
-              <View style={styles.inputContainer}>
-                <View style={styles.inputIcon}>
-                  <Hash size={20} color={colors.primary} />
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={insets.top + 56}
+        >
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            <Card style={styles.formCard}>
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldLabel}>
+                  Code <Text style={styles.required}>*</Text>
+                </Text>
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputIcon}>
+                    <Hash size={20} color={colors.primary} />
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    value={formData.codice}
+                    onChangeText={(text) =>
+                      setFormData({ ...formData, codice: text.toUpperCase() })
+                    }
+                    placeholder="e.g. MAY-PI, CC-AFA"
+                    placeholderTextColor={colors.textTertiary}
+                    autoCapitalize="characters"
+                    maxLength={20}
+                  />
                 </View>
-                <TextInput
-                  style={styles.input}
-                  value={formData.codice}
-                  onChangeText={(text) =>
-                    setFormData({ ...formData, codice: text.toUpperCase() })
-                  }
-                  placeholder="e.g. MAY-PI, CC-AFA"
-                  placeholderTextColor={colors.textTertiary}
-                  autoCapitalize="characters"
-                  maxLength={20}
-                />
+                <Text style={styles.hint}>
+                  Contract code (e.g. MAY-PI for Pilots, MAY-CC for Cabin Crew)
+                </Text>
               </View>
-              <Text style={styles.hint}>
-                Contract code (e.g. MAY-PI for Pilots, MAY-CC for Cabin Crew)
-              </Text>
+
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldLabel}>
+                  Name <Text style={styles.required}>*</Text>
+                </Text>
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputIcon}>
+                    <Briefcase size={20} color={colors.primary} />
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    value={formData.nome}
+                    onChangeText={(text) =>
+                      setFormData({ ...formData, nome: text })
+                    }
+                    placeholder="e.g. CCNL Naviganti Piloti"
+                    placeholderTextColor={colors.textTertiary}
+                  />
+                </View>
+                <Text style={styles.hint}>Full name of the contract</Text>
+              </View>
+            </Card>
+
+            <View style={styles.actionsContainer}>
+              <Button
+                title="Cancel"
+                onPress={() => navigation.goBack()}
+                variant="secondary"
+                style={styles.actionButton}
+              />
+              <Button
+                title={isEditing ? "Update Contract" : "Create Contract"}
+                onPress={handleSave}
+                loading={isLoading}
+                style={styles.actionButton}
+              />
             </View>
 
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>
-                Name <Text style={styles.required}>*</Text>
-              </Text>
-              <View style={styles.inputContainer}>
-                <View style={styles.inputIcon}>
-                  <Briefcase size={20} color={colors.primary} />
-                </View>
-                <TextInput
-                  style={styles.input}
-                  value={formData.nome}
-                  onChangeText={(text) =>
-                    setFormData({ ...formData, nome: text })
-                  }
-                  placeholder="e.g. CCNL Naviganti Piloti"
-                  placeholderTextColor={colors.textTertiary}
-                />
-              </View>
-              <Text style={styles.hint}>Full name of the contract</Text>
-            </View>
-          </Card>
-
-          <View style={styles.actionsContainer}>
-            <Button
-              title="Cancel"
-              onPress={() => navigation.goBack()}
-              variant="secondary"
-              style={styles.actionButton}
-            />
-            <Button
-              title={isEditing ? "Update Contract" : "Create Contract"}
-              onPress={handleSave}
-              loading={isLoading}
-              style={styles.actionButton}
-            />
-          </View>
-
-          <View style={styles.bottomSpacer} />
-        </ScrollView>
+            <View style={styles.bottomSpacer} />
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );

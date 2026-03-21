@@ -4,10 +4,12 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  KeyboardAvoidingView,
   TextInput,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import {
   SafeAreaView,
@@ -191,99 +193,107 @@ export const ReportIssueScreen: React.FC = () => {
             <Text style={styles.noDataText}>{t("common.connectToLoad")}</Text>
           </View>
         ) : (
-          <ScrollView
-            contentContainerStyle={styles.content}
-            keyboardShouldPersistTaps="handled"
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={insets.top + 56}
           >
-            <Text style={styles.label}>{t("issues.title")}</Text>
-            <TextInput
-              style={styles.input}
-              value={title}
-              onChangeText={setTitle}
-              placeholder={t("issues.titlePlaceholder")}
-              placeholderTextColor={colors.textTertiary}
-              maxLength={200}
-            />
-
-            <Text style={styles.label}>{t("issues.description")}</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={description}
-              onChangeText={setDescription}
-              placeholder={t("issues.descriptionPlaceholder")}
-              placeholderTextColor={colors.textTertiary}
-              multiline
-              numberOfLines={5}
-              textAlignVertical="top"
-            />
-
-            <Text style={styles.label}>{t("issues.category")}</Text>
-            <View style={styles.optionsList}>
-              {categories.map((cat) => (
-                <TouchableOpacity
-                  key={cat.id}
-                  style={[
-                    styles.optionItem,
-                    selectedCategoryId === cat.id && styles.optionItemSelected,
-                  ]}
-                  onPress={() => setSelectedCategoryId(cat.id)}
-                >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      selectedCategoryId === cat.id &&
-                        styles.optionTextSelected,
-                    ]}
-                  >
-                    {localName(cat)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={styles.label}>{t("issues.urgency")}</Text>
-            <View style={styles.optionsList}>
-              {urgencies.map((urg) => (
-                <TouchableOpacity
-                  key={urg.id}
-                  style={[
-                    styles.optionItem,
-                    selectedUrgencyId === urg.id && styles.optionItemSelected,
-                  ]}
-                  onPress={() => setSelectedUrgencyId(urg.id)}
-                >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      selectedUrgencyId === urg.id && styles.optionTextSelected,
-                    ]}
-                  >
-                    {`${urg.level} - ${localName(urg)}`}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.submitButton,
-                mutation.isPending && styles.submitButtonDisabled,
-              ]}
-              onPress={handleSubmit}
-              disabled={mutation.isPending}
+            <ScrollView
+              contentContainerStyle={styles.content}
+              keyboardShouldPersistTaps="handled"
             >
-              {mutation.isPending ? (
-                <ActivityIndicator color={colors.textInverse} />
-              ) : (
-                <>
-                  <Send size={18} color={colors.textInverse} />
-                  <Text style={styles.submitButtonText}>
-                    {isOnline ? t("issues.submit") : t("issues.saveOffline")}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </ScrollView>
+              <Text style={styles.label}>{t("issues.title")}</Text>
+              <TextInput
+                style={styles.input}
+                value={title}
+                onChangeText={setTitle}
+                placeholder={t("issues.titlePlaceholder")}
+                placeholderTextColor={colors.textTertiary}
+                maxLength={200}
+              />
+
+              <Text style={styles.label}>{t("issues.description")}</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder={t("issues.descriptionPlaceholder")}
+                placeholderTextColor={colors.textTertiary}
+                multiline
+                numberOfLines={5}
+                textAlignVertical="top"
+              />
+
+              <Text style={styles.label}>{t("issues.category")}</Text>
+              <View style={styles.optionsList}>
+                {categories.map((cat) => (
+                  <TouchableOpacity
+                    key={cat.id}
+                    style={[
+                      styles.optionItem,
+                      selectedCategoryId === cat.id &&
+                        styles.optionItemSelected,
+                    ]}
+                    onPress={() => setSelectedCategoryId(cat.id)}
+                  >
+                    <Text
+                      style={[
+                        styles.optionText,
+                        selectedCategoryId === cat.id &&
+                          styles.optionTextSelected,
+                      ]}
+                    >
+                      {localName(cat)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles.label}>{t("issues.urgency")}</Text>
+              <View style={styles.optionsList}>
+                {urgencies.map((urg) => (
+                  <TouchableOpacity
+                    key={urg.id}
+                    style={[
+                      styles.optionItem,
+                      selectedUrgencyId === urg.id && styles.optionItemSelected,
+                    ]}
+                    onPress={() => setSelectedUrgencyId(urg.id)}
+                  >
+                    <Text
+                      style={[
+                        styles.optionText,
+                        selectedUrgencyId === urg.id &&
+                          styles.optionTextSelected,
+                      ]}
+                    >
+                      {`${urg.level} - ${localName(urg)}`}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  mutation.isPending && styles.submitButtonDisabled,
+                ]}
+                onPress={handleSubmit}
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending ? (
+                  <ActivityIndicator color={colors.textInverse} />
+                ) : (
+                  <>
+                    <Send size={18} color={colors.textInverse} />
+                    <Text style={styles.submitButtonText}>
+                      {isOnline ? t("issues.submit") : t("issues.saveOffline")}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
+          </KeyboardAvoidingView>
         )}
       </SafeAreaView>
     </View>

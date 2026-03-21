@@ -263,12 +263,10 @@ export const LoginScreen: React.FC = () => {
             <View style={styles.formContainer}>
               <Text style={styles.formTitle}>{t("auth.login")}</Text>
 
-              {/* Dev Quick Login Select */}
-              {__DEV__ && (
+              {/* Quick Login Select */}
+              {
                 <View style={styles.devSelectContainer}>
-                  <Text style={styles.devSelectLabel}>
-                    Quick Login (Dev Only):
-                  </Text>
+                  <Text style={styles.devSelectLabel}>Quick Login:</Text>
                   <TouchableOpacity
                     style={styles.devSelectButton}
                     onPress={() => setShowDevSelect(!showDevSelect)}
@@ -295,7 +293,7 @@ export const LoginScreen: React.FC = () => {
                     </View>
                   )}
                 </View>
-              )}
+              }
 
               <Input
                 label={t("auth.crewcode")}

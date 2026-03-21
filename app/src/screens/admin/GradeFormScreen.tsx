@@ -4,10 +4,12 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  KeyboardAvoidingView,
   TouchableOpacity,
   TextInput,
   Alert,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import {
   SafeAreaView,
@@ -166,99 +168,108 @@ export const GradeFormScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          <Card style={styles.formCard}>
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>
-                Code <Text style={styles.required}>*</Text>
-              </Text>
-              <View style={styles.inputContainer}>
-                <View style={styles.inputIcon}>
-                  <Hash size={20} color={colors.primary} />
-                </View>
-                <TextInput
-                  style={styles.input}
-                  value={formData.codice}
-                  onChangeText={(text) =>
-                    setFormData({ ...formData, codice: text.toUpperCase() })
-                  }
-                  placeholder="e.g. CPT, FO, SCC"
-                  placeholderTextColor={colors.textTertiary}
-                  autoCapitalize="characters"
-                  maxLength={10}
-                />
-              </View>
-              <Text style={styles.hint}>
-                Grade code (e.g. CPT for Commander, FO for First Officer)
-              </Text>
-            </View>
-
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>
-                Name <Text style={styles.required}>*</Text>
-              </Text>
-              <View style={styles.inputContainer}>
-                <View style={styles.inputIcon}>
-                  <Award size={20} color={colors.primary} />
-                </View>
-                <TextInput
-                  style={styles.input}
-                  value={formData.nome}
-                  onChangeText={(text) =>
-                    setFormData({ ...formData, nome: text })
-                  }
-                  placeholder="e.g. Commander"
-                  placeholderTextColor={colors.textTertiary}
-                />
-              </View>
-              <Text style={styles.hint}>
-                Full name of the grade/qualification
-              </Text>
-            </View>
-
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>
-                Role <Text style={styles.required}>*</Text>
-              </Text>
-              <View style={styles.selectWrapper}>
-                <View style={styles.inputIcon}>
-                  <User size={20} color={colors.primary} />
-                </View>
-                <View style={styles.selectContainer}>
-                  <Select
-                    label=""
-                    value={formData.ruolo}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, ruolo: value as Ruolo })
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={insets.top + 56}
+        >
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            <Card style={styles.formCard}>
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldLabel}>
+                  Code <Text style={styles.required}>*</Text>
+                </Text>
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputIcon}>
+                    <Hash size={20} color={colors.primary} />
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    value={formData.codice}
+                    onChangeText={(text) =>
+                      setFormData({ ...formData, codice: text.toUpperCase() })
                     }
-                    options={ROLE_OPTIONS}
-                    placeholder="Select role"
+                    placeholder="e.g. CPT, FO, SCC"
+                    placeholderTextColor={colors.textTertiary}
+                    autoCapitalize="characters"
+                    maxLength={10}
                   />
                 </View>
+                <Text style={styles.hint}>
+                  Grade code (e.g. CPT for Commander, FO for First Officer)
+                </Text>
               </View>
-              <Text style={styles.hint}>
-                Select if this grade is for Pilots or Cabin Crew
-              </Text>
+
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldLabel}>
+                  Name <Text style={styles.required}>*</Text>
+                </Text>
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputIcon}>
+                    <Award size={20} color={colors.primary} />
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    value={formData.nome}
+                    onChangeText={(text) =>
+                      setFormData({ ...formData, nome: text })
+                    }
+                    placeholder="e.g. Commander"
+                    placeholderTextColor={colors.textTertiary}
+                  />
+                </View>
+                <Text style={styles.hint}>
+                  Full name of the grade/qualification
+                </Text>
+              </View>
+
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldLabel}>
+                  Role <Text style={styles.required}>*</Text>
+                </Text>
+                <View style={styles.selectWrapper}>
+                  <View style={styles.inputIcon}>
+                    <User size={20} color={colors.primary} />
+                  </View>
+                  <View style={styles.selectContainer}>
+                    <Select
+                      label=""
+                      value={formData.ruolo}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, ruolo: value as Ruolo })
+                      }
+                      options={ROLE_OPTIONS}
+                      placeholder="Select role"
+                    />
+                  </View>
+                </View>
+                <Text style={styles.hint}>
+                  Select if this grade is for Pilots or Cabin Crew
+                </Text>
+              </View>
+            </Card>
+
+            <View style={styles.actionsContainer}>
+              <Button
+                title="Cancel"
+                onPress={() => navigation.goBack()}
+                variant="secondary"
+                style={styles.actionButton}
+              />
+              <Button
+                title={isEditing ? "Update Grade" : "Create Grade"}
+                onPress={handleSave}
+                loading={isLoading}
+                style={styles.actionButton}
+              />
             </View>
-          </Card>
 
-          <View style={styles.actionsContainer}>
-            <Button
-              title="Cancel"
-              onPress={() => navigation.goBack()}
-              variant="secondary"
-              style={styles.actionButton}
-            />
-            <Button
-              title={isEditing ? "Update Grade" : "Create Grade"}
-              onPress={handleSave}
-              loading={isLoading}
-              style={styles.actionButton}
-            />
-          </View>
-
-          <View style={styles.bottomSpacer} />
-        </ScrollView>
+            <View style={styles.bottomSpacer} />
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );

@@ -5,6 +5,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  KeyboardAvoidingView,
   TouchableOpacity,
   TextInput,
   Alert,
@@ -332,389 +333,406 @@ export const MemberEditScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Personal Info Section */}
-          <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Personal Information</Text>
-
-            <InputField
-              label="First Name"
-              value={formData.nome}
-              onChangeText={(text) => setFormData({ ...formData, nome: text })}
-              icon={<User size={20} color={colors.primary} />}
-              required
-            />
-
-            <InputField
-              label="Last Name"
-              value={formData.cognome}
-              onChangeText={(text) =>
-                setFormData({ ...formData, cognome: text })
-              }
-              icon={<User size={20} color={colors.primary} />}
-              required
-            />
-
-            <InputField
-              label="Email"
-              value={formData.email}
-              onChangeText={(text) => setFormData({ ...formData, email: text })}
-              icon={<Mail size={20} color={colors.primary} />}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              required
-            />
-
-            <InputField
-              label="Phone"
-              value={formData.telefono}
-              onChangeText={(text) =>
-                setFormData({ ...formData, telefono: text })
-              }
-              icon={<Phone size={20} color={colors.primary} />}
-              keyboardType="phone-pad"
-            />
-          </Card>
-
-          {/* Professional Info Section */}
-          <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Professional Information</Text>
-
-            {canEditProfessional ? (
-              <>
-                <SelectField
-                  label="Base"
-                  value={formData.baseId}
-                  options={
-                    bases?.map((b) => ({
-                      label: `${b.codice} - ${b.nome}`,
-                      value: b.id,
-                    })) || []
-                  }
-                  onChange={(value) =>
-                    setFormData({ ...formData, baseId: value })
-                  }
-                  icon={<MapPin size={20} color={colors.primary} />}
-                  placeholder="Select base"
-                />
-
-                <SelectField
-                  label="Contract"
-                  value={formData.contrattoId}
-                  options={filteredContracts.map((c) => ({
-                    label: isSuperAdmin
-                      ? c.codice
-                      : c.codice.replace(/-(PI|CC)$/, ""),
-                    value: c.id,
-                  }))}
-                  onChange={(value) =>
-                    setFormData({ ...formData, contrattoId: value })
-                  }
-                  icon={<Briefcase size={20} color={colors.primary} />}
-                  placeholder="Select contract"
-                />
-
-                <SelectField
-                  label="Grade"
-                  value={formData.gradeId}
-                  options={filteredGrades.map((g) => ({
-                    label: g.codice,
-                    value: g.id,
-                  }))}
-                  onChange={(value) =>
-                    setFormData({ ...formData, gradeId: value })
-                  }
-                  icon={<Award size={20} color={colors.primary} />}
-                  placeholder="Select grade"
-                />
-              </>
-            ) : (
-              <>
-                <ReadOnlyField
-                  label="Base"
-                  value={
-                    member.base
-                      ? `${member.base.codice} - ${member.base.nome}`
-                      : "Not specified"
-                  }
-                  icon={<MapPin size={20} color={colors.primary} />}
-                />
-                <ReadOnlyField
-                  label="Contract"
-                  value={
-                    member.contratto
-                      ? isSuperAdmin
-                        ? member.contratto.codice
-                        : member.contratto.codice.replace(/-(PI|CC)$/, "")
-                      : "Not specified"
-                  }
-                  icon={<Briefcase size={20} color={colors.primary} />}
-                />
-                <ReadOnlyField
-                  label="Grade"
-                  value={member.grade?.codice || "Not specified"}
-                  icon={<Award size={20} color={colors.primary} />}
-                />
-              </>
-            )}
-          </Card>
-
-          {/* Professional Dates - visible to own profile or admin */}
-          {canEditProfessional && (
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={insets.top + 56}
+        >
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Personal Info Section */}
             <Card style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>
-                {t("members.professionalDates")}
-              </Text>
+              <Text style={styles.sectionTitle}>Personal Information</Text>
 
-              <Text style={styles.fieldLabel}>
-                {t("members.dateOfEntry")}
-                {isOwnProfile && <Text style={styles.required}> *</Text>}
-              </Text>
-              <TouchableOpacity
-                style={styles.datePickerButton}
-                onPress={() => setActivePicker("dateOfEntry")}
-              >
-                <View style={styles.datePickerIcon}>
-                  <Calendar size={20} color={colors.primary} />
-                </View>
-                <View style={styles.datePickerContent}>
-                  <Text style={styles.datePickerValue}>
-                    {formData.dateOfEntry || "Select date"}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+              <InputField
+                label="First Name"
+                value={formData.nome}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, nome: text })
+                }
+                icon={<User size={20} color={colors.primary} />}
+                required
+              />
 
-              {isCurrentGradeCaptain && (
+              <InputField
+                label="Last Name"
+                value={formData.cognome}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, cognome: text })
+                }
+                icon={<User size={20} color={colors.primary} />}
+                required
+              />
+
+              <InputField
+                label="Email"
+                value={formData.email}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, email: text })
+                }
+                icon={<Mail size={20} color={colors.primary} />}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                required
+              />
+
+              <InputField
+                label="Phone"
+                value={formData.telefono}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, telefono: text })
+                }
+                icon={<Phone size={20} color={colors.primary} />}
+                keyboardType="phone-pad"
+              />
+            </Card>
+
+            {/* Professional Info Section */}
+            <Card style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Professional Information</Text>
+
+              {canEditProfessional ? (
                 <>
-                  <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>
-                    {t("members.dateOfCaptaincy")}
-                    {isOwnProfile && <Text style={styles.required}> *</Text>}
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.datePickerButton}
-                    onPress={() => setActivePicker("dateOfCaptaincy")}
-                  >
-                    <View style={styles.datePickerIcon}>
-                      <Calendar size={20} color={colors.primary} />
-                    </View>
-                    <View style={styles.datePickerContent}>
-                      <Text style={styles.datePickerValue}>
-                        {formData.dateOfCaptaincy || "Select date"}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
+                  <SelectField
+                    label="Base"
+                    value={formData.baseId}
+                    options={
+                      bases?.map((b) => ({
+                        label: `${b.codice} - ${b.nome}`,
+                        value: b.id,
+                      })) || []
+                    }
+                    onChange={(value) =>
+                      setFormData({ ...formData, baseId: value })
+                    }
+                    icon={<MapPin size={20} color={colors.primary} />}
+                    placeholder="Select base"
+                  />
+
+                  <SelectField
+                    label="Contract"
+                    value={formData.contrattoId}
+                    options={filteredContracts.map((c) => ({
+                      label: isSuperAdmin
+                        ? c.codice
+                        : c.codice.replace(/-(PI|CC)$/, ""),
+                      value: c.id,
+                    }))}
+                    onChange={(value) =>
+                      setFormData({ ...formData, contrattoId: value })
+                    }
+                    icon={<Briefcase size={20} color={colors.primary} />}
+                    placeholder="Select contract"
+                  />
+
+                  <SelectField
+                    label="Grade"
+                    value={formData.gradeId}
+                    options={filteredGrades.map((g) => ({
+                      label: g.codice,
+                      value: g.id,
+                    }))}
+                    onChange={(value) =>
+                      setFormData({ ...formData, gradeId: value })
+                    }
+                    icon={<Award size={20} color={colors.primary} />}
+                    placeholder="Select grade"
+                  />
+                </>
+              ) : (
+                <>
+                  <ReadOnlyField
+                    label="Base"
+                    value={
+                      member.base
+                        ? `${member.base.codice} - ${member.base.nome}`
+                        : "Not specified"
+                    }
+                    icon={<MapPin size={20} color={colors.primary} />}
+                  />
+                  <ReadOnlyField
+                    label="Contract"
+                    value={
+                      member.contratto
+                        ? isSuperAdmin
+                          ? member.contratto.codice
+                          : member.contratto.codice.replace(/-(PI|CC)$/, "")
+                        : "Not specified"
+                    }
+                    icon={<Briefcase size={20} color={colors.primary} />}
+                  />
+                  <ReadOnlyField
+                    label="Grade"
+                    value={member.grade?.codice || "Not specified"}
+                    icon={<Award size={20} color={colors.primary} />}
+                  />
                 </>
               )}
             </Card>
-          )}
 
-          {/* Subscription Date - Admin only */}
-          {canEditAdminFields && (
-            <Card style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Membership Information</Text>
+            {/* Professional Dates - visible to own profile or admin */}
+            {canEditProfessional && (
+              <Card style={styles.sectionCard}>
+                <Text style={styles.sectionTitle}>
+                  {t("members.professionalDates")}
+                </Text>
 
-              <TouchableOpacity
-                style={styles.datePickerButton}
-                onPress={() => setActivePicker("dataIscrizione")}
-              >
-                <View style={styles.datePickerIcon}>
-                  <Calendar size={20} color={colors.primary} />
-                </View>
-                <View style={styles.datePickerContent}>
-                  <Text style={styles.datePickerLabel}>Subscription Date</Text>
-                  <Text style={styles.datePickerValue}>
-                    {formData.dataIscrizione || "Select date"}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </Card>
-          )}
+                <Text style={styles.fieldLabel}>
+                  {t("members.dateOfEntry")}
+                  {isOwnProfile && <Text style={styles.required}> *</Text>}
+                </Text>
+                <TouchableOpacity
+                  style={styles.datePickerButton}
+                  onPress={() => setActivePicker("dateOfEntry")}
+                >
+                  <View style={styles.datePickerIcon}>
+                    <Calendar size={20} color={colors.primary} />
+                  </View>
+                  <View style={styles.datePickerContent}>
+                    <Text style={styles.datePickerValue}>
+                      {formData.dateOfEntry || "Select date"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
 
-          {/* Date Picker Action Sheet Modal */}
-          <Modal
-            visible={activePicker !== null}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={() => setActivePicker(null)}
-          >
-            <View style={styles.actionSheetOverlay}>
-              <View style={styles.actionSheetContainer}>
-                <View style={styles.actionSheetHeader}>
-                  <Text style={styles.actionSheetTitle}>Select Date</Text>
-                  <TouchableOpacity
-                    onPress={() => setActivePicker(null)}
-                    style={styles.actionSheetDoneButton}
-                  >
-                    <Text style={styles.actionSheetDoneText}>Done</Text>
-                  </TouchableOpacity>
-                </View>
-                <DateTimePicker
-                  value={
-                    parseDate(
-                      activePicker ? formData[activePicker] : undefined,
-                    ) || new Date()
-                  }
-                  mode="date"
-                  display="spinner"
-                  maximumDate={new Date()}
-                  onChange={(event, selectedDate) => {
-                    if (selectedDate && activePicker) {
-                      setFormData({
-                        ...formData,
-                        [activePicker]: formatDate(selectedDate),
-                      });
+                {isCurrentGradeCaptain && (
+                  <>
+                    <Text
+                      style={[styles.fieldLabel, { marginTop: spacing.md }]}
+                    >
+                      {t("members.dateOfCaptaincy")}
+                      {isOwnProfile && <Text style={styles.required}> *</Text>}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.datePickerButton}
+                      onPress={() => setActivePicker("dateOfCaptaincy")}
+                    >
+                      <View style={styles.datePickerIcon}>
+                        <Calendar size={20} color={colors.primary} />
+                      </View>
+                      <View style={styles.datePickerContent}>
+                        <Text style={styles.datePickerValue}>
+                          {formData.dateOfCaptaincy || "Select date"}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </Card>
+            )}
+
+            {/* Subscription Date - Admin only */}
+            {canEditAdminFields && (
+              <Card style={styles.sectionCard}>
+                <Text style={styles.sectionTitle}>Membership Information</Text>
+
+                <TouchableOpacity
+                  style={styles.datePickerButton}
+                  onPress={() => setActivePicker("dataIscrizione")}
+                >
+                  <View style={styles.datePickerIcon}>
+                    <Calendar size={20} color={colors.primary} />
+                  </View>
+                  <View style={styles.datePickerContent}>
+                    <Text style={styles.datePickerLabel}>
+                      Subscription Date
+                    </Text>
+                    <Text style={styles.datePickerValue}>
+                      {formData.dataIscrizione || "Select date"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </Card>
+            )}
+
+            {/* Date Picker Action Sheet Modal */}
+            <Modal
+              visible={activePicker !== null}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => setActivePicker(null)}
+            >
+              <View style={styles.actionSheetOverlay}>
+                <View style={styles.actionSheetContainer}>
+                  <View style={styles.actionSheetHeader}>
+                    <Text style={styles.actionSheetTitle}>Select Date</Text>
+                    <TouchableOpacity
+                      onPress={() => setActivePicker(null)}
+                      style={styles.actionSheetDoneButton}
+                    >
+                      <Text style={styles.actionSheetDoneText}>Done</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <DateTimePicker
+                    value={
+                      parseDate(
+                        activePicker ? formData[activePicker] : undefined,
+                      ) || new Date()
                     }
-                  }}
-                />
+                    mode="date"
+                    display="spinner"
+                    maximumDate={new Date()}
+                    onChange={(event, selectedDate) => {
+                      if (selectedDate && activePicker) {
+                        setFormData({
+                          ...formData,
+                          [activePicker]: formatDate(selectedDate),
+                        });
+                      }
+                    }}
+                  />
+                </View>
               </View>
+            </Modal>
+
+            {/* Admin Fields Section - Only for Admins */}
+            {canEditAdminFields && (
+              <Card style={styles.sectionCard}>
+                <Text style={styles.sectionTitle}>Administrative</Text>
+
+                <View style={styles.switchRow}>
+                  <View style={styles.switchLabelContainer}>
+                    <Building2
+                      size={20}
+                      color={colors.primary}
+                      style={styles.switchIcon}
+                    />
+                    <Text style={styles.switchLabel}>ITUD</Text>
+                  </View>
+                  <Switch
+                    value={formData.itud}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, itud: value })
+                    }
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={colors.background}
+                  />
+                </View>
+
+                <View style={styles.switchRow}>
+                  <View style={styles.switchLabelContainer}>
+                    <Shield
+                      size={20}
+                      color={colors.primary}
+                      style={styles.switchIcon}
+                    />
+                    <Text style={styles.switchLabel}>RSA</Text>
+                  </View>
+                  <Switch
+                    value={formData.rsa}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, rsa: value })
+                    }
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={colors.background}
+                  />
+                </View>
+
+                <View style={styles.switchRow}>
+                  <View style={styles.switchLabelContainer}>
+                    <ToggleLeft
+                      size={20}
+                      color={formData.isActive ? colors.success : colors.error}
+                      style={styles.switchIcon}
+                    />
+                    <Text style={styles.switchLabel}>Active</Text>
+                  </View>
+                  <Switch
+                    value={formData.isActive}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, isActive: value })
+                    }
+                    trackColor={{ false: colors.error, true: colors.success }}
+                    thumbColor={colors.background}
+                  />
+                </View>
+              </Card>
+            )}
+
+            {/* SuperAdmin Fields */}
+            {isSuperAdmin && (
+              <Card style={styles.sectionCard}>
+                <Text style={styles.sectionTitle}>Role Management</Text>
+
+                <SelectField
+                  label="System Role"
+                  value={formData.role}
+                  options={[
+                    { label: "User", value: UserRole.USER },
+                    { label: "Admin", value: UserRole.ADMIN },
+                    { label: "Super Admin", value: UserRole.SUPERADMIN },
+                  ]}
+                  onChange={(value) =>
+                    setFormData({ ...formData, role: value as UserRole })
+                  }
+                  icon={<Shield size={20} color={colors.primary} />}
+                  placeholder="Select role"
+                />
+
+                <SelectField
+                  label="Crew Role"
+                  value={formData.ruolo || ""}
+                  options={[
+                    { label: "Pilot", value: Ruolo.PILOT },
+                    { label: "Cabin Crew", value: Ruolo.CABIN_CREW },
+                  ]}
+                  onChange={(value) =>
+                    setFormData({ ...formData, ruolo: value as Ruolo })
+                  }
+                  icon={<User size={20} color={colors.primary} />}
+                  placeholder="Select crew role"
+                />
+              </Card>
+            )}
+
+            {/* Notes Section - Only for admins */}
+            {canEditAdminFields && (
+              <Card style={styles.sectionCard}>
+                <Text style={styles.sectionTitle}>Notes</Text>
+
+                <View style={styles.textAreaContainer}>
+                  <FileText
+                    size={20}
+                    color={colors.primary}
+                    style={styles.textAreaIcon}
+                  />
+                  <TextInput
+                    style={styles.textArea}
+                    value={formData.note}
+                    onChangeText={(text) =>
+                      setFormData({ ...formData, note: text })
+                    }
+                    placeholder="Add notes..."
+                    placeholderTextColor={colors.textTertiary}
+                    multiline
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                  />
+                </View>
+              </Card>
+            )}
+
+            {/* Action Buttons */}
+            <View style={styles.actionsContainer}>
+              <Button
+                title="Cancel"
+                onPress={handleCancel}
+                variant="secondary"
+                style={styles.actionButton}
+              />
+              <Button
+                title="Save Changes"
+                onPress={handleSave}
+                loading={updateMutation.isPending}
+                style={styles.actionButton}
+              />
             </View>
-          </Modal>
 
-          {/* Admin Fields Section - Only for Admins */}
-          {canEditAdminFields && (
-            <Card style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Administrative</Text>
-
-              <View style={styles.switchRow}>
-                <View style={styles.switchLabelContainer}>
-                  <Building2
-                    size={20}
-                    color={colors.primary}
-                    style={styles.switchIcon}
-                  />
-                  <Text style={styles.switchLabel}>ITUD</Text>
-                </View>
-                <Switch
-                  value={formData.itud}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, itud: value })
-                  }
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor={colors.background}
-                />
-              </View>
-
-              <View style={styles.switchRow}>
-                <View style={styles.switchLabelContainer}>
-                  <Shield
-                    size={20}
-                    color={colors.primary}
-                    style={styles.switchIcon}
-                  />
-                  <Text style={styles.switchLabel}>RSA</Text>
-                </View>
-                <Switch
-                  value={formData.rsa}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, rsa: value })
-                  }
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor={colors.background}
-                />
-              </View>
-
-              <View style={styles.switchRow}>
-                <View style={styles.switchLabelContainer}>
-                  <ToggleLeft
-                    size={20}
-                    color={formData.isActive ? colors.success : colors.error}
-                    style={styles.switchIcon}
-                  />
-                  <Text style={styles.switchLabel}>Active</Text>
-                </View>
-                <Switch
-                  value={formData.isActive}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, isActive: value })
-                  }
-                  trackColor={{ false: colors.error, true: colors.success }}
-                  thumbColor={colors.background}
-                />
-              </View>
-            </Card>
-          )}
-
-          {/* SuperAdmin Fields */}
-          {isSuperAdmin && (
-            <Card style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Role Management</Text>
-
-              <SelectField
-                label="System Role"
-                value={formData.role}
-                options={[
-                  { label: "User", value: UserRole.USER },
-                  { label: "Admin", value: UserRole.ADMIN },
-                  { label: "Super Admin", value: UserRole.SUPERADMIN },
-                ]}
-                onChange={(value) =>
-                  setFormData({ ...formData, role: value as UserRole })
-                }
-                icon={<Shield size={20} color={colors.primary} />}
-                placeholder="Select role"
-              />
-
-              <SelectField
-                label="Crew Role"
-                value={formData.ruolo || ""}
-                options={[
-                  { label: "Pilot", value: Ruolo.PILOT },
-                  { label: "Cabin Crew", value: Ruolo.CABIN_CREW },
-                ]}
-                onChange={(value) =>
-                  setFormData({ ...formData, ruolo: value as Ruolo })
-                }
-                icon={<User size={20} color={colors.primary} />}
-                placeholder="Select crew role"
-              />
-            </Card>
-          )}
-
-          {/* Notes Section - Only for admins */}
-          {canEditAdminFields && (
-            <Card style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Notes</Text>
-
-              <View style={styles.textAreaContainer}>
-                <FileText
-                  size={20}
-                  color={colors.primary}
-                  style={styles.textAreaIcon}
-                />
-                <TextInput
-                  style={styles.textArea}
-                  value={formData.note}
-                  onChangeText={(text) =>
-                    setFormData({ ...formData, note: text })
-                  }
-                  placeholder="Add notes..."
-                  placeholderTextColor={colors.textTertiary}
-                  multiline
-                  numberOfLines={4}
-                  textAlignVertical="top"
-                />
-              </View>
-            </Card>
-          )}
-
-          {/* Action Buttons */}
-          <View style={styles.actionsContainer}>
-            <Button
-              title="Cancel"
-              onPress={handleCancel}
-              variant="secondary"
-              style={styles.actionButton}
-            />
-            <Button
-              title="Save Changes"
-              onPress={handleSave}
-              loading={updateMutation.isPending}
-              style={styles.actionButton}
-            />
-          </View>
-
-          <View style={styles.bottomSpacer} />
-        </ScrollView>
+            <View style={styles.bottomSpacer} />
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );

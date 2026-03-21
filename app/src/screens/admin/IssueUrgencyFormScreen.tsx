@@ -4,10 +4,12 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  KeyboardAvoidingView,
   TextInput,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import {
   SafeAreaView,
@@ -126,50 +128,59 @@ export const IssueUrgencyFormScreen: React.FC = () => {
           <View style={{ width: 40 }} />
         </View>
 
-        <ScrollView
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={insets.top + 56}
         >
-          <Text style={styles.label}>{t("issues.nameEn")}</Text>
-          <TextInput
-            style={styles.input}
-            value={nameEn}
-            onChangeText={setNameEn}
-            placeholder="Urgency name in English"
-            placeholderTextColor={colors.textTertiary}
-          />
-
-          <Text style={styles.label}>{t("issues.nameIt")}</Text>
-          <TextInput
-            style={styles.input}
-            value={nameIt}
-            onChangeText={setNameIt}
-            placeholder="Nome urgenza in italiano"
-            placeholderTextColor={colors.textTertiary}
-          />
-
-          <Text style={styles.label}>{t("issues.level")} (1-5)</Text>
-          <TextInput
-            style={styles.input}
-            value={level}
-            onChangeText={setLevel}
-            keyboardType="numeric"
-            maxLength={1}
-            placeholderTextColor={colors.textTertiary}
-          />
-
-          <TouchableOpacity
-            style={[styles.saveButton, isPending && styles.saveButtonDisabled]}
-            onPress={handleSave}
-            disabled={isPending}
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
           >
-            {isPending ? (
-              <ActivityIndicator color={colors.textInverse} />
-            ) : (
-              <Text style={styles.saveButtonText}>{t("common.save")}</Text>
-            )}
-          </TouchableOpacity>
-        </ScrollView>
+            <Text style={styles.label}>{t("issues.nameEn")}</Text>
+            <TextInput
+              style={styles.input}
+              value={nameEn}
+              onChangeText={setNameEn}
+              placeholder="Urgency name in English"
+              placeholderTextColor={colors.textTertiary}
+            />
+
+            <Text style={styles.label}>{t("issues.nameIt")}</Text>
+            <TextInput
+              style={styles.input}
+              value={nameIt}
+              onChangeText={setNameIt}
+              placeholder="Nome urgenza in italiano"
+              placeholderTextColor={colors.textTertiary}
+            />
+
+            <Text style={styles.label}>{t("issues.level")} (1-5)</Text>
+            <TextInput
+              style={styles.input}
+              value={level}
+              onChangeText={setLevel}
+              keyboardType="numeric"
+              maxLength={1}
+              placeholderTextColor={colors.textTertiary}
+            />
+
+            <TouchableOpacity
+              style={[
+                styles.saveButton,
+                isPending && styles.saveButtonDisabled,
+              ]}
+              onPress={handleSave}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <ActivityIndicator color={colors.textInverse} />
+              ) : (
+                <Text style={styles.saveButtonText}>{t("common.save")}</Text>
+              )}
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );

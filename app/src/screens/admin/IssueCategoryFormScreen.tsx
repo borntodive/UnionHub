@@ -4,10 +4,12 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  KeyboardAvoidingView,
   TextInput,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import {
   SafeAreaView,
@@ -125,63 +127,72 @@ export const IssueCategoryFormScreen: React.FC = () => {
           <View style={{ width: 40 }} />
         </View>
 
-        <ScrollView
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={insets.top + 56}
         >
-          <Text style={styles.label}>{t("issues.nameEn")}</Text>
-          <TextInput
-            style={styles.input}
-            value={nameEn}
-            onChangeText={setNameEn}
-            placeholder="Category name in English"
-            placeholderTextColor={colors.textTertiary}
-          />
-
-          <Text style={styles.label}>{t("issues.nameIt")}</Text>
-          <TextInput
-            style={styles.input}
-            value={nameIt}
-            onChangeText={setNameIt}
-            placeholder="Nome categoria in italiano"
-            placeholderTextColor={colors.textTertiary}
-          />
-
-          <Text style={styles.label}>{t("members.role")}</Text>
-          <View style={styles.optionsList}>
-            {RUOLO_OPTIONS.map((opt) => (
-              <TouchableOpacity
-                key={opt.value}
-                style={[
-                  styles.optionItem,
-                  ruolo === opt.value && styles.optionItemSelected,
-                ]}
-                onPress={() => setRuolo(opt.value)}
-              >
-                <Text
-                  style={[
-                    styles.optionText,
-                    ruolo === opt.value && styles.optionTextSelected,
-                  ]}
-                >
-                  {opt.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <TouchableOpacity
-            style={[styles.saveButton, isPending && styles.saveButtonDisabled]}
-            onPress={handleSave}
-            disabled={isPending}
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
           >
-            {isPending ? (
-              <ActivityIndicator color={colors.textInverse} />
-            ) : (
-              <Text style={styles.saveButtonText}>{t("common.save")}</Text>
-            )}
-          </TouchableOpacity>
-        </ScrollView>
+            <Text style={styles.label}>{t("issues.nameEn")}</Text>
+            <TextInput
+              style={styles.input}
+              value={nameEn}
+              onChangeText={setNameEn}
+              placeholder="Category name in English"
+              placeholderTextColor={colors.textTertiary}
+            />
+
+            <Text style={styles.label}>{t("issues.nameIt")}</Text>
+            <TextInput
+              style={styles.input}
+              value={nameIt}
+              onChangeText={setNameIt}
+              placeholder="Nome categoria in italiano"
+              placeholderTextColor={colors.textTertiary}
+            />
+
+            <Text style={styles.label}>{t("members.role")}</Text>
+            <View style={styles.optionsList}>
+              {RUOLO_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[
+                    styles.optionItem,
+                    ruolo === opt.value && styles.optionItemSelected,
+                  ]}
+                  onPress={() => setRuolo(opt.value)}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      ruolo === opt.value && styles.optionTextSelected,
+                    ]}
+                  >
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={[
+                styles.saveButton,
+                isPending && styles.saveButtonDisabled,
+              ]}
+              onPress={handleSave}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <ActivityIndicator color={colors.textInverse} />
+              ) : (
+                <Text style={styles.saveButtonText}>{t("common.save")}</Text>
+              )}
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );

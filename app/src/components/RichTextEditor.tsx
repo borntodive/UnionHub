@@ -23,18 +23,26 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   editable = true,
 }) => {
   const editorRef = useRef<RichEditor>(null);
+  // Track the last value that came from the editor itself (user typing).
+  // setContentHTML must NOT be called for values we emitted — it resets the
+  // cursor and causes characters to appear at random positions.
+  const lastEmittedValue = useRef(value);
 
   const handleChange = useCallback(
     (html: string) => {
+      lastEmittedValue.current = html;
       onChange(html);
     },
     [onChange],
   );
 
-  // initialContentHTML is only read at mount — sync external value changes
-  // (e.g. when an existing document finishes loading) imperatively.
+  // Only push content into the editor when the value changed from an external
+  // source (e.g. document finished loading), not from our own onChange.
   useEffect(() => {
-    editorRef.current?.setContentHTML(value);
+    if (value !== lastEmittedValue.current) {
+      lastEmittedValue.current = value;
+      editorRef.current?.setContentHTML(value);
+    }
   }, [value]);
 
   return (
@@ -73,6 +81,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             font-size: 15px;
             line-height: 1.6;
             padding: 4px 0;
+            min-height: ${minHeight}px;
           `,
         }}
         useContainer

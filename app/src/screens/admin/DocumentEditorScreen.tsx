@@ -8,6 +8,8 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import {
   SafeAreaView,
@@ -36,6 +38,7 @@ import {
   XCircle,
   RefreshCw,
   Languages,
+  Edit2,
 } from "lucide-react-native";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
@@ -43,7 +46,8 @@ import { documentsApi, Document } from "../../api/documents";
 import { RootStackParamList } from "../../navigation/types";
 import { useAuthStore } from "../../store/authStore";
 import { UserRole } from "../../types";
-import { RichTextEditor } from "../../components/RichTextEditor";
+import { FullscreenEditorModal } from "../../components/FullscreenEditorModal";
+import { HtmlPreview } from "../../components/HtmlPreview";
 
 type DocumentEditorRouteProp = RouteProp<RootStackParamList, "DocumentEditor">;
 type DocumentEditorNavigationProp =
@@ -73,6 +77,10 @@ export const DocumentEditorScreen: React.FC = () => {
   const [englishTranslation, setEnglishTranslation] = useState("");
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [translationDirty, setTranslationDirty] = useState(false);
+  const [showEditorModal, setShowEditorModal] = useState(false);
+  const [showReviewEditorModal, setShowReviewEditorModal] = useState(false);
+  const [showTranslationEditorModal, setShowTranslationEditorModal] =
+    useState(false);
 
   // Check if there are unsaved changes
   const hasUnsavedChanges = () => {
@@ -512,12 +520,24 @@ export const DocumentEditorScreen: React.FC = () => {
             />
 
             <Text style={styles.label}>{t("documents.documentContent")}</Text>
-            <RichTextEditor
-              value={content}
-              onChange={setContent}
-              placeholder={t("documents.enterContent")}
-              minHeight={220}
-            />
+            <TouchableOpacity
+              style={styles.contentPreview}
+              onPress={() => setShowEditorModal(true)}
+            >
+              {content ? (
+                <HtmlPreview html={content} />
+              ) : (
+                <Text style={styles.contentPreviewPlaceholder}>
+                  {t("documents.enterContent")}
+                </Text>
+              )}
+              <View style={styles.contentPreviewEdit}>
+                <Edit2 size={14} color={colors.primary} />
+                <Text style={styles.contentPreviewEditText}>
+                  {t("common.edit")}
+                </Text>
+              </View>
+            </TouchableOpacity>
 
             {!isEditing ? (
               <TouchableOpacity
@@ -562,7 +582,9 @@ export const DocumentEditorScreen: React.FC = () => {
 
                 <TouchableOpacity
                   style={[styles.actionButton, styles.secondaryButton]}
-                  onPress={() => setStep("review")}
+                  onPress={() =>
+                    setStep(aiReviewedContent ? "review" : "approve")
+                  }
                 >
                   <ArrowRight size={20} color={colors.text} />
                   <Text style={styles.secondaryButtonText}>
@@ -585,7 +607,7 @@ export const DocumentEditorScreen: React.FC = () => {
 
             <Text style={styles.label}>{t("documents.originalText")}</Text>
             <View style={styles.originalBox}>
-              <Text style={styles.originalText}>{content}</Text>
+              <HtmlPreview html={content} maxLines={5} />
             </View>
 
             <Text style={styles.label}>
@@ -593,11 +615,24 @@ export const DocumentEditorScreen: React.FC = () => {
                 ? t("documents.aiReviewedVersion")
                 : t("documents.versionToApprove")}
             </Text>
-            <RichTextEditor
-              value={aiReviewedContent || content}
-              onChange={setAiReviewedContent}
-              minHeight={220}
-            />
+            <TouchableOpacity
+              style={styles.contentPreview}
+              onPress={() => setShowReviewEditorModal(true)}
+            >
+              {aiReviewedContent || content ? (
+                <HtmlPreview html={aiReviewedContent || content} />
+              ) : (
+                <Text style={styles.contentPreviewPlaceholder}>
+                  {t("documents.enterContent")}
+                </Text>
+              )}
+              <View style={styles.contentPreviewEdit}>
+                <Edit2 size={14} color={colors.primary} />
+                <Text style={styles.contentPreviewEditText}>
+                  {t("common.edit")}
+                </Text>
+              </View>
+            </TouchableOpacity>
 
             {hasAIReview && (
               <TouchableOpacity
@@ -657,15 +692,13 @@ export const DocumentEditorScreen: React.FC = () => {
 
             <Text style={styles.label}>{t("documents.italianVersion")}</Text>
             <View style={styles.finalBox}>
-              <Text style={styles.finalText}>
-                {aiReviewedContent || content}
-              </Text>
+              <HtmlPreview html={aiReviewedContent || content} maxLines={8} />
             </View>
 
             <View style={styles.buttonRow}>
               <TouchableOpacity
                 style={[styles.actionButton, styles.secondaryButton]}
-                onPress={() => setStep("review")}
+                onPress={() => setStep(aiReviewedContent ? "review" : "edit")}
               >
                 <ArrowLeft size={20} color={colors.text} />
                 <Text style={styles.secondaryButtonText}>
@@ -712,23 +745,28 @@ export const DocumentEditorScreen: React.FC = () => {
 
             <Text style={styles.label}>{t("documents.italianVersion")}</Text>
             <View style={styles.finalBox}>
-              <Text style={styles.finalText}>
-                {aiReviewedContent || content}
-              </Text>
+              <HtmlPreview html={aiReviewedContent || content} maxLines={8} />
             </View>
 
             <Text style={styles.label}>{t("documents.englishVersion")}</Text>
-            <RichTextEditor
-              value={englishTranslation}
-              onChange={(html) => {
-                setEnglishTranslation(html);
-                setTranslationDirty(
-                  html !== (existingDoc?.englishTranslation || ""),
-                );
-              }}
-              placeholder={t("documents.enterContent")}
-              minHeight={180}
-            />
+            <TouchableOpacity
+              style={styles.contentPreview}
+              onPress={() => setShowTranslationEditorModal(true)}
+            >
+              {englishTranslation ? (
+                <HtmlPreview html={englishTranslation} />
+              ) : (
+                <Text style={styles.contentPreviewPlaceholder}>
+                  {t("documents.enterContent")}
+                </Text>
+              )}
+              <View style={styles.contentPreviewEdit}>
+                <Edit2 size={14} color={colors.primary} />
+                <Text style={styles.contentPreviewEditText}>
+                  {t("common.edit")}
+                </Text>
+              </View>
+            </TouchableOpacity>
             {translationDirty && (
               <TouchableOpacity
                 style={[
@@ -753,22 +791,6 @@ export const DocumentEditorScreen: React.FC = () => {
             )}
 
             <View style={styles.buttonColumn}>
-              {!isPublished && (
-                <TouchableOpacity
-                  style={[
-                    styles.actionButton,
-                    styles.secondaryButton,
-                    styles.fullWidthButton,
-                  ]}
-                  onPress={() => setStep("approve")}
-                >
-                  <ArrowLeft size={20} color={colors.text} />
-                  <Text style={styles.secondaryButtonText}>
-                    {t("common.back")}
-                  </Text>
-                </TouchableOpacity>
-              )}
-
               {isPublished || isVerified ? (
                 <>
                   <TouchableOpacity
@@ -868,6 +890,22 @@ export const DocumentEditorScreen: React.FC = () => {
                       </>
                     )}
                   </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.actionButton,
+                      styles.secondaryButton,
+                      styles.fullWidthButton,
+                    ]}
+                    onPress={() =>
+                      setStep(aiReviewedContent ? "review" : "edit")
+                    }
+                  >
+                    <ArrowLeft size={20} color={colors.text} />
+                    <Text style={styles.secondaryButtonText}>
+                      {t("common.back")}
+                    </Text>
+                  </TouchableOpacity>
                 </>
               )}
             </View>
@@ -927,13 +965,54 @@ export const DocumentEditorScreen: React.FC = () => {
 
         {renderStepIndicator()}
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={insets.top + 56}
         >
-          {renderStepContent()}
-        </ScrollView>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            {renderStepContent()}
+          </ScrollView>
+        </KeyboardAvoidingView>
+
+        {/* Fullscreen Editor Modal — step edit */}
+        <FullscreenEditorModal
+          visible={showEditorModal}
+          onClose={() => setShowEditorModal(false)}
+          title={t("documents.documentContent")}
+          value={content}
+          onChange={setContent}
+          placeholder={t("documents.enterContent")}
+        />
+
+        {/* Fullscreen Editor Modal — step review */}
+        <FullscreenEditorModal
+          visible={showReviewEditorModal}
+          onClose={() => setShowReviewEditorModal(false)}
+          title={t("documents.versionToApprove")}
+          value={aiReviewedContent || content}
+          onChange={setAiReviewedContent}
+          placeholder={t("documents.enterContent")}
+        />
+
+        {/* Fullscreen Editor Modal — step publish (english translation) */}
+        <FullscreenEditorModal
+          visible={showTranslationEditorModal}
+          onClose={() => setShowTranslationEditorModal(false)}
+          title={t("documents.englishVersion")}
+          value={englishTranslation}
+          onChange={(html) => {
+            setEnglishTranslation(html);
+            setTranslationDirty(
+              html !== (existingDoc?.englishTranslation || ""),
+            );
+          }}
+          placeholder={t("documents.enterContent")}
+        />
 
         {/* Close Confirmation Modal */}
         {showCloseModal && (
@@ -1167,10 +1246,6 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     maxHeight: 150,
   },
-  originalText: {
-    fontSize: typography.sizes.sm,
-    color: colors.textSecondary,
-  },
   finalBox: {
     backgroundColor: colors.primary + "10",
     borderRadius: borderRadius.md,
@@ -1178,10 +1253,6 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: colors.primary,
     maxHeight: 200,
-  },
-  finalText: {
-    fontSize: typography.sizes.md,
-    color: colors.text,
   },
   englishBox: {
     backgroundColor: colors.surface,
@@ -1366,6 +1437,32 @@ const styles = StyleSheet.create({
   modalButtonCancelText: {
     color: colors.textSecondary,
     fontSize: typography.sizes.md,
+  },
+  contentPreview: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    minHeight: 100,
+  },
+  contentPreviewPlaceholder: {
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
+  },
+  contentPreviewEdit: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  contentPreviewEditText: {
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
+    fontWeight: typography.weights.semibold,
   },
 });
 

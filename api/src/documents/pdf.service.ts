@@ -402,20 +402,82 @@ export class PdfService {
 
     const qrBase64 = this.readBase64(this.qrImagePath);
 
+    // displayHeaderFooter renders headerTemplate/footerTemplate in the margin
+    // area on EVERY page — the only reliable way to have repeating header/footer
+    // in Puppeteer (position:fixed only works correctly on page 1).
+    const topMargin = isJoint ? "36mm" : "38mm";
+    const bottomMargin = isJoint ? "20mm" : "36mm";
+
     const browser = await this.launchBrowser();
     try {
       const page = await browser.newPage();
-      const html = this.generateHtml(document, logos, qrBase64);
+      const html = this.generateHtml(document, qrBase64);
       await page.setContent(html, { waitUntil: "networkidle0" });
       const pdf = await page.pdf({
         format: "A4",
         printBackground: true,
-        margin: { top: "0", right: "0", bottom: "0", left: "0" },
+        displayHeaderFooter: true,
+        headerTemplate: this.buildHeaderTemplate(isJoint, logos),
+        footerTemplate: this.buildFooterTemplate(isJoint),
+        margin: {
+          top: topMargin,
+          right: "22mm",
+          bottom: bottomMargin,
+          left: "22mm",
+        },
       });
       return Buffer.from(pdf);
     } finally {
       await browser.close();
     }
+  }
+
+  /**
+   * Build Puppeteer headerTemplate (rendered in top margin on every page).
+   *
+   * <img> tags in headerTemplate don't load data URIs in Puppeteer's isolated
+   * header context. Use CSS background-image instead, which is allowed.
+   * height:100% collapses to 0 when the parent has no explicit height — use
+   * an explicit px height matching margin.top (38mm ≈ 143px at 96dpi).
+   */
+  private buildHeaderTemplate(
+    isJoint: boolean,
+    logos: Record<string, string | null | undefined>,
+  ): string {
+    // Use mm to match margin.top exactly, regardless of Puppeteer's internal DPI.
+    const h = isJoint ? "36mm" : "38mm";
+    const px = `-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;font-size:10px;`;
+
+    if (isJoint) {
+      const leftBg = logos.left
+        ? `background:url('data:image/${logos.leftMime};base64,${logos.left}') no-repeat left center / auto 75%;`
+        : "";
+      const rightBg = logos.right
+        ? `background:url('data:image/${logos.rightMime};base64,${logos.right}') no-repeat right center / auto 75%;`
+        : "";
+      return (
+        `<div style="${px}display:table;width:100%;height:${h};margin:0;padding:0;box-sizing:border-box;border-bottom:1px solid #177246;">` +
+        `<div style="${px}display:table-cell;width:38%;height:${h};padding-left:22mm;${leftBg}"></div>` +
+        `<div style="${px}display:table-cell;width:62%;height:${h};padding-right:22mm;${rightBg}"></div>` +
+        `</div>`
+      );
+    }
+
+    const logoBg = logos.single
+      ? `background:url('data:image/${logos.singleMime};base64,${logos.single}') no-repeat 10mm center / auto 72%;`
+      : "";
+    return `<div style="${px}display:block;width:100%;height:${h};margin:0;padding:0 22mm;box-sizing:border-box;border-bottom:1px solid #177246;${logoBg}"></div>`;
+  }
+
+  /**
+   * Build Puppeteer footerTemplate (rendered in bottom margin on every page).
+   * Joint documents have no institutional footer.
+   */
+  private buildFooterTemplate(isJoint: boolean): string {
+    if (isJoint) {
+      return `<div style="font-size:10px;width:100%;"></div>`;
+    }
+    return `<div style="-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:10px;width:100%;margin:0;padding:3px 0 0;position:relative;font-family:'Times New Roman',Times,serif;text-align:center;line-height:1.25;color:#000;box-sizing:border-box;"><div style="position:absolute;top:0;left:0;width:100%;height:1px;background:#177246;"></div><p style="font-weight:bold;color:#CC0000;margin:0;font-size:9px;">Dipartimento Trasporto Aereo</p><p style="font-weight:bold;margin:1px 0 0;color:#CC0000;font-size:7.5px;">Sede di Roma: Via A. Musa, 4 - 00161 ROMA - Tel. 06/44286354 Fax 06/44286410</p><p style="font-weight:bold;margin:1px 0 0;color:#CC0000;font-size:7.5px;">Sede di Fiumicino: Aeroporto L. Da Vinci Tel./Fax 06/659550339</p><p style="margin:1px 0 0;color:#177246;font-size:7px;"><span>C.F. 80421120587 - </span><span style="font-weight:bold;">e-mail: fit.trasportoaereo@cisl.it \u2013 PEC: fitcislnazionale@postecert.it - </span><span>Website: www.fitcisl.org</span></p><p style="margin:1px 0 0;color:#177246;font-size:7px;">Aderente a: International Transport Workers' Federation ITF - European Transport Workers' Federation ETF</p></div>`;
   }
 
   /**
@@ -506,7 +568,7 @@ export class PdfService {
         if (attrs && /class=/i.test(attrs)) {
           return `<p${attrs.replace(/class="([^"]*)"/i, 'class="$1 body-paragraph"')}>`;
         }
-        return `<p${attrs || ""} class="body-paragraph">`;
+        return `<p class="body-paragraph">`;
       });
     }
 
@@ -556,7 +618,6 @@ export class PdfService {
    */
   private generateHtml(
     document: Document,
-    logos: Record<string, string | null | undefined>,
     qrBase64: string | null = null,
   ): string {
     const isJoint = document.union === "joint";
@@ -571,67 +632,27 @@ export class PdfService {
           year: "numeric",
         });
 
-    const italianContent = this.contentToHtml(
+    let italianContent = this.contentToHtml(
       document.aiReviewedContent || document.originalContent,
     );
-    const englishContent = document.englishTranslation
+    if (!isJoint) {
+      // For joint communications, add a standard opening line at the end of the content
+      italianContent +=
+        '<p class="body-content">Come sempre, i vostri rappresentanti FIT-CISL restano a disposizione per qualsiasi dubbio o chiarimento.</p>';
+    }
+    let englishContent = document.englishTranslation
       ? this.contentToHtml(document.englishTranslation)
       : "";
+    if (englishContent && !isJoint) {
+      // For joint communications, add a standard opening line at the end of the content
+      englishContent +=
+        '<p class="body-content">As always, your FIT-CISL representatives remain available for any questions or clarifications.</p>';
+    }
     const englishTitle = document.englishTitle || document.title;
 
     const qrImg = qrBase64
       ? `<img src="data:image/png;base64,${qrBase64}" width="110" height="110" style="display:block;margin:8px auto 0;">`
       : "";
-
-    // ── Letterhead HTML (fixed elements) ──────────────────────────────────
-    let letterheadHtml: string;
-    let topPadding: string;
-
-    if (isJoint) {
-      // Two logos side by side, no footer
-      const leftImg = logos.left
-        ? `<img src="data:image/${logos.leftMime};base64,${logos.left}" alt="Logo FIT-CISL" style="width:100%;height:100%;object-fit:contain;">`
-        : "";
-      const rightImg = logos.right
-        ? `<img src="data:image/${logos.rightMime};base64,${logos.right}" alt="Logo ANPAC" style="width:100%;height:100%;object-fit:contain;">`
-        : "";
-
-      letterheadHtml = `
-  <!-- Joint: FIT-CISL logo (left) — bbox_pt [56.7, 37.9, 219.3, 81.09] on 595×842 -->
-  <div aria-hidden="true" style="position:fixed;left:9.529%;top:4.500%;width:27.328%;height:5.130%;">${leftImg}</div>
-  <!-- Joint: ANPAC logo (right) — bbox_pt [274.9, 37.8, 515.25, 73.0] on 595×842 -->
-  <div aria-hidden="true" style="position:fixed;left:46.202%;top:4.489%;width:40.394%;height:4.179%;">${rightImg}</div>
-  `;
-
-      // top: 11.5% of 297mm ≈ 34.2mm → use 36mm; no bottom footer rule needed
-      topPadding = "36mm";
-    } else {
-      // Single FIT-CISL logo + institutional footer
-      const singleImg = logos.single
-        ? `<img src="data:image/${logos.singleMime};base64,${logos.single}" alt="Logo FIT CISL – Trasporto Aereo" style="width:100%;height:100%;object-fit:contain;">`
-        : "";
-
-      letterheadHtml = `
-  <!-- FIT-CISL logo — bbox_pt [39, 27.55, 218.9, 75.2] on 595.4×841.8 -->
-  <div aria-hidden="true" style="position:fixed;left:6.550%;top:3.273%;width:30.215%;height:5.660%;">${singleImg}</div>
-  <!-- Separator below logo — CISL green, aligned to content margins (left 22mm, right 22mm) -->
-  <div aria-hidden="true" style="position:fixed;top:10.4%;left:10.476%;width:79.048%;height:1pt;background:#177246;"></div>
-  <!-- Separator above footer — CISL green, full width -->
-  <div aria-hidden="true" style="position:fixed;top:89.5%;left:0;width:100%;height:1pt;background:#177246;"></div>
-  <!-- Institutional footer — top 91.72% from letterhead.meta-2.json -->
-  <footer aria-hidden="true" style="position:fixed;top:91.72%;left:0;width:100%;text-align:center;font-family:'Times New Roman',Times,serif;font-size:10.7px;line-height:1.15;color:#000;">
-    <p style="font-weight:bold;color:#CC0000;">Dipartimento Trasporto Aereo</p>
-    <p style="font-weight:bold;margin-top:5px;color:#CC0000;">Sede di Roma: Via A. Musa, 4 - 00161 ROMA - Tel. 06/44286354 Fax 06/44286410</p>
-    <p style="font-weight:bold;margin-top:5px;color:#CC0000;">Sede di Fiumicino: Aeroporto L. Da Vinci Tel./Fax 06/659550339</p>
-    <p style="margin-top:5px;color:#177246;"><span>C.F. 80421120587 - </span><span style="font-weight:bold;">e-mail: fit.trasportoaereo@cisl.it – PEC: fitcislnazionale@postecert.it - </span><span>Website: www.fitcisl.org</span></p>
-    <p style="margin-top:5px;color:#177246;">Aderente a: International Transport Workers' Federation ITF - European Transport Workers' Federation ETF</p>
-  </footer>`;
-
-      // top 10.4% of 297mm ≈ 30.9mm → 33mm; bottom 10.5% ≈ 31.2mm → 34mm
-      topPadding = "33mm";
-    }
-
-    const bottomPadding = isJoint ? "20mm" : "34mm";
 
     // ── Closing sections ──────────────────────────────────────────────────
     const jointSignatures = `
@@ -642,15 +663,13 @@ export class PdfService {
 
     const closingIt = isJoint
       ? jointSignatures
-      : `<p class="closing-text">Come sempre, i vostri rappresentanti FIT-CISL restano a disposizione per qualsiasi dubbio o chiarimento.</p>
-         <p class="closing-center"><strong>RSA FIT-CISL PILOTI MALTA AIR</strong></p>
+      : `<p class="closing-center"><strong>RSA FIT-CISL PILOTI MALTA AIR</strong></p>
          <p class="closing-center" style="color:#177246;"><strong>READY2B FIT-CISL</strong></p>
          ${qrBase64 ? `<p class="closing-center" style="font-size:9pt;color:#666;margin-top:8px;">Resta aggiornato — entra nel gruppo WhatsApp:</p>${qrImg}` : ""}`;
 
     const closingEn = isJoint
       ? jointSignatures
-      : `<p class="closing-text">As always, your FIT-CISL representatives remain available for any questions or clarifications.</p>
-         <p class="closing-center"><strong>RSA FIT-CISL PILOTI MALTA AIR</strong></p>
+      : `<p class="closing-center"><strong>RSA FIT-CISL PILOTI MALTA AIR</strong></p>
          <p class="closing-center" style="color:#177246;"><strong>READY2B FIT-CISL</strong></p>
          ${qrBase64 ? `<p class="closing-center" style="font-size:9pt;color:#666;margin-top:8px;">Stay updated — join the WhatsApp group:</p>${qrImg}` : ""}`;
 
@@ -660,7 +679,7 @@ export class PdfService {
   <meta charset="UTF-8">
   <title>${this.esc(document.title)}</title>
   <style>
-    @page { size: A4; margin: 0; }
+    @page { size: A4; margin: ${isJoint ? "36mm" : "38mm"} 22mm ${isJoint ? "20mm" : "36mm"} 22mm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     html, body {
@@ -677,8 +696,8 @@ export class PdfService {
       color: #000;
     }
 
-    .page     { padding: ${topPadding} 22mm ${bottomPadding}; }
-    .page-en  { padding: ${topPadding} 22mm ${bottomPadding}; page-break-before: always; }
+    .page     { padding-bottom: 4mm; padding-left: 14mm; padding-right: 14mm; }
+    .page-en  { padding-bottom: 4mm; padding-left: 14mm; padding-right: 14mm; page-break-before: always; }
 
     .date {
       text-align: right;
@@ -701,10 +720,8 @@ export class PdfService {
     /* Paragraphs: justified, generous spacing to match letterhead reference */
     .body-paragraph {
       text-align: justify;
-      hyphens: auto;
-      word-break: break-word;
       margin-bottom: 12pt;
-      line-height: 1.6;
+      line-height: 2.0;
     }
 
     /* Rich text editor elements */
@@ -751,7 +768,7 @@ export class PdfService {
       word-break: break-word;
       font-size: 11pt;
       line-height: 1.6;
-      margin-top: 12pt;
+      margin-top: 14pt;
       margin-bottom: 6pt;
       color: #000;
     }
@@ -764,8 +781,6 @@ export class PdfService {
   </style>
 </head>
 <body>
-${letterheadHtml}
-
   <!-- Italian content -->
   <div class="page">
     <div class="date">
