@@ -679,7 +679,7 @@ export class PdfService {
   <meta charset="UTF-8">
   <title>${this.esc(document.title)}</title>
   <style>
-    @page { size: A4; margin: ${isJoint ? "36mm" : "38mm"} 22mm ${isJoint ? "20mm" : "36mm"} 22mm; }
+    @page { size: A4; margin: ${isJoint ? "36mm" : "45mm"} 22mm ${isJoint ? "20mm" : "36mm"} 22mm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     html, body {
