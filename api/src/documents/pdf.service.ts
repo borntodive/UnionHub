@@ -468,31 +468,38 @@ export class PdfService {
           console.log(
             `[overflow] lastParaPage=${lastParaPage}, sigPage=${sigPage}, qrPage=${qrSection ? getPage(qrSection) : "N/A"}, pageHeightPx=${pageHeightPx.toFixed(1)}`,
           );
-          if (sigPage > lastParaPage) {
-            // Case 2: signature overflows → reduce line-height until it fits
+          console.log(
+            `[overflow] lastPara offsetTop=${lastPara ? getAbsTop(lastPara).toFixed(1) : "N/A"} text="${lastPara ? lastPara.innerText.slice(0, 80).replace(/\n/g, " ") : "N/A"}"`,
+          );
+          // Trigger compression whenever the signature is not on page 0 AND there
+          // are body paragraphs on earlier pages — regardless of whether lastPara
+          // is on the same page or a previous one. Target: move signature one page back.
+          const hasParasBeforeSig = bodyParagraphs.some(
+            (p) => getPage(p) < sigPage,
+          );
+          if (sigPage > 0 && hasParasBeforeSig) {
+            // Case 2: compress body line-height to pull closing back one page
+            const targetPage = sigPage - 1;
             let lh = 2.0;
             const MIN_LH = 1.5;
-            while (
-              lh > MIN_LH &&
-              getPage(signature as HTMLElement) > lastParaPage
-            ) {
+            while (lh > MIN_LH && getPage(signature) > targetPage) {
               lh = Math.round((lh - 0.05) * 100) / 100;
               bodyParagraphs.forEach((p) => {
                 p.style.lineHeight = String(lh);
                 p.style.marginBottom = lh * 0.4 + "em";
               });
             }
-            if (qrSection) qrSection.style.display = "none";
-          } else if (qrSection) {
-            const qrPage = getPage(qrSection);
-            console.debug(`sigPage=${sigPage}, qrPage=${qrPage}`);
-            if (qrPage > sigPage) {
-              // Case 1: only QR overflows → hide it
+            console.log(
+              `[overflow] after compression: lh=${lh}, sigAbsTop=${getAbsTop(signature).toFixed(1)}, sigPage=${getPage(signature)}, targetPage=${targetPage}`,
+            );
+            // After compression, hide QR if it still overflows the signature page
+            if (qrSection && getPage(qrSection) > getPage(signature)) {
               qrSection.style.display = "none";
-              console.debug(
-                `Hid QR section to prevent overflow (qrPage=${qrPage})`,
-              );
             }
+          } else if (qrSection && getPage(qrSection) > sigPage) {
+            // Case 1: signature fits but QR overflows → hide QR
+            qrSection.style.display = "none";
+            console.debug(`Hid QR section (qrPage=${getPage(qrSection)})`);
           }
 
           // ── Same logic for the English section (.page-en) ──────────────
@@ -516,25 +523,31 @@ export class PdfService {
           console.log(
             `[overflow:en] lastParaPage=${lastParaEnPage}, sigPage=${sigEnPage}, qrPage=${qrEn ? getPage(qrEn) : "N/A"}`,
           );
-          if (sigEnPage > lastParaEnPage) {
-            // Case 2 EN: signature overflows → reduce line-height
+          const hasParasBeforeSigEn = parasEn.some(
+            (p) => getPage(p) < sigEnPage,
+          );
+          if (sigEnPage > 0 && hasParasBeforeSigEn) {
+            // Case 2 EN: compress to pull closing back one page
+            const targetPageEn = sigEnPage - 1;
             let lh = 2.0;
             const MIN_LH = 1.5;
-            while (lh > MIN_LH && getPage(sigEn) > lastParaEnPage) {
+            while (lh > MIN_LH && getPage(sigEn) > targetPageEn) {
               lh = Math.round((lh - 0.05) * 100) / 100;
               parasEn.forEach((p) => {
                 p.style.lineHeight = String(lh);
                 p.style.marginBottom = lh * 0.4 + "em";
               });
             }
-            if (qrEn) qrEn.style.display = "none";
-          } else if (qrEn) {
-            const qrEnPage = getPage(qrEn);
-            if (qrEnPage > sigEnPage) {
-              // Case 1 EN: only QR overflows → hide it
+            console.log(
+              `[overflow:en] after compression: lh=${lh}, sigPage=${getPage(sigEn)}, targetPage=${targetPageEn}`,
+            );
+            if (qrEn && getPage(qrEn) > getPage(sigEn)) {
               qrEn.style.display = "none";
-              console.debug(`Hid EN QR section (qrPage=${qrEnPage})`);
             }
+          } else if (qrEn && getPage(qrEn) > sigEnPage) {
+            // Case 1 EN: only QR overflows → hide it
+            qrEn.style.display = "none";
+            console.debug(`Hid EN QR section (qrPage=${getPage(qrEn)})`);
           }
         },
         isJoint ? 36 : 38, // Puppeteer margin.top (matches topMargin variable above)
@@ -577,16 +590,23 @@ export class PdfService {
     const px = `-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;font-size:10px;`;
 
     if (isJoint) {
+      // Logo sizes and positions derived from reference PDF bounding boxes (pt→mm ÷2.8346):
+      //   FIT-CISL (left):  left edge 20mm, height 15.2mm → 42% of 36mm header
+      //   ANPAC    (right): right edge 28mm from page right, height 12.4mm → 34% of 36mm header
+      // background-position with explicit offsets: avoids the background-origin:padding-box
+      // default that makes padding irrelevant for bg positioning.
+      // "20mm center" = logo left edge at 20mm from cell left.
+      // "right 28mm center" = logo right edge at 28mm from cell right (CSS 4-value syntax).
       const leftBg = logos.left
-        ? `background:url('data:image/${logos.leftMime};base64,${logos.left}') no-repeat left center / auto 75%;`
+        ? `background:url('data:image/${logos.leftMime};base64,${logos.left}') no-repeat 20mm center / auto 42%;`
         : "";
       const rightBg = logos.right
-        ? `background:url('data:image/${logos.rightMime};base64,${logos.right}') no-repeat right center / auto 75%;`
+        ? `background:url('data:image/${logos.rightMime};base64,${logos.right}') no-repeat right 28mm center / auto 34%;`
         : "";
       return (
-        `<div style="${px}display:table;width:100%;height:${h};margin:0;padding:0;box-sizing:border-box;border-bottom:1px solid #177246;">` +
-        `<div style="${px}display:table-cell;width:38%;height:${h};padding-left:22mm;${leftBg}"></div>` +
-        `<div style="${px}display:table-cell;width:62%;height:${h};padding-right:22mm;${rightBg}"></div>` +
+        `<div style="${px}display:table;width:100%;height:${h};margin:0;padding:0;box-sizing:border-box;">` +
+        `<div style="${px}display:table-cell;width:46%;height:${h};${leftBg}"></div>` +
+        `<div style="${px}display:table-cell;width:54%;height:${h};${rightBg}"></div>` +
         `</div>`
       );
     }
@@ -825,7 +845,7 @@ export class PdfService {
   <meta charset="UTF-8">
   <title>${this.esc(document.title)}</title>
   <style>
-    @page { size: A4; margin: ${isJoint ? "36mm" : "45mm"} 22mm ${isJoint ? "20mm" : "36mm"} 22mm; }
+    @page { size: A4; margin: ${isJoint ? "45mm" : "45mm"} 22mm ${isJoint ? "20mm" : "36mm"} 22mm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     html, body {
@@ -936,7 +956,7 @@ export class PdfService {
       ${today}
       ${isJoint ? `<br><span style="font-style:italic;font-size:9pt;color:#555;">___English text at the bottom___</span>` : ""}
     </div>
-    ${isJoint ? "" : `<h1 class="doc-title">${this.esc(document.title)}</h1>`}
+    ${`<h1 class="doc-title">${this.esc(document.title)}</h1>`}
 ${italianContent}
 ${closingIt}
   </div>
