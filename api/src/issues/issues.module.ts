@@ -6,11 +6,13 @@ import { IssueUrgency } from "../issue-urgencies/entities/issue-urgency.entity";
 import { IssuesService } from "./issues.service";
 import { IssuesController } from "./issues.controller";
 import { OllamaModule } from "../ollama/ollama.module";
+import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Issue, IssueCategory, IssueUrgency]),
     OllamaModule,
+    NotificationsModule,
   ],
   controllers: [IssuesController],
   providers: [IssuesService],

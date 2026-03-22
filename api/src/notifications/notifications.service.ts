@@ -2,6 +2,8 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { DeviceToken } from "./entities/device-token.entity";
+import { UserRole } from "../common/enums/user-role.enum";
+import { Ruolo } from "../common/enums/ruolo.enum";
 
 interface ExpoPushMessage {
   to: string;
@@ -63,6 +65,40 @@ export class NotificationsService {
       { token, userId },
       { isActive: false },
     );
+  }
+
+  async notifyAdmins(
+    ruolo: Ruolo,
+    title: string,
+    body: string,
+    data?: Record<string, any>,
+  ): Promise<void> {
+    // Find active tokens belonging to SuperAdmins or Admins of the given ruolo
+    const tokens = await this.deviceTokenRepository
+      .createQueryBuilder("dt")
+      .innerJoin("users", "u", "u.id = dt.userId")
+      .where("dt.isActive = true")
+      .andWhere(
+        "(u.role = :superadmin OR (u.role = :admin AND u.ruolo = :ruolo))",
+        {
+          superadmin: UserRole.SUPERADMIN,
+          admin: UserRole.ADMIN,
+          ruolo,
+        },
+      )
+      .getMany();
+
+    if (tokens.length === 0) return;
+
+    const messages: ExpoPushMessage[] = tokens.map((t) => ({
+      to: t.token,
+      sound: "default",
+      title,
+      body,
+      data,
+    }));
+
+    await this.sendExpoNotifications(messages);
   }
 
   async sendPushNotification(

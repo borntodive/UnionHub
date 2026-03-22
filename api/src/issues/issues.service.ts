@@ -13,6 +13,7 @@ import { IssueStatus } from "../common/enums/issue-status.enum";
 import { UserRole } from "../common/enums/user-role.enum";
 import { Ruolo } from "../common/enums/ruolo.enum";
 import { OllamaService } from "../ollama/ollama.service";
+import { NotificationsService } from "../notifications/notifications.service";
 
 @Injectable()
 export class IssuesService {
@@ -20,6 +21,7 @@ export class IssuesService {
     @InjectRepository(Issue)
     private readonly repo: Repository<Issue>,
     private readonly ollamaService: OllamaService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(
@@ -28,7 +30,19 @@ export class IssuesService {
     ruolo: Ruolo,
   ): Promise<Issue> {
     const issue = this.repo.create({ ...dto, userId, ruolo });
-    return this.repo.save(issue);
+    const saved = await this.repo.save(issue);
+
+    // Notify admins — fire and forget
+    this.notificationsService
+      .notifyAdmins(ruolo, "Nuova segnalazione", dto.title, {
+        type: "NEW_ISSUE",
+        issueId: saved.id,
+      })
+      .catch(() => {
+        /* ignore notification errors */
+      });
+
+    return saved;
   }
 
   async findAll(requestingUser: {
@@ -99,7 +113,32 @@ export class IssuesService {
       issue.adminNotes = dto.adminNotes;
     }
 
-    return this.repo.save(issue);
+    const saved = await this.repo.save(issue);
+
+    // Notify the issue creator if status changed
+    if (dto.status !== undefined) {
+      const statusLabels: Record<IssueStatus, string> = {
+        [IssueStatus.OPEN]: "Aperta",
+        [IssueStatus.IN_PROGRESS]: "In lavorazione",
+        [IssueStatus.SOLVED]: "Risolta",
+      };
+      this.notificationsService
+        .sendPushNotification(
+          issue.userId,
+          "Aggiornamento segnalazione",
+          `"${issue.title}" — ${statusLabels[dto.status]}`,
+          {
+            type: "ISSUE_STATUS_UPDATED",
+            issueId: saved.id,
+            status: dto.status,
+          },
+        )
+        .catch(() => {
+          /* ignore */
+        });
+    }
+
+    return saved;
   }
 
   async reopen(
