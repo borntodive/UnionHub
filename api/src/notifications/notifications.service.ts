@@ -23,7 +23,7 @@ export class NotificationsService {
     token: string,
     platform: string = "expo",
   ): Promise<DeviceToken> {
-    // Check if token already exists
+    // Check if this exact token already exists
     const existingToken = await this.deviceTokenRepository.findOne({
       where: { token },
     });
@@ -37,6 +37,14 @@ export class NotificationsService {
       existingToken.lastUsedAt = new Date();
       return this.deviceTokenRepository.save(existingToken);
     }
+
+    // Deactivate all other tokens for this user on the same platform to avoid
+    // duplicate notifications when the Expo push token is refreshed or the
+    // app is reinstalled (old token stays in DB alongside the new one).
+    await this.deviceTokenRepository.update(
+      { userId, platform, isActive: true },
+      { isActive: false },
+    );
 
     // Create new token
     const deviceToken = this.deviceTokenRepository.create({
