@@ -272,7 +272,16 @@
     "extensionRulePlanned": "Pianificata: +1h, max 2× ogni 7 giorni",
     "extensionRuleDiscretionary": "Discrezionale: +2h, solo post-report",
     "extensionRuleWocl": "Pianificata con WOCL ≤2h: max 4 settori; WOCL >2h: max 2 settori",
-    "enterInputs": "Inserisci orario di report e settori"
+    "enterInputs": "Inserisci orario di report e settori",
+    "limited16hCap": "Limitato dal cap 16h combinato SBY+FDP (OMA §7.14)",
+    "nightDutyWarning": "Servizio notturno: max 4 settori pianificati (OMA §7.10)",
+    "reportTimeNotAllowed": "Estensione pianificata non ammessa per questo orario di report (OMA Tabella 3)",
+    "discretionChecklist": "Discrezionalità del Comandante — verificare tutte e 5 le condizioni (OMA §7.9f):",
+    "discretionCheck1": "Nessun membro ha un orario di presentazione che supera i limiti legali",
+    "discretionCheck2": "Nessun membro ha operato più settori del Comandante",
+    "discretionCheck3": "Nessun membro ha riportato dopo un riposo ridotto (<12h)",
+    "discretionCheck4": "Nessun membro è al 6° giorno consecutivo di servizio",
+    "discretionCheck5": "Nessun'altra preoccupazione per la sicurezza identificata"
   },
   "home": {
     "greetingMorning": "Buongiorno",

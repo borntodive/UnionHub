@@ -112,6 +112,32 @@ export const ExtensionScreen: React.FC = () => {
                     <Text style={styles.infoText}>{t("ftl.plannedNote")}</Text>
                   </View>
                 )}
+                {extType === "discretionary" && (
+                  <View
+                    style={[
+                      styles.infoBox,
+                      { marginTop: 8, alignSelf: "stretch" },
+                    ]}
+                  >
+                    <Info size={13} color={colors.textSecondary} />
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={[
+                          styles.infoText,
+                          { fontWeight: "600", marginBottom: 4 },
+                        ]}
+                      >
+                        {t("ftl.discretionChecklist")}
+                      </Text>
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <Text key={n} style={styles.infoText}>
+                          {"• "}
+                          {t(`ftl.discretionCheck${n}`)}
+                        </Text>
+                      ))}
+                    </View>
+                  </View>
+                )}
               </>
             ) : (
               <>

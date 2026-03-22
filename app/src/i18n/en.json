@@ -272,7 +272,16 @@
     "extensionRulePlanned": "Planned: +1h, max 2× per 7 days",
     "extensionRuleDiscretionary": "Commander discretion: +2h, post-report only",
     "extensionRuleWocl": "Planned with WOCL ≤2h: max 4 sectors; WOCL >2h: max 2 sectors",
-    "enterInputs": "Enter report time and sectors"
+    "enterInputs": "Enter report time and sectors",
+    "limited16hCap": "Limited by 16h combined SBY+FDP cap (OMA §7.14)",
+    "nightDutyWarning": "Night duty: planned max 4 sectors (OMA §7.10)",
+    "reportTimeNotAllowed": "Planned extension not allowed for this report time (OMA Table 3)",
+    "discretionChecklist": "Commander's Discretion — verify all 5 conditions (OMA §7.9f):",
+    "discretionCheck1": "No crew member has a reporting time that exceeds legal limits",
+    "discretionCheck2": "No crew member has operated more sectors than the Commander",
+    "discretionCheck3": "No crew member reported after a reduced rest (<12h)",
+    "discretionCheck4": "No crew member is on their 6th consecutive duty day",
+    "discretionCheck5": "No other safety concern identified"
   },
   "home": {
     "greetingMorning": "Good morning",

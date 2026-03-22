@@ -14,9 +14,11 @@ export interface FdpResult {
   assumedWakeMinutes: number | null; // null when 18h rule doesn't apply
   limitedByAwake: boolean;
   limitedByStandby: boolean;
+  limitedBy16hCap: boolean; // airport standby: combined SBY+FDP capped at 16h
   standbyReduction: number; // minutes
   woclEncroachmentMin: number; // minutes overlapping with WOCL
   isEarlyStart: boolean;
+  isNightDuty: boolean; // start 02:00–04:59 OR end 02:00–05:59 with start <02:00
 }
 
 export interface ExtensionResult {

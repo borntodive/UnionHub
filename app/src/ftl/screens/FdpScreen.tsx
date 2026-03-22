@@ -127,6 +127,18 @@ export const FdpScreen: React.FC = () => {
               </Text>
             </View>
           )}
+          {result?.limitedBy16hCap && (
+            <View style={[styles.badge, styles.badgeWarning]}>
+              <AlertTriangle size={14} color={colors.warning} />
+              <Text style={styles.badgeText}>{t("ftl.limited16hCap")}</Text>
+            </View>
+          )}
+          {result?.isNightDuty && sectors > 4 && (
+            <View style={[styles.badge, styles.badgeWarning]}>
+              <AlertTriangle size={14} color={colors.warning} />
+              <Text style={styles.badgeText}>{t("ftl.nightDutyWarning")}</Text>
+            </View>
+          )}
           {result && result.woclEncroachmentMin > 0 && (
             <View style={[styles.badge, styles.badgeInfo]}>
               <AlertTriangle size={14} color={colors.secondary} />

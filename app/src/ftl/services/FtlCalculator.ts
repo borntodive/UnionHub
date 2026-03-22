@@ -132,15 +132,29 @@ export function calcMaxFdp(
     awakeMax = MAX_AWAKE - awakeBeforeReport;
   }
 
-  // 3. Standby reduction
+  // 3. Standby reduction + 16h combined cap (airport only, OMA §7.14)
   let standbyReduction = 0;
+  let cap16h = Number.MAX_SAFE_INTEGER;
   if (standbyType === "airport" && standby?.startTime) {
     const sbyStart = timeToMinutes(standby.startTime);
     const sbyDuration = (reportMinutes - sbyStart + 1440) % 1440;
     standbyReduction = Math.max(sbyDuration - 240, 0); // excess over 4h
+    // OMA §7.14: combined airport SBY + FDP must not exceed 16h
+    cap16h = Math.max(0, 16 * 60 - sbyDuration);
   } else if (standbyType === "home" && standby?.startTime) {
     const sbyStart = timeToMinutes(standby.startTime);
-    const activeStandby = calcActiveHomeStandby(sbyStart, reportMinutes, false);
+    // Bug 2 fix: if callTime is in night window (2300–0700), active standby
+    // starts from callout time (night before callout does not count).
+    const calloutMinForReduction = standby.callTime
+      ? timeToMinutes(standby.callTime)
+      : null;
+    const isCallInNight =
+      calloutMinForReduction !== null &&
+      (calloutMinForReduction >= 23 * 60 || calloutMinForReduction < 7 * 60);
+    const activeStandby =
+      isCallInNight && calloutMinForReduction !== null
+        ? (reportMinutes - calloutMinForReduction + 1440) % 1440
+        : calcActiveHomeStandby(sbyStart, reportMinutes, false);
     const threshold = standby.splitDuty ? 480 : 360; // 8h or 6h
     if (activeStandby > threshold) {
       standbyReduction = activeStandby - threshold;
@@ -149,15 +163,28 @@ export function calcMaxFdp(
 
   // 4. Effective max FDP
   const reducedTableMax = tableMax - standbyReduction;
-  const limitedByAwake = awakeMax < reducedTableMax;
+  const limitedByAwake = awakeMax < reducedTableMax && awakeMax < cap16h;
   const limitedByStandby = standbyReduction > 0;
-  const effectiveMax = Math.max(MIN_FDP, Math.min(reducedTableMax, awakeMax));
+  const limitedBy16hCap =
+    cap16h < reducedTableMax &&
+    cap16h < awakeMax &&
+    cap16h !== Number.MAX_SAFE_INTEGER;
+  const effectiveMax = Math.max(
+    MIN_FDP,
+    Math.min(reducedTableMax, awakeMax, cap16h),
+  );
 
   // 5. WOCL encroachment
   const woclEncroachmentMin = calcWoclEncroachment(reportMinutes, effectiveMax);
 
   // 6. Early start (05:00–05:59)
   const isEarlyStart = reportMinutes >= 300 && reportMinutes < 360;
+
+  // 7. Night duty flag (OMA §7.10): start 02:00–04:59 OR end 02:00–05:59 with start <02:00
+  const endMin = (reportMinutes + effectiveMax) % 1440;
+  const isNightDuty =
+    (reportMinutes >= 120 && reportMinutes < 300) ||
+    (reportMinutes < 120 && endMin >= 120 && endMin < 360);
 
   return {
     maxFdp: effectiveMax,
@@ -166,9 +193,11 @@ export function calcMaxFdp(
     assumedWakeMinutes,
     limitedByAwake,
     limitedByStandby,
+    limitedBy16hCap,
     standbyReduction,
     woclEncroachmentMin,
     isEarlyStart,
+    isNightDuty,
   };
 }
 
@@ -228,6 +257,23 @@ export function calcExtension(
   }
 
   if (extType === "planned") {
+    // OMA Table 3: planned extension NOT ALLOWED for these report time windows:
+    //   06:00–06:14 → [360, 375)
+    //   19:00–03:59 → [1140, 1440) ∪ [0, 240)
+    //   04:00–04:59 → [240, 300)
+    // Combined forbidden: [0, 300) ∪ [360, 375) ∪ [1140, 1440)
+    const forbidden =
+      reportMinutes < 300 ||
+      (reportMinutes >= 360 && reportMinutes < 375) ||
+      reportMinutes >= 1140;
+    if (forbidden) {
+      return {
+        allowed: false,
+        extendedFdp,
+        reason: "reportTimeNotAllowed",
+      };
+    }
+
     // Planned extension sector limits based on WOCL encroachment
     const woclHours = woclEncroachment / 60;
     if (woclHours > 2 && sectors > 2) {
