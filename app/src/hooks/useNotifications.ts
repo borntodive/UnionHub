@@ -12,15 +12,45 @@ import { QUERY_KEYS } from "../api/queryKeys";
 // Configure how notifications appear when the app is in the foreground.
 // Silent system notifications (CATEGORIES_UPDATED, URGENCIES_UPDATED) are
 // handled quietly — no alert, no sound.
+// User prefs (newIssue / issueStatusUpdate) suppress foreground alerts.
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
     const type = notification.request.content.data?.type as string | undefined;
     const isSilent =
       type === "CATEGORIES_UPDATED" || type === "URGENCIES_UPDATED";
+    if (isSilent) {
+      return {
+        shouldShowAlert: false,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      };
+    }
+    const prefs = useOfflineStore.getState().notificationPrefs;
+    if (type === "NEW_ISSUE" && !prefs.newIssue) {
+      return {
+        shouldShowAlert: false,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      };
+    }
+    if (type === "ISSUE_STATUS_UPDATED" && !prefs.issueStatusUpdate) {
+      return {
+        shouldShowAlert: false,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      };
+    }
+    if (type === "new_document" && !prefs.newDocument) {
+      return {
+        shouldShowAlert: false,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      };
+    }
     return {
-      shouldShowAlert: !isSilent,
-      shouldPlaySound: !isSilent,
-      shouldSetBadge: !isSilent,
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
     };
   },
 });
@@ -92,14 +122,28 @@ export const useNotifications = () => {
             queryKey: QUERY_KEYS.issueUrgencies,
           });
         } else if (notification.request.content.title) {
-          // Persist visible notifications (non-silent)
-          addNotification({
-            id: notification.request.identifier,
-            title: notification.request.content.title,
-            body: notification.request.content.body ?? "",
-            receivedAt: new Date().toISOString(),
-            data: notification.request.content.data as Record<string, unknown>,
-          });
+          // Persist visible notifications only if pref allows it
+          const prefs = useOfflineStore.getState().notificationPrefs;
+          const notifType = type as string | undefined;
+          const allowed =
+            (notifType === "NEW_ISSUE" && prefs.newIssue) ||
+            (notifType === "ISSUE_STATUS_UPDATED" && prefs.issueStatusUpdate) ||
+            (notifType === "new_document" && prefs.newDocument) ||
+            (notifType !== "NEW_ISSUE" &&
+              notifType !== "ISSUE_STATUS_UPDATED" &&
+              notifType !== "new_document");
+          if (allowed) {
+            addNotification({
+              id: notification.request.identifier,
+              title: notification.request.content.title,
+              body: notification.request.content.body ?? "",
+              receivedAt: new Date().toISOString(),
+              data: notification.request.content.data as Record<
+                string,
+                unknown
+              >,
+            });
+          }
         }
       });
 

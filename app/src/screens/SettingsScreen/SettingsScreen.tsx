@@ -19,10 +19,13 @@ import {
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
+import { Switch } from "react-native";
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { useAuthStore } from "../../store/authStore";
+import { UserRole } from "../../types";
 import { setLanguage, getLanguage } from "../../i18n";
 import { usePayslipStore } from "../../payslip/store/usePayslipStore";
+import { useOfflineStore } from "../../store/offlineStore";
 import { PayslipSettings, LegacyCustom } from "../../payslip/types";
 import {
   getContractData,
@@ -519,8 +522,11 @@ const CheckboxRow: React.FC<CheckboxRowProps> = ({
 
 export const SettingsScreen: React.FC = () => {
   const { t } = useTranslation();
-  const { biometricEnabled, disableBiometric } = useAuthStore();
+  const { biometricEnabled, disableBiometric, user } = useAuthStore();
   const { settings, setSettings } = usePayslipStore();
+  const { notificationPrefs, setNotificationPrefs } = useOfflineStore();
+  const isAdmin =
+    user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
 
   const [activeTab, setActiveTab] = useState<"general" | "payslip">("general");
   const [showLanguageModal, setShowLanguageModal] = useState(false);
@@ -605,6 +611,69 @@ export const SettingsScreen: React.FC = () => {
             ))}
           </View>
         )}
+      </View>
+
+      {/* Notifications */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t("settings.notifications")}</Text>
+        <View style={styles.card}>
+          <View style={styles.notifRow}>
+            <View style={styles.notifTextContainer}>
+              <Text style={styles.label}>
+                {t("settings.notificationsIssueStatus")}
+              </Text>
+              <Text style={styles.value}>
+                {t("settings.notificationsIssueStatusDesc")}
+              </Text>
+            </View>
+            <Switch
+              value={notificationPrefs.issueStatusUpdate}
+              onValueChange={(v) =>
+                setNotificationPrefs({ issueStatusUpdate: v })
+              }
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={colors.surface}
+            />
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.notifRow}>
+            <View style={styles.notifTextContainer}>
+              <Text style={styles.label}>
+                {t("settings.notificationsNewDocument")}
+              </Text>
+              <Text style={styles.value}>
+                {t("settings.notificationsNewDocumentDesc")}
+              </Text>
+            </View>
+            <Switch
+              value={notificationPrefs.newDocument}
+              onValueChange={(v) => setNotificationPrefs({ newDocument: v })}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={colors.surface}
+            />
+          </View>
+          {isAdmin && (
+            <>
+              <View style={styles.divider} />
+              <View style={styles.notifRow}>
+                <View style={styles.notifTextContainer}>
+                  <Text style={styles.label}>
+                    {t("settings.notificationsNewIssue")}
+                  </Text>
+                  <Text style={styles.value}>
+                    {t("settings.notificationsNewIssueDesc")}
+                  </Text>
+                </View>
+                <Switch
+                  value={notificationPrefs.newIssue}
+                  onValueChange={(v) => setNotificationPrefs({ newIssue: v })}
+                  trackColor={{ false: colors.border, true: colors.primary }}
+                  thumbColor={colors.surface}
+                />
+              </View>
+            </>
+          )}
+        </View>
       </View>
 
       {/* Security */}
@@ -855,6 +924,16 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: colors.border,
+    marginVertical: spacing.sm,
+  },
+  notifRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  notifTextContainer: {
+    flex: 1,
   },
   languageModal: {
     marginTop: spacing.md,

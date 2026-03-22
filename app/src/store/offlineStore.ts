@@ -22,12 +22,28 @@ export interface StoredNotification {
 
 const MAX_NOTIFICATIONS = 50;
 
+export interface NotificationPrefs {
+  /** Notifica quando lo stato di una mia segnalazione cambia */
+  issueStatusUpdate: boolean;
+  /** Notifica quando viene creata una nuova segnalazione (solo admin/superadmin) */
+  newIssue: boolean;
+  /** Notifica quando viene pubblicato un nuovo comunicato sindacale */
+  newDocument: boolean;
+}
+
+const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
+  issueStatusUpdate: true,
+  newIssue: true,
+  newDocument: true,
+};
+
 interface OfflineState {
   isOnline: boolean;
   categories: IssueCategory[];
   urgencies: IssueUrgency[];
   pendingIssues: PendingIssue[];
   notifications: StoredNotification[];
+  notificationPrefs: NotificationPrefs;
   setIsOnline: (online: boolean) => void;
   setCategories: (categories: IssueCategory[]) => void;
   setUrgencies: (urgencies: IssueUrgency[]) => void;
@@ -35,6 +51,7 @@ interface OfflineState {
   removePendingIssue: (localId: string) => void;
   addNotification: (notification: StoredNotification) => void;
   clearNotifications: () => void;
+  setNotificationPrefs: (prefs: Partial<NotificationPrefs>) => void;
 }
 
 export const useOfflineStore = create<OfflineState>()(
@@ -45,6 +62,7 @@ export const useOfflineStore = create<OfflineState>()(
       urgencies: [],
       pendingIssues: [],
       notifications: [],
+      notificationPrefs: DEFAULT_NOTIFICATION_PREFS,
 
       setIsOnline: (isOnline) => set({ isOnline }),
 
@@ -84,6 +102,11 @@ export const useOfflineStore = create<OfflineState>()(
         }),
 
       clearNotifications: () => set({ notifications: [] }),
+
+      setNotificationPrefs: (prefs) =>
+        set((state) => ({
+          notificationPrefs: { ...state.notificationPrefs, ...prefs },
+        })),
     }),
     {
       name: "offline-storage",
@@ -93,6 +116,7 @@ export const useOfflineStore = create<OfflineState>()(
         urgencies: state.urgencies,
         pendingIssues: state.pendingIssues,
         notifications: state.notifications,
+        notificationPrefs: state.notificationPrefs,
       }),
     },
   ),
