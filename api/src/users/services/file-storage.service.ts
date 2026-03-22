@@ -9,8 +9,12 @@ export class FileStorageService {
   private readonly uploadDir: string;
 
   constructor() {
-    // Upload directory: project-root/uploads/registration-forms/
-    this.uploadDir = path.join(process.cwd(), "uploads", "registration-forms");
+    // UPLOAD_BASE_DIR env var points to a persistent directory outside the
+    // deploy folder (e.g. /var/www/unionhub-uploads on Cleavr).
+    // Falls back to <cwd>/uploads for local development.
+    const baseDir =
+      process.env.UPLOAD_BASE_DIR || path.join(process.cwd(), "uploads");
+    this.uploadDir = path.join(baseDir, "registration-forms");
     this.ensureUploadDirExists();
   }
 
@@ -65,9 +69,10 @@ export class FileStorageService {
    * Get file path from URL
    */
   getFilePathFromUrl(fileUrl: string): string {
-    // Remove leading slash and convert to absolute path
+    const baseDir =
+      process.env.UPLOAD_BASE_DIR || path.join(process.cwd(), "uploads");
     const relativePath = fileUrl.replace(/^\/uploads\//, "");
-    return path.join(process.cwd(), "uploads", relativePath);
+    return path.join(baseDir, relativePath);
   }
 
   /**

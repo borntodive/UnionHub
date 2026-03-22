@@ -83,8 +83,12 @@ async function bootstrap() {
   // Global prefix
   app.setGlobalPrefix("api/v1");
 
-  // Serve static files from uploads directory
-  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+  // Serve static files from persistent uploads directory.
+  // UPLOAD_BASE_DIR must point to a path outside the deploy folder on the server
+  // (e.g. /var/www/unionhub-uploads) so files survive Cleavr deployments.
+  const uploadsDir =
+    process.env.UPLOAD_BASE_DIR || path.join(process.cwd(), "uploads");
+  app.use("/uploads", express.static(uploadsDir));
 
   const port = configService.get<number>("PORT", 3000);
 
