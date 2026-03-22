@@ -30,6 +30,7 @@ import {
   FileText,
   Bell,
   AlertTriangle,
+  Clock,
 } from "lucide-react-native";
 
 import { colors, spacing, typography, borderRadius } from "../theme";
@@ -40,6 +41,7 @@ import * as Updates from "expo-updates";
 import { HomeScreen } from "../screens/HomeScreen/HomeScreen";
 import { MembersScreen } from "../screens/MembersScreen/MembersScreen";
 import { PayslipTabs } from "../payslip/navigation/PayslipTabs";
+import { FtlTabs } from "../ftl";
 import AdminContractsScreen from "../payslip/screens/AdminContractsScreen";
 import ContractEditorScreen from "../payslip/screens/ContractEditorScreen";
 import { SettingsScreen } from "../screens/SettingsScreen/SettingsScreen";
@@ -174,6 +176,15 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             label={t("navigation.payslipCalculator")}
             onPress={() => {
               props.navigation.navigate("PayslipCalculator");
+              props.navigation.closeDrawer();
+            }}
+          />
+
+          <MenuItem
+            icon={<Clock size={22} color={colors.primary} />}
+            label={t("navigation.ftlCalculator")}
+            onPress={() => {
+              props.navigation.navigate("FtlCalculator");
               props.navigation.closeDrawer();
             }}
           />
@@ -504,6 +515,15 @@ export const DrawerNavigator: React.FC = () => {
         options={{
           title: t("navigation.payslipCalculator"),
           drawerIcon: ({ color }) => <Calculator size={22} color={color} />,
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
+        name="FtlCalculator"
+        component={FtlTabs}
+        options={{
+          title: t("navigation.ftlCalculator"),
+          drawerIcon: ({ color }) => <Clock size={22} color={color} />,
           headerShown: false,
         }}
       />

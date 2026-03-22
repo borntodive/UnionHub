@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+} from "react";
 import {
   View,
   Text,
@@ -7,9 +13,166 @@ import {
   Modal,
   Pressable,
   ScrollView,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from "react-native";
-import { Clock, X, Check } from "lucide-react-native";
+import { Clock, X } from "lucide-react-native";
 import { colors, spacing, typography, borderRadius } from "../../../theme";
+
+const ITEM_HEIGHT = 52;
+const VISIBLE_ITEMS = 5;
+const PICKER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
+const PAD = ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2);
+const REPEAT = 10; // 10× is enough for a 0–150 hour range
+
+const HOUR_ITEMS = Array.from({ length: 151 }, (_, i) => i); // 0–150
+const MINUTE_ITEMS = Array.from({ length: 60 }, (_, i) => i); // 0–59
+
+// ---------------------------------------------------------------------------
+
+interface PickerColumnProps {
+  items: number[];
+  selected: number;
+  onChange: (v: number) => void;
+  label: string;
+}
+
+const PickerColumn: React.FC<PickerColumnProps> = ({
+  items,
+  selected,
+  onChange,
+  label,
+}) => {
+  const scrollRef = useRef<ScrollView>(null);
+
+  const extended = useMemo(
+    () =>
+      Array.from(
+        { length: items.length * REPEAT },
+        (_, i) => items[i % items.length],
+      ),
+    [items],
+  );
+
+  const initialIndex = Math.floor(REPEAT / 2) * items.length + selected;
+  const [centeredIndex, setCenteredIndex] = useState(initialIndex);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      scrollRef.current?.scrollTo({
+        y: initialIndex * ITEM_HEIGHT,
+        animated: false,
+      });
+    }, 50);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+      setCenteredIndex(Math.max(0, Math.min(extended.length - 1, idx)));
+    },
+    [extended.length],
+  );
+
+  const handleScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+      const clamped = Math.max(0, Math.min(extended.length - 1, idx));
+      setCenteredIndex(clamped);
+      onChange(items[clamped % items.length]);
+    },
+    [extended.length, items, onChange],
+  );
+
+  return (
+    <View style={colStyles.wrapper}>
+      <Text style={colStyles.label}>{label}</Text>
+      <View style={colStyles.drum}>
+        <View style={colStyles.selectionBand} pointerEvents="none" />
+        <ScrollView
+          ref={scrollRef}
+          showsVerticalScrollIndicator={false}
+          snapToInterval={ITEM_HEIGHT}
+          decelerationRate="fast"
+          scrollEventThrottle={16}
+          onScroll={handleScroll}
+          onMomentumScrollEnd={handleScrollEnd}
+          onScrollEndDrag={handleScrollEnd}
+          contentContainerStyle={{ paddingVertical: PAD }}
+          style={colStyles.scroll}
+        >
+          {extended.map((item, index) => {
+            const isCenter = index === centeredIndex;
+            return (
+              <View key={index} style={colStyles.item}>
+                <Text
+                  style={[
+                    colStyles.itemText,
+                    isCenter && colStyles.itemTextSelected,
+                  ]}
+                >
+                  {String(item).padStart(2, "0")}
+                </Text>
+              </View>
+            );
+          })}
+        </ScrollView>
+      </View>
+    </View>
+  );
+};
+
+const colStyles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    alignItems: "center",
+  },
+  label: {
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.semibold,
+    color: colors.textTertiary,
+    letterSpacing: 1,
+    marginBottom: spacing.xs,
+  },
+  drum: {
+    width: "100%",
+    height: PICKER_HEIGHT,
+    overflow: "hidden",
+  },
+  scroll: {
+    flex: 1,
+  },
+  selectionBand: {
+    position: "absolute",
+    top: PAD,
+    left: 0,
+    right: 0,
+    height: ITEM_HEIGHT,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.md,
+    zIndex: 0,
+  },
+  item: {
+    height: ITEM_HEIGHT,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
+  },
+  itemText: {
+    fontSize: typography.sizes.xl ?? 22,
+    color: colors.textSecondary,
+    fontVariant: ["tabular-nums"],
+    fontWeight: typography.weights.medium,
+  },
+  itemTextSelected: {
+    color: colors.textInverse,
+    fontWeight: typography.weights.bold,
+  },
+});
+
+// ---------------------------------------------------------------------------
 
 interface SbhPickerProps {
   value: string;
@@ -17,131 +180,72 @@ interface SbhPickerProps {
 }
 
 export const SbhPicker: React.FC<SbhPickerProps> = ({ value, onChange }) => {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [tempHours, setTempHours] = useState(0);
-  const [tempMinutes, setTempMinutes] = useState(0);
+  const [open, setOpen] = useState(false);
 
   const [hours, minutes] = useMemo(() => {
     const [h, m] = value.split(":").map((v) => parseInt(v) || 0);
     return [h, m];
   }, [value]);
 
-  const openModal = useCallback(() => {
-    setTempHours(hours);
-    setTempMinutes(minutes);
-    setModalVisible(true);
+  const [tempH, setTempH] = useState(hours);
+  const [tempM, setTempM] = useState(minutes);
+
+  const handleOpen = useCallback(() => {
+    setTempH(hours);
+    setTempM(minutes);
+    setOpen(true);
   }, [hours, minutes]);
 
-  const closeModal = useCallback(() => {
-    setModalVisible(false);
-  }, []);
-
   const handleConfirm = useCallback(() => {
-    const newValue = `${tempHours.toString().padStart(2, "0")}:${tempMinutes.toString().padStart(2, "0")}`;
-    onChange(newValue);
-    setModalVisible(false);
-  }, [tempHours, tempMinutes, onChange]);
-
-  const hourItems = useMemo(() => Array.from({ length: 151 }, (_, i) => i), []);
-
-  const minuteItems = useMemo(
-    () => Array.from({ length: 60 }, (_, i) => i),
-    [],
-  );
+    onChange(
+      `${String(tempH).padStart(2, "0")}:${String(tempM).padStart(2, "0")}`,
+    );
+    setOpen(false);
+  }, [tempH, tempM, onChange]);
 
   return (
     <View style={styles.container}>
       <Text style={styles.label}>Scheduled Block Hours</Text>
-      <TouchableOpacity style={styles.inputContainer} onPress={openModal}>
+      <TouchableOpacity style={styles.inputContainer} onPress={handleOpen}>
         <Clock size={20} color={colors.textSecondary} />
         <Text style={styles.valueText}>{value}</Text>
       </TouchableOpacity>
 
       <Modal
         animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={closeModal}
+        transparent
+        visible={open}
+        onRequestClose={() => setOpen(false)}
       >
-        <View style={styles.modalOverlay}>
-          <Pressable style={styles.backdrop} onPress={closeModal} />
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Hours</Text>
-              <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+        <View style={styles.overlay}>
+          <Pressable style={styles.backdrop} onPress={() => setOpen(false)} />
+          <View style={styles.sheet}>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Select Hours</Text>
+              <TouchableOpacity
+                onPress={() => setOpen(false)}
+                style={styles.closeButton}
+              >
                 <X size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.previewContainer}>
-              <Text style={styles.previewText}>
-                {tempHours.toString().padStart(2, "0")}:
-                {tempMinutes.toString().padStart(2, "0")}
-              </Text>
-            </View>
-
-            <View style={styles.pickersRow}>
-              <View style={styles.pickerColumn}>
-                <Text style={styles.pickerLabel}>Hours</Text>
-                <ScrollView
-                  style={styles.scrollView}
-                  showsVerticalScrollIndicator={false}
-                >
-                  {hourItems.map((h) => (
-                    <TouchableOpacity
-                      key={h}
-                      style={[
-                        styles.item,
-                        tempHours === h && styles.itemSelected,
-                      ]}
-                      onPress={() => setTempHours(h)}
-                    >
-                      <Text
-                        style={[
-                          styles.itemText,
-                          tempHours === h && styles.itemTextSelected,
-                        ]}
-                      >
-                        {h.toString().padStart(2, "0")}
-                      </Text>
-                      {tempHours === h && (
-                        <Check size={16} color={colors.primary} />
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
+            <View style={styles.columns}>
+              <PickerColumn
+                items={HOUR_ITEMS}
+                selected={tempH}
+                onChange={setTempH}
+                label="HH"
+              />
+              <View style={styles.colon}>
+                <Text style={styles.colonText}>:</Text>
               </View>
-
-              <View style={styles.pickerColumn}>
-                <Text style={styles.pickerLabel}>Minutes</Text>
-                <ScrollView
-                  style={styles.scrollView}
-                  showsVerticalScrollIndicator={false}
-                >
-                  {minuteItems.map((m) => (
-                    <TouchableOpacity
-                      key={m}
-                      style={[
-                        styles.item,
-                        tempMinutes === m && styles.itemSelected,
-                      ]}
-                      onPress={() => setTempMinutes(m)}
-                    >
-                      <Text
-                        style={[
-                          styles.itemText,
-                          tempMinutes === m && styles.itemTextSelected,
-                        ]}
-                      >
-                        {m.toString().padStart(2, "0")}
-                      </Text>
-                      {tempMinutes === m && (
-                        <Check size={16} color={colors.primary} />
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
+              <PickerColumn
+                items={MINUTE_ITEMS}
+                selected={tempM}
+                onChange={setTempM}
+                label="MM"
+              />
             </View>
 
             <TouchableOpacity
@@ -183,86 +287,49 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: typography.weights.medium,
   },
-  modalOverlay: {
+  overlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
-  backdrop: {
-    flex: 1,
-  },
-  modalContent: {
+  backdrop: { flex: 1 },
+  sheet: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
-    maxHeight: "80%",
   },
-  modalHeader: {
+  sheetHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-  },
-  modalTitle: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.text,
-  },
-  closeButton: {
-    padding: spacing.xs,
-  },
-  previewContainer: {
-    alignItems: "center",
-    paddingVertical: spacing.lg,
-  },
-  previewText: {
-    fontSize: 48,
-    fontWeight: typography.weights.bold,
-    color: colors.primary,
-    fontVariant: ["tabular-nums"],
-  },
-  pickersRow: {
-    flexDirection: "row",
-    gap: spacing.md,
-    height: 250,
-  },
-  pickerColumn: {
-    flex: 1,
-  },
-  pickerLabel: {
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
-    color: colors.textSecondary,
-    textAlign: "center",
     marginBottom: spacing.sm,
   },
-  scrollView: {
-    flex: 1,
-  },
-  item: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    gap: spacing.sm,
-  },
-  itemSelected: {
-    backgroundColor: colors.primaryLight,
-  },
-  itemText: {
+  sheetTitle: {
     fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
     color: colors.text,
-    fontVariant: ["tabular-nums"],
   },
-  itemTextSelected: {
-    color: colors.primary,
-    fontWeight: typography.weights.semibold,
+  closeButton: { padding: spacing.xs },
+  columns: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: spacing.xs,
+  },
+  colon: {
+    width: 20,
+    alignItems: "center",
+    paddingBottom:
+      ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2) + ITEM_HEIGHT / 2,
+  },
+  colonText: {
+    fontSize: 28,
+    fontWeight: typography.weights.bold,
+    color: colors.textSecondary,
   },
   confirmButton: {
     backgroundColor: colors.primary,
