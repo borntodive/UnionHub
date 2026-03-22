@@ -103,6 +103,13 @@ npm run lint               # ESLint check
 - Joint letterhead: two logos (FIT-CISL left, ANPAC right), Avenir font, `Roma dd.MM.yy` date format, no footer
 - `contentToHtml()` detects HTML anywhere in content (regex `/<[a-z][\s\S]*?>/i`) — preserves rich text from editor
 - Logo assets in `api/templates/`: `logo.png`, `logo-joint-left.jpeg`, `logo-joint-right.png`, `whatsapp-qr.png`
+- Templates dir resolved via `__dirname` (not `process.cwd()`) — required for Cleavr/pm2 where cwd ≠ app dir
+- **Overflow prevention**: `page.evaluate()` runs after `setContent()` and before `pdf()` to detect and fix closing block overflow:
+  - Scoped per section (`.page` for Italian, `.page-en` for English) to avoid cross-section false positives
+  - Case 1: QR section spills to new page → `qr-section` hidden
+  - Case 2: closing signature overflows → body `line-height` compressed from 2.0 to 1.5 (step 0.05); triggers when `sigPage > 0 && paragraphs exist on earlier pages`
+  - Page height computed as `(297 - puppeteerTopMargin - puppeteerBottomMargin) * pxPerMm`; `pxPerMm` from `body.clientWidth / 210`
+- **Puppeteer executable**: set `PUPPETEER_EXECUTABLE_PATH` env var; on Linux/Cleavr use `/usr/bin/chromium-browser`
 
 **OllamaService** (`api/src/ollama/ollama.service.ts`):
 
@@ -153,7 +160,7 @@ npm run lint               # ESLint check
   - `offlineStore.ts` - Offline cache: categories, urgencies, pending issues queue
 - `hooks/` - Custom React hooks
   - `useNetworkStatus.ts` - NetInfo monitoring + automatic pending-issue sync
-  - `useNotifications.ts` - Push notifications + silent cache-invalidation handler
+  - `useNotifications.ts` - Push notifications + silent cache-invalidation handler; **must be mounted at app root** (`AppNavigator`) to be always active
 - `payslip/` - Payslip calculator module with Italian tax calculations
 - `i18n/` - Internationalization (English/Italian)
 - `theme/` - Colors, typography, spacing constants
