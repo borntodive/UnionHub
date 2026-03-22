@@ -72,12 +72,16 @@ export const useOfflineStore = create<OfflineState>()(
         })),
 
       addNotification: (notification) =>
-        set((state) => ({
-          notifications: [notification, ...state.notifications].slice(
-            0,
-            MAX_NOTIFICATIONS,
-          ),
-        })),
+        set((state) => {
+          if (state.notifications.some((n) => n.id === notification.id))
+            return state;
+          return {
+            notifications: [notification, ...state.notifications].slice(
+              0,
+              MAX_NOTIFICATIONS,
+            ),
+          };
+        }),
 
       clearNotifications: () => set({ notifications: [] }),
     }),
