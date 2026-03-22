@@ -121,14 +121,25 @@ export const useAuthStore = create<AuthState>()(
         // biometricCredentials intentionally excluded — stored in SecureStore
       }),
       onRehydrateStorage: () => async (state) => {
-        // Restore tokens from SecureStore (encrypted storage)
+        // Restore tokens from SecureStore (encrypted storage).
+        // Tokens are the authoritative source for isAuthenticated — setting it
+        // here guards against AsyncStorage being slow or returning undefined
+        // (state === undefined) during an OTA bundle reload, which would leave
+        // isAuthenticated at its initial false value and log the user out.
         try {
           const [accessToken, refreshToken] = await Promise.all([
             SecureStore.getItemAsync(SECURE_ACCESS_TOKEN_KEY),
             SecureStore.getItemAsync(SECURE_REFRESH_TOKEN_KEY),
           ]);
           if (accessToken && refreshToken) {
-            useAuthStore.setState({ accessToken, refreshToken });
+            // Tokens present → authenticated regardless of AsyncStorage outcome.
+            // If user is null (AsyncStorage lost it), AppNavigator will re-fetch
+            // /auth/me on first render to restore the user object.
+            useAuthStore.setState({
+              accessToken,
+              refreshToken,
+              isAuthenticated: true,
+            });
           } else {
             // No tokens in SecureStore → force logged-out state
             useAuthStore.setState({
@@ -146,7 +157,13 @@ export const useAuthStore = create<AuthState>()(
             refreshToken: null,
           });
         } finally {
-          state?.setLoading(false);
+          // state may be undefined if AsyncStorage itself errored; fall back to
+          // calling setLoading on the live store in that case.
+          if (state) {
+            state.setLoading(false);
+          } else {
+            useAuthStore.getState().setLoading(false);
+          }
         }
       },
     },

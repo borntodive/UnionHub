@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
@@ -40,6 +40,7 @@ import { SharedFileHandler } from "../components/SharedFileHandler";
 import { CompleteProfileScreen } from "../screens/CompleteProfileScreen/CompleteProfileScreen";
 import { UserRole } from "../types";
 import { useNotifications } from "../hooks/useNotifications";
+import apiClient from "../api/client";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -53,6 +54,20 @@ export const AppNavigator: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
   const user = useAuthStore((state) => state.user);
+  const setUser = useAuthStore((state) => state.setUser);
+
+  // Self-healing: if authenticated but user object was lost (AsyncStorage failure
+  // during OTA reload), re-fetch /auth/me to restore the profile silently.
+  // If the token is expired the Axios interceptor will refresh it; if refresh
+  // also fails it calls logout() → isAuthenticated becomes false → login screen.
+  useEffect(() => {
+    if (isAuthenticated && !user) {
+      apiClient
+        .get("/auth/me")
+        .then((res) => setUser(res.data))
+        .catch(() => {}); // interceptor handles logout on hard 401
+    }
+  }, [isAuthenticated, user]); // eslint-disable-line react-hooks/exhaustive-deps
   const mustChangePassword = user?.mustChangePassword ?? false;
   const isCaptainGrade = CAPTAIN_GRADES.includes(user?.grade?.codice || "");
   // Profile completion required for users with a professional role (not superadmin)
