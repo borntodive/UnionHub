@@ -88,10 +88,12 @@ npm run lint               # ESLint check
 - `cla-contracts/` - Collective Labor Agreement with versioning
 - `documents/` - Document management with PDF generation (Puppeteer/HTML)
 - `notifications/` - Push notifications via Expo + silent broadcast for cache invalidation
-- `ollama/` - AI integration (rewrite + translate), HTML-aware prompts
+- `ollama/` - AI integration (rewrite + translate + embeddings + chat streaming), HTML-aware prompts
 - `issues/` - Issue/segnalazione management with AI summary and CSV export
 - `issue-categories/` - Issue categories CRUD (sends silent push on change)
 - `issue-urgencies/` - Issue urgencies CRUD (sends silent push on change)
+- `knowledge-base/` - PDF knowledge base for RAG chatbot (Admin/SuperAdmin only)
+- `chatbot/` - RAG chatbot with streaming SSE (Admin/SuperAdmin only)
 - `database/` - TypeORM migrations and seeds
 - `common/` - Shared enums (`UserRole`, `Ruolo`), decorators, filters, interceptors
 - `config/` - App configuration (TypeORM, JWT, etc.)
@@ -115,11 +117,40 @@ npm run lint               # ESLint check
 
 - `isHtml(text)` detects HTML input via `text.trim().startsWith("<")`
 - `rewriteAsUnionCommunication()` and `translateToEnglish()` both preserve HTML tag structure when input is HTML
+- `generateEmbedding(text)` — calls `POST /api/embeddings` with `OLLAMA_EMBED_MODEL` (nomic-embed-text, 768 dims)
+- `chatGenerate(prompt, system)` — blocking generation with `OLLAMA_CHATBOT_MODEL`
+- `chatGenerateStream(prompt, system)` — AsyncGenerator yielding tokens via Ollama `stream:true` API
+
+**KnowledgeBaseService** (`api/src/knowledge-base/`):
+
+- Access: Admin + SuperAdmin only
+- PDF upload → pdf-parse text extraction → chunking (300 words, 30 overlap, 2000 char max) → embeddings → pgvector
+- Indexing runs **in background** (fire-and-forget); document `status` field: `pending → indexing → ready | error`
+- Push notification sent to uploader when indexing completes/fails
+- `semanticSearch()` uses cosine distance (`<=>`) on `knowledge_base_chunks`; filters by `accessLevel` and `ruolo`; only returns chunks from `status='ready'` documents
+- **pgvector**: `embedding vector(768)` column NOT in TypeORM entity — created via raw SQL migration. All vector ops use `DataSource.query()`. Chunk inserts also use raw SQL to avoid TypeORM identity-map issues in long async loops
+- IVFFlat index: create AFTER data is loaded (empty-table centroids break search)
+- Role-based access: `accessLevel='all'` visible to all; `accessLevel='admin'` admin only. `ruolo` filter: admins bypass entirely; users see their role + null-ruolo docs
+
+**ChatbotService** (`api/src/chatbot/`):
+
+- Access: Admin + SuperAdmin only (`RolesGuard`)
+- RAG pipeline: semantic search → conversation history → system prompt with context → Ollama generation → save messages
+- `chat()` — blocking, returns full response
+- `chatStream()` — AsyncGenerator yielding `{t}` tokens, then `{done, sources, conversationId}`
+- Conversation history stored in `chat_messages` table (scoped by `userId + conversationId`)
+
+**Streaming SSE** (`POST /chatbot/chat/stream`):
+
+- Returns `text/event-stream` with explicit `res.status(200)`, `X-Accel-Buffering: no`, `res.flush()` after each write
+- Frontend uses **`XMLHttpRequest` + `onprogress`** (NOT `fetch + ReadableStream` — RN/iOS buffers the full response before exposing `body`)
+- XHR buffer sliced cumulatively: `newText = xhr.responseText.slice(lastIndex)`
 
 **NotificationsService** (`api/src/notifications/notifications.service.ts`):
 
 - `broadcastSilent(type)` — sends data-only push (no title/body) to all active devices
-- Used by `IssueCategoriesService` and `IssueUrgenciesService` after every create/update/remove
+- `sendPushNotification(userId, title, body, data)` — sends visible push to a specific user
+- Used by `IssueCategoriesService`, `IssueUrgenciesService`, and `KnowledgeBaseService`
 
 **Backend Path Aliases** (tsconfig):
 
@@ -146,6 +177,9 @@ npm run lint               # ESLint check
 - `issues` - Member issue/segnalazione reports
 - `issue_categories` - Issue categories (nameIt, nameEn, ruolo)
 - `issue_urgencies` - Issue urgency levels (level, nameIt, nameEn)
+- `knowledge_base_documents` - PDF metadata (title, filename, accessLevel, ruolo, extractedText, chunkCount, status)
+- `knowledge_base_chunks` - Text chunks with `embedding vector(768)` (pgvector, IVFFlat index); column NOT in TypeORM entity
+- `chat_messages` - Chatbot conversation history (userId, conversationId, role, content)
 
 ### Frontend Architecture (Expo + React Native)
 
@@ -162,6 +196,14 @@ npm run lint               # ESLint check
   - `useNetworkStatus.ts` - NetInfo monitoring + automatic pending-issue sync
   - `useNotifications.ts` - Push notifications + silent cache-invalidation handler; **must be mounted at app root** (`AppNavigator`) to be always active
 - `payslip/` - Payslip calculator module with Italian tax calculations
+- `ftl/` - FTL Calculator (EASA Part-ORO.FTL, Malta Air OMA)
+- `chatbot/` - RAG chatbot (Admin/SuperAdmin only); streaming via XHR onprogress
+  - `screens/ChatbotScreen.tsx` - bubble UI, progressive token rendering, sources badge
+  - `api/chatbot.ts` - `chatbotApi` (Axios) + `chatStream()` (XHR streaming)
+  - `store/useChatStore.ts` - conversationId (persisted UUID) + messages; `updateLastAssistantMessage` accepts string | updater fn | undefined
+- `knowledge-base/` - PDF knowledge base management (Admin/SuperAdmin only)
+  - `screens/KnowledgeBaseScreen.tsx` - upload modal, status badges (pending/indexing/ready/error), auto-poll
+  - `api/knowledge-base.ts` - list/upload/delete/reindex
 - `i18n/` - Internationalization (English/Italian)
 - `theme/` - Colors, typography, spacing constants
 
@@ -197,7 +239,7 @@ npm run lint               # ESLint check
 - Biometric authentication (Face ID / fingerprint)
 - In-app PDF viewer (`PdfViewerScreen`) with share/download
 - Rich text editor (`RichTextEditor`) using `react-native-pell-rich-editor`
-- Push notifications via Expo (silent + visible)
+- Push notifications via Expo (silent + visible); `KB_INDEXED`/`KB_INDEX_ERROR` invalidate the knowledge-base list
 - Offline issue reporting with background sync
 - Payslip calculator with Italian tax rules, persisted in Zustand; settings unified in the main Settings screen (two tabs: General / Payslip); admin-only Override tab in PayslipCalculator
   - **Tabs**: Input → Results → Contract → Reverse (all users) + Settings/Override (Admin+) + Debug (SuperAdmin)
@@ -259,6 +301,14 @@ Key endpoints:
 - `GET /issue-categories` - List categories (filterable by ruolo)
 - `GET /issue-urgencies` - List urgencies
 - `POST /notifications/broadcast-silent` - Send silent push to all devices
+- `GET /knowledge-base` - List KB documents (Admin+)
+- `POST /knowledge-base/upload` - Upload PDF → returns 202, indexes in background
+- `DELETE /knowledge-base/:id` - Delete document + chunks
+- `POST /knowledge-base/:id/reindex` - Re-generate embeddings (background, 202)
+- `POST /chatbot/chat` - Blocking chat (Admin+)
+- `POST /chatbot/chat/stream` - SSE streaming chat (Admin+); `text/event-stream`
+- `GET /chatbot/history/:conversationId` - Conversation history
+- `DELETE /chatbot/history/:conversationId` - Clear conversation
 
 ## Environment Configuration
 
@@ -276,9 +326,15 @@ JWT_ACCESS_EXPIRATION=15m
 JWT_REFRESH_EXPIRATION=30d
 
 # Ollama (AI)
-OLLAMA_MODEL=mistral
+OLLAMA_MODEL=mistral               # document rewrite / translate
+OLLAMA_CHATBOT_MODEL=llama3.2      # chatbot generation (stream:true)
+OLLAMA_EMBED_MODEL=nomic-embed-text # embeddings 768 dims
 OLLAMA_URL=http://localhost:11434
 OLLAMA_CLOUD=false
+
+# Chatbot RAG
+CHATBOT_CHUNKS_LIMIT=5             # top-N chunks injected per message
+CHATBOT_CONTEXT_MESSAGES=10        # previous messages sent as history
 
 # Puppeteer (PDF generation)
 PUPPETEER_EXECUTABLE_PATH=/Applications/Google Chrome.app/Contents/MacOS/Google Chrome
@@ -387,3 +443,8 @@ rm -rf node_modules && npm install
 - **Logout on app update / OTA reload**: Fixed by removing token validation from `AuthProvider`. The old code read `refreshToken` before AsyncStorage rehydration completed (it was `null`), causing immediate `setLoading(false)` with no session. Now `AuthProvider` only shows a spinner until rehydration fires. A 3-second timeout in `AuthProvider` unblocks the UI if AsyncStorage fails entirely.
 - **Logout when going offline**: Fixed in `api/client.ts` — token refresh catch only calls `logout()` when server returns an HTTP error response (not on network errors).
 - **HTML tags visible in PDF**: `contentToHtml()` uses regex `/<[a-z][\s\S]*?>/i` to detect HTML anywhere in content, not just `startsWith("<")`.
+- **Chatbot SSE not streaming (iOS)**: React Native's `fetch` buffers the full `text/event-stream` response on iOS before exposing `body`. Use `XMLHttpRequest` + `onprogress` instead — fires incrementally as bytes arrive.
+- **Chatbot SSE Cloudflare 524**: Ollama generation exceeding 100s hits Cloudflare's proxy timeout. Ensure `X-Accel-Buffering: no` and `res.flush()` after each write so tokens reach Cloudflare as they're generated (keeps the connection alive).
+- **pgvector FK violation during indexing**: TypeORM entity identity-map goes stale after many async Ollama calls. Use raw SQL `INSERT INTO knowledge_base_chunks … RETURNING id` instead of `chunkRepo.save()`.
+- **IVFFlat index broken (empty table)**: Creating the IVFFlat index on an empty table produces broken centroids. Drop and recreate the index after loading data: `DROP INDEX … ; CREATE INDEX … USING ivfflat … WITH (lists = 10);`
+- **pdf-parse v2 incompatibility**: v2 exports a class, not a function. Pin to v1.1.1 and import via `require("pdf-parse")` with explicit type annotation.
