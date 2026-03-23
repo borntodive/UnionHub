@@ -121,7 +121,12 @@ export const useNotifications = () => {
           queryClient.invalidateQueries({
             queryKey: QUERY_KEYS.issueUrgencies,
           });
-        } else if (notification.request.content.title) {
+        } else if (type === "KB_INDEXED" || type === "KB_INDEX_ERROR") {
+          // Refresh the knowledge-base list when background indexing completes
+          queryClient.invalidateQueries({ queryKey: ["knowledge-base"] });
+        }
+
+        if (notification.request.content.title) {
           // Persist visible notifications only if pref allows it
           const prefs = useOfflineStore.getState().notificationPrefs;
           const notifType = type as string | undefined;

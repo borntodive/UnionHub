@@ -9,6 +9,7 @@ import {
 import { KnowledgeBaseChunk } from "./knowledge-base-chunk.entity";
 
 export type KbAccessLevel = "all" | "admin";
+export type KbStatus = "pending" | "indexing" | "ready" | "error";
 
 @Entity("knowledge_base_documents")
 export class KnowledgeBaseDocument {
@@ -39,6 +40,10 @@ export class KnowledgeBaseDocument {
 
   @Column({ name: "chunk_count", type: "integer", default: 0 })
   chunkCount: number;
+
+  /** Indexing lifecycle: pending → indexing → ready | error */
+  @Column({ type: "varchar", default: "ready" })
+  status: KbStatus;
 
   @OneToMany(() => KnowledgeBaseChunk, (chunk) => chunk.document, {
     cascade: true,

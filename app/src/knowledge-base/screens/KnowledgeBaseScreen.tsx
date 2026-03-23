@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -25,12 +25,15 @@ import {
   RefreshCw,
   FileText,
   X,
-  ChevronDown,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Loader,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
-import { knowledgeBaseApi, KbDocument } from "../api/knowledge-base";
+import { knowledgeBaseApi, KbDocument, KbStatus } from "../api/knowledge-base";
 
 type Nav = DrawerNavigationProp<any>;
 
@@ -44,6 +47,32 @@ const RUOLI: Array<{ value: "pilot" | "cabin_crew" | ""; labelKey: string }> = [
   { value: "pilot", labelKey: "home.pilot" },
   { value: "cabin_crew", labelKey: "home.cabinCrew" },
 ];
+
+const STATUS_CONFIG: Record<
+  KbStatus,
+  { color: string; labelKey: string; icon: React.ReactNode }
+> = {
+  pending: {
+    color: colors.textSecondary,
+    labelKey: "kb.statusPending",
+    icon: <Clock size={11} color={colors.textSecondary} />,
+  },
+  indexing: {
+    color: "#f59e0b",
+    labelKey: "kb.statusIndexing",
+    icon: <Loader size={11} color="#f59e0b" />,
+  },
+  ready: {
+    color: "#16a34a",
+    labelKey: "kb.statusReady",
+    icon: <CheckCircle size={11} color="#16a34a" />,
+  },
+  error: {
+    color: colors.error,
+    labelKey: "kb.statusError",
+    icon: <AlertCircle size={11} color={colors.error} />,
+  },
+};
 
 export const KnowledgeBaseScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -67,6 +96,18 @@ export const KnowledgeBaseScreen: React.FC = () => {
     queryKey: ["knowledge-base"],
     queryFn: () => knowledgeBaseApi.list().then((r) => r.data),
   });
+
+  // Auto-poll every 10s while any document is still being indexed
+  const hasInProgress = docs?.some(
+    (d) => d.status === "pending" || d.status === "indexing",
+  );
+  useEffect(() => {
+    if (!hasInProgress) return;
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["knowledge-base"] });
+    }, 10_000);
+    return () => clearInterval(interval);
+  }, [hasInProgress, queryClient]);
 
   const uploadMutation = useMutation({
     mutationFn: () =>
@@ -165,56 +206,88 @@ export const KnowledgeBaseScreen: React.FC = () => {
     );
   };
 
-  const renderDoc = ({ item }: { item: KbDocument }) => (
-    <View style={styles.docCard}>
-      <View style={styles.docIcon}>
-        <FileText size={20} color={colors.primary} />
-      </View>
-      <View style={styles.docInfo}>
-        <Text style={styles.docTitle} numberOfLines={1}>
-          {item.title}
-        </Text>
-        <Text style={styles.docMeta}>
-          {item.filename} · {item.chunkCount} chunk
-        </Text>
-        <View style={styles.docBadges}>
-          <View
-            style={[
-              styles.badge,
-              item.accessLevel === "admin" && styles.badgeAdmin,
-            ]}
-          >
-            <Text style={styles.badgeText}>
-              {item.accessLevel === "all"
-                ? t("kb.accessAll")
-                : t("kb.accessAdmin")}
-            </Text>
-          </View>
-          {item.ruolo && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{item.ruolo}</Text>
+  const renderDoc = ({ item }: { item: KbDocument }) => {
+    const status = item.status ?? "ready";
+    const statusCfg = STATUS_CONFIG[status];
+    const isProcessing = status === "pending" || status === "indexing";
+
+    return (
+      <View style={styles.docCard}>
+        <View style={styles.docIcon}>
+          <FileText size={20} color={colors.primary} />
+        </View>
+        <View style={styles.docInfo}>
+          <Text style={styles.docTitle} numberOfLines={1}>
+            {item.title}
+          </Text>
+          <Text style={styles.docMeta}>
+            {item.filename}
+            {!isProcessing ? ` · ${item.chunkCount} chunk` : ""}
+          </Text>
+          <View style={styles.docBadges}>
+            {/* Status badge */}
+            <View
+              style={[
+                styles.badge,
+                {
+                  borderColor: statusCfg.color,
+                  backgroundColor: `${statusCfg.color}18`,
+                },
+              ]}
+            >
+              <View style={styles.badgeInner}>
+                {isProcessing ? (
+                  <ActivityIndicator size={10} color={statusCfg.color} />
+                ) : (
+                  statusCfg.icon
+                )}
+                <Text style={[styles.badgeText, { color: statusCfg.color }]}>
+                  {t(statusCfg.labelKey)}
+                </Text>
+              </View>
             </View>
-          )}
+            {/* Access badge */}
+            <View
+              style={[
+                styles.badge,
+                item.accessLevel === "admin" && styles.badgeAdmin,
+              ]}
+            >
+              <Text style={styles.badgeText}>
+                {item.accessLevel === "all"
+                  ? t("kb.accessAll")
+                  : t("kb.accessAdmin")}
+              </Text>
+            </View>
+            {item.ruolo && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{item.ruolo}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+        <View style={styles.docActions}>
+          <TouchableOpacity
+            onPress={() => confirmReindex(item)}
+            style={styles.iconButton}
+            disabled={reindexMutation.isPending || isProcessing}
+          >
+            <RefreshCw
+              size={18}
+              color={isProcessing ? colors.border : colors.textSecondary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => confirmDelete(item)}
+            style={styles.iconButton}
+            disabled={deleteMutation.isPending}
+          >
+            <Trash2 size={18} color={colors.error} />
+          </TouchableOpacity>
         </View>
       </View>
-      <View style={styles.docActions}>
-        <TouchableOpacity
-          onPress={() => confirmReindex(item)}
-          style={styles.iconButton}
-          disabled={reindexMutation.isPending}
-        >
-          <RefreshCw size={18} color={colors.textSecondary} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => confirmDelete(item)}
-          style={styles.iconButton}
-          disabled={deleteMutation.isPending}
-        >
-          <Trash2 size={18} color={colors.error} />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
   const canUpload =
     !!pickedFile && title.trim().length > 0 && !uploadMutation.isPending;
@@ -377,12 +450,6 @@ export const KnowledgeBaseScreen: React.FC = () => {
                     </>
                   )}
                 </TouchableOpacity>
-
-                {uploadMutation.isPending && (
-                  <Text style={styles.uploadingHint}>
-                    {t("kb.uploadingHint")}
-                  </Text>
-                )}
               </ScrollView>
             </View>
           </View>
@@ -441,7 +508,12 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  docBadges: { flexDirection: "row", gap: 4, marginTop: spacing.xs },
+  docBadges: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 4,
+    marginTop: spacing.xs,
+  },
   badge: {
     backgroundColor: colors.background,
     borderRadius: borderRadius.sm,
@@ -450,6 +522,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  badgeInner: { flexDirection: "row", alignItems: "center", gap: 3 },
   badgeAdmin: {
     borderColor: colors.primary,
     backgroundColor: `${colors.primary}15`,
@@ -567,11 +640,5 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     fontWeight: typography.weights.bold,
     fontSize: typography.sizes.base,
-  },
-  uploadingHint: {
-    textAlign: "center",
-    color: colors.textSecondary,
-    fontSize: typography.sizes.sm,
-    marginTop: spacing.sm,
   },
 });

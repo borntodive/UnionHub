@@ -13,6 +13,7 @@ const pdfParse: (
 import { KnowledgeBaseDocument } from "./entities/knowledge-base-document.entity";
 import { KnowledgeBaseChunk } from "./entities/knowledge-base-chunk.entity";
 import { OllamaService } from "../ollama/ollama.service";
+import { NotificationsService } from "../notifications/notifications.service";
 
 const CHUNK_WORDS = 300;
 const CHUNK_OVERLAP_WORDS = 30;
@@ -38,6 +39,7 @@ export class KnowledgeBaseService {
     private readonly chunkRepo: Repository<KnowledgeBaseChunk>,
     private readonly dataSource: DataSource,
     private readonly ollamaService: OllamaService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   // ─── Text chunking ────────────────────────────────────────────────────────
@@ -59,14 +61,20 @@ export class KnowledgeBaseService {
 
   // ─── Upload & index ───────────────────────────────────────────────────────
 
+  /**
+   * Parse the PDF, persist the document record, then kick off background
+   * indexing. Returns immediately with status='pending' so the HTTP request
+   * does not time out during the (potentially long) embedding loop.
+   */
   async uploadDocument(
     buffer: Buffer,
     filename: string,
     title: string,
     accessLevel: "all" | "admin",
+    uploadedByUserId: string,
     ruolo?: string,
   ): Promise<KnowledgeBaseDocument> {
-    // Extract text from PDF
+    // Extract text from PDF (fast, synchronous-ish)
     let extractedText: string;
     try {
       const parsed = await pdfParse(buffer);
@@ -81,7 +89,7 @@ export class KnowledgeBaseService {
       );
     }
 
-    // Persist document metadata
+    // Persist document metadata with status=pending
     const doc = this.docRepo.create({
       title,
       filename,
@@ -90,17 +98,23 @@ export class KnowledgeBaseService {
       fileData: buffer,
       extractedText,
       chunkCount: 0,
+      status: "pending",
     });
     await this.docRepo.save(doc);
 
-    // Index chunks
-    await this.indexDocument(doc, extractedText);
+    // Fire-and-forget background indexing
+    this.indexDocumentBackground(doc, extractedText, uploadedByUserId).catch(
+      (err) =>
+        this.logger.error(
+          `Background indexing failed for doc ${doc.id}: ${err.message}`,
+        ),
+    );
 
-    return (await this.docRepo.findOne({ where: { id: doc.id } }))!;
+    return doc;
   }
 
   /** (Re)generate embeddings for an existing document */
-  async reindexDocument(id: string): Promise<void> {
+  async reindexDocument(id: string, requestedByUserId?: string): Promise<void> {
     const doc = await this.dataSource
       .getRepository(KnowledgeBaseDocument)
       .createQueryBuilder("d")
@@ -112,10 +126,54 @@ export class KnowledgeBaseService {
     if (!doc.extractedText)
       throw new BadRequestException("No extracted text available for re-index");
 
+    // Mark as pending so the UI can show progress
+    await this.docRepo.update(id, { status: "pending", chunkCount: 0 });
+
     // Delete existing chunks
     await this.chunkRepo.delete({ document: { id } });
 
-    await this.indexDocument(doc, doc.extractedText);
+    // Fire-and-forget
+    this.indexDocumentBackground(doc, doc.extractedText, requestedByUserId).catch(
+      (err) =>
+        this.logger.error(
+          `Background re-index failed for doc ${id}: ${err.message}`,
+        ),
+    );
+  }
+
+  private async indexDocumentBackground(
+    doc: KnowledgeBaseDocument,
+    text: string,
+    notifyUserId?: string,
+  ): Promise<void> {
+    const docId = doc.id;
+    await this.docRepo.update(docId, { status: "indexing" });
+
+    try {
+      await this.indexDocument(doc, text);
+      await this.docRepo.update(docId, { status: "ready" });
+
+      if (notifyUserId) {
+        await this.notificationsService.sendPushNotification(
+          notifyUserId,
+          "Knowledge Base",
+          `"${doc.title}" è stato indicizzato con successo ed è ora disponibile per il chatbot.`,
+          { type: "KB_INDEXED", documentId: docId },
+        );
+      }
+    } catch (err) {
+      this.logger.error(`Indexing error for doc ${docId}: ${err.message}`);
+      await this.docRepo.update(docId, { status: "error" });
+
+      if (notifyUserId) {
+        await this.notificationsService.sendPushNotification(
+          notifyUserId,
+          "Knowledge Base",
+          `Errore durante l'indicizzazione di "${doc.title}". Riprova.`,
+          { type: "KB_INDEX_ERROR", documentId: docId },
+        );
+      }
+    }
   }
 
   private async indexDocument(
@@ -201,6 +259,7 @@ export class KnowledgeBaseService {
        FROM knowledge_base_chunks c
        JOIN knowledge_base_documents d ON c.document_id = d.id
        WHERE c.embedding IS NOT NULL
+         AND d.status = 'ready'
          ${accessFilter}
          ${ruoloFilter}
        ORDER BY distance ASC

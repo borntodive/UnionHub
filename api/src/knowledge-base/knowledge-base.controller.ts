@@ -11,6 +11,7 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  Req,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -32,24 +33,30 @@ export class KnowledgeBaseController {
   }
 
   @Post("upload")
+  @HttpCode(HttpStatus.ACCEPTED)
   @UseInterceptors(FileInterceptor("file"))
   async upload(
     @UploadedFile() file: Express.Multer.File,
     @Body() dto: UploadDocumentDto,
+    @Req() req: any,
   ) {
     return this.kbService.uploadDocument(
       file.buffer,
       file.originalname,
       dto.title,
       dto.accessLevel,
+      req.user.userId,
       dto.ruolo,
     );
   }
 
   @Post(":id/reindex")
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async reindex(@Param("id", ParseUUIDPipe) id: string) {
-    await this.kbService.reindexDocument(id);
+  @HttpCode(HttpStatus.ACCEPTED)
+  async reindex(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Req() req: any,
+  ) {
+    await this.kbService.reindexDocument(id, req.user.userId);
   }
 
   @Delete(":id")

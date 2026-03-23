@@ -534,9 +534,12 @@
     "uploadFirst": "Carica il primo documento",
     "uploadTitle": "Carica PDF",
     "upload": "Carica",
-    "uploadSuccess": "Caricamento completato",
-    "uploadSuccessMessage": "Documento indicizzato e disponibile per il chatbot.",
-    "uploadingHint": "Indicizzazione in corso, potrebbe richiedere qualche minuto…",
+    "uploadSuccess": "Caricamento ricevuto",
+    "uploadSuccessMessage": "Il documento viene indicizzato in background. Riceverai una notifica quando sarà pronto.",
+    "statusPending": "In attesa",
+    "statusIndexing": "Indicizzazione…",
+    "statusReady": "Pronto",
+    "statusError": "Errore",
     "pickPdf": "Tocca per selezionare un PDF",
     "labelTitle": "Titolo documento",
     "titlePlaceholder": "es. OMA Part A",
@@ -550,8 +553,8 @@
     "reindexTitle": "Re-indicizza documento",
     "reindexMessage": "Rigenerare gli embedding per \"{{title}}\"?",
     "reindex": "Re-indicizza",
-    "reindexSuccess": "Re-indicizzazione completata",
-    "reindexSuccessMessage": "Embedding rigenerati con successo."
+    "reindexSuccess": "Re-indicizzazione avviata",
+    "reindexSuccessMessage": "Gli embedding vengono rigenerati in background. Riceverai una notifica al termine."
   },
   "chatbot": {
     "title": "Chatbot",

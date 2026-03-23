@@ -534,9 +534,12 @@
     "uploadFirst": "Upload first document",
     "uploadTitle": "Upload PDF",
     "upload": "Upload",
-    "uploadSuccess": "Upload complete",
-    "uploadSuccessMessage": "Document indexed and ready for the chatbot.",
-    "uploadingHint": "Indexing in progress, this may take a few minutes…",
+    "uploadSuccess": "Upload received",
+    "uploadSuccessMessage": "The document is being indexed in the background. You will receive a notification when it is ready.",
+    "statusPending": "Pending",
+    "statusIndexing": "Indexing…",
+    "statusReady": "Ready",
+    "statusError": "Error",
     "pickPdf": "Tap to select a PDF",
     "labelTitle": "Document title",
     "titlePlaceholder": "e.g. OMA Part A",
@@ -550,8 +553,8 @@
     "reindexTitle": "Re-index document",
     "reindexMessage": "Re-generate embeddings for \"{{title}}\"?",
     "reindex": "Re-index",
-    "reindexSuccess": "Re-index complete",
-    "reindexSuccessMessage": "Embeddings regenerated successfully."
+    "reindexSuccess": "Re-index started",
+    "reindexSuccessMessage": "Embeddings are being regenerated in the background. You will receive a notification when done."
   },
   "chatbot": {
     "title": "Chatbot",

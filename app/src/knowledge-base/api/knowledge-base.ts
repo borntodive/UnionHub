@@ -1,5 +1,7 @@
 import apiClient from "../../api/client";
 
+export type KbStatus = "pending" | "indexing" | "ready" | "error";
+
 export interface KbDocument {
   id: string;
   title: string;
@@ -7,6 +9,7 @@ export interface KbDocument {
   accessLevel: "all" | "admin";
   ruolo: string | null;
   chunkCount: number;
+  status: KbStatus;
   createdAt: string;
 }
 
@@ -29,9 +32,9 @@ export const knowledgeBaseApi = {
     form.append("title", title);
     form.append("accessLevel", accessLevel);
     if (ruolo) form.append("ruolo", ruolo);
+    // No custom timeout — server returns 202 immediately now
     return apiClient.post<KbDocument>("/knowledge-base/upload", form, {
       headers: { "Content-Type": "multipart/form-data" },
-      timeout: 300_000, // 5 min — Ollama embedding can be slow
     });
   },
 
