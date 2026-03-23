@@ -17,12 +17,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import {
-  useNavigation,
-  useRoute,
-  RouteProp,
-  DrawerActions,
-} from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -38,7 +33,6 @@ import {
   Check,
   X,
   ArrowLeft,
-  Menu,
   FileText,
   ExternalLink,
 } from "lucide-react-native";
@@ -229,19 +223,11 @@ export const MemberDetailScreen: React.FC = () => {
         {/* Header - Same style as drawer screens */}
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() =>
-              isOwnProfile
-                ? navigation.getParent()?.dispatch(DrawerActions.openDrawer())
-                : navigation.goBack()
-            }
+            onPress={() => navigation.goBack()}
             style={styles.backButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            {isOwnProfile ? (
-              <Menu size={24} color={colors.textInverse} />
-            ) : (
-              <ArrowLeft size={24} color={colors.textInverse} />
-            )}
+            <ArrowLeft size={24} color={colors.textInverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Member Details</Text>
           {canEdit ? (
