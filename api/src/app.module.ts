@@ -15,6 +15,8 @@ import { NotificationsModule } from "./notifications/notifications.module";
 import { IssueCategoriesModule } from "./issue-categories/issue-categories.module";
 import { IssueUrgenciesModule } from "./issue-urgencies/issue-urgencies.module";
 import { IssuesModule } from "./issues/issues.module";
+import { KnowledgeBaseModule } from "./knowledge-base/knowledge-base.module";
+import { ChatbotModule } from "./chatbot/chatbot.module";
 
 @Module({
   providers: [
@@ -53,6 +55,8 @@ import { IssuesModule } from "./issues/issues.module";
     IssueCategoriesModule,
     IssueUrgenciesModule,
     IssuesModule,
+    KnowledgeBaseModule,
+    ChatbotModule,
   ],
 })
 export class AppModule {}

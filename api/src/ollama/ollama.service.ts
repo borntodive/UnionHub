@@ -15,11 +15,17 @@ interface OllamaResponse {
   eval_duration?: number;
 }
 
+interface OllamaEmbeddingResponse {
+  embedding: number[];
+}
+
 @Injectable()
 export class OllamaService {
   private readonly logger = new Logger(OllamaService.name);
   private readonly baseUrl: string;
   private readonly model: string;
+  private readonly chatbotModel: string;
+  private readonly embedModel: string;
   private readonly apiKey: string | undefined;
   private readonly isCloud: boolean;
 
@@ -27,6 +33,11 @@ export class OllamaService {
     this.baseUrl =
       this.configService.get<string>("OLLAMA_URL") || "http://localhost:11434";
     this.model = this.configService.get<string>("OLLAMA_MODEL") || "llama3.2";
+    this.chatbotModel =
+      this.configService.get<string>("OLLAMA_CHATBOT_MODEL") || this.model;
+    this.embedModel =
+      this.configService.get<string>("OLLAMA_EMBED_MODEL") ||
+      "nomic-embed-text";
     this.apiKey = this.configService.get<string>("OLLAMA_API_KEY");
     this.isCloud = this.configService.get<boolean>("OLLAMA_CLOUD") || false;
   }
@@ -45,15 +56,20 @@ export class OllamaService {
   }
 
   /**
-   * Generate a response from Ollama
+   * Generate a response from Ollama.
+   * @param model Override model (defaults to OLLAMA_MODEL)
    */
-  async generate(prompt: string, system?: string): Promise<string> {
+  async generate(
+    prompt: string,
+    system?: string,
+    model?: string,
+  ): Promise<string> {
     try {
       const response = await fetch(`${this.baseUrl}/api/generate`, {
         method: "POST",
         headers: this.getHeaders(),
         body: JSON.stringify({
-          model: this.model,
+          model: model ?? this.model,
           prompt,
           system,
           stream: false,
@@ -159,6 +175,41 @@ HTML tradotto (solo HTML, nient'altro):`
 Traduzione (solo il testo tradotto, nient'altro):`;
 
     return this.generate(prompt, systemPrompt);
+  }
+
+  /**
+   * Generate a vector embedding for the given text using OLLAMA_EMBED_MODEL.
+   * Returns a float array (768 dimensions for nomic-embed-text).
+   */
+  async generateEmbedding(text: string): Promise<number[]> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/embeddings`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          model: this.embedModel,
+          prompt: text,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Ollama embeddings error: ${error}`);
+      }
+
+      const data: OllamaEmbeddingResponse = await response.json();
+      return data.embedding;
+    } catch (error) {
+      this.logger.error("Ollama embedding failed:", error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate a chatbot response using OLLAMA_CHATBOT_MODEL.
+   */
+  async chatGenerate(prompt: string, system?: string): Promise<string> {
+    return this.generate(prompt, system, this.chatbotModel);
   }
 
   /**

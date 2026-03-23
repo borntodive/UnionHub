@@ -20,6 +20,8 @@ export type RootStackParamList = {
   BulkImport: undefined;
   PayslipCalculator: undefined;
   FtlCalculator: undefined;
+  Chatbot: undefined;
+  KnowledgeBase: undefined;
   // CLA Contract Admin
   ClaContracts: undefined;
   ContractEditor: { contract?: any } | undefined;

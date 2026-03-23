@@ -214,7 +214,9 @@
     "issues": "Gestisci Segnalazioni",
     "issueCategories": "Categorie Segnalazioni",
     "issueUrgencies": "Urgenze Segnalazioni",
-    "ftlCalculator": "Calcolatore FTL"
+    "ftlCalculator": "Calcolatore FTL",
+    "chatbot": "Chatbot",
+    "knowledgeBase": "Knowledge Base"
   },
   "ftl": {
     "title": "Calcolatore FTL",
@@ -525,6 +527,43 @@
     "description": "Prima di accedere all'app, fornisci alcuni dettagli sulla tua storia lavorativa.",
     "selectDate": "Seleziona data",
     "save": "Continua all'app"
+  },
+  "kb": {
+    "title": "Knowledge Base",
+    "empty": "Nessun documento",
+    "uploadFirst": "Carica il primo documento",
+    "uploadTitle": "Carica PDF",
+    "upload": "Carica",
+    "uploadSuccess": "Caricamento completato",
+    "uploadSuccessMessage": "Documento indicizzato e disponibile per il chatbot.",
+    "uploadingHint": "Indicizzazione in corso, potrebbe richiedere qualche minuto…",
+    "pickPdf": "Tocca per selezionare un PDF",
+    "labelTitle": "Titolo documento",
+    "titlePlaceholder": "es. OMA Part A",
+    "labelAccess": "Visibilità",
+    "accessAll": "Tutti i membri",
+    "accessAdmin": "Solo admin",
+    "labelRuolo": "Categoria",
+    "ruoloAll": "Tutte",
+    "deleteTitle": "Elimina documento",
+    "deleteMessage": "Eliminare \"{{title}}\"? L'operazione non è reversibile.",
+    "reindexTitle": "Re-indicizza documento",
+    "reindexMessage": "Rigenerare gli embedding per \"{{title}}\"?",
+    "reindex": "Re-indicizza",
+    "reindexSuccess": "Re-indicizzazione completata",
+    "reindexSuccessMessage": "Embedding rigenerati con successo."
+  },
+  "chatbot": {
+    "title": "Chatbot",
+    "inputPlaceholder": "Fai una domanda…",
+    "errorResponse": "Si è verificato un errore. Riprova.",
+    "clearTitle": "Cancella conversazione",
+    "clearMessage": "Verranno eliminati tutti i messaggi. Continuare?",
+    "clearConfirm": "Cancella",
+    "showSources": "Fonti ({{count}})",
+    "hideSources": "Nascondi fonti",
+    "onboardingTitle": "Chiedi al chatbot sindacale",
+    "onboardingText": "Posso rispondere a domande basate sui documenti caricati dall'amministratore. Chiedimi del tuo contratto, OMA o CCNL."
   },
   "errors": {
     "generic": "Qualcosa è andato storto",

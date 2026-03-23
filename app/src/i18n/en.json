@@ -214,7 +214,9 @@
     "issues": "Manage Issues",
     "issueCategories": "Issue Categories",
     "issueUrgencies": "Issue Urgencies",
-    "ftlCalculator": "FTL Calculator"
+    "ftlCalculator": "FTL Calculator",
+    "chatbot": "Chatbot",
+    "knowledgeBase": "Knowledge Base"
   },
   "ftl": {
     "title": "FTL Calculator",
@@ -525,6 +527,43 @@
     "description": "Before accessing the app, please provide a few details about your employment history.",
     "selectDate": "Select date",
     "save": "Continue to App"
+  },
+  "kb": {
+    "title": "Knowledge Base",
+    "empty": "No documents yet",
+    "uploadFirst": "Upload first document",
+    "uploadTitle": "Upload PDF",
+    "upload": "Upload",
+    "uploadSuccess": "Upload complete",
+    "uploadSuccessMessage": "Document indexed and ready for the chatbot.",
+    "uploadingHint": "Indexing in progress, this may take a few minutes…",
+    "pickPdf": "Tap to select a PDF",
+    "labelTitle": "Document title",
+    "titlePlaceholder": "e.g. OMA Part A",
+    "labelAccess": "Visibility",
+    "accessAll": "All members",
+    "accessAdmin": "Admin only",
+    "labelRuolo": "Category",
+    "ruoloAll": "All",
+    "deleteTitle": "Delete document",
+    "deleteMessage": "Delete \"{{title}}\"? This cannot be undone.",
+    "reindexTitle": "Re-index document",
+    "reindexMessage": "Re-generate embeddings for \"{{title}}\"?",
+    "reindex": "Re-index",
+    "reindexSuccess": "Re-index complete",
+    "reindexSuccessMessage": "Embeddings regenerated successfully."
+  },
+  "chatbot": {
+    "title": "Chatbot",
+    "inputPlaceholder": "Ask a question…",
+    "errorResponse": "An error occurred. Please try again.",
+    "clearTitle": "Clear conversation",
+    "clearMessage": "This will delete all messages. Continue?",
+    "clearConfirm": "Clear",
+    "showSources": "Sources ({{count}})",
+    "hideSources": "Hide sources",
+    "onboardingTitle": "Ask the union chatbot",
+    "onboardingText": "I can answer questions based on union documents uploaded by your admin. Ask me about your contract, OMA, or CLA."
   },
   "errors": {
     "generic": "Something went wrong",

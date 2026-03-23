@@ -31,6 +31,8 @@ import {
   Bell,
   AlertTriangle,
   Clock,
+  MessageSquare,
+  Database,
 } from "lucide-react-native";
 
 import { colors, spacing, typography, borderRadius } from "../theme";
@@ -42,6 +44,8 @@ import { HomeScreen } from "../screens/HomeScreen/HomeScreen";
 import { MembersScreen } from "../screens/MembersScreen/MembersScreen";
 import { PayslipTabs } from "../payslip/navigation/PayslipTabs";
 import { FtlTabs } from "../ftl";
+import { ChatbotScreen } from "../chatbot/screens/ChatbotScreen";
+import { KnowledgeBaseScreen } from "../knowledge-base/screens/KnowledgeBaseScreen";
 import AdminContractsScreen from "../payslip/screens/AdminContractsScreen";
 import ContractEditorScreen from "../payslip/screens/ContractEditorScreen";
 import { SettingsScreen } from "../screens/SettingsScreen/SettingsScreen";
@@ -188,6 +192,17 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
               props.navigation.closeDrawer();
             }}
           />
+
+          {isOnline && (
+            <MenuItem
+              icon={<MessageSquare size={22} color={colors.primary} />}
+              label={t("navigation.chatbot")}
+              onPress={() => {
+                props.navigation.navigate("Chatbot");
+                props.navigation.closeDrawer();
+              }}
+            />
+          )}
 
           {/* Issues — available offline */}
           <View style={styles.sectionDivider} />
@@ -362,6 +377,14 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                       props.navigation.closeDrawer();
                     }}
                   />
+                  <MenuItem
+                    icon={<Database size={22} color={colors.primary} />}
+                    label={t("navigation.knowledgeBase")}
+                    onPress={() => {
+                      props.navigation.navigate("KnowledgeBase");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
                 </>
               )}
             </>
@@ -527,6 +550,15 @@ export const DrawerNavigator: React.FC = () => {
           headerShown: false,
         }}
       />
+      <Drawer.Screen
+        name="Chatbot"
+        component={ChatbotScreen}
+        options={{
+          title: t("navigation.chatbot"),
+          drawerIcon: ({ color }) => <MessageSquare size={22} color={color} />,
+          headerShown: false,
+        }}
+      />
       {/* Issues screens — hidden from drawer list, accessible to all users */}
       <Drawer.Screen
         name="ReportIssue"
@@ -580,6 +612,15 @@ export const DrawerNavigator: React.FC = () => {
       )}
       {isSuperAdmin && (
         <>
+          <Drawer.Screen
+            name="KnowledgeBase"
+            component={KnowledgeBaseScreen}
+            options={{
+              title: t("navigation.knowledgeBase"),
+              drawerIcon: ({ color }) => <Database size={22} color={color} />,
+              headerShown: false,
+            }}
+          />
           <Drawer.Screen
             name="ClaContracts"
             component={AdminContractsScreen}
