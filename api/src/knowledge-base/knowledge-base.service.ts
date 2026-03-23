@@ -178,10 +178,13 @@ export class KnowledgeBaseService {
     const accessFilter =
       accessLevel === "admin" ? "" : `AND d.access_level = 'all'`;
 
-    // Build ruolo filter: if user has a ruolo, show their-role docs + global ones
-    const ruoloFilter = ruolo
-      ? `AND (d.ruolo IS NULL OR d.ruolo = '${ruolo}')`
-      : `AND d.ruolo IS NULL`;
+    // Build ruolo filter: admins see all ruoli; users see their role + global docs
+    const ruoloFilter =
+      accessLevel === "admin"
+        ? ""
+        : ruolo
+          ? `AND (d.ruolo IS NULL OR d.ruolo = '${ruolo}')`
+          : `AND d.ruolo IS NULL`;
 
     const rows: any[] = await this.dataSource.query(
       `SELECT
