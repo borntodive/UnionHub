@@ -39,6 +39,10 @@ export type RootStackParamList = {
   IssueCategoryForm: { categoryId?: string };
   IssueUrgencies: undefined;
   IssueUrgencyForm: { urgencyId?: string };
+  // Gmail
+  Gmail: undefined;
+  EmailDetail: { messageId: string; subject: string; ruolo?: string };
+  GmailSetup: undefined;
 };
 
 declare global {

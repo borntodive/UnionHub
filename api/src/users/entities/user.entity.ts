@@ -166,6 +166,7 @@ export class User {
       dataIscrizione: this.dataIscrizione,
       dateOfEntry: this.dateOfEntry,
       dateOfCaptaincy: this.dateOfCaptaincy,
+      rsa: this.rsa,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

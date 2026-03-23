@@ -33,6 +33,7 @@ import {
   Clock,
   MessageSquare,
   Database,
+  Mail,
 } from "lucide-react-native";
 
 import { colors, spacing, typography, borderRadius } from "../theme";
@@ -46,6 +47,7 @@ import { PayslipTabs } from "../payslip/navigation/PayslipTabs";
 import { FtlTabs } from "../ftl";
 import { ChatbotScreen } from "../chatbot/screens/ChatbotScreen";
 import { KnowledgeBaseScreen } from "../knowledge-base/screens/KnowledgeBaseScreen";
+import { GmailScreen } from "../gmail/screens/GmailScreen";
 import AdminContractsScreen from "../payslip/screens/AdminContractsScreen";
 import ContractEditorScreen from "../payslip/screens/ContractEditorScreen";
 import { SettingsScreen } from "../screens/SettingsScreen/SettingsScreen";
@@ -106,6 +108,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const isAdmin =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
+  const isRsa = user?.rsa === true;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
@@ -199,6 +202,17 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
               label={t("navigation.chatbot")}
               onPress={() => {
                 props.navigation.navigate("Chatbot");
+                props.navigation.closeDrawer();
+              }}
+            />
+          )}
+
+          {isOnline && isRsa && (
+            <MenuItem
+              icon={<Mail size={22} color={colors.primary} />}
+              label={t("navigation.gmail")}
+              onPress={() => {
+                props.navigation.navigate("Gmail");
                 props.navigation.closeDrawer();
               }}
             />
@@ -385,6 +399,14 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                       props.navigation.closeDrawer();
                     }}
                   />
+                  <MenuItem
+                    icon={<Mail size={22} color={colors.primary} />}
+                    label={t("navigation.gmailSetup")}
+                    onPress={() => {
+                      props.navigation.navigate("GmailSetup");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
                 </>
               )}
             </>
@@ -436,6 +458,7 @@ export const DrawerNavigator: React.FC = () => {
   const isAdmin =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
+  const isRsa = user?.rsa === true;
 
   return (
     <Drawer.Navigator
@@ -640,6 +663,17 @@ export const DrawerNavigator: React.FC = () => {
             }}
           />
         </>
+      )}
+      {isRsa && (
+        <Drawer.Screen
+          name="Gmail"
+          component={GmailScreen}
+          options={{
+            title: t("navigation.gmail"),
+            drawerIcon: ({ color }) => <Mail size={22} color={color} />,
+            headerShown: false,
+          }}
+        />
       )}
     </Drawer.Navigator>
   );

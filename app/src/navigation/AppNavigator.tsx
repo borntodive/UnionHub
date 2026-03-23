@@ -38,6 +38,8 @@ import { colors } from "../theme";
 import { useAuthStore } from "../store/authStore";
 import { SharedFileHandler } from "../components/SharedFileHandler";
 import { CompleteProfileScreen } from "../screens/CompleteProfileScreen/CompleteProfileScreen";
+import { EmailDetailScreen } from "../gmail/screens/EmailDetailScreen";
+import { GmailSetupScreen } from "../gmail/screens/GmailSetupScreen";
 import { UserRole } from "../types";
 import { useNotifications } from "../hooks/useNotifications";
 import apiClient from "../api/client";
@@ -237,6 +239,16 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen
               name="PdfViewer"
               component={PdfViewerScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="EmailDetail"
+              component={EmailDetailScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="GmailSetup"
+              component={GmailSetupScreen}
               options={{ headerShown: false }}
             />
             {/* Note: CLA Contract screens moved to DrawerNavigator */}

@@ -216,7 +216,9 @@
     "issueUrgencies": "Urgenze Segnalazioni",
     "ftlCalculator": "Calcolatore FTL",
     "chatbot": "Chatbot",
-    "knowledgeBase": "Knowledge Base"
+    "knowledgeBase": "Knowledge Base",
+    "gmail": "Casella Sindacale",
+    "gmailSetup": "Configurazione Gmail"
   },
   "ftl": {
     "title": "Calcolatore FTL",
@@ -567,6 +569,33 @@
     "hideSources": "Nascondi fonti",
     "onboardingTitle": "Chiedi al chatbot sindacale",
     "onboardingText": "Posso rispondere a domande basate sui documenti caricati dall'amministratore. Chiedimi del tuo contratto, OMA o CCNL."
+  },
+  "gmail": {
+    "noEmails": "Nessuna email da visualizzare",
+    "noSubject": "(senza oggetto)",
+    "loadError": "Impossibile caricare l'email",
+    "emptyBody": "Messaggio vuoto",
+    "attachments": "Allegati",
+    "downloadError": "Impossibile scaricare l'allegato",
+    "sharingNotAvailable": "La condivisione non è disponibile su questo dispositivo"
+  },
+  "gmailSetup": {
+    "title": "Configurazione Gmail",
+    "intro": "Autorizza l'app ad accedere alla casella Gmail di ogni ruolo. È un'operazione una tantum. Dopo aver ottenuto il refresh token, salvalo nel file .env del server e riavvia l'API.",
+    "pilotLabel": "Casella Piloti",
+    "cabinCrewLabel": "Casella Cabin Crew",
+    "authorized": "Autorizzato",
+    "notAuthorized": "Non autorizzato",
+    "step1": "Passo 1 — Apri la pagina di autorizzazione Google",
+    "openGoogle": "Apri Google",
+    "step2": "Passo 2 — Incolla il codice restituito da Google",
+    "codePlaceholder": "Incolla qui il codice di autorizzazione...",
+    "getToken": "Ottieni Refresh Token",
+    "tokenLabel": "Refresh Token ottenuto",
+    "tokenHint": "Copia questo token e salvalo nel file .env del server, poi riavvia l'API.",
+    "copied": "Token copiato negli appunti",
+    "errorUrl": "Impossibile generare l'URL di autorizzazione",
+    "errorCode": "Impossibile scambiare il codice. Verifica che sia corretto e non scaduto."
   },
   "errors": {
     "generic": "Qualcosa è andato storto",

@@ -216,7 +216,9 @@
     "issueUrgencies": "Issue Urgencies",
     "ftlCalculator": "FTL Calculator",
     "chatbot": "Chatbot",
-    "knowledgeBase": "Knowledge Base"
+    "knowledgeBase": "Knowledge Base",
+    "gmail": "Union Mailbox",
+    "gmailSetup": "Gmail Setup"
   },
   "ftl": {
     "title": "FTL Calculator",
@@ -567,6 +569,33 @@
     "hideSources": "Hide sources",
     "onboardingTitle": "Ask the union chatbot",
     "onboardingText": "I can answer questions based on union documents uploaded by your admin. Ask me about your contract, OMA, or CLA."
+  },
+  "gmail": {
+    "noEmails": "No emails to display",
+    "noSubject": "(no subject)",
+    "loadError": "Failed to load email",
+    "emptyBody": "Empty message",
+    "attachments": "Attachments",
+    "downloadError": "Failed to download attachment",
+    "sharingNotAvailable": "Sharing is not available on this device"
+  },
+  "gmailSetup": {
+    "title": "Gmail Setup",
+    "intro": "Authorize the app to access each role's Gmail account. This is a one-time setup. After obtaining the refresh token, save it in the server .env file and restart the API.",
+    "pilotLabel": "Pilots Mailbox",
+    "cabinCrewLabel": "Cabin Crew Mailbox",
+    "authorized": "Authorized",
+    "notAuthorized": "Not authorized",
+    "step1": "Step 1 — Open Google authorization page",
+    "openGoogle": "Open Google",
+    "step2": "Step 2 — Paste the code returned by Google",
+    "codePlaceholder": "Paste authorization code here...",
+    "getToken": "Get Refresh Token",
+    "tokenLabel": "Refresh Token obtained",
+    "tokenHint": "Copy this token and save it in the .env file on the server, then restart the API.",
+    "copied": "Token copied to clipboard",
+    "errorUrl": "Failed to generate authorization URL",
+    "errorCode": "Failed to exchange code. Check that the code is correct and not expired."
   },
   "errors": {
     "generic": "Something went wrong",
