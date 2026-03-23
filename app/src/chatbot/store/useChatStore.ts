@@ -19,9 +19,14 @@ interface ChatState {
   conversationId: string;
   messages: ChatMessageLocal[];
   addMessage: (msg: Omit<ChatMessageLocal, "id" | "createdAt">) => void;
+  /**
+   * Update the last assistant message.
+   * content: string → set directly | (prev)=>next → append (streaming) | undefined → leave unchanged
+   * sources: array → set | undefined → leave unchanged
+   */
   updateLastAssistantMessage: (
-    content: string,
-    sources: Array<{ title: string; accessLevel: string }>,
+    content: string | ((prev: string) => string) | undefined,
+    sources: Array<{ title: string; accessLevel: string }> | undefined,
   ) => void;
   clearMessages: () => void;
   resetConversation: () => void;
@@ -46,7 +51,17 @@ export const useChatStore = create<ChatState>()(
           const msgs = [...state.messages];
           for (let i = msgs.length - 1; i >= 0; i--) {
             if (msgs[i].role === "assistant") {
-              msgs[i] = { ...msgs[i], content, sources };
+              const prev = msgs[i];
+              msgs[i] = {
+                ...prev,
+                content:
+                  content === undefined
+                    ? prev.content
+                    : typeof content === "function"
+                      ? content(prev.content)
+                      : content,
+                sources: sources !== undefined ? sources : prev.sources,
+              };
               break;
             }
           }

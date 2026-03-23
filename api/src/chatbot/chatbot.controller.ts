@@ -6,11 +6,13 @@ import {
   Body,
   Param,
   Req,
+  Res,
   UseGuards,
   HttpCode,
   HttpStatus,
 } from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
+import { Response } from "express";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ChatbotService } from "./chatbot.service";
 import { ChatDto } from "./dto/chat.dto";
@@ -24,6 +26,45 @@ export class ChatbotController {
   @Post("chat")
   chat(@Body() dto: ChatDto, @Req() req: any) {
     return this.chatbotService.chat(dto.message, dto.conversationId, req.user);
+  }
+
+  /**
+   * Streaming endpoint — returns text/event-stream (SSE).
+   * Each event is `data: <JSON>\n\n`:
+   *   { t: string }       — a token fragment
+   *   { done: true, sources, conversationId }  — stream complete
+   *   { error: string }   — generation error
+   *
+   * Using @Res() bypasses NestJS response serialization so we can write
+   * raw SSE chunks. X-Accel-Buffering: no disables nginx proxy buffering.
+   */
+  @Post("chat/stream")
+  async chatStream(
+    @Body() dto: ChatDto,
+    @Req() req: any,
+    @Res() res: Response,
+  ) {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.flushHeaders();
+
+    try {
+      for await (const event of this.chatbotService.chatStream(
+        dto.message,
+        dto.conversationId,
+        req.user,
+      )) {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      }
+    } catch (err) {
+      res.write(
+        `data: ${JSON.stringify({ error: "Stream error: " + err.message })}\n\n`,
+      );
+    }
+
+    res.end();
   }
 
   @Get("history/:conversationId")

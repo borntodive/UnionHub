@@ -146,6 +146,87 @@ ${contextBlock ? `CONTEXT:\n${contextBlock}` : "CONTEXT: (no relevant documents 
     return { response: responseText, sources, conversationId };
   }
 
+  /**
+   * Streaming version of chat().
+   * Yields { t } tokens as they arrive, then { done, sources, conversationId }.
+   * On error yields { error } and still persists the exchange.
+   */
+  async *chatStream(
+    message: string,
+    conversationId: string,
+    user: JwtUser,
+  ): AsyncGenerator<
+    | { t: string }
+    | { done: true; sources: Array<{ title: string; accessLevel: string }>; conversationId: string }
+    | { error: string }
+  > {
+    const accessLevel: "all" | "admin" =
+      user.role === UserRole.USER ? "all" : "admin";
+
+    let chunks: ChunkWithSource[] = [];
+    try {
+      chunks = await this.kbService.semanticSearch(message, accessLevel, user.ruolo ?? null, this.chunksLimit);
+    } catch (err) {
+      this.logger.warn("Semantic search failed:", err.message);
+    }
+
+    const history = await this.msgRepo.find({
+      where: { userId: user.userId, conversationId },
+      order: { createdAt: "ASC" },
+      take: this.contextMessages,
+    });
+
+    const contextBlock = chunks.length
+      ? chunks.map((c) => `[Document: "${c.documentTitle}"]\n${c.content}`).join("\n\n---\n\n")
+      : "";
+
+    const historyBlock = history
+      .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
+      .join("\n");
+
+    const systemPrompt = `You are an AI assistant for CISL union members at Malta Air.
+Answer questions ONLY using the information provided in the CONTEXT section below.
+If the answer is not contained in the context, respond: "Non ho informazioni su questo argomento nella mia knowledge base." (or the equivalent in the user's language).
+Always respond in the same language the user is using.
+When referencing specific information, cite the document title in parentheses.
+Be concise and precise.
+
+${contextBlock ? `CONTEXT:\n${contextBlock}` : "CONTEXT: (no relevant documents found)"}`;
+
+    const fullPrompt = historyBlock
+      ? `${historyBlock}\nUser: ${message}\nAssistant:`
+      : `User: ${message}\nAssistant:`;
+
+    let fullResponse = "";
+    try {
+      for await (const token of this.ollamaService.chatGenerateStream(fullPrompt, systemPrompt)) {
+        fullResponse += token;
+        yield { t: token };
+      }
+    } catch (err) {
+      this.logger.error("Ollama stream failed:", err.message);
+      const fallback = "Si è verificato un errore durante la generazione della risposta. Riprova.";
+      yield { error: fallback };
+      await this.msgRepo.save([
+        this.msgRepo.create({ userId: user.userId, conversationId, role: "user", content: message }),
+        this.msgRepo.create({ userId: user.userId, conversationId, role: "assistant", content: fallback }),
+      ]);
+      return;
+    }
+
+    await this.msgRepo.save([
+      this.msgRepo.create({ userId: user.userId, conversationId, role: "user", content: message }),
+      this.msgRepo.create({ userId: user.userId, conversationId, role: "assistant", content: fullResponse }),
+    ]);
+
+    const seen = new Set<string>();
+    const sources = chunks
+      .filter((c) => { if (seen.has(c.documentId)) return false; seen.add(c.documentId); return true; })
+      .map((c) => ({ title: c.documentTitle, accessLevel: c.accessLevel }));
+
+    yield { done: true, sources, conversationId };
+  }
+
   async getHistory(
     conversationId: string,
     userId: string,

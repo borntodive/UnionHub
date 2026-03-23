@@ -213,6 +213,57 @@ Traduzione (solo il testo tradotto, nient'altro):`;
   }
 
   /**
+   * Stream a chatbot response token-by-token using OLLAMA_CHATBOT_MODEL.
+   * Ollama's stream:true API sends newline-delimited JSON objects; each chunk
+   * is yielded immediately so the HTTP connection stays alive through proxies
+   * (Cloudflare, nginx) that enforce a hard response-time limit.
+   */
+  async *chatGenerateStream(
+    prompt: string,
+    system?: string,
+  ): AsyncGenerator<string> {
+    const response = await fetch(`${this.baseUrl}/api/generate`, {
+      method: "POST",
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        model: this.chatbotModel,
+        prompt,
+        system,
+        stream: true,
+      }),
+    });
+
+    if (!response.ok || !response.body) {
+      const errText = await response.text().catch(() => String(response.status));
+      throw new Error(`Ollama streaming error: ${errText}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const obj = JSON.parse(line) as { response?: string; done?: boolean };
+          if (obj.response) yield obj.response;
+          if (obj.done) return;
+        } catch {
+          // ignore malformed line
+        }
+      }
+    }
+  }
+
+  /**
    * Check if Ollama is available
    */
   async healthCheck(): Promise<boolean> {

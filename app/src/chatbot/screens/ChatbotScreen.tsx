@@ -20,9 +20,17 @@ import { DrawerNavigationProp } from "@react-navigation/drawer";
 import { Menu, Send, Trash2, BookOpen } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
+import Constants from "expo-constants";
 import { colors, spacing, typography, borderRadius } from "../../theme";
-import { chatbotApi } from "../api/chatbot";
+import { chatbotApi, chatStream } from "../api/chatbot";
 import { useChatStore, ChatMessageLocal } from "../store/useChatStore";
+import { useAuthStore } from "../../store/authStore";
+
+const API_BASE_URL =
+  Constants.expoConfig?.extra?.apiUrl ||
+  (__DEV__
+    ? "http://localhost:3000/api/v1"
+    : "https://api.unionhub.app/api/v1");
 
 type Nav = DrawerNavigationProp<any>;
 
@@ -52,14 +60,30 @@ export const ChatbotScreen: React.FC = () => {
 
     setInput("");
     addMessage({ role: "user", content: text });
-
-    // Add placeholder assistant message
-    addMessage({ role: "assistant", content: "…", sources: [] });
+    // Empty string = waiting for first token; spinner shown by renderMessage
+    addMessage({ role: "assistant", content: "", sources: [] });
     setIsLoading(true);
 
+    const { accessToken } = useAuthStore.getState();
+
     try {
-      const res = await chatbotApi.chat(text, conversationId);
-      updateLastAssistantMessage(res.data.response, res.data.sources);
+      await chatStream(
+        text,
+        conversationId,
+        accessToken ?? "",
+        API_BASE_URL,
+        (token) => {
+          // Append each token to the current accumulated content
+          updateLastAssistantMessage((prev: string) => prev + token, undefined);
+        },
+        (sources) => {
+          // Stream complete — lock in sources
+          updateLastAssistantMessage(undefined, sources);
+        },
+        () => {
+          updateLastAssistantMessage(t("chatbot.errorResponse"), []);
+        },
+      );
     } catch {
       updateLastAssistantMessage(t("chatbot.errorResponse"), []);
     } finally {
@@ -106,7 +130,7 @@ export const ChatbotScreen: React.FC = () => {
 
   const renderMessage = ({ item }: { item: ChatMessageLocal }) => {
     const isUser = item.role === "user";
-    const isPlaceholder = item.content === "…" && isLoading;
+    const isPlaceholder = item.content === "" && isLoading;
     const hasSources = !isUser && item.sources && item.sources.length > 0;
 
     return (
