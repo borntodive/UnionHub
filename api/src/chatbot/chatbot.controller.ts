@@ -14,11 +14,15 @@ import {
 import { SkipThrottle } from "@nestjs/throttler";
 import { Response } from "express";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../common/decorators/roles.decorator";
+import { UserRole } from "../common/enums/user-role.enum";
 import { ChatbotService } from "./chatbot.service";
 import { ChatDto } from "./dto/chat.dto";
 
 @Controller("chatbot")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
 @SkipThrottle()
 export class ChatbotController {
   constructor(private readonly chatbotService: ChatbotService) {}

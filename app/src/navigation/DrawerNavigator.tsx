@@ -193,7 +193,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             }}
           />
 
-          {isOnline && (
+          {isOnline && isAdmin && (
             <MenuItem
               icon={<MessageSquare size={22} color={colors.primary} />}
               label={t("navigation.chatbot")}
