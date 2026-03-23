@@ -20,13 +20,19 @@ export const chatbotApi = {
 
 /**
  * Streaming chat via Server-Sent Events.
- * Uses native fetch (not Axios) — Axios doesn't support streaming in RN.
- * Parses `data: <JSON>\n\n` SSE frames and calls the appropriate callback.
- *   onToken(t)            — each text fragment as it arrives from Ollama
- *   onDone(sources, id)   — generation complete, sources available
- *   onError(msg)          — network or generation error
+ *
+ * Uses XMLHttpRequest with onprogress instead of fetch + ReadableStream.
+ * React Native's fetch does not expose response.body as a live ReadableStream
+ * on iOS — it buffers the entire response before resolving. XHR.onprogress
+ * fires incrementally as bytes arrive, which is the reliable streaming
+ * primitive in React Native.
+ *
+ * SSE frame format: `data: <JSON>\n\n`
+ *   { t: string }                               — token fragment
+ *   { done: true, sources, conversationId }      — generation complete
+ *   { error: string }                            — generation error
  */
-export async function chatStream(
+export function chatStream(
   message: string,
   conversationId: string,
   accessToken: string,
@@ -38,67 +44,73 @@ export async function chatStream(
   ) => void,
   onError: (msg: string) => void,
 ): Promise<void> {
-  let res: Response;
-  try {
-    res = await fetch(`${baseUrl}/chatbot/chat/stream`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({ message, conversationId }),
-    });
-  } catch (err: any) {
-    onError(err.message ?? "Network error");
-    return;
-  }
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${baseUrl}/chatbot/chat/stream`, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+    // No timeout — let Cloudflare/server decide; generation can take minutes
+    xhr.timeout = 0;
 
-  if (!res.ok || !res.body) {
-    onError(`HTTP ${res.status}`);
-    return;
-  }
+    let buffer = "";
+    let lastIndex = 0;
 
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
+    const parseBuffer = (incoming: string) => {
+      buffer += incoming;
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
 
-  while (true) {
-    let chunk: ReadableStreamReadResult<Uint8Array>;
-    try {
-      chunk = await reader.read();
-    } catch {
-      break;
-    }
-    if (chunk.done) break;
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const json = line.slice(6).trim();
+        if (!json) continue;
+        try {
+          const event = JSON.parse(json) as
+            | { t: string }
+            | {
+                done: true;
+                sources: Array<{ title: string; accessLevel: string }>;
+                conversationId: string;
+              }
+            | { error: string };
 
-    buffer += decoder.decode(chunk.value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      const json = line.slice(6).trim();
-      if (!json) continue;
-      try {
-        const event = JSON.parse(json) as
-          | { t: string }
-          | {
-              done: true;
-              sources: Array<{ title: string; accessLevel: string }>;
-              conversationId: string;
-            }
-          | { error: string };
-
-        if ("t" in event) {
-          onToken(event.t);
-        } else if ("done" in event) {
-          onDone(event.sources, event.conversationId);
-        } else if ("error" in event) {
-          onError(event.error);
+          if ("t" in event) {
+            onToken(event.t);
+          } else if ("done" in event) {
+            onDone(event.sources, event.conversationId);
+          } else if ("error" in event) {
+            onError(event.error);
+          }
+        } catch {
+          // skip malformed line
         }
-      } catch {
-        // skip malformed SSE line
       }
-    }
-  }
+    };
+
+    xhr.onprogress = () => {
+      // responseText grows cumulatively; slice out only the new chunk
+      const newText = xhr.responseText.slice(lastIndex);
+      lastIndex = xhr.responseText.length;
+      if (newText) parseBuffer(newText);
+    };
+
+    xhr.onload = () => {
+      // Process any data that arrived after the last onprogress event
+      const remaining = xhr.responseText.slice(lastIndex);
+      if (remaining) parseBuffer(remaining);
+      resolve();
+    };
+
+    xhr.onerror = () => {
+      onError("Network error");
+      resolve();
+    };
+
+    xhr.ontimeout = () => {
+      onError("Request timed out");
+      resolve();
+    };
+
+    xhr.send(JSON.stringify({ message, conversationId }));
+  });
 }

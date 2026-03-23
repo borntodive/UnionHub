@@ -44,11 +44,19 @@ export class ChatbotController {
     @Req() req: any,
     @Res() res: Response,
   ) {
+    // Explicit 200 — NestJS defaults POST to 201 before the handler runs.
+    res.status(200);
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache, no-transform");
     res.setHeader("Connection", "keep-alive");
+    // Disable nginx / Cloudflare proxy buffering so chunks reach the client
+    // immediately instead of being held until the response closes.
     res.setHeader("X-Accel-Buffering", "no");
     res.flushHeaders();
+
+    // flush() drains any compression middleware buffer after each write so
+    // tokens are delivered in real-time rather than batched.
+    const flush = () => (res as any).flush?.();
 
     try {
       for await (const event of this.chatbotService.chatStream(
@@ -57,11 +65,13 @@ export class ChatbotController {
         req.user,
       )) {
         res.write(`data: ${JSON.stringify(event)}\n\n`);
+        flush();
       }
     } catch (err) {
       res.write(
         `data: ${JSON.stringify({ error: "Stream error: " + err.message })}\n\n`,
       );
+      flush();
     }
 
     res.end();
