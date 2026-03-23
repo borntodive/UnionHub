@@ -17,7 +17,10 @@ Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
     const type = notification.request.content.data?.type as string | undefined;
     const isSilent =
-      type === "CATEGORIES_UPDATED" || type === "URGENCIES_UPDATED";
+      type === "CATEGORIES_UPDATED" ||
+      type === "URGENCIES_UPDATED" ||
+      type === "KB_INDEXED" ||
+      type === "KB_INDEX_ERROR";
     if (isSilent) {
       return {
         shouldShowAlert: false,
@@ -122,8 +125,9 @@ export const useNotifications = () => {
             queryKey: QUERY_KEYS.issueUrgencies,
           });
         } else if (type === "KB_INDEXED" || type === "KB_INDEX_ERROR") {
-          // Refresh the knowledge-base list when background indexing completes
           queryClient.invalidateQueries({ queryKey: ["knowledge-base"] });
+        } else if (type === "NEW_GMAIL") {
+          queryClient.invalidateQueries({ queryKey: ["gmail-inbox"] });
         }
 
         if (notification.request.content.title) {

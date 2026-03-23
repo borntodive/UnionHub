@@ -67,6 +67,33 @@ export class NotificationsService {
     );
   }
 
+  async notifyRsaUsers(
+    ruolo: Ruolo,
+    title: string,
+    body: string,
+    data?: Record<string, any>,
+  ): Promise<void> {
+    const tokens = await this.deviceTokenRepository
+      .createQueryBuilder("dt")
+      .innerJoin("users", "u", "u.id = dt.userId")
+      .where("dt.isActive = true")
+      .andWhere("u.rsa = :rsa", { rsa: true })
+      .andWhere("u.ruolo = :ruolo", { ruolo })
+      .getMany();
+
+    if (tokens.length === 0) return;
+
+    const messages: ExpoPushMessage[] = tokens.map((t) => ({
+      to: t.token,
+      sound: "default",
+      title,
+      body,
+      data,
+    }));
+
+    await this.sendExpoNotifications(messages);
+  }
+
   async notifyAdmins(
     ruolo: Ruolo,
     title: string,

@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   InternalServerErrorException,
   Logger,
+  OnModuleInit,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -47,14 +48,22 @@ export interface EmailListResult {
 }
 
 @Injectable()
-export class GmailService {
+export class GmailService implements OnModuleInit {
   private readonly logger = new Logger(GmailService.name);
+
+  // In-memory tracking per Pub/Sub webhook
+  private readonly lastHistoryId = new Map<Ruolo, string>();
 
   constructor(
     private readonly configService: ConfigService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
+
+  async onModuleInit() {
+    await this.watchInbox(Ruolo.PILOT);
+    await this.watchInbox(Ruolo.CABIN_CREW);
+  }
 
   // ── Per-ruolo config helpers ──────────────────────────────────────
 
@@ -151,6 +160,118 @@ export class GmailService {
       throw new InternalServerErrorException(
         `Failed to exchange code: ${err.message}`,
       );
+    }
+  }
+
+  // ── Pub/Sub watch ──────────────────────────────────────────────────
+
+  async watchInbox(ruolo: Ruolo): Promise<void> {
+    if (!this.isAuthorized(ruolo)) return;
+
+    const topicName = this.configService.get<string>("GOOGLE_PUBSUB_TOPIC");
+    if (!topicName) {
+      this.logger.warn(
+        "GOOGLE_PUBSUB_TOPIC not configured — Gmail push disabled",
+      );
+      return;
+    }
+
+    const gmail = this.getGmailClientForRuolo(ruolo);
+    const gmailUser = this.getGmailUserForRuolo(ruolo);
+
+    try {
+      const res = await gmail.users.watch({
+        userId: gmailUser,
+        requestBody: { labelIds: ["INBOX"], topicName },
+      });
+      if (res.data.historyId) {
+        this.lastHistoryId.set(ruolo, res.data.historyId);
+      }
+      this.logger.log(
+        `Gmail watch registered for ${ruolo}, historyId: ${res.data.historyId}`,
+      );
+    } catch (err: any) {
+      this.logger.error(
+        `Failed to set Gmail watch for ${ruolo}: ${err.message}`,
+      );
+    }
+  }
+
+  getRuoloForEmail(email: string): Ruolo | undefined {
+    const pilotEmail = this.configService.get<string>("GMAIL_USER_PILOT");
+    const cabinEmail = this.configService.get<string>("GMAIL_USER_CABIN_CREW");
+    if (email === pilotEmail) return Ruolo.PILOT;
+    if (email === cabinEmail) return Ruolo.CABIN_CREW;
+    return undefined;
+  }
+
+  async processWebhookNotification(
+    emailAddress: string,
+    newHistoryId: string,
+  ): Promise<{
+    ruolo: Ruolo;
+    newMessages: Array<{ id: string; subject: string; from: string }>;
+  } | null> {
+    const ruolo = this.getRuoloForEmail(emailAddress);
+    if (!ruolo) {
+      this.logger.warn(`Webhook for unknown email: ${emailAddress}`);
+      return null;
+    }
+
+    const lastId = this.lastHistoryId.get(ruolo);
+    this.lastHistoryId.set(ruolo, newHistoryId);
+
+    if (!lastId) {
+      // First notification after restart — just seed historyId, no notification
+      return null;
+    }
+    if (lastId === newHistoryId) return null;
+
+    const gmail = this.getGmailClientForRuolo(ruolo);
+    const gmailUser = this.getGmailUserForRuolo(ruolo);
+
+    try {
+      const historyRes = await gmail.users.history.list({
+        userId: gmailUser,
+        startHistoryId: lastId,
+        historyTypes: ["messageAdded"],
+        labelId: "INBOX",
+      });
+
+      const history = historyRes.data.history || [];
+      const newMessageIds = new Set<string>();
+      for (const record of history) {
+        for (const added of record.messagesAdded || []) {
+          if (added.message?.id) newMessageIds.add(added.message.id);
+        }
+      }
+
+      if (newMessageIds.size === 0) return null;
+
+      const newMessages = await Promise.all(
+        [...newMessageIds].map(async (msgId) => {
+          const detail = await gmail.users.messages.get({
+            userId: gmailUser,
+            id: msgId,
+            format: "metadata",
+            metadataHeaders: ["From", "Subject"],
+          });
+          const headers = detail.data.payload?.headers || [];
+          return {
+            id: msgId,
+            subject: this.getHeader(headers, "Subject") || "(no subject)",
+            from: this.getHeader(headers, "From") || "",
+          };
+        }),
+      );
+
+      // Renew watch to keep it alive (expires after 7 days)
+      await this.watchInbox(ruolo);
+
+      return { ruolo, newMessages };
+    } catch (err: any) {
+      this.logger.error(`Failed to process webhook history: ${err.message}`);
+      return null;
     }
   }
 

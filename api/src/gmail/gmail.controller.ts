@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
   BadRequestException,
+  Logger,
 } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
@@ -17,11 +18,15 @@ import { Roles } from "../common/decorators/roles.decorator";
 import { UserRole } from "../common/enums/user-role.enum";
 import { Ruolo } from "../common/enums/ruolo.enum";
 import { GmailService } from "./gmail.service";
+import { NotificationsService } from "../notifications/notifications.service";
 
 @Controller("gmail")
 @UseGuards(JwtAuthGuard)
 export class GmailController {
-  constructor(private readonly gmailService: GmailService) {}
+  constructor(
+    private readonly gmailService: GmailService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   // ── RSA endpoints ──────────────────────────────────────────────
 
@@ -137,5 +142,54 @@ export class GmailController {
       return value as Ruolo;
     }
     return undefined;
+  }
+}
+
+/**
+ * Separate controller — no JwtAuthGuard — for Google Pub/Sub push webhook.
+ * Google calls POST /gmail/webhook without any Authorization header.
+ */
+@Controller("gmail")
+export class GmailWebhookController {
+  private readonly logger = new Logger(GmailWebhookController.name);
+
+  constructor(
+    private readonly gmailService: GmailService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
+
+  @Post("webhook")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async handleWebhook(@Body() body: any): Promise<void> {
+    const messageData = body?.message?.data;
+    if (!messageData) return;
+
+    try {
+      const decoded = Buffer.from(messageData, "base64").toString("utf-8");
+      const { emailAddress, historyId } = JSON.parse(decoded);
+      if (!emailAddress || !historyId) return;
+
+      const result = await this.gmailService.processWebhookNotification(
+        emailAddress,
+        String(historyId),
+      );
+      if (!result || result.newMessages.length === 0) return;
+
+      const { ruolo, newMessages } = result;
+      const count = newMessages.length;
+      const title =
+        count === 1 ? newMessages[0].subject : `${count} nuove mail sindacali`;
+      const body =
+        count === 1
+          ? newMessages[0].from.replace(/<.*>/, "").trim()
+          : newMessages[0].subject;
+
+      await this.notificationsService.notifyRsaUsers(ruolo, title, body, {
+        type: "NEW_GMAIL",
+        ruolo,
+      });
+    } catch (err: any) {
+      this.logger.error(`Webhook processing error: ${err.message}`);
+    }
   }
 }
