@@ -122,6 +122,9 @@ export class KnowledgeBaseService {
     doc: KnowledgeBaseDocument,
     text: string,
   ): Promise<void> {
+    // Capture the ID once to avoid TypeORM entity tracking issues
+    // across many async Ollama calls in a long-running loop.
+    const docId = doc.id;
     const chunks = this.splitIntoChunks(text);
     let indexed = 0;
 
@@ -132,19 +135,20 @@ export class KnowledgeBaseService {
       try {
         const embedding = await this.ollamaService.generateEmbedding(content);
 
-        // Save chunk metadata via TypeORM
-        const chunk = this.chunkRepo.create({
-          document: doc,
-          chunkIndex: i,
-          content,
-          tokenCount: wordCount,
-        });
-        const saved = await this.chunkRepo.save(chunk);
+        // Use raw SQL for the chunk insert to guarantee document_id is set
+        // correctly regardless of TypeORM's entity identity-map state.
+        const rows: { id: string }[] = await this.dataSource.query(
+          `INSERT INTO knowledge_base_chunks (id, document_id, chunk_index, content, token_count, created_at)
+           VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW())
+           RETURNING id`,
+          [docId, i, content, wordCount],
+        );
+        const chunkId = rows[0].id;
 
-        // Insert the vector embedding via raw SQL (pgvector)
+        // Set the vector embedding (pgvector)
         await this.dataSource.query(
           `UPDATE knowledge_base_chunks SET embedding = $1::vector WHERE id = $2`,
-          [`[${embedding.join(",")}]`, saved.id],
+          [`[${embedding.join(",")}]`, chunkId],
         );
 
         indexed++;
@@ -153,7 +157,7 @@ export class KnowledgeBaseService {
       }
     }
 
-    await this.docRepo.update(doc.id, { chunkCount: indexed });
+    await this.docRepo.update(docId, { chunkCount: indexed });
     this.logger.log(
       `Indexed ${indexed}/${chunks.length} chunks for "${doc.title}"`,
     );
