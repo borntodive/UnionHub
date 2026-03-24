@@ -261,6 +261,7 @@
     "restRules": "Regole riposo (EASA ORO.FTL.235)",
     "restRuleHome": "Base casa: riposo ≥ max(duty, 12h)",
     "restRuleAway": "Fuori base: riposo ≥ max(duty, 10h)",
+    "awakeAlert": "Tempo sveglio: {{hours}} — limite di 18h superato",
     "extensionType": "Tipo di estensione",
     "extensionPlanned": "Pianificata (+1h)",
     "extensionDiscretionary": "Discrezionale comandante (+2h)",

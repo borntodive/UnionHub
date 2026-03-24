@@ -8,6 +8,7 @@ import {
   Switch,
   StatusBar,
 } from "react-native";
+import { AlertTriangle } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Menu, RotateCcw } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -16,6 +17,7 @@ import { colors, spacing, typography, borderRadius } from "../../theme";
 import { useFtlStore } from "../store/useFtlStore";
 import {
   calcMinRest,
+  calcMaxFdp,
   timeToMinutes,
   minutesToTime,
   minutesToDuration,
@@ -25,7 +27,17 @@ import { TimePickerSheet } from "../components/TimePickerSheet";
 export const RestScreen: React.FC = () => {
   const navigation = useNavigation();
   const { t } = useTranslation();
-  const { dutyStart, finishTime, isHomeBase, set, reset } = useFtlStore();
+  const {
+    dutyStart,
+    finishTime,
+    wakeTime,
+    isHomeBase,
+    reportTime,
+    sectors,
+    standby,
+    set,
+    reset,
+  } = useFtlStore();
 
   // Duty duration = finishTime − dutyStart (wraps midnight)
   const dutyMinutes = useMemo(() => {
@@ -50,6 +62,26 @@ export const RestScreen: React.FC = () => {
     if (!result || !finishTime || finishTime.length < 5) return null;
     return minutesToTime(timeToMinutes(finishTime) + result.minRest);
   }, [result, finishTime]);
+
+  // assumedWakeMinutes from FDP calc (home standby), fallback to manual wakeTime
+  const effectiveWakeMinutes = useMemo(() => {
+    if (reportTime && reportTime.length === 5) {
+      try {
+        const fdp = calcMaxFdp(timeToMinutes(reportTime), sectors, standby);
+        if (fdp.assumedWakeMinutes !== null) return fdp.assumedWakeMinutes;
+      } catch {}
+    }
+    if (wakeTime && wakeTime.length === 5) return timeToMinutes(wakeTime);
+    return null;
+  }, [reportTime, sectors, standby, wakeTime]);
+
+  const awakeMinutes = useMemo(() => {
+    if (effectiveWakeMinutes === null || !finishTime || finishTime.length < 5)
+      return null;
+    return (timeToMinutes(finishTime) - effectiveWakeMinutes + 1440) % 1440;
+  }, [effectiveWakeMinutes, finishTime]);
+
+  const awakeAlert = awakeMinutes !== null && awakeMinutes >= 18 * 60;
 
   return (
     <View style={styles.container}>
@@ -95,6 +127,18 @@ export const RestScreen: React.FC = () => {
             {isHomeBase ? t("ftl.minRestHomeRule") : t("ftl.minRestAwayRule")}
           </Text>
         </View>
+
+        {/* Awake alert */}
+        {awakeAlert && (
+          <View style={styles.alertBanner}>
+            <AlertTriangle size={18} color={colors.error} />
+            <Text style={styles.alertText}>
+              {t("ftl.awakeAlert", {
+                hours: minutesToDuration(awakeMinutes!),
+              })}
+            </Text>
+          </View>
+        )}
 
         {/* Inputs */}
         <View style={styles.card}>
@@ -228,6 +272,23 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: spacing.sm,
+  },
+  alertBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: "#FEF2F2",
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.error,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  alertText: {
+    flex: 1,
+    fontSize: typography.sizes.sm,
+    color: colors.error,
+    fontWeight: typography.weights.semibold,
   },
   refCard: { backgroundColor: colors.background },
   refTitle: {

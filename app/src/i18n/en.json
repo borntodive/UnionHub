@@ -261,6 +261,7 @@
     "restRules": "Rest rules (EASA ORO.FTL.235)",
     "restRuleHome": "Home base: rest ≥ max(duty, 12h)",
     "restRuleAway": "Away base: rest ≥ max(duty, 10h)",
+    "awakeAlert": "Time awake: {{hours}} — 18h limit exceeded",
     "extensionType": "Extension type",
     "extensionPlanned": "Planned (+1h)",
     "extensionDiscretionary": "Commander discretion (+2h)",

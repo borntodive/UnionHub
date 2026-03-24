@@ -85,8 +85,12 @@ function homeSbyAssumedWake(sbyStartMin: number, calloutMin: number): number {
   // A pre-midnight callout (e.g. 23:30 = 1410 min) must be treated as
   // "before 07:00 next morning" so it shifts the 18h clock earlier.
   // For 0700–2000 band (baseWake = 1000) the callout is always daytime — no wrap.
+  // Only shift pre-midnight callouts (23:00–23:59) for the night-SBY band.
+  // They fall "after" 07:00 numerically but occur before baseWake in clock time.
+  // Afternoon callouts (e.g. 13:50) must NOT be shifted — they are simply later
+  // than baseWake, so min(baseWake, callout) = baseWake already gives the right answer.
   let calloutNorm = calloutMin;
-  if (baseWake === 7 * 60 && calloutMin >= 12 * 60) {
+  if (baseWake === 7 * 60 && calloutMin >= 23 * 60) {
     calloutNorm = calloutMin - 1440; // shift to negative = evening before
   }
 
