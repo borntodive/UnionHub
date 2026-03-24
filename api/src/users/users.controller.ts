@@ -21,6 +21,7 @@ import {
   NotFoundException,
   ForbiddenException,
   InternalServerErrorException,
+  Logger,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { memoryStorage } from "multer";
@@ -53,6 +54,8 @@ interface RequestWithUser extends Request {
 @Controller("users")
 @UseGuards(JwtAuthGuard)
 export class UsersController {
+  private readonly logger = new Logger(UsersController.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly mailService: MailService,
@@ -342,9 +345,21 @@ export class UsersController {
     );
 
     // Notify secretary with the form attached (fire-and-forget)
-    this.mailService
-      .sendRegistrationFormToSecretary(updated, file.buffer, file.originalname)
-      .catch(() => {});
+    // Re-fetch with relations to ensure base/grade are populated for the email
+    this.usersService
+      .findById(id)
+      .then((fullUser) =>
+        this.mailService.sendRegistrationFormToSecretary(
+          fullUser,
+          file.buffer,
+          file.originalname,
+        ),
+      )
+      .catch((err) =>
+        this.logger.error(
+          `Secretary email failed for ${id}: ${err?.message ?? err}`,
+        ),
+      );
 
     return updated.serialize(requestingUser.role);
   }

@@ -57,7 +57,6 @@ export interface User {
   dataIscrizione?: string | null;
   dateOfEntry?: string | null;
   dateOfCaptaincy?: string | null;
-  deactivatedAt?: string | null;
   statusLog?: StatusLogEntry[];
   createdAt: string;
   updatedAt: string;

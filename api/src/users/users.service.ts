@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, Brackets, IsNull, In } from "typeorm";
+import { Repository, Brackets, In } from "typeorm";
 import * as bcrypt from "bcrypt";
 import { parse } from "csv-parse/sync";
 import * as xlsx from "xlsx";
@@ -117,7 +117,6 @@ export class UsersService {
       .leftJoinAndSelect("user.contratto", "contratto")
       .leftJoinAndSelect("user.grade", "grade")
       .where(where)
-      .andWhere("user.deactivatedAt IS NULL")
       .andWhere("user.isActive = :isActive", {
         isActive: isActive !== undefined ? isActive : true,
       })
@@ -148,14 +147,9 @@ export class UsersService {
     };
   }
 
-  async findById(id: string, includeDeactivated = false): Promise<User> {
-    const where: any = { id };
-    if (!includeDeactivated) {
-      where.deactivatedAt = null;
-    }
-
+  async findById(id: string): Promise<User> {
     const user = await this.usersRepository.findOne({
-      where,
+      where: { id },
       relations: ["base", "contratto", "grade"],
     });
 
@@ -178,7 +172,7 @@ export class UsersService {
       .leftJoinAndSelect("user.grade", "grade");
 
     if (!includeDeleted) {
-      query.andWhere("user.deactivatedAt IS NULL");
+      query.andWhere("user.isActive = true");
     }
 
     return query.getOne();
@@ -221,8 +215,8 @@ export class UsersService {
     );
 
     if (existingCrewcode) {
-      if (existingCrewcode.deactivatedAt) {
-        // User was previously deleted - reactivate and update
+      if (!existingCrewcode.isActive) {
+        // User was previously deactivated - reactivate and update
         return this.reactivateUser(
           existingCrewcode,
           createUserDto,
@@ -302,8 +296,6 @@ export class UsersService {
     createUserDto: CreateUserDto,
     requestingUser: User,
   ): Promise<User> {
-    // Clear the deactivatedAt timestamp to reactivate
-
     // Hash default password
     const hashedPassword = await bcrypt.hash("password", 10);
 
@@ -343,7 +335,6 @@ export class UsersService {
       password: hashedPassword,
       mustChangePassword: true,
       isActive: true,
-      deactivatedAt: null,
     });
 
     // Add to status log
@@ -416,7 +407,7 @@ export class UsersService {
         updateUserDto.crewcode,
         true,
       );
-      if (existingCrewcode && !existingCrewcode.deactivatedAt) {
+      if (existingCrewcode && existingCrewcode.isActive) {
         throw new ConflictException("Crewcode already exists");
       }
     }
@@ -509,9 +500,7 @@ export class UsersService {
       }
     }
 
-    // Soft delete - set deactivatedAt timestamp and add to status log
     user.isActive = false;
-    user.deactivatedAt = new Date();
     this.addStatusLogEntry(
       user,
       false,
@@ -544,7 +533,7 @@ export class UsersService {
 
   async countByRole(ruolo: Ruolo): Promise<number> {
     return this.usersRepository.count({
-      where: { ruolo, isActive: true, deactivatedAt: IsNull() },
+      where: { ruolo, isActive: true },
     });
   }
 
@@ -552,7 +541,7 @@ export class UsersService {
     limit: number = 5,
     requestingUser: User,
   ): Promise<User[]> {
-    const where: any = { isActive: true, deactivatedAt: IsNull() };
+    const where: any = { isActive: true };
 
     // Admin scoping
     if (requestingUser.role === UserRole.ADMIN && requestingUser.ruolo) {
@@ -660,13 +649,12 @@ export class UsersService {
       throw new NotFoundException("User not found");
     }
 
-    if (!user.deactivatedAt) {
+    if (user.isActive) {
       throw new ConflictException("User is not deactivated");
     }
 
     // Reactivate user
     user.isActive = true;
-    user.deactivatedAt = null;
     user.mustChangePassword = true; // Force password change on reactivation
 
     // Add to status log
@@ -706,7 +694,7 @@ export class UsersService {
       throw new NotFoundException("User not found");
     }
 
-    if (!user.deactivatedAt) {
+    if (user.isActive) {
       throw new ConflictException(
         "Only deactivated users can be permanently deleted",
       );
@@ -730,7 +718,7 @@ export class UsersService {
       options.ruolo = requestingUser.ruolo;
     }
 
-    const where: any = { isActive: true, deactivatedAt: IsNull() };
+    const where: any = { isActive: true };
     if (options.ruolo) where.ruolo = options.ruolo;
     if (options.baseId) where.baseId = options.baseId;
     if (options.contrattoId) where.contrattoId = options.contrattoId;
@@ -805,10 +793,7 @@ export class UsersService {
     rsaCount: number;
   }> {
     // Build base query conditions
-    const baseConditions: string[] = [
-      "user.isActive = :isActive",
-      "user.deactivatedAt IS NULL",
-    ];
+    const baseConditions: string[] = ["user.isActive = :isActive"];
     const parameters: any = { isActive: true };
 
     // Admin scoping

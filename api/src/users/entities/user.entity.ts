@@ -132,10 +132,6 @@ export class User {
   @UpdateDateColumn({ type: "timestamptz" })
   updatedAt: Date;
 
-  // Soft delete - when user is deactivated, this is set
-  @Column({ type: "timestamptz", nullable: true })
-  deactivatedAt: Date | null;
-
   // Quick status log for frontend display (summary of status changes)
   @Column({ type: "jsonb", nullable: true })
   statusLog: StatusLogEntry[] | null;
@@ -183,7 +179,6 @@ export class User {
         itud: this.itud,
         rsa: this.rsa,
         rls: this.rls,
-        deactivatedAt: this.deactivatedAt,
         statusLog: this.statusLog,
       };
     }
