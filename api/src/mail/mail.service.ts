@@ -707,57 +707,75 @@ export class MailService {
         : user.ruolo === "cabin_crew"
           ? "Cabin Crew"
           : (user.ruolo ?? "—");
+    const baseLabel = user.base
+      ? `${user.base.codice} — ${user.base.nome}`
+      : "—";
+    const gradeLabel = user.grade ? user.grade.codice : "—";
 
     const html = `
 <!DOCTYPE html>
 <html lang="it">
-<head><meta charset="UTF-8" /><title>Nuovo modulo di iscrizione</title></head>
-<body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:32px 0;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-        <tr>
-          <td style="background:#177246;padding:24px 32px;">
-            <span style="font-size:20px;font-weight:bold;color:#ffffff;">FIT-CISL · Nuovo modulo di iscrizione</span>
+<head><meta charset="UTF-8" /><title>Modulo iscrizione</title></head>
+<body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#ffffff;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:24px;">
+    <tr><td>
+      <p style="margin:0 0 20px;font-size:15px;color:#222;">Buongiorno,</p>
+      <p style="margin:0 0 20px;font-size:15px;color:#222;">
+        in allegato il modulo di iscrizione di:
+      </p>
+      <table cellpadding="0" cellspacing="0"
+             style="border:1px solid #ddd;border-radius:6px;overflow:hidden;
+                    min-width:320px;">
+        <tr style="background:#f0f7f3;">
+          <td style="padding:8px 16px;font-size:12px;font-weight:bold;color:#177246;
+                     text-transform:uppercase;letter-spacing:0.5px;width:140px;">
+            Campo
+          </td>
+          <td style="padding:8px 16px;font-size:12px;font-weight:bold;color:#177246;
+                     text-transform:uppercase;letter-spacing:0.5px;">
+            Valore
           </td>
         </tr>
-        <tr>
-          <td style="padding:28px 32px;">
-            <p style="margin:0 0 16px;font-size:15px;color:#333;">
-              È stato caricato un nuovo modulo di iscrizione per il seguente socio:
-            </p>
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:6px;margin-bottom:24px;">
-              <tr><td style="padding:20px 24px;">
-                <table width="100%" cellpadding="0" cellspacing="6">
-                  <tr>
-                    <td style="font-size:13px;color:#888;width:130px;">Nome</td>
-                    <td style="font-size:14px;font-weight:bold;color:#333;">${user.nome} ${user.cognome}</td>
-                  </tr>
-                  <tr>
-                    <td style="font-size:13px;color:#888;">Crewcode</td>
-                    <td style="font-size:14px;font-weight:bold;color:#177246;font-family:monospace;">${user.crewcode}</td>
-                  </tr>
-                  <tr>
-                    <td style="font-size:13px;color:#888;">Email</td>
-                    <td style="font-size:14px;color:#333;">${user.email}</td>
-                  </tr>
-                  <tr>
-                    <td style="font-size:13px;color:#888;">Ruolo</td>
-                    <td style="font-size:14px;color:#333;">${ruoloLabel}</td>
-                  </tr>
-                </table>
-              </td></tr>
-            </table>
-            <p style="margin:0;font-size:13px;color:#888;">
-              Il modulo è allegato a questa email in formato PDF.
-            </p>
+        <tr style="background:#ffffff;">
+          <td style="padding:9px 16px;font-size:13px;color:#555;border-top:1px solid #eee;">
+            Nome
+          </td>
+          <td style="padding:9px 16px;font-size:14px;font-weight:bold;color:#222;
+                     border-top:1px solid #eee;">
+            ${user.nome} ${user.cognome}
           </td>
         </tr>
-        <tr>
-          <td style="background:#f8f9fa;padding:16px 32px;text-align:center;border-top:1px solid #eee;">
-            <p style="margin:0;font-size:12px;color:#aaa;">
-              FIT-CISL · Questa è un'email automatica, non rispondere a questo messaggio.
-            </p>
+        <tr style="background:#fafafa;">
+          <td style="padding:9px 16px;font-size:13px;color:#555;border-top:1px solid #eee;">
+            Crewcode
+          </td>
+          <td style="padding:9px 16px;font-size:14px;font-weight:bold;color:#177246;
+                     font-family:monospace;border-top:1px solid #eee;">
+            ${user.crewcode}
+          </td>
+        </tr>
+        <tr style="background:#ffffff;">
+          <td style="padding:9px 16px;font-size:13px;color:#555;border-top:1px solid #eee;">
+            Ruolo
+          </td>
+          <td style="padding:9px 16px;font-size:14px;color:#222;border-top:1px solid #eee;">
+            ${ruoloLabel}
+          </td>
+        </tr>
+        <tr style="background:#fafafa;">
+          <td style="padding:9px 16px;font-size:13px;color:#555;border-top:1px solid #eee;">
+            Base
+          </td>
+          <td style="padding:9px 16px;font-size:14px;color:#222;border-top:1px solid #eee;">
+            ${baseLabel}
+          </td>
+        </tr>
+        <tr style="background:#ffffff;">
+          <td style="padding:9px 16px;font-size:13px;color:#555;border-top:1px solid #eee;">
+            Grado
+          </td>
+          <td style="padding:9px 16px;font-size:14px;color:#222;border-top:1px solid #eee;">
+            ${gradeLabel}
           </td>
         </tr>
       </table>
