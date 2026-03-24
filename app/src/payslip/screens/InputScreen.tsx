@@ -19,8 +19,10 @@ import { SbhPicker } from "../components/input/SbhPicker";
 import { NumberInput } from "../components/input/NumberInput";
 import { AdditionalPaymentsSection } from "../components/input/AdditionalPaymentsSection";
 import { AdditionalDeductionsSection } from "../components/input/AdditionalDeductionsSection";
+import { usePayslipSettingsSync } from "../hooks/usePayslipSettingsSync";
 
 export const InputScreen: React.FC = () => {
+  usePayslipSettingsSync();
   const navigation = useNavigation();
   const { t } = useTranslation();
   const { user } = useAuthStore();

@@ -132,6 +132,10 @@ export class User {
   @UpdateDateColumn({ type: "timestamptz" })
   updatedAt: Date;
 
+  // Payslip calculator settings (synced across devices)
+  @Column({ type: "jsonb", nullable: true })
+  payslipSettings: Record<string, unknown> | null;
+
   // Quick status log for frontend display (summary of status changes)
   @Column({ type: "jsonb", nullable: true })
   statusLog: StatusLogEntry[] | null;

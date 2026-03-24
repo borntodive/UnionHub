@@ -99,6 +99,21 @@ export class UsersController {
     );
   }
 
+  @Get("me/payslip-settings")
+  async getPayslipSettings(
+    @Request() req: RequestWithUser,
+  ): Promise<Record<string, unknown> | null> {
+    return this.usersService.getPayslipSettings(req.user.userId);
+  }
+
+  @Put("me/payslip-settings")
+  async updatePayslipSettings(
+    @Request() req: RequestWithUser,
+    @Body() settings: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    return this.usersService.updatePayslipSettings(req.user.userId, settings);
+  }
+
   @Get("me")
   async getMe(@Request() req: RequestWithUser): Promise<Partial<User>> {
     const user = await this.usersService.findById(req.user.userId);

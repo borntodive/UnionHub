@@ -1125,6 +1125,25 @@ export class UsersService {
     }));
   }
 
+  async getPayslipSettings(
+    userId: string,
+  ): Promise<Record<string, unknown> | null> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ["id", "payslipSettings"],
+    });
+    if (!user) throw new NotFoundException("User not found");
+    return user.payslipSettings ?? null;
+  }
+
+  async updatePayslipSettings(
+    userId: string,
+    settings: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    await this.usersRepository.update(userId, { payslipSettings: settings });
+    return settings;
+  }
+
   async sendTestWelcomeEmail(): Promise<{
     sent: boolean;
     to: string;

@@ -19,6 +19,7 @@ import { useAuthStore } from "../../store/authStore";
 import { usePayslipStore } from "../store/usePayslipStore";
 import { UserRole } from "../../types";
 import { PayslipSettings } from "../types";
+import { usePayslipSettingsSync } from "../hooks/usePayslipSettingsSync";
 
 // ── Shared sub-components (inline) ──────────────────────────────────────────
 
@@ -57,6 +58,7 @@ const CheckboxRow: React.FC<CheckboxRowProps> = ({
 // ── Main Screen ──────────────────────────────────────────────────────────────
 
 export const SettingsScreen: React.FC = () => {
+  usePayslipSettingsSync();
   const navigation = useNavigation();
   const { t } = useTranslation();
   const { user } = useAuthStore();

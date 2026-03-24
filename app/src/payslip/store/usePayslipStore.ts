@@ -22,9 +22,14 @@ interface PayslipState {
   overrideSettings: PayslipSettings;
   overrideRsa: boolean;
   overrideItud: boolean;
+  /** Local settings have been modified but not yet pushed to the server */
+  settingsPendingSync: boolean;
 
   setInput: (input: Partial<PayslipInput>) => void;
   setSettings: (settings: Partial<PayslipSettings>) => void;
+  /** Apply settings fetched from server (does NOT mark as pending) */
+  applyServerSettings: (settings: PayslipSettings) => void;
+  markSettingsSynced: () => void;
   setOverrideActive: (active: boolean) => void;
   setOverrideSettings: (settings: Partial<PayslipSettings>) => void;
   setOverrideRsa: (v: boolean) => void;
@@ -109,13 +114,25 @@ export const usePayslipStore = create<PayslipState>()(
       overrideSettings: { ...defaultSettings },
       overrideRsa: false,
       overrideItud: false,
+      settingsPendingSync: false,
 
       setInput: (input) => {
         set((state) => ({ input: { ...state.input, ...input } }));
       },
 
       setSettings: (settings) => {
-        set((state) => ({ settings: { ...state.settings, ...settings } }));
+        set((state) => ({
+          settings: { ...state.settings, ...settings },
+          settingsPendingSync: true,
+        }));
+      },
+
+      applyServerSettings: (settings) => {
+        set({ settings, settingsPendingSync: false });
+      },
+
+      markSettingsSynced: () => {
+        set({ settingsPendingSync: false });
       },
 
       setOverrideActive: (active) => set({ overrideActive: active }),
@@ -262,6 +279,7 @@ export const usePayslipStore = create<PayslipState>()(
       partialize: (state) => ({
         settings: state.settings,
         history: state.history,
+        settingsPendingSync: state.settingsPendingSync,
       }),
     },
   ),
