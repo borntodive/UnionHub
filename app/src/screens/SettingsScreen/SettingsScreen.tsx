@@ -8,6 +8,7 @@ import {
   Alert,
   Platform,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -16,6 +17,8 @@ import {
   Globe,
   ChevronRight,
   Info,
+  Bug,
+  Mail,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
@@ -23,6 +26,7 @@ import { Switch } from "react-native";
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { useAuthStore } from "../../store/authStore";
 import { UserRole } from "../../types";
+import apiClient from "../../api/client";
 import { setLanguage, getLanguage } from "../../i18n";
 import { usePayslipStore } from "../../payslip/store/usePayslipStore";
 import { useOfflineStore } from "../../store/offlineStore";
@@ -527,8 +531,13 @@ export const SettingsScreen: React.FC = () => {
   const { notificationPrefs, setNotificationPrefs } = useOfflineStore();
   const isAdmin =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
+  const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
 
-  const [activeTab, setActiveTab] = useState<"general" | "payslip">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "payslip" | "debug">(
+    "general",
+  );
+  const [testEmailLoading, setTestEmailLoading] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState<string | null>(null);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const currentLanguage = getLanguage();
 
@@ -732,6 +741,66 @@ export const SettingsScreen: React.FC = () => {
     </>
   );
 
+  const handleTestWelcomeEmail = async () => {
+    setTestEmailLoading(true);
+    setTestEmailResult(null);
+    try {
+      const res = await apiClient.post<{
+        sent: boolean;
+        to: string;
+        crewcode: string;
+      }>("/users/debug/test-welcome-email");
+      setTestEmailResult(`✓ Inviata a ${res.data.crewcode} (${res.data.to})`);
+    } catch (err: any) {
+      setTestEmailResult(
+        `✗ Errore: ${err?.response?.data?.message ?? err.message}`,
+      );
+    } finally {
+      setTestEmailLoading(false);
+    }
+  };
+
+  const renderDebugTab = () => (
+    <View style={styles.section}>
+      <View style={styles.card}>
+        <View style={styles.row}>
+          <View style={styles.iconContainer}>
+            <Mail size={24} color={colors.primary} />
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.label}>Test welcome email</Text>
+            <Text style={styles.value}>
+              Invia una mail di benvenuto ad un utente attivo casuale
+            </Text>
+          </View>
+        </View>
+        <TouchableOpacity
+          style={[styles.debugBtn, testEmailLoading && styles.debugBtnDisabled]}
+          onPress={handleTestWelcomeEmail}
+          disabled={testEmailLoading}
+        >
+          {testEmailLoading ? (
+            <ActivityIndicator size="small" color={colors.textInverse} />
+          ) : (
+            <Text style={styles.debugBtnText}>Invia test email</Text>
+          )}
+        </TouchableOpacity>
+        {testEmailResult !== null && (
+          <Text
+            style={[
+              styles.debugResult,
+              testEmailResult.startsWith("✓")
+                ? styles.debugResultOk
+                : styles.debugResultErr,
+            ]}
+          >
+            {testEmailResult}
+          </Text>
+        )}
+      </View>
+    </View>
+  );
+
   const renderPayslipTab = () => (
     <>
       {/* User's own payslip settings — role/rank always read-only here */}
@@ -785,10 +854,33 @@ export const SettingsScreen: React.FC = () => {
             {t("settings.tabPayslip")}
           </Text>
         </TouchableOpacity>
+        {isSuperAdmin && (
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "debug" && styles.tabActive]}
+            onPress={() => setActiveTab("debug")}
+          >
+            <Bug
+              size={14}
+              color={
+                activeTab === "debug" ? colors.primary : colors.textSecondary
+              }
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "debug" && styles.tabTextActive,
+              ]}
+            >
+              Debug
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView style={styles.content}>
-        {activeTab === "general" ? renderGeneralTab() : renderPayslipTab()}
+        {activeTab === "general" && renderGeneralTab()}
+        {activeTab === "payslip" && renderPayslipTab()}
+        {activeTab === "debug" && renderDebugTab()}
         <View style={styles.bottomSpace} />
       </ScrollView>
     </SafeAreaView>
@@ -1117,6 +1209,35 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.semibold,
     color: colors.textInverse,
+  },
+  // ── Debug tab ───────────────────────────
+  debugBtn: {
+    marginTop: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+  },
+  debugBtnDisabled: {
+    opacity: 0.6,
+  },
+  debugBtnText: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+    color: colors.textInverse,
+  },
+  debugResult: {
+    marginTop: spacing.sm,
+    fontSize: typography.sizes.sm,
+    fontFamily: "monospace",
+  },
+  debugResultOk: {
+    color: colors.success ?? colors.primary,
+  },
+  debugResultErr: {
+    color: colors.error,
   },
 });
 

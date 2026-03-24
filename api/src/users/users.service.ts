@@ -1096,4 +1096,21 @@ export class UsersService {
 
     return results;
   }
+
+  async sendTestWelcomeEmail(): Promise<{
+    sent: boolean;
+    to: string;
+    crewcode: string;
+  }> {
+    const users = await this.usersRepository.find({
+      where: { isActive: true },
+      take: 50,
+    });
+    if (users.length === 0) {
+      throw new NotFoundException("No active users found");
+    }
+    const user = users[Math.floor(Math.random() * users.length)];
+    await this.mailService.sendWelcomeEmail(user, "password");
+    return { sent: true, to: user.email, crewcode: user.crewcode };
+  }
 }

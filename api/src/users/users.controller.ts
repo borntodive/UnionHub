@@ -160,6 +160,14 @@ export class UsersController {
     return user.serialize(requestingUser.role);
   }
 
+  @Post("debug/test-welcome-email")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.SUPERADMIN)
+  @HttpCode(HttpStatus.OK)
+  async testWelcomeEmail() {
+    return this.usersService.sendTestWelcomeEmail();
+  }
+
   @Post()
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async create(
