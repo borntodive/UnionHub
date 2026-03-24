@@ -18,6 +18,7 @@ import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { UserRole } from "../common/enums/user-role.enum";
 import { Ruolo } from "../common/enums/ruolo.enum";
+import { MailService } from "../mail/mail.service";
 
 interface FindAllOptions {
   role?: UserRole;
@@ -38,6 +39,7 @@ export class UsersService {
     private usersRepository: Repository<User>,
     @InjectRepository(UserStatusHistory)
     private statusHistoryRepository: Repository<UserStatusHistory>,
+    private readonly mailService: MailService,
   ) {}
 
   // Helper to add entry to statusLog
@@ -285,6 +287,9 @@ export class UsersService {
       changedById: requestingUser.id,
     });
 
+    // Send welcome email (fire-and-forget — never blocks user creation)
+    this.mailService.sendWelcomeEmail(savedUser, "password").catch(() => {});
+
     return savedUser;
   }
 
@@ -354,6 +359,9 @@ export class UsersService {
       reason: "User re-registered with same crewcode (previously deactivated)",
       changedById: requestingUser.id,
     });
+
+    // Send welcome email (fire-and-forget)
+    this.mailService.sendWelcomeEmail(savedUser, "password").catch(() => {});
 
     return savedUser;
   }

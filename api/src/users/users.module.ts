@@ -10,6 +10,7 @@ import { PdfImageService } from "./services/pdf-image.service";
 import { BasesModule } from "../bases/bases.module";
 import { ContractsModule } from "../contracts/contracts.module";
 import { GradesModule } from "../grades/grades.module";
+import { MailModule } from "../mail/mail.module";
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { GradesModule } from "../grades/grades.module";
     BasesModule,
     ContractsModule,
     GradesModule,
+    MailModule,
   ],
   controllers: [UsersController],
   providers: [
