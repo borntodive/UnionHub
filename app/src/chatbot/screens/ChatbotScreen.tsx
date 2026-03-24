@@ -206,7 +206,7 @@ export const ChatbotScreen: React.FC = () => {
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={insets.top + headerHeight}
+          keyboardVerticalOffset={headerHeight}
         >
           {showOnboarding ? (
             <View style={styles.onboarding}>
