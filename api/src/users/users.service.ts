@@ -1140,7 +1140,10 @@ export class UsersService {
     userId: string,
     settings: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
-    await this.usersRepository.update(userId, { payslipSettings: settings });
+    await this.usersRepository.query(
+      `UPDATE "users" SET "payslipSettings" = $1 WHERE "id" = $2`,
+      [JSON.stringify(settings), userId],
+    );
     return settings;
   }
 
