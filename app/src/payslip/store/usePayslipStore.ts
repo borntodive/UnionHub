@@ -10,6 +10,8 @@ import {
   AdditionalDeductionInput,
 } from "../types";
 import { calculatePayroll } from "../services/PayslipCalculator";
+import { payslipSettingsApi } from "../../api/payslipSettings";
+import { useOfflineStore } from "../../store/offlineStore";
 
 interface PayslipState {
   input: PayslipInput;
@@ -121,10 +123,18 @@ export const usePayslipStore = create<PayslipState>()(
       },
 
       setSettings: (settings) => {
-        set((state) => ({
-          settings: { ...state.settings, ...settings },
-          settingsPendingSync: true,
-        }));
+        const merged = { ...get().settings, ...settings };
+        set({ settings: merged, settingsPendingSync: true });
+
+        // Push immediately if online — fire and forget
+        if (useOfflineStore.getState().isOnline) {
+          payslipSettingsApi
+            .put(merged)
+            .then(() => usePayslipStore.getState().markSettingsSynced())
+            .catch(() => {
+              // stay pending — will retry on next mount/reconnect
+            });
+        }
       },
 
       applyServerSettings: (settings) => {

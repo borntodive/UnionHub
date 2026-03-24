@@ -22,6 +22,7 @@ import { Input } from "../../components/Input";
 import { authApi } from "../../api/auth";
 import { useAuthStore } from "../../store/authStore";
 import { useBiometricAuth } from "../../hooks/useBiometricAuth";
+import { syncPayslipSettings } from "../../payslip/hooks/usePayslipSettingsSync";
 
 const QUICK_USERS: { label: string; crewcode: string; password: string }[] = [
   { label: "Manual Entry", crewcode: "", password: "" },
@@ -90,6 +91,7 @@ export const LoginScreen: React.FC = () => {
               password: biometricCredentials.password,
             });
             setAuth(response);
+            syncPayslipSettings();
           } catch {
             Alert.alert(t("errors.generic"), t("auth.sessionExpired"), [
               { text: t("common.ok") },
@@ -112,6 +114,7 @@ export const LoginScreen: React.FC = () => {
     mutationFn: authApi.login,
     onSuccess: (data, variables) => {
       setAuth(data);
+      syncPayslipSettings();
       // Store credentials used for this login
       setLastLoginCredentials({
         crewcode: variables.crewcode,
@@ -231,6 +234,7 @@ export const LoginScreen: React.FC = () => {
           password: biometricCredentials.password,
         });
         setAuth(response);
+        syncPayslipSettings();
       } catch (error: any) {
         Alert.alert(t("errors.generic"), t("auth.sessionExpired"));
       }

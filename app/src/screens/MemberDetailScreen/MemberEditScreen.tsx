@@ -49,6 +49,8 @@ import { Ruolo, UserRole } from "../../types";
 import { basesApi } from "../../api/bases";
 import { contractsApi } from "../../api/contracts";
 import { gradesApi } from "../../api/grades";
+import { usePayslipStore } from "../../payslip/store/usePayslipStore";
+import { getUnionFee } from "../../payslip/data/contractData";
 
 type MemberEditRouteProp = RouteProp<RootStackParamList, "MemberEdit">;
 type MemberEditNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -207,6 +209,22 @@ export const MemberEditScreen: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user", memberId] });
       queryClient.invalidateQueries({ queryKey: ["users"] });
+
+      // If editing own profile and grade changed → sync rank in payslip settings
+      if (
+        isOwnProfile &&
+        formData.gradeId &&
+        formData.gradeId !== member?.grade?.id
+      ) {
+        const newGrade = grades?.find((g) => g.id === formData.gradeId);
+        if (newGrade) {
+          const rank = newGrade.codice.toLowerCase();
+          const role = currentUser?.ruolo === Ruolo.CABIN_CREW ? "cc" : "pil";
+          const union = getUnionFee(rank, role);
+          usePayslipStore.getState().setSettings({ rank, role, union });
+        }
+      }
+
       Alert.alert("Success", "Member updated successfully");
       navigation.goBack();
     },
