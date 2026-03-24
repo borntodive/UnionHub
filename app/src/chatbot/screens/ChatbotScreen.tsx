@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  useWindowDimensions,
 } from "react-native";
 import {
   SafeAreaView,
@@ -39,6 +40,7 @@ export const ChatbotScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const flatListRef = useRef<FlatList>(null);
   const insets = useSafeAreaInsets();
+  const [headerHeight, setHeaderHeight] = useState(0);
 
   const {
     conversationId,
@@ -185,7 +187,10 @@ export const ChatbotScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.header}>
+        <View
+          style={styles.header}
+          onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+        >
           <TouchableOpacity
             onPress={() => navigation.openDrawer()}
             style={styles.headerButton}
@@ -201,7 +206,7 @@ export const ChatbotScreen: React.FC = () => {
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={0}
+          keyboardVerticalOffset={insets.top + headerHeight}
         >
           {showOnboarding ? (
             <View style={styles.onboarding}>
