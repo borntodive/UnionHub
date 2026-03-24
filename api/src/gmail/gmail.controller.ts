@@ -178,11 +178,11 @@ export class GmailWebhookController {
       const { ruolo, newMessages } = result;
       const count = newMessages.length;
       const title =
-        count === 1 ? newMessages[0].subject : `${count} nuove mail sindacali`;
-      const body =
-        count === 1
-          ? newMessages[0].from.replace(/<.*>/, "").trim()
-          : newMessages[0].subject;
+        count === 1 ? "Nuova Mail" : `${count} nuove mail sindacali`;
+      const from =
+        newMessages[0].from.replace(/<.*>/, "").trim() || newMessages[0].from;
+      const subject = newMessages[0].subject;
+      const body = count === 1 ? `${from}\n${subject}` : `${from} — ${subject}`;
 
       await this.notificationsService.notifyRsaUsers(ruolo, title, body, {
         type: "NEW_GMAIL",
