@@ -202,13 +202,7 @@ export class UsersService {
       }
     }
 
-    // Check for duplicate email
-    const existingEmail = await this.findByEmail(createUserDto.email);
-    if (existingEmail) {
-      throw new ConflictException("Email already exists");
-    }
-
-    // Check for existing crewcode (including soft-deleted users)
+    // Check crewcode first (includes inactive users for reactivation)
     const existingCrewcode = await this.findByCrewcode(
       createUserDto.crewcode,
       true,
@@ -225,6 +219,20 @@ export class UsersService {
       } else {
         throw new ConflictException("Crewcode already exists");
       }
+    }
+
+    // Check for duplicate email (only among active users — inactive users can be reactivated)
+    const existingEmail = await this.findByEmail(createUserDto.email);
+    if (existingEmail) {
+      if (!existingEmail.isActive) {
+        // Email belongs to a deactivated user with a different crewcode — reactivate them
+        return this.reactivateUser(
+          existingEmail,
+          createUserDto,
+          requestingUser,
+        );
+      }
+      throw new ConflictException("Email already exists");
     }
 
     // Hash default password
@@ -281,12 +289,14 @@ export class UsersService {
       changedById: requestingUser.id,
     });
 
-    // Send welcome email (fire-and-forget — never blocks user creation)
-    this.getRsaRlsContacts()
-      .then((contacts) =>
-        this.mailService.sendWelcomeEmail(savedUser, "password", contacts),
-      )
-      .catch(() => {});
+    // Send welcome email (fire-and-forget — 3s delay to avoid Mailtrap rate limit)
+    setTimeout(() => {
+      this.getRsaRlsContacts()
+        .then((contacts) =>
+          this.mailService.sendWelcomeEmail(savedUser, "password", contacts),
+        )
+        .catch(() => {});
+    }, 3000);
 
     return savedUser;
   }
@@ -355,12 +365,14 @@ export class UsersService {
       changedById: requestingUser.id,
     });
 
-    // Send welcome email (fire-and-forget)
-    this.getRsaRlsContacts()
-      .then((contacts) =>
-        this.mailService.sendWelcomeEmail(savedUser, "password", contacts),
-      )
-      .catch(() => {});
+    // Send welcome email (fire-and-forget — 3s delay to avoid Mailtrap rate limit)
+    setTimeout(() => {
+      this.getRsaRlsContacts()
+        .then((contacts) =>
+          this.mailService.sendWelcomeEmail(savedUser, "password", contacts),
+        )
+        .catch(() => {});
+    }, 3000);
 
     return savedUser;
   }

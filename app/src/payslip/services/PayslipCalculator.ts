@@ -39,12 +39,7 @@ import {
   calculateIVSExemption,
   calculateBonus,
 } from "../utils/calculations";
-import {
-  parseSbh,
-  isDecember,
-  getYear,
-  getDaysInMonth,
-} from "../utils/formatters";
+import { parseSbh, isDecember, getYear } from "../utils/formatters";
 
 export class PayslipCalculator {
   private contractData: ReturnType<typeof getContractData>;
@@ -445,10 +440,9 @@ export class PayslipCalculator {
     }
 
     if (isStatutory) {
-      // Statutory leave: based on actual month days
-      const monthDays = getDaysInMonth(this.year, this.month);
-      const basicQuota = (basic * days) / monthDays;
-      const ffpQuota = (ffp * days) / monthDays;
+      // Statutory leave: divided by 26 (contractual working days convention)
+      const basicQuota = (basic * days) / 26;
+      const ffpQuota = (ffp * days) / 26;
       return createLeaveItem(basicQuota, ffpQuota, days);
     } else {
       // Contractual leave: based on contract unpaid leave days

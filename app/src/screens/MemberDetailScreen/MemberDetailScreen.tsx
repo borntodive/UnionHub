@@ -100,6 +100,7 @@ export const MemberDetailScreen: React.FC = () => {
   } = useQuery({
     queryKey: ["user", memberId],
     queryFn: () => usersApi.getUserById(memberId),
+    staleTime: 0,
   });
 
   // Handle app state changes - force re-render when coming back to foreground

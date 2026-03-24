@@ -363,7 +363,7 @@ export class UsersController {
             `Secretary email failed for ${id}: ${err?.message ?? err}`,
           ),
         );
-    }, 2000);
+    }, 20000);
 
     return updated.serialize(requestingUser.role);
   }

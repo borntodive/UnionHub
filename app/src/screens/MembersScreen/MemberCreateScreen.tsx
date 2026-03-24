@@ -111,37 +111,34 @@ export const MemberCreateScreen: React.FC = () => {
     dataIscrizione: "",
     dateOfEntry: "",
     dateOfCaptaincy: "",
-    role: UserRole.USER,
+    role: isSuperAdmin ? ("" as UserRole) : UserRole.USER,
     ruolo: isSuperAdmin ? undefined : currentUser?.ruolo || undefined,
   });
 
   // Filter options based on user role
   const filteredContracts = useMemo(() => {
     if (!contracts) return [];
-    if (isSuperAdmin) return contracts;
-
-    const userRuolo = currentUser?.ruolo;
+    const ruolo = isSuperAdmin ? formData.ruolo : currentUser?.ruolo;
     return contracts.filter((c) => {
-      if (userRuolo === Ruolo.PILOT) {
+      if (ruolo === Ruolo.PILOT) {
         return (
           c.codice.includes("PI") ||
           ["AFA", "Contractor", "DAC"].includes(c.codice)
         );
       }
-      if (userRuolo === Ruolo.CABIN_CREW) {
+      if (ruolo === Ruolo.CABIN_CREW) {
         return c.codice.includes("CC") || c.codice === "CrewLink";
       }
       return true;
     });
-  }, [contracts, isSuperAdmin, currentUser?.ruolo]);
+  }, [contracts, isSuperAdmin, formData.ruolo, currentUser?.ruolo]);
 
   const filteredGrades = useMemo(() => {
     if (!grades) return [];
-    if (isSuperAdmin) return grades;
-
-    const userRuolo = currentUser?.ruolo;
-    return grades.filter((g) => g.ruolo === userRuolo);
-  }, [grades, isSuperAdmin, currentUser?.ruolo]);
+    const ruolo = isSuperAdmin ? formData.ruolo : currentUser?.ruolo;
+    if (!ruolo) return grades;
+    return grades.filter((g) => g.ruolo === ruolo);
+  }, [grades, isSuperAdmin, formData.ruolo, currentUser?.ruolo]);
 
   // PDF extraction state
   const [selectedPdf, setSelectedPdf] = useState<{
@@ -158,6 +155,8 @@ export const MemberCreateScreen: React.FC = () => {
   const [activePicker, setActivePicker] = useState<
     "dataIscrizione" | "dateOfEntry" | "dateOfCaptaincy" | null
   >(null);
+
+  const rolesSelected = !isSuperAdmin || (!!formData.role && !!formData.ruolo);
 
   const isSelectedGradeCaptain = useMemo(() => {
     if (formData.gradeId && grades) {
@@ -425,410 +424,14 @@ export const MemberCreateScreen: React.FC = () => {
             style={styles.content}
             showsVerticalScrollIndicator={false}
           >
-            {/* PDF Upload Section */}
-            <Card style={{ ...styles.sectionCard, ...styles.pdfCard }}>
-              <Text style={styles.sectionTitle}>Registration Form</Text>
-              <Text style={styles.pdfDescription}>
-                Upload the signed membership form (PDF) to auto-fill the fields
-              </Text>
-
-              <TouchableOpacity
-                style={[
-                  styles.pdfUploadButton,
-                  extractionStatus === "extracting" &&
-                    styles.pdfUploadButtonDisabled,
-                ]}
-                onPress={handlePdfUpload}
-                disabled={extractionStatus === "extracting"}
-              >
-                {extractionStatus === "extracting" ? (
-                  <>
-                    <ActivityIndicator size="small" color={colors.primary} />
-                    <Text style={styles.pdfUploadText}>Extracting...</Text>
-                  </>
-                ) : (
-                  <>
-                    <Upload size={24} color={colors.primary} />
-                    <Text style={styles.pdfUploadText}>
-                      {selectedPdf ? "Change PDF" : "Select PDF Form"}
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
-
-              {selectedPdf && (
-                <View style={styles.pdfInfo}>
-                  <FileText size={16} color={colors.textSecondary} />
-                  <Text style={styles.pdfName} numberOfLines={1}>
-                    {selectedPdf.name}
-                  </Text>
-                  {extractionStatus === "success" && (
-                    <View style={styles.extractionBadge}>
-                      <ScanLine size={14} color={colors.success} />
-                      <Text style={styles.extractionText}>Extracted</Text>
-                    </View>
-                  )}
-                  <View style={styles.pdfActions}>
-                    <TouchableOpacity
-                      onPress={async () => {
-                        // Generate preview from PDF
-                        if (!selectedPdf) return;
-
-                        setIsLoadingPreview(true);
-                        try {
-                          // Read PDF as base64 using legacy API
-                          const base64 = await FileSystem.readAsStringAsync(
-                            selectedPdf.uri,
-                            {
-                              encoding: FileSystem.EncodingType.Base64,
-                            },
-                          );
-
-                          // Send to backend for conversion
-                          const response =
-                            await usersApi.convertPdfToImage(base64);
-                          setPdfPreviewBase64(response.imageBase64);
-                          setShowPdfModal(true);
-                        } catch (error) {
-                          console.error("Error generating preview:", error);
-                          Alert.alert(
-                            "Error",
-                            "Could not generate PDF preview",
-                          );
-                        } finally {
-                          setIsLoadingPreview(false);
-                        }
-                      }}
-                      style={styles.pdfActionButton}
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                      disabled={isLoadingPreview}
-                    >
-                      {isLoadingPreview ? (
-                        <ActivityIndicator
-                          size="small"
-                          color={colors.primary}
-                        />
-                      ) : (
-                        <Eye size={18} color={colors.primary} />
-                      )}
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setSelectedPdf(null);
-                        setExtractionStatus("idle");
-                      }}
-                      style={styles.pdfActionButton}
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                      <X size={18} color={colors.error} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
-            </Card>
-
-            {/* Subscription Date - Only if extracted from PDF or admin */}
-            {(formData.dataIscrizione || isAdmin) && (
-              <Card style={styles.sectionCard}>
-                <Text style={styles.sectionTitle}>Membership Information</Text>
-
-                <TouchableOpacity
-                  style={styles.datePickerButton}
-                  onPress={() => setActivePicker("dataIscrizione")}
-                >
-                  <View style={styles.datePickerIcon}>
-                    <Calendar size={20} color={colors.primary} />
-                  </View>
-                  <View style={styles.datePickerContent}>
-                    <Text style={styles.datePickerLabel}>
-                      Subscription Date
-                    </Text>
-                    <Text style={styles.datePickerValue}>
-                      {formData.dataIscrizione || "Select date"}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-
-                {formData.dataIscrizione && (
-                  <Text style={styles.hintText}>
-                    Date extracted from PDF signature
-                  </Text>
-                )}
-              </Card>
-            )}
-
-            {/* Professional Dates - optional for admins */}
-            {isAdmin && (
-              <Card style={styles.sectionCard}>
-                <Text style={styles.sectionTitle}>Professional Dates</Text>
-
-                <Text style={styles.datePickerLabel}>Date of Entry</Text>
-                <TouchableOpacity
-                  style={styles.datePickerButton}
-                  onPress={() => setActivePicker("dateOfEntry")}
-                >
-                  <View style={styles.datePickerIcon}>
-                    <Calendar size={20} color={colors.primary} />
-                  </View>
-                  <View style={styles.datePickerContent}>
-                    <Text style={styles.datePickerValue}>
-                      {formData.dateOfEntry || "Select date (optional)"}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-
-                {isSelectedGradeCaptain && (
-                  <>
-                    <Text
-                      style={[
-                        styles.datePickerLabel,
-                        { marginTop: spacing.md },
-                      ]}
-                    >
-                      Date of Captaincy
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.datePickerButton}
-                      onPress={() => setActivePicker("dateOfCaptaincy")}
-                    >
-                      <View style={styles.datePickerIcon}>
-                        <Calendar size={20} color={colors.primary} />
-                      </View>
-                      <View style={styles.datePickerContent}>
-                        <Text style={styles.datePickerValue}>
-                          {formData.dateOfCaptaincy || "Select date (optional)"}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  </>
-                )}
-              </Card>
-            )}
-
-            {/* Date Picker Action Sheet Modal */}
-            <Modal
-              visible={activePicker !== null}
-              transparent={true}
-              animationType="slide"
-              onRequestClose={() => setActivePicker(null)}
-            >
-              <View style={styles.actionSheetOverlay}>
-                <View style={styles.actionSheetContainer}>
-                  <View style={styles.actionSheetHeader}>
-                    <Text style={styles.actionSheetTitle}>Select Date</Text>
-                    <TouchableOpacity
-                      onPress={() => setActivePicker(null)}
-                      style={styles.actionSheetDoneButton}
-                    >
-                      <Text style={styles.actionSheetDoneText}>Done</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <DateTimePicker
-                    value={
-                      parseDate(
-                        activePicker
-                          ? (formData as any)[activePicker]
-                          : undefined,
-                      ) || new Date()
-                    }
-                    mode="date"
-                    display="spinner"
-                    maximumDate={new Date()}
-                    onChange={(event, selectedDate) => {
-                      if (selectedDate && activePicker) {
-                        setFormData({
-                          ...formData,
-                          [activePicker]: formatDate(selectedDate),
-                        });
-                      }
-                    }}
-                  />
-                </View>
-              </View>
-            </Modal>
-
-            {/* Personal Info Section */}
-            <Card style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Personal Information</Text>
-
-              <InputField
-                label="Crewcode"
-                value={formData.crewcode}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, crewcode: text.toUpperCase() })
-                }
-                icon={<Hash size={20} color={colors.primary} />}
-                autoCapitalize="characters"
-                required
-                placeholder="e.g. PIL0001"
-              />
-
-              <InputField
-                label="First Name"
-                value={formData.nome}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, nome: text })
-                }
-                icon={<User size={20} color={colors.primary} />}
-                required
-              />
-
-              <InputField
-                label="Last Name"
-                value={formData.cognome}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, cognome: text })
-                }
-                icon={<User size={20} color={colors.primary} />}
-                required
-              />
-
-              <InputField
-                label="Email"
-                value={formData.email}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, email: text })
-                }
-                icon={<Mail size={20} color={colors.primary} />}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                required
-              />
-
-              <InputField
-                label="Phone"
-                value={formData.telefono || ""}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, telefono: text })
-                }
-                icon={<Phone size={20} color={colors.primary} />}
-                keyboardType="phone-pad"
-              />
-            </Card>
-
-            {/* Professional Info Section */}
-            <Card style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Professional Information</Text>
-
-              <SelectField
-                label="Base"
-                value={formData.baseId || ""}
-                options={
-                  bases?.map((b) => ({
-                    label: `${b.codice} - ${b.nome}`,
-                    value: b.id,
-                  })) || []
-                }
-                onChange={(value) =>
-                  setFormData({ ...formData, baseId: value })
-                }
-                icon={<MapPin size={20} color={colors.primary} />}
-                placeholder="Select base"
-              />
-
-              <SelectField
-                label="Contract"
-                value={formData.contrattoId || ""}
-                options={filteredContracts.map((c) => ({
-                  label: isSuperAdmin
-                    ? c.codice
-                    : c.codice.replace(/-(PI|CC)$/, ""),
-                  value: c.id,
-                }))}
-                onChange={(value) =>
-                  setFormData({ ...formData, contrattoId: value })
-                }
-                icon={<Briefcase size={20} color={colors.primary} />}
-                placeholder="Select contract"
-              />
-
-              <SelectField
-                label="Grade"
-                value={formData.gradeId || ""}
-                options={filteredGrades.map((g) => ({
-                  label: g.codice,
-                  value: g.id,
-                }))}
-                onChange={(value) =>
-                  setFormData({ ...formData, gradeId: value })
-                }
-                icon={<Award size={20} color={colors.primary} />}
-                placeholder="Select grade"
-              />
-            </Card>
-
-            {/* Admin Fields Section - Only for Admins */}
-            {isAdmin && (
-              <Card style={styles.sectionCard}>
-                <Text style={styles.sectionTitle}>Administrative</Text>
-
-                <View style={styles.switchRow}>
-                  <View style={styles.switchLabelContainer}>
-                    <Building2
-                      size={20}
-                      color={colors.primary}
-                      style={styles.switchIcon}
-                    />
-                    <Text style={styles.switchLabel}>ITUD</Text>
-                  </View>
-                  <Switch
-                    value={formData.itud}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, itud: value })
-                    }
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={colors.background}
-                  />
-                </View>
-
-                <View style={styles.switchRow}>
-                  <View style={styles.switchLabelContainer}>
-                    <Shield
-                      size={20}
-                      color={colors.primary}
-                      style={styles.switchIcon}
-                    />
-                    <Text style={styles.switchLabel}>RSA</Text>
-                  </View>
-                  <Switch
-                    value={formData.rsa}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, rsa: value })
-                    }
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={colors.background}
-                  />
-                </View>
-
-                <View style={styles.switchRow}>
-                  <View style={styles.switchLabelContainer}>
-                    <Shield
-                      size={20}
-                      color={colors.primary}
-                      style={styles.switchIcon}
-                    />
-                    <Text style={styles.switchLabel}>RLS</Text>
-                  </View>
-                  <Switch
-                    value={formData.rls}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, rls: value })
-                    }
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={colors.background}
-                  />
-                </View>
-              </Card>
-            )}
-
-            {/* SuperAdmin Fields */}
+            {/* SuperAdmin: Role Management first — gates everything else */}
             {isSuperAdmin && (
               <Card style={styles.sectionCard}>
                 <Text style={styles.sectionTitle}>Role Management</Text>
 
                 <SelectField
                   label="System Role"
-                  value={formData.role || UserRole.USER}
+                  value={formData.role || ""}
                   options={[
                     { label: "User", value: UserRole.USER },
                     { label: "Admin", value: UserRole.ADMIN },
@@ -849,7 +452,12 @@ export const MemberCreateScreen: React.FC = () => {
                     { label: "Cabin Crew", value: Ruolo.CABIN_CREW },
                   ]}
                   onChange={(value) =>
-                    setFormData({ ...formData, ruolo: value as Ruolo })
+                    setFormData({
+                      ...formData,
+                      ruolo: value as Ruolo,
+                      gradeId: "",
+                      contrattoId: "",
+                    })
                   }
                   icon={<User size={20} color={colors.primary} />}
                   placeholder="Select crew role"
@@ -857,48 +465,466 @@ export const MemberCreateScreen: React.FC = () => {
               </Card>
             )}
 
-            {/* Notes Section - Only for admins */}
-            {isAdmin && (
-              <Card style={styles.sectionCard}>
-                <Text style={styles.sectionTitle}>Notes</Text>
+            {rolesSelected && (
+              <>
+                {/* PDF Upload Section */}
+                <Card style={{ ...styles.sectionCard, ...styles.pdfCard }}>
+                  <Text style={styles.sectionTitle}>Registration Form</Text>
+                  <Text style={styles.pdfDescription}>
+                    Upload the signed membership form (PDF) to auto-fill the
+                    fields
+                  </Text>
 
-                <View style={styles.textAreaContainer}>
-                  <FileText
-                    size={20}
-                    color={colors.primary}
-                    style={styles.textAreaIcon}
-                  />
-                  <TextInput
-                    style={styles.textArea}
-                    value={formData.note}
+                  <TouchableOpacity
+                    style={[
+                      styles.pdfUploadButton,
+                      extractionStatus === "extracting" &&
+                        styles.pdfUploadButtonDisabled,
+                    ]}
+                    onPress={handlePdfUpload}
+                    disabled={extractionStatus === "extracting"}
+                  >
+                    {extractionStatus === "extracting" ? (
+                      <>
+                        <ActivityIndicator
+                          size="small"
+                          color={colors.primary}
+                        />
+                        <Text style={styles.pdfUploadText}>Extracting...</Text>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={24} color={colors.primary} />
+                        <Text style={styles.pdfUploadText}>
+                          {selectedPdf ? "Change PDF" : "Select PDF Form"}
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  {selectedPdf && (
+                    <View style={styles.pdfInfo}>
+                      <FileText size={16} color={colors.textSecondary} />
+                      <Text style={styles.pdfName} numberOfLines={1}>
+                        {selectedPdf.name}
+                      </Text>
+                      {extractionStatus === "success" && (
+                        <View style={styles.extractionBadge}>
+                          <ScanLine size={14} color={colors.success} />
+                          <Text style={styles.extractionText}>Extracted</Text>
+                        </View>
+                      )}
+                      <View style={styles.pdfActions}>
+                        <TouchableOpacity
+                          onPress={async () => {
+                            // Generate preview from PDF
+                            if (!selectedPdf) return;
+
+                            setIsLoadingPreview(true);
+                            try {
+                              // Read PDF as base64 using legacy API
+                              const base64 = await FileSystem.readAsStringAsync(
+                                selectedPdf.uri,
+                                {
+                                  encoding: FileSystem.EncodingType.Base64,
+                                },
+                              );
+
+                              // Send to backend for conversion
+                              const response =
+                                await usersApi.convertPdfToImage(base64);
+                              setPdfPreviewBase64(response.imageBase64);
+                              setShowPdfModal(true);
+                            } catch (error) {
+                              console.error("Error generating preview:", error);
+                              Alert.alert(
+                                "Error",
+                                "Could not generate PDF preview",
+                              );
+                            } finally {
+                              setIsLoadingPreview(false);
+                            }
+                          }}
+                          style={styles.pdfActionButton}
+                          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                          disabled={isLoadingPreview}
+                        >
+                          {isLoadingPreview ? (
+                            <ActivityIndicator
+                              size="small"
+                              color={colors.primary}
+                            />
+                          ) : (
+                            <Eye size={18} color={colors.primary} />
+                          )}
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setSelectedPdf(null);
+                            setExtractionStatus("idle");
+                          }}
+                          style={styles.pdfActionButton}
+                          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        >
+                          <X size={18} color={colors.error} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+                </Card>
+
+                {/* Subscription Date - Only if extracted from PDF or admin */}
+                {(formData.dataIscrizione || isAdmin) && (
+                  <Card style={styles.sectionCard}>
+                    <Text style={styles.sectionTitle}>
+                      Membership Information
+                    </Text>
+
+                    <TouchableOpacity
+                      style={styles.datePickerButton}
+                      onPress={() => setActivePicker("dataIscrizione")}
+                    >
+                      <View style={styles.datePickerIcon}>
+                        <Calendar size={20} color={colors.primary} />
+                      </View>
+                      <View style={styles.datePickerContent}>
+                        <Text style={styles.datePickerLabel}>
+                          Subscription Date
+                        </Text>
+                        <Text style={styles.datePickerValue}>
+                          {formData.dataIscrizione || "Select date"}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+
+                    {formData.dataIscrizione && (
+                      <Text style={styles.hintText}>
+                        Date extracted from PDF signature
+                      </Text>
+                    )}
+                  </Card>
+                )}
+
+                {/* Professional Dates - optional for admins */}
+                {isAdmin && (
+                  <Card style={styles.sectionCard}>
+                    <Text style={styles.sectionTitle}>Professional Dates</Text>
+
+                    <Text style={styles.datePickerLabel}>Date of Entry</Text>
+                    <TouchableOpacity
+                      style={styles.datePickerButton}
+                      onPress={() => setActivePicker("dateOfEntry")}
+                    >
+                      <View style={styles.datePickerIcon}>
+                        <Calendar size={20} color={colors.primary} />
+                      </View>
+                      <View style={styles.datePickerContent}>
+                        <Text style={styles.datePickerValue}>
+                          {formData.dateOfEntry || "Select date (optional)"}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+
+                    {isSelectedGradeCaptain && (
+                      <>
+                        <Text
+                          style={[
+                            styles.datePickerLabel,
+                            { marginTop: spacing.md },
+                          ]}
+                        >
+                          Date of Captaincy
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.datePickerButton}
+                          onPress={() => setActivePicker("dateOfCaptaincy")}
+                        >
+                          <View style={styles.datePickerIcon}>
+                            <Calendar size={20} color={colors.primary} />
+                          </View>
+                          <View style={styles.datePickerContent}>
+                            <Text style={styles.datePickerValue}>
+                              {formData.dateOfCaptaincy ||
+                                "Select date (optional)"}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      </>
+                    )}
+                  </Card>
+                )}
+
+                {/* Date Picker Action Sheet Modal */}
+                <Modal
+                  visible={activePicker !== null}
+                  transparent={true}
+                  animationType="slide"
+                  onRequestClose={() => setActivePicker(null)}
+                >
+                  <View style={styles.actionSheetOverlay}>
+                    <View style={styles.actionSheetContainer}>
+                      <View style={styles.actionSheetHeader}>
+                        <Text style={styles.actionSheetTitle}>Select Date</Text>
+                        <TouchableOpacity
+                          onPress={() => setActivePicker(null)}
+                          style={styles.actionSheetDoneButton}
+                        >
+                          <Text style={styles.actionSheetDoneText}>Done</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <DateTimePicker
+                        value={
+                          parseDate(
+                            activePicker
+                              ? (formData as any)[activePicker]
+                              : undefined,
+                          ) || new Date()
+                        }
+                        mode="date"
+                        display="spinner"
+                        maximumDate={new Date()}
+                        onChange={(event, selectedDate) => {
+                          if (selectedDate && activePicker) {
+                            setFormData({
+                              ...formData,
+                              [activePicker]: formatDate(selectedDate),
+                            });
+                          }
+                        }}
+                      />
+                    </View>
+                  </View>
+                </Modal>
+
+                {/* Personal Info Section */}
+                <Card style={styles.sectionCard}>
+                  <Text style={styles.sectionTitle}>Personal Information</Text>
+
+                  <InputField
+                    label="Crewcode"
+                    value={formData.crewcode}
                     onChangeText={(text) =>
-                      setFormData({ ...formData, note: text })
+                      setFormData({ ...formData, crewcode: text.toUpperCase() })
                     }
-                    placeholder="Add notes..."
-                    placeholderTextColor={colors.textTertiary}
-                    multiline
-                    numberOfLines={4}
-                    textAlignVertical="top"
+                    icon={<Hash size={20} color={colors.primary} />}
+                    autoCapitalize="characters"
+                    required
+                    placeholder="e.g. PIL0001"
+                  />
+
+                  <InputField
+                    label="First Name"
+                    value={formData.nome}
+                    onChangeText={(text) =>
+                      setFormData({ ...formData, nome: text })
+                    }
+                    icon={<User size={20} color={colors.primary} />}
+                    required
+                  />
+
+                  <InputField
+                    label="Last Name"
+                    value={formData.cognome}
+                    onChangeText={(text) =>
+                      setFormData({ ...formData, cognome: text })
+                    }
+                    icon={<User size={20} color={colors.primary} />}
+                    required
+                  />
+
+                  <InputField
+                    label="Email"
+                    value={formData.email}
+                    onChangeText={(text) =>
+                      setFormData({ ...formData, email: text })
+                    }
+                    icon={<Mail size={20} color={colors.primary} />}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    required
+                  />
+
+                  <InputField
+                    label="Phone"
+                    value={formData.telefono || ""}
+                    onChangeText={(text) =>
+                      setFormData({ ...formData, telefono: text })
+                    }
+                    icon={<Phone size={20} color={colors.primary} />}
+                    keyboardType="phone-pad"
+                  />
+                </Card>
+
+                {/* Professional Info Section */}
+                <Card style={styles.sectionCard}>
+                  <Text style={styles.sectionTitle}>
+                    Professional Information
+                  </Text>
+
+                  <SelectField
+                    label="Base"
+                    value={formData.baseId || ""}
+                    options={
+                      bases?.map((b) => ({
+                        label: `${b.codice} - ${b.nome}`,
+                        value: b.id,
+                      })) || []
+                    }
+                    onChange={(value) =>
+                      setFormData({ ...formData, baseId: value })
+                    }
+                    icon={<MapPin size={20} color={colors.primary} />}
+                    placeholder="Select base"
+                  />
+
+                  <SelectField
+                    label="Contract"
+                    value={formData.contrattoId || ""}
+                    options={filteredContracts.map((c) => ({
+                      label: isSuperAdmin
+                        ? c.codice
+                        : c.codice.replace(/-(PI|CC)$/, ""),
+                      value: c.id,
+                    }))}
+                    onChange={(value) =>
+                      setFormData({ ...formData, contrattoId: value })
+                    }
+                    icon={<Briefcase size={20} color={colors.primary} />}
+                    placeholder="Select contract"
+                  />
+
+                  <SelectField
+                    label="Grade"
+                    value={formData.gradeId || ""}
+                    options={filteredGrades.map((g) => ({
+                      label: g.codice,
+                      value: g.id,
+                    }))}
+                    onChange={(value) =>
+                      setFormData({ ...formData, gradeId: value })
+                    }
+                    icon={<Award size={20} color={colors.primary} />}
+                    placeholder="Select grade"
+                  />
+                </Card>
+
+                {/* Admin Fields Section - Only for Admins */}
+                {isAdmin && (
+                  <Card style={styles.sectionCard}>
+                    <Text style={styles.sectionTitle}>Administrative</Text>
+
+                    <View style={styles.switchRow}>
+                      <View style={styles.switchLabelContainer}>
+                        <Building2
+                          size={20}
+                          color={colors.primary}
+                          style={styles.switchIcon}
+                        />
+                        <Text style={styles.switchLabel}>ITUD</Text>
+                      </View>
+                      <Switch
+                        value={formData.itud}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, itud: value })
+                        }
+                        trackColor={{
+                          false: colors.border,
+                          true: colors.primary,
+                        }}
+                        thumbColor={colors.background}
+                      />
+                    </View>
+
+                    <View style={styles.switchRow}>
+                      <View style={styles.switchLabelContainer}>
+                        <Shield
+                          size={20}
+                          color={colors.primary}
+                          style={styles.switchIcon}
+                        />
+                        <Text style={styles.switchLabel}>RSA</Text>
+                      </View>
+                      <Switch
+                        value={formData.rsa}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, rsa: value })
+                        }
+                        trackColor={{
+                          false: colors.border,
+                          true: colors.primary,
+                        }}
+                        thumbColor={colors.background}
+                      />
+                    </View>
+
+                    <View style={styles.switchRow}>
+                      <View style={styles.switchLabelContainer}>
+                        <Shield
+                          size={20}
+                          color={colors.primary}
+                          style={styles.switchIcon}
+                        />
+                        <Text style={styles.switchLabel}>RLS</Text>
+                      </View>
+                      <Switch
+                        value={formData.rls}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, rls: value })
+                        }
+                        trackColor={{
+                          false: colors.border,
+                          true: colors.primary,
+                        }}
+                        thumbColor={colors.background}
+                      />
+                    </View>
+                  </Card>
+                )}
+
+                {/* Notes Section - Only for admins */}
+                {isAdmin && (
+                  <Card style={styles.sectionCard}>
+                    <Text style={styles.sectionTitle}>Notes</Text>
+
+                    <View style={styles.textAreaContainer}>
+                      <FileText
+                        size={20}
+                        color={colors.primary}
+                        style={styles.textAreaIcon}
+                      />
+                      <TextInput
+                        style={styles.textArea}
+                        value={formData.note}
+                        onChangeText={(text) =>
+                          setFormData({ ...formData, note: text })
+                        }
+                        placeholder="Add notes..."
+                        placeholderTextColor={colors.textTertiary}
+                        multiline
+                        numberOfLines={4}
+                        textAlignVertical="top"
+                      />
+                    </View>
+                  </Card>
+                )}
+
+                {/* Action Buttons */}
+                <View style={styles.actionsContainer}>
+                  <Button
+                    title="Cancel"
+                    onPress={handleCancel}
+                    variant="secondary"
+                    style={styles.actionButton}
+                  />
+                  <Button
+                    title="Create Member"
+                    onPress={handleSave}
+                    loading={createMutation.isPending}
+                    style={styles.actionButton}
                   />
                 </View>
-              </Card>
+              </>
             )}
-
-            {/* Action Buttons */}
-            <View style={styles.actionsContainer}>
-              <Button
-                title="Cancel"
-                onPress={handleCancel}
-                variant="secondary"
-                style={styles.actionButton}
-              />
-              <Button
-                title="Create Member"
-                onPress={handleSave}
-                loading={createMutation.isPending}
-                style={styles.actionButton}
-              />
-            </View>
 
             <View style={styles.bottomSpacer} />
           </ScrollView>
