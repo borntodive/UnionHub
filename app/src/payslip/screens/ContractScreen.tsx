@@ -142,10 +142,16 @@ const Badge: React.FC<BadgeProps> = ({ label, color = colors.primary }) => (
 export const ContractScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
-  const { settings, overrideActive, overrideSettings } = usePayslipStore();
+  const {
+    settings,
+    overrideActive,
+    overrideSettings,
+    overrideRsa,
+    overrideItud,
+  } = usePayslipStore();
   const user = useAuthStore((state) => state.user);
-  const userRsa = user?.rsa === true;
-  const userItud = user?.itud === true;
+  const userRsa = overrideActive ? overrideRsa : user?.rsa === true;
+  const userItud = overrideActive ? overrideItud : user?.itud === true;
 
   const handleMenuPress = () => {
     // @ts-ignore

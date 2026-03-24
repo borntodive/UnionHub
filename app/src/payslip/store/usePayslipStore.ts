@@ -20,11 +20,15 @@ interface PayslipState {
   error: string | null;
   overrideActive: boolean;
   overrideSettings: PayslipSettings;
+  overrideRsa: boolean;
+  overrideItud: boolean;
 
   setInput: (input: Partial<PayslipInput>) => void;
   setSettings: (settings: Partial<PayslipSettings>) => void;
   setOverrideActive: (active: boolean) => void;
   setOverrideSettings: (settings: Partial<PayslipSettings>) => void;
+  setOverrideRsa: (v: boolean) => void;
+  setOverrideItud: (v: boolean) => void;
   calculate: (userFlags?: { itud?: boolean; rsa?: boolean }) => Promise<void>;
   saveCalculation: (name?: string) => void;
   deleteCalculation: (id: string) => void;
@@ -103,6 +107,8 @@ export const usePayslipStore = create<PayslipState>()(
       error: null,
       overrideActive: false,
       overrideSettings: { ...defaultSettings },
+      overrideRsa: false,
+      overrideItud: false,
 
       setInput: (input) => {
         set((state) => ({ input: { ...state.input, ...input } }));
@@ -113,6 +119,9 @@ export const usePayslipStore = create<PayslipState>()(
       },
 
       setOverrideActive: (active) => set({ overrideActive: active }),
+
+      setOverrideRsa: (v) => set({ overrideRsa: v }),
+      setOverrideItud: (v) => set({ overrideItud: v }),
 
       setOverrideSettings: (settings) => {
         set((state) => ({

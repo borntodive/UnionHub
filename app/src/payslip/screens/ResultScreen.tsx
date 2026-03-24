@@ -22,14 +22,21 @@ export const ResultScreen: React.FC = () => {
   const navigation = useNavigation();
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  const { result, settings, overrideActive, overrideSettings, calculate } =
-    usePayslipStore();
+  const {
+    result,
+    settings,
+    overrideActive,
+    overrideSettings,
+    overrideRsa,
+    overrideItud,
+    calculate,
+  } = usePayslipStore();
 
   const activeSettings = overrideActive ? overrideSettings : settings;
 
-  // Get user flags from profile
-  const itud = user?.itud ?? false;
-  const rsa = user?.rsa ?? false;
+  // When override is active, use override flags; otherwise use the real user profile
+  const itud = overrideActive ? overrideItud : (user?.itud ?? false);
+  const rsa = overrideActive ? overrideRsa : (user?.rsa ?? false);
 
   // Auto-calculate when screen is focused
   useFocusEffect(

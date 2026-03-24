@@ -29,6 +29,7 @@ export const InputScreen: React.FC = () => {
     settings,
     overrideActive,
     overrideSettings,
+    overrideItud,
     setInput,
     addAdditionalPayment,
     updateAdditionalPayment,
@@ -43,8 +44,7 @@ export const InputScreen: React.FC = () => {
   const isLTC = activeSettings.rank === "ltc";
   const isInstructor = ["sfi", "tri", "tre"].includes(activeSettings.rank);
 
-  // Get ITUD flag from user profile
-  const hasItud = user?.itud ?? false;
+  const hasItud = overrideActive ? overrideItud : (user?.itud ?? false);
 
   const handleMenuPress = () => {
     // @ts-ignore - Now inside DrawerNavigator

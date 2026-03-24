@@ -63,8 +63,12 @@ export const SettingsScreen: React.FC = () => {
   const {
     overrideActive,
     overrideSettings,
+    overrideRsa,
+    overrideItud,
     setOverrideActive,
     setOverrideSettings,
+    setOverrideRsa,
+    setOverrideItud,
   } = usePayslipStore();
 
   const isAdmin =
@@ -133,6 +137,8 @@ export const SettingsScreen: React.FC = () => {
             setLegacyFfpText("");
             setLegacySbhText("");
             setLegacyAlText("");
+            setOverrideRsa(false);
+            setOverrideItud(false);
           },
         },
       ],
@@ -297,6 +303,16 @@ export const SettingsScreen: React.FC = () => {
                 onToggle={() =>
                   set({ coniugeCarico: !overrideSettings.coniugeCarico })
                 }
+              />
+              <CheckboxRow
+                label="RSA"
+                value={overrideRsa}
+                onToggle={() => setOverrideRsa(!overrideRsa)}
+              />
+              <CheckboxRow
+                label="ITUD"
+                value={overrideItud}
+                onToggle={() => setOverrideItud(!overrideItud)}
               />
             </View>
 
