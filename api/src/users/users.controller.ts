@@ -344,22 +344,26 @@ export class UsersController {
       requestingUser,
     );
 
-    // Notify secretary with the form attached (fire-and-forget)
-    // Re-fetch with relations to ensure base/grade are populated for the email
-    this.usersService
-      .findById(id)
-      .then((fullUser) =>
-        this.mailService.sendRegistrationFormToSecretary(
-          fullUser,
-          file.buffer,
-          file.originalname,
-        ),
-      )
-      .catch((err) =>
-        this.logger.error(
-          `Secretary email failed for ${id}: ${err?.message ?? err}`,
-        ),
-      );
+    // Notify secretary with the form attached (fire-and-forget, 2s delay to
+    // avoid Mailtrap sandbox rate-limit when welcome email fires simultaneously)
+    const pdfBuffer = file.buffer;
+    const pdfName = file.originalname;
+    setTimeout(() => {
+      this.usersService
+        .findById(id)
+        .then((fullUser) =>
+          this.mailService.sendRegistrationFormToSecretary(
+            fullUser,
+            pdfBuffer,
+            pdfName,
+          ),
+        )
+        .catch((err) =>
+          this.logger.error(
+            `Secretary email failed for ${id}: ${err?.message ?? err}`,
+          ),
+        );
+    }, 2000);
 
     return updated.serialize(requestingUser.role);
   }
