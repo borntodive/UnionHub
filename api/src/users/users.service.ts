@@ -18,7 +18,7 @@ import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { UserRole } from "../common/enums/user-role.enum";
 import { Ruolo } from "../common/enums/ruolo.enum";
-import { MailService } from "../mail/mail.service";
+import { MailService, RsaRlsContact } from "../mail/mail.service";
 
 interface FindAllOptions {
   role?: UserRole;
@@ -288,7 +288,11 @@ export class UsersService {
     });
 
     // Send welcome email (fire-and-forget — never blocks user creation)
-    this.mailService.sendWelcomeEmail(savedUser, "password").catch(() => {});
+    this.getRsaRlsContacts()
+      .then((contacts) =>
+        this.mailService.sendWelcomeEmail(savedUser, "password", contacts),
+      )
+      .catch(() => {});
 
     return savedUser;
   }
@@ -361,7 +365,11 @@ export class UsersService {
     });
 
     // Send welcome email (fire-and-forget)
-    this.mailService.sendWelcomeEmail(savedUser, "password").catch(() => {});
+    this.getRsaRlsContacts()
+      .then((contacts) =>
+        this.mailService.sendWelcomeEmail(savedUser, "password", contacts),
+      )
+      .catch(() => {});
 
     return savedUser;
   }
@@ -1098,6 +1106,28 @@ export class UsersService {
     return results;
   }
 
+  private async getRsaRlsContacts(): Promise<RsaRlsContact[]> {
+    const users = await this.usersRepository
+      .createQueryBuilder("user")
+      .select([
+        "user.nome",
+        "user.cognome",
+        "user.telefono",
+        "user.rsa",
+        "user.rls",
+      ])
+      .where("user.isActive = true AND (user.rsa = true OR user.rls = true)")
+      .getMany();
+
+    return users.map((u) => ({
+      nome: u.nome,
+      cognome: u.cognome,
+      telefono: u.telefono ?? null,
+      isRsa: u.rsa === true,
+      isRls: u.rls === true,
+    }));
+  }
+
   async sendTestWelcomeEmail(): Promise<{
     sent: boolean;
     to: string;
@@ -1111,7 +1141,8 @@ export class UsersService {
       throw new NotFoundException("No active users found");
     }
     const user = users[Math.floor(Math.random() * users.length)];
-    await this.mailService.sendWelcomeEmail(user, "password");
+    const contacts = await this.getRsaRlsContacts();
+    await this.mailService.sendWelcomeEmail(user, "password", contacts);
     return { sent: true, to: user.email, crewcode: user.crewcode };
   }
 
