@@ -25,6 +25,7 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { memoryStorage } from "multer";
 import { UsersService } from "./users.service";
+import { MailService } from "../mail/mail.service";
 import { PdfExtractionService } from "./services/pdf-extraction.service";
 import { FileStorageService } from "./services/file-storage.service";
 import { PdfImageService } from "./services/pdf-image.service";
@@ -54,6 +55,7 @@ interface RequestWithUser extends Request {
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
+    private readonly mailService: MailService,
     private readonly pdfExtractionService: PdfExtractionService,
     private readonly fileStorageService: FileStorageService,
     private readonly pdfImageService: PdfImageService,
@@ -330,6 +332,11 @@ export class UsersController {
       { registrationFormUrl: fileUrl },
       requestingUser,
     );
+
+    // Notify secretary with the form attached (fire-and-forget)
+    this.mailService
+      .sendRegistrationFormToSecretary(updated, file.buffer, file.originalname)
+      .catch(() => {});
 
     return updated.serialize(requestingUser.role);
   }

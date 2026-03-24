@@ -129,4 +129,112 @@ export class MailService {
       );
     }
   }
+
+  async sendRegistrationFormToSecretary(
+    user: User,
+    pdfBuffer: Buffer,
+    originalFilename: string,
+  ): Promise<void> {
+    const secretaryEmail = this.configService.get<string>("MAIL_SECRETARY", "");
+    if (!secretaryEmail) {
+      this.logger.warn(
+        "MAIL_SECRETARY not configured — skipping secretary notification",
+      );
+      return;
+    }
+
+    const from = this.configService.get<string>(
+      "MAIL_FROM",
+      "UnionHub <noreply@unionhub.app>",
+    );
+    const ruoloLabel =
+      user.ruolo === "pilot"
+        ? "Pilota"
+        : user.ruolo === "cabin_crew"
+          ? "Cabin Crew"
+          : (user.ruolo ?? "—");
+
+    const html = `
+<!DOCTYPE html>
+<html lang="it">
+<head><meta charset="UTF-8" /><title>Nuovo modulo di iscrizione</title></head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:32px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background:#177246;padding:24px 32px;">
+            <span style="font-size:20px;font-weight:bold;color:#ffffff;">FIT-CISL · Nuovo modulo di iscrizione</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:28px 32px;">
+            <p style="margin:0 0 16px;font-size:15px;color:#333;">
+              È stato caricato un nuovo modulo di iscrizione per il seguente socio:
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:6px;margin-bottom:24px;">
+              <tr><td style="padding:20px 24px;">
+                <table width="100%" cellpadding="0" cellspacing="6">
+                  <tr>
+                    <td style="font-size:13px;color:#888;width:130px;">Nome</td>
+                    <td style="font-size:14px;font-weight:bold;color:#333;">${user.nome} ${user.cognome}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-size:13px;color:#888;">Crewcode</td>
+                    <td style="font-size:14px;font-weight:bold;color:#177246;font-family:monospace;">${user.crewcode}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-size:13px;color:#888;">Email</td>
+                    <td style="font-size:14px;color:#333;">${user.email}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-size:13px;color:#888;">Ruolo</td>
+                    <td style="font-size:14px;color:#333;">${ruoloLabel}</td>
+                  </tr>
+                </table>
+              </td></tr>
+            </table>
+            <p style="margin:0;font-size:13px;color:#888;">
+              Il modulo è allegato a questa email in formato PDF.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f8f9fa;padding:16px 32px;text-align:center;border-top:1px solid #eee;">
+            <p style="margin:0;font-size:12px;color:#aaa;">
+              FIT-CISL · Questa è un'email automatica, non rispondere a questo messaggio.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+    try {
+      await this.transporter.sendMail({
+        from,
+        to: secretaryEmail,
+        subject: `Modulo iscrizione — ${user.cognome} ${user.nome} (${user.crewcode})`,
+        html,
+        attachments: [
+          {
+            filename: originalFilename.endsWith(".pdf")
+              ? originalFilename
+              : `${originalFilename}.pdf`,
+            content: pdfBuffer,
+            contentType: "application/pdf",
+          },
+        ],
+      });
+      this.logger.log(
+        `Registration form sent to secretary for ${user.crewcode}`,
+      );
+    } catch (err: any) {
+      this.logger.error(
+        `Failed to send registration form to secretary for ${user.crewcode}: ${err.message}`,
+      );
+    }
+  }
 }
