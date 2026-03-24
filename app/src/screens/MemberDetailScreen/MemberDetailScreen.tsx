@@ -349,6 +349,7 @@ export const MemberDetailScreen: React.FC = () => {
               <View style={styles.flagsContainer}>
                 <FlagItem label="ITUD" isActive={member.itud} />
                 <FlagItem label="RSA" isActive={member.rsa} />
+                <FlagItem label="RLS" isActive={member.rls} />
               </View>
             </Card>
           )}

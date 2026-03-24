@@ -1071,6 +1071,7 @@ export class UsersService {
           isActive: true,
           itud: false, // Default false
           rsa: false, // Default false
+          rls: false, // Default false
           note: note || null,
           dataIscrizione: null, // Empty for now
         });

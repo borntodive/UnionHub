@@ -104,6 +104,7 @@ export const MemberEditScreen: React.FC = () => {
     note: "",
     itud: false,
     rsa: false,
+    rls: false,
     dataIscrizione: "",
     dateOfEntry: "",
     dateOfCaptaincy: "",
@@ -159,6 +160,7 @@ export const MemberEditScreen: React.FC = () => {
         note: member.note || "",
         itud: member.itud || false,
         rsa: member.rsa || false,
+        rls: member.rls || false,
         dataIscrizione: member.dataIscrizione || "",
         dateOfEntry: member.dateOfEntry || "",
         dateOfCaptaincy: member.dateOfCaptaincy || "",
@@ -258,6 +260,7 @@ export const MemberEditScreen: React.FC = () => {
       if (formData.itud !== (member.itud || false))
         updateData.itud = formData.itud;
       if (formData.rsa !== (member.rsa || false)) updateData.rsa = formData.rsa;
+      if (formData.rls !== (member.rls || false)) updateData.rls = formData.rls;
       if (formData.dataIscrizione !== (member.dataIscrizione || ""))
         updateData.dataIscrizione = formData.dataIscrizione || null;
       if (formData.dateOfEntry !== (member.dateOfEntry || ""))
@@ -624,6 +627,25 @@ export const MemberEditScreen: React.FC = () => {
                     value={formData.rsa}
                     onValueChange={(value) =>
                       setFormData({ ...formData, rsa: value })
+                    }
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={colors.background}
+                  />
+                </View>
+
+                <View style={styles.switchRow}>
+                  <View style={styles.switchLabelContainer}>
+                    <Shield
+                      size={20}
+                      color={colors.primary}
+                      style={styles.switchIcon}
+                    />
+                    <Text style={styles.switchLabel}>RLS</Text>
+                  </View>
+                  <Switch
+                    value={formData.rls}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, rls: value })
                     }
                     trackColor={{ false: colors.border, true: colors.primary }}
                     thumbColor={colors.background}

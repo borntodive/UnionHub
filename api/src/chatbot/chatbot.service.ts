@@ -157,7 +157,11 @@ ${contextBlock ? `CONTEXT:\n${contextBlock}` : "CONTEXT: (no relevant documents 
     user: JwtUser,
   ): AsyncGenerator<
     | { t: string }
-    | { done: true; sources: Array<{ title: string; accessLevel: string }>; conversationId: string }
+    | {
+        done: true;
+        sources: Array<{ title: string; accessLevel: string }>;
+        conversationId: string;
+      }
     | { error: string }
   > {
     const accessLevel: "all" | "admin" =
@@ -165,7 +169,12 @@ ${contextBlock ? `CONTEXT:\n${contextBlock}` : "CONTEXT: (no relevant documents 
 
     let chunks: ChunkWithSource[] = [];
     try {
-      chunks = await this.kbService.semanticSearch(message, accessLevel, user.ruolo ?? null, this.chunksLimit);
+      chunks = await this.kbService.semanticSearch(
+        message,
+        accessLevel,
+        user.ruolo ?? null,
+        this.chunksLimit,
+      );
     } catch (err) {
       this.logger.warn("Semantic search failed:", err.message);
     }
@@ -177,7 +186,9 @@ ${contextBlock ? `CONTEXT:\n${contextBlock}` : "CONTEXT: (no relevant documents 
     });
 
     const contextBlock = chunks.length
-      ? chunks.map((c) => `[Document: "${c.documentTitle}"]\n${c.content}`).join("\n\n---\n\n")
+      ? chunks
+          .map((c) => `[Document: "${c.documentTitle}"]\n${c.content}`)
+          .join("\n\n---\n\n")
       : "";
 
     const historyBlock = history
@@ -199,29 +210,57 @@ ${contextBlock ? `CONTEXT:\n${contextBlock}` : "CONTEXT: (no relevant documents 
 
     let fullResponse = "";
     try {
-      for await (const token of this.ollamaService.chatGenerateStream(fullPrompt, systemPrompt)) {
+      for await (const token of this.ollamaService.chatGenerateStream(
+        fullPrompt,
+        systemPrompt,
+      )) {
         fullResponse += token;
         yield { t: token };
       }
     } catch (err) {
       this.logger.error("Ollama stream failed:", err.message);
-      const fallback = "Si è verificato un errore durante la generazione della risposta. Riprova.";
+      const fallback =
+        "Si è verificato un errore durante la generazione della risposta. Riprova.";
       yield { error: fallback };
       await this.msgRepo.save([
-        this.msgRepo.create({ userId: user.userId, conversationId, role: "user", content: message }),
-        this.msgRepo.create({ userId: user.userId, conversationId, role: "assistant", content: fallback }),
+        this.msgRepo.create({
+          userId: user.userId,
+          conversationId,
+          role: "user",
+          content: message,
+        }),
+        this.msgRepo.create({
+          userId: user.userId,
+          conversationId,
+          role: "assistant",
+          content: fallback,
+        }),
       ]);
       return;
     }
 
     await this.msgRepo.save([
-      this.msgRepo.create({ userId: user.userId, conversationId, role: "user", content: message }),
-      this.msgRepo.create({ userId: user.userId, conversationId, role: "assistant", content: fullResponse }),
+      this.msgRepo.create({
+        userId: user.userId,
+        conversationId,
+        role: "user",
+        content: message,
+      }),
+      this.msgRepo.create({
+        userId: user.userId,
+        conversationId,
+        role: "assistant",
+        content: fullResponse,
+      }),
     ]);
 
     const seen = new Set<string>();
     const sources = chunks
-      .filter((c) => { if (seen.has(c.documentId)) return false; seen.add(c.documentId); return true; })
+      .filter((c) => {
+        if (seen.has(c.documentId)) return false;
+        seen.add(c.documentId);
+        return true;
+      })
       .map((c) => ({ title: c.documentTitle, accessLevel: c.accessLevel }));
 
     yield { done: true, sources, conversationId };

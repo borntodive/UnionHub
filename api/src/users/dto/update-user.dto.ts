@@ -75,6 +75,10 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsBoolean()
+  rls?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   isActive?: boolean;
 
   @IsOptional()

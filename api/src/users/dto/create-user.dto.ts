@@ -70,6 +70,10 @@ export class CreateUserDto {
   rsa?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  rls?: boolean;
+
+  @IsOptional()
   @IsDateString()
   dataIscrizione?: string;
 

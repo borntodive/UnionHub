@@ -52,10 +52,7 @@ export class KnowledgeBaseController {
 
   @Post(":id/reindex")
   @HttpCode(HttpStatus.ACCEPTED)
-  async reindex(
-    @Param("id", ParseUUIDPipe) id: string,
-    @Req() req: any,
-  ) {
+  async reindex(@Param("id", ParseUUIDPipe) id: string, @Req() req: any) {
     await this.kbService.reindexDocument(id, req.user.userId);
   }
 

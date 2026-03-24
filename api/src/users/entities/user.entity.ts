@@ -106,6 +106,9 @@ export class User {
   @Column({ type: "boolean", default: false })
   rsa: boolean;
 
+  @Column({ type: "boolean", default: false })
+  rls: boolean;
+
   // PDF Registration Form
   @Column({ type: "varchar", length: 500, nullable: true })
   registrationFormUrl: string | null;
@@ -167,6 +170,7 @@ export class User {
       dateOfEntry: this.dateOfEntry,
       dateOfCaptaincy: this.dateOfCaptaincy,
       rsa: this.rsa,
+      rls: this.rls,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };
@@ -178,6 +182,7 @@ export class User {
         note: this.note,
         itud: this.itud,
         rsa: this.rsa,
+        rls: this.rls,
         deactivatedAt: this.deactivatedAt,
         statusLog: this.statusLog,
       };

@@ -234,7 +234,9 @@ Traduzione (solo il testo tradotto, nient'altro):`;
     });
 
     if (!response.ok || !response.body) {
-      const errText = await response.text().catch(() => String(response.status));
+      const errText = await response
+        .text()
+        .catch(() => String(response.status));
       throw new Error(`Ollama streaming error: ${errText}`);
     }
 

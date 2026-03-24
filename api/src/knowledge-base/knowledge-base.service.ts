@@ -133,11 +133,14 @@ export class KnowledgeBaseService {
     await this.chunkRepo.delete({ document: { id } });
 
     // Fire-and-forget
-    this.indexDocumentBackground(doc, doc.extractedText, requestedByUserId).catch(
-      (err) =>
-        this.logger.error(
-          `Background re-index failed for doc ${id}: ${err.message}`,
-        ),
+    this.indexDocumentBackground(
+      doc,
+      doc.extractedText,
+      requestedByUserId,
+    ).catch((err) =>
+      this.logger.error(
+        `Background re-index failed for doc ${id}: ${err.message}`,
+      ),
     );
   }
 

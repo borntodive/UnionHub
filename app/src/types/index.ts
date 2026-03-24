@@ -52,6 +52,7 @@ export interface User {
   note?: string;
   itud?: boolean;
   rsa?: boolean;
+  rls?: boolean;
   registrationFormUrl?: string | null;
   dataIscrizione?: string | null;
   dateOfEntry?: string | null;

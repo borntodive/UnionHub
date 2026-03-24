@@ -16,7 +16,12 @@ export class PdfService {
   // Resolve templates relative to this file so it works regardless of cwd.
   // __dirname = dist/documents/ (compiled) or src/documents/ (ts-node)
   // ../../templates → api/templates/
-  private static readonly TEMPLATES_DIR = path.join(__dirname, "..", "..", "templates");
+  private static readonly TEMPLATES_DIR = path.join(
+    __dirname,
+    "..",
+    "..",
+    "templates",
+  );
 
   constructor(private configService: ConfigService) {
     this.fitCislTemplatePath = path.join(
