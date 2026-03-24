@@ -538,6 +538,10 @@ export const SettingsScreen: React.FC = () => {
   );
   const [testEmailLoading, setTestEmailLoading] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<string | null>(null);
+  const [testFormEmailLoading, setTestFormEmailLoading] = useState(false);
+  const [testFormEmailResult, setTestFormEmailResult] = useState<string | null>(
+    null,
+  );
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const currentLanguage = getLanguage();
 
@@ -760,6 +764,27 @@ export const SettingsScreen: React.FC = () => {
     }
   };
 
+  const handleTestFormEmail = async () => {
+    setTestFormEmailLoading(true);
+    setTestFormEmailResult(null);
+    try {
+      const res = await apiClient.post<{
+        sent: boolean;
+        to: string;
+        crewcode: string;
+      }>("/users/debug/test-registration-form-email");
+      setTestFormEmailResult(
+        `✓ Inviata a segreteria (utente: ${res.data.crewcode})`,
+      );
+    } catch (err: any) {
+      setTestFormEmailResult(
+        `✗ Errore: ${err?.response?.data?.message ?? err.message}`,
+      );
+    } finally {
+      setTestFormEmailLoading(false);
+    }
+  };
+
   const renderDebugTab = () => (
     <View style={styles.section}>
       <View style={styles.card}>
@@ -795,6 +820,46 @@ export const SettingsScreen: React.FC = () => {
             ]}
           >
             {testEmailResult}
+          </Text>
+        )}
+      </View>
+
+      <View style={styles.card}>
+        <View style={styles.row}>
+          <View style={styles.iconContainer}>
+            <Mail size={24} color={colors.primary} />
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.label}>Test email segreteria</Text>
+            <Text style={styles.value}>
+              Invia un modulo di iscrizione (placeholder) alla segreteria
+            </Text>
+          </View>
+        </View>
+        <TouchableOpacity
+          style={[
+            styles.debugBtn,
+            testFormEmailLoading && styles.debugBtnDisabled,
+          ]}
+          onPress={handleTestFormEmail}
+          disabled={testFormEmailLoading}
+        >
+          {testFormEmailLoading ? (
+            <ActivityIndicator size="small" color={colors.textInverse} />
+          ) : (
+            <Text style={styles.debugBtnText}>Invia test segreteria</Text>
+          )}
+        </TouchableOpacity>
+        {testFormEmailResult !== null && (
+          <Text
+            style={[
+              styles.debugResult,
+              testFormEmailResult.startsWith("✓")
+                ? styles.debugResultOk
+                : styles.debugResultErr,
+            ]}
+          >
+            {testFormEmailResult}
           </Text>
         )}
       </View>

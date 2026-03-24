@@ -170,6 +170,14 @@ export class UsersController {
     return this.usersService.sendTestWelcomeEmail();
   }
 
+  @Post("debug/test-registration-form-email")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.SUPERADMIN)
+  @HttpCode(HttpStatus.OK)
+  async testRegistrationFormEmail() {
+    return this.usersService.sendTestRegistrationFormEmail();
+  }
+
   @Post()
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async create(

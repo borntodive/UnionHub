@@ -1113,4 +1113,31 @@ export class UsersService {
     await this.mailService.sendWelcomeEmail(user, "password");
     return { sent: true, to: user.email, crewcode: user.crewcode };
   }
+
+  async sendTestRegistrationFormEmail(): Promise<{
+    sent: boolean;
+    to: string;
+    crewcode: string;
+  }> {
+    const users = await this.usersRepository.find({
+      where: { isActive: true },
+      take: 50,
+    });
+    if (users.length === 0)
+      throw new NotFoundException("No active users found");
+    const user = users[Math.floor(Math.random() * users.length)];
+    // Minimal valid PDF placeholder for testing
+    const pdfBuffer = Buffer.from(
+      "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n" +
+        "2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n" +
+        "3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R>>endobj\n" +
+        "xref\n0 4\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n9\n%%EOF",
+    );
+    await this.mailService.sendRegistrationFormToSecretary(
+      user,
+      pdfBuffer,
+      `modulo_iscrizione_${user.crewcode}_TEST.pdf`,
+    );
+    return { sent: true, to: user.email, crewcode: user.crewcode };
+  }
 }
