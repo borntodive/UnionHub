@@ -215,6 +215,7 @@
     "issueCategories": "Issue Categories",
     "issueUrgencies": "Issue Urgencies",
     "ftlCalculator": "FTL Calculator",
+    "ctcCalculator": "Cold Temp Correction",
     "chatbot": "Chatbot",
     "knowledgeBase": "Knowledge Base",
     "gmail": "Union Mailbox",
@@ -597,6 +598,32 @@
     "copied": "Token copied to clipboard",
     "errorUrl": "Failed to generate authorization URL",
     "errorCode": "Failed to exchange code. Check that the code is correct and not expired."
+  },
+  "ctc": {
+    "title": "Cold Temp Correction",
+    "airportTemp": "Airport Temp (°C)",
+    "airportElev": "Airport Elevation",
+    "msa": "MSA (optional)",
+    "msaPlaceholder": "optional",
+    "noCorrection": "No correction needed (temp > 0°C)",
+    "addRow": "Add altitude",
+    "label": "Label (e.g. FAF)",
+    "published": "Published altitude",
+    "correction": "Correction",
+    "corrected": "Corrected altitude",
+    "altitudesSection": "Altitudes",
+    "roundUp": "Round up to nearest 100",
+    "aboveMsa": "Above MSA — no correction",
+    "notApplicableTitle": "When CTC is NOT applicable",
+    "notApplicableItems": [
+      "RNP / RNAV (Baro-VNAV): all fixes (IAF, IF, FAF, FACF, MAPt) — the FMS applies the correction internally",
+      "LPV / GLS / SBAS approaches — geometric vertical guidance, independent of OAT",
+      "FAF on ILS approaches when coupled to the glideslope — vertical guidance is geometric",
+      "MSA, MORA, MOCA — obstacle clearance altitudes are not procedure altitudes",
+      "Altitudes above the MSA entered above — already have sufficient obstacle clearance margin",
+      "Flight levels (QNE) — referenced to ISA, not to actual temperature"
+    ],
+    "info": "Table: ICAO Doc 8168 PANS-OPS. Apply CTC only when OAT < 0°C on barometric (QNH) non-compensated procedures."
   },
   "errors": {
     "generic": "Something went wrong",

@@ -40,6 +40,7 @@ import { SharedFileHandler } from "../components/SharedFileHandler";
 import { CompleteProfileScreen } from "../screens/CompleteProfileScreen/CompleteProfileScreen";
 import { EmailDetailScreen } from "../gmail/screens/EmailDetailScreen";
 import { GmailSetupScreen } from "../gmail/screens/GmailSetupScreen";
+import { CtcScreen } from "../screens/CtcScreen";
 import { UserRole } from "../types";
 import { useNotifications } from "../hooks/useNotifications";
 import apiClient from "../api/client";
@@ -249,6 +250,11 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen
               name="GmailSetup"
               component={GmailSetupScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="ColdTempCorrection"
+              component={CtcScreen}
               options={{ headerShown: false }}
             />
             {/* Note: CLA Contract screens moved to DrawerNavigator */}

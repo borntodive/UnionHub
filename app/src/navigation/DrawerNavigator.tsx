@@ -34,6 +34,7 @@ import {
   MessageSquare,
   Database,
   Mail,
+  Thermometer,
 } from "lucide-react-native";
 
 import { colors, spacing, typography, borderRadius } from "../theme";
@@ -45,6 +46,7 @@ import { HomeScreen } from "../screens/HomeScreen/HomeScreen";
 import { MembersScreen } from "../screens/MembersScreen/MembersScreen";
 import { PayslipTabs } from "../payslip/navigation/PayslipTabs";
 import { FtlTabs } from "../ftl";
+import { CtcScreen } from "../screens/CtcScreen";
 import { ChatbotScreen } from "../chatbot/screens/ChatbotScreen";
 import { KnowledgeBaseScreen } from "../knowledge-base/screens/KnowledgeBaseScreen";
 import { GmailScreen } from "../gmail/screens/GmailScreen";
@@ -192,6 +194,15 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             label={t("navigation.ftlCalculator")}
             onPress={() => {
               props.navigation.navigate("FtlCalculator");
+              props.navigation.closeDrawer();
+            }}
+          />
+
+          <MenuItem
+            icon={<Thermometer size={22} color={colors.primary} />}
+            label={t("navigation.ctcCalculator")}
+            onPress={() => {
+              props.navigation.navigate("ColdTempCorrection");
               props.navigation.closeDrawer();
             }}
           />
@@ -570,6 +581,15 @@ export const DrawerNavigator: React.FC = () => {
         options={{
           title: t("navigation.ftlCalculator"),
           drawerIcon: ({ color }) => <Clock size={22} color={color} />,
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
+        name="ColdTempCorrection"
+        component={CtcScreen}
+        options={{
+          title: t("navigation.ctcCalculator"),
+          drawerIcon: ({ color }) => <Thermometer size={22} color={color} />,
           headerShown: false,
         }}
       />

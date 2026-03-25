@@ -215,6 +215,7 @@
     "issueCategories": "Categorie Segnalazioni",
     "issueUrgencies": "Urgenze Segnalazioni",
     "ftlCalculator": "Calcolatore FTL",
+    "ctcCalculator": "Corr. Temp. Fredda",
     "chatbot": "Chatbot",
     "knowledgeBase": "Knowledge Base",
     "gmail": "Casella Sindacale",
@@ -597,6 +598,32 @@
     "copied": "Token copiato negli appunti",
     "errorUrl": "Impossibile generare l'URL di autorizzazione",
     "errorCode": "Impossibile scambiare il codice. Verifica che sia corretto e non scaduto."
+  },
+  "ctc": {
+    "title": "Corr. Temp. Fredda",
+    "airportTemp": "Temp. Aeroporto (°C)",
+    "airportElev": "Elevazione Aeroporto",
+    "msa": "MSA (opzionale)",
+    "msaPlaceholder": "opzionale",
+    "noCorrection": "Nessuna correzione necessaria (temp > 0°C)",
+    "addRow": "Aggiungi altitudine",
+    "label": "Etichetta (es. FAF)",
+    "published": "Altitudine pubblicata",
+    "correction": "Correzione",
+    "corrected": "Altitudine corretta",
+    "altitudesSection": "Altitudini",
+    "roundUp": "Arrotonda al 100 superiore",
+    "aboveMsa": "Sopra MSA — nessuna correzione",
+    "notApplicableTitle": "Quando la CTC NON è applicabile",
+    "notApplicableItems": [
+      "RNP / RNAV (Baro-VNAV): tutti i fix (IAF, IF, FAF, FACF, MAPt) — l'FMS applica la correzione internamente",
+      "Avvicinamenti LPV / GLS / SBAS — guida verticale geometrica, indipendente dall'OAT",
+      "FAF su avvicinamenti ILS quando agganciato al glideslope — guida verticale geometrica",
+      "MSA, MORA, MOCA — altitudini di separazione ostacoli, non altitudini di procedura",
+      "Altitudini superiori alla MSA inserita sopra — margine di separazione ostacoli già sufficiente",
+      "Livelli di volo (QNE) — riferiti all'ISA, non alla temperatura reale"
+    ],
+    "info": "Tabella: ICAO Doc 8168 PANS-OPS. Applicare la CTC solo con OAT < 0°C su procedure barometriche (QNH) non compensate."
   },
   "errors": {
     "generic": "Qualcosa è andato storto",
