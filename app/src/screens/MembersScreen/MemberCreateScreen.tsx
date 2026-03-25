@@ -152,6 +152,8 @@ export const MemberCreateScreen: React.FC = () => {
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [pdfPreviewBase64, setPdfPreviewBase64] = useState<string | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+
   const [activePicker, setActivePicker] = useState<
     "dataIscrizione" | "dateOfEntry" | "dateOfCaptaincy" | null
   >(null);
@@ -421,8 +423,10 @@ export const MemberCreateScreen: React.FC = () => {
           keyboardVerticalOffset={insets.top + 56}
         >
           <ScrollView
+            ref={scrollViewRef}
             style={styles.content}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
             {/* SuperAdmin: Role Management first — gates everything else */}
             {isSuperAdmin && (
@@ -897,6 +901,9 @@ export const MemberCreateScreen: React.FC = () => {
                         value={formData.note}
                         onChangeText={(text) =>
                           setFormData({ ...formData, note: text })
+                        }
+                        onFocus={() =>
+                          scrollViewRef.current?.scrollToEnd({ animated: true })
                         }
                         placeholder="Add notes..."
                         placeholderTextColor={colors.textTertiary}

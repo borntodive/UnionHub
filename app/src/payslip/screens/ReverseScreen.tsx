@@ -7,6 +7,8 @@ import {
   TextInput,
   TouchableOpacity,
   StatusBar,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -189,112 +191,117 @@ export const ReverseScreen: React.FC = () => {
         </View>
       </SafeAreaView>
 
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {/* Sector Pay section */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleRow}>
-            <ArrowLeftRight size={16} color={colors.primary} />
-            <Text style={styles.sectionTitle}>
-              {t("payslip.reverseSectorTitle")}
-            </Text>
-          </View>
-          <View style={styles.card}>
-            <AmountInput
-              label={t("payslip.reverseEnterAmount")}
-              value={sectorPayText}
-              onChange={setSectorPayText}
-            />
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.content}
+        >
+          {/* Sector Pay section */}
+          <View style={styles.section}>
+            <View style={styles.sectionTitleRow}>
+              <ArrowLeftRight size={16} color={colors.primary} />
+              <Text style={styles.sectionTitle}>
+                {t("payslip.reverseSectorTitle")}
+              </Text>
+            </View>
+            <View style={styles.card}>
+              <AmountInput
+                label={t("payslip.reverseEnterAmount")}
+                value={sectorPayText}
+                onChange={setSectorPayText}
+              />
 
-            {sectorPayAmount > 0 && rates && (
-              <View style={styles.results}>
-                {/* Hours at contract rate */}
-                {hoursAtContractRate !== null && (
-                  <>
-                    <View style={styles.divider} />
+              {sectorPayAmount > 0 && rates && (
+                <View style={styles.results}>
+                  {/* Hours at contract rate */}
+                  {hoursAtContractRate !== null && (
+                    <>
+                      <View style={styles.divider} />
+                      <ResultRow
+                        label={t("payslip.reverseHoursAtRate")}
+                        sub={`${t("payslip.contractPerHour")} @ ${formatCurrency(sbhRate)}`}
+                        value={formatSbh(hoursAtContractRate)}
+                      />
+                    </>
+                  )}
+
+                  {/* Effective rate using input hours */}
+                  <View style={styles.divider} />
+                  {hasSbhHours ? (
                     <ResultRow
-                      label={t("payslip.reverseHoursAtRate")}
-                      sub={`${t("payslip.contractPerHour")} @ ${formatCurrency(sbhRate)}`}
-                      value={formatSbh(hoursAtContractRate)}
+                      label={t("payslip.reverseEffectiveRate")}
+                      sub={`${formatSbh(inputSbhDecimal)} ${t("payslip.reverseFromInput")}`}
+                      value={`${formatCurrency(effectiveSbhRate!)}/${t("payslip.reverseHourShort")}`}
                     />
-                  </>
-                )}
-
-                {/* Effective rate using input hours */}
-                <View style={styles.divider} />
-                {hasSbhHours ? (
-                  <ResultRow
-                    label={t("payslip.reverseEffectiveRate")}
-                    sub={`${formatSbh(inputSbhDecimal)} ${t("payslip.reverseFromInput")}`}
-                    value={`${formatCurrency(effectiveSbhRate!)}/${t("payslip.reverseHourShort")}`}
-                  />
-                ) : (
-                  <View style={styles.warning}>
-                    <AlertTriangle size={14} color={colors.warning} />
-                    <Text style={styles.warningText}>
-                      {t("payslip.reverseNoSbhWarning")}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
+                  ) : (
+                    <View style={styles.warning}>
+                      <AlertTriangle size={14} color={colors.warning} />
+                      <Text style={styles.warningText}>
+                        {t("payslip.reverseNoSbhWarning")}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
           </View>
-        </View>
 
-        {/* Diaria section */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleRow}>
-            <ArrowLeftRight size={16} color={colors.primary} />
-            <Text style={styles.sectionTitle}>
-              {t("payslip.reverseDiariaTitle")}
-            </Text>
-          </View>
-          <View style={styles.card}>
-            <AmountInput
-              label={t("payslip.reverseEnterAmount")}
-              value={diariaText}
-              onChange={setDiariaText}
-            />
+          {/* Diaria section */}
+          <View style={styles.section}>
+            <View style={styles.sectionTitleRow}>
+              <ArrowLeftRight size={16} color={colors.primary} />
+              <Text style={styles.sectionTitle}>
+                {t("payslip.reverseDiariaTitle")}
+              </Text>
+            </View>
+            <View style={styles.card}>
+              <AmountInput
+                label={t("payslip.reverseEnterAmount")}
+                value={diariaText}
+                onChange={setDiariaText}
+              />
 
-            {diariaAmount > 0 && rates && (
-              <View style={styles.results}>
-                {/* Days at contract rate */}
-                {daysAtContractRate !== null && (
-                  <>
-                    <View style={styles.divider} />
+              {diariaAmount > 0 && rates && (
+                <View style={styles.results}>
+                  {/* Days at contract rate */}
+                  {daysAtContractRate !== null && (
+                    <>
+                      <View style={styles.divider} />
+                      <ResultRow
+                        label={t("payslip.reverseDaysAtRate")}
+                        sub={`${t("payslip.contractPerDay")} @ ${formatCurrency(diariaRate)}`}
+                        value={formatNumber(daysAtContractRate, 2)}
+                      />
+                    </>
+                  )}
+
+                  {/* Effective rate using input days */}
+                  <View style={styles.divider} />
+                  {hasDiariaDays ? (
                     <ResultRow
-                      label={t("payslip.reverseDaysAtRate")}
-                      sub={`${t("payslip.contractPerDay")} @ ${formatCurrency(diariaRate)}`}
-                      value={formatNumber(daysAtContractRate, 2)}
+                      label={t("payslip.reverseEffectiveRate")}
+                      sub={`${totalDiariaDays} ${t("payslip.reverseFromInput")}`}
+                      value={`${formatCurrency(effectiveDiariaRate!)}/${t("payslip.reverseDayShort")}`}
                     />
-                  </>
-                )}
-
-                {/* Effective rate using input days */}
-                <View style={styles.divider} />
-                {hasDiariaDays ? (
-                  <ResultRow
-                    label={t("payslip.reverseEffectiveRate")}
-                    sub={`${totalDiariaDays} ${t("payslip.reverseFromInput")}`}
-                    value={`${formatCurrency(effectiveDiariaRate!)}/${t("payslip.reverseDayShort")}`}
-                  />
-                ) : (
-                  <View style={styles.warning}>
-                    <AlertTriangle size={14} color={colors.warning} />
-                    <Text style={styles.warningText}>
-                      {t("payslip.reverseNoDiariaWarning")}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
+                  ) : (
+                    <View style={styles.warning}>
+                      <AlertTriangle size={14} color={colors.warning} />
+                      <Text style={styles.warningText}>
+                        {t("payslip.reverseNoDiariaWarning")}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
           </View>
-        </View>
 
-        <View style={styles.bottomSpace} />
-      </ScrollView>
+          <View style={styles.bottomSpace} />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 };

@@ -303,6 +303,7 @@ export const DeactivatedMembersScreen: React.FC = () => {
             data={members}
             renderItem={renderMember}
             keyExtractor={(item) => item.id}
+            keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.listContent}
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.5}

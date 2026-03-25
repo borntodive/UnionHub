@@ -8,6 +8,8 @@ import {
   TextInput,
   StatusBar,
   Switch,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -116,226 +118,236 @@ export const CtcScreen: React.FC = () => {
         </View>
       </SafeAreaView>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {/* Unit toggle + round-up option */}
-        <View style={styles.card}>
-          <View style={styles.switchRow}>
-            <Text style={styles.label}>{t("ctc.roundUp")}</Text>
-            <Switch
-              value={roundUp}
-              onValueChange={setRoundUp}
-              trackColor={{ true: colors.primary, false: colors.border }}
-              thumbColor={colors.surface}
-            />
-          </View>
-          <View style={styles.toggleRow}>
-            <TouchableOpacity
-              style={[
-                styles.toggleBtn,
-                unit === "ft" && styles.toggleBtnActive,
-              ]}
-              onPress={() => setUnit("ft")}
-            >
-              <Text
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Unit toggle + round-up option */}
+          <View style={styles.card}>
+            <View style={styles.switchRow}>
+              <Text style={styles.label}>{t("ctc.roundUp")}</Text>
+              <Switch
+                value={roundUp}
+                onValueChange={setRoundUp}
+                trackColor={{ true: colors.primary, false: colors.border }}
+                thumbColor={colors.surface}
+              />
+            </View>
+            <View style={styles.toggleRow}>
+              <TouchableOpacity
                 style={[
-                  styles.toggleBtnText,
-                  unit === "ft" && styles.toggleBtnTextActive,
+                  styles.toggleBtn,
+                  unit === "ft" && styles.toggleBtnActive,
                 ]}
+                onPress={() => setUnit("ft")}
               >
-                ft
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.toggleBtn, unit === "m" && styles.toggleBtnActive]}
-              onPress={() => setUnit("m")}
-            >
-              <Text
+                <Text
+                  style={[
+                    styles.toggleBtnText,
+                    unit === "ft" && styles.toggleBtnTextActive,
+                  ]}
+                >
+                  ft
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
                 style={[
-                  styles.toggleBtnText,
-                  unit === "m" && styles.toggleBtnTextActive,
+                  styles.toggleBtn,
+                  unit === "m" && styles.toggleBtnActive,
                 ]}
+                onPress={() => setUnit("m")}
               >
-                m
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Inputs */}
-        <View style={styles.card}>
-          <View style={styles.inputRow}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{t("ctc.airportTemp")}</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.input}
-                  value={tempStr}
-                  onChangeText={setTempStr}
-                  keyboardType="numbers-and-punctuation"
-                  placeholder="-10"
-                  placeholderTextColor={colors.textTertiary}
-                />
-                <Text style={styles.inputUnit}>°C</Text>
-              </View>
-            </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{t("ctc.airportElev")}</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.input}
-                  value={elevStr}
-                  onChangeText={setElevStr}
-                  keyboardType="numbers-and-punctuation"
-                  placeholder="500"
-                  placeholderTextColor={colors.textTertiary}
-                />
-                <Text style={styles.inputUnit}>{unitLabel}</Text>
-              </View>
+                <Text
+                  style={[
+                    styles.toggleBtnText,
+                    unit === "m" && styles.toggleBtnTextActive,
+                  ]}
+                >
+                  m
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
 
-          <View style={[styles.inputRow, { marginTop: spacing.md }]}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{t("ctc.msa")}</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.input}
-                  value={msaStr}
-                  onChangeText={setMsaStr}
-                  keyboardType="number-pad"
-                  placeholder={t("ctc.msaPlaceholder")}
-                  placeholderTextColor={colors.textTertiary}
-                />
-                <Text style={styles.inputUnit}>{unitLabel}</Text>
-              </View>
-            </View>
-            <View style={styles.inputGroup} />
-          </View>
-        </View>
-
-        {/* No correction banner */}
-        {noCorrection && (
-          <View style={styles.warningBanner}>
-            <AlertTriangle size={18} color={colors.warning} />
-            <Text style={styles.warningText}>{t("ctc.noCorrection")}</Text>
-          </View>
-        )}
-
-        {/* Altitude rows */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>{t("ctc.altitudesSection")}</Text>
-
-          {rows.map((row, idx) => {
-            const { correction, corrected, aboveMsa } = computeRow(row);
-            const hasResult =
-              correction !== null && corrected !== null && !noCorrection;
-
-            return (
-              <View key={row.id} style={styles.altRow}>
-                <View style={styles.altRowHeader}>
-                  <Text style={styles.altRowIndex}>#{idx + 1}</Text>
-                  {rows.length > 1 && (
-                    <TouchableOpacity onPress={() => removeRow(row.id)}>
-                      <X size={18} color={colors.error} />
-                    </TouchableOpacity>
-                  )}
+          {/* Inputs */}
+          <View style={styles.card}>
+            <View style={styles.inputRow}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{t("ctc.airportTemp")}</Text>
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={styles.input}
+                    value={tempStr}
+                    onChangeText={setTempStr}
+                    keyboardType="numbers-and-punctuation"
+                    placeholder="-10"
+                    placeholderTextColor={colors.textTertiary}
+                  />
+                  <Text style={styles.inputUnit}>°C</Text>
                 </View>
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{t("ctc.airportElev")}</Text>
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={styles.input}
+                    value={elevStr}
+                    onChangeText={setElevStr}
+                    keyboardType="numbers-and-punctuation"
+                    placeholder="500"
+                    placeholderTextColor={colors.textTertiary}
+                  />
+                  <Text style={styles.inputUnit}>{unitLabel}</Text>
+                </View>
+              </View>
+            </View>
 
-                <View style={styles.altInputRow}>
-                  <View style={[styles.inputGroup, { flex: 1.2 }]}>
-                    <Text style={styles.label}>{t("ctc.label")}</Text>
-                    <TextInput
-                      style={[styles.input, styles.inputBordered]}
-                      value={row.label}
-                      onChangeText={(v) => updateRow(row.id, "label", v)}
-                      placeholder="FAF"
-                      placeholderTextColor={colors.textTertiary}
-                    />
+            <View style={[styles.inputRow, { marginTop: spacing.md }]}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{t("ctc.msa")}</Text>
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={styles.input}
+                    value={msaStr}
+                    onChangeText={setMsaStr}
+                    keyboardType="number-pad"
+                    placeholder={t("ctc.msaPlaceholder")}
+                    placeholderTextColor={colors.textTertiary}
+                  />
+                  <Text style={styles.inputUnit}>{unitLabel}</Text>
+                </View>
+              </View>
+              <View style={styles.inputGroup} />
+            </View>
+          </View>
+
+          {/* No correction banner */}
+          {noCorrection && (
+            <View style={styles.warningBanner}>
+              <AlertTriangle size={18} color={colors.warning} />
+              <Text style={styles.warningText}>{t("ctc.noCorrection")}</Text>
+            </View>
+          )}
+
+          {/* Altitude rows */}
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>{t("ctc.altitudesSection")}</Text>
+
+            {rows.map((row, idx) => {
+              const { correction, corrected, aboveMsa } = computeRow(row);
+              const hasResult =
+                correction !== null && corrected !== null && !noCorrection;
+
+              return (
+                <View key={row.id} style={styles.altRow}>
+                  <View style={styles.altRowHeader}>
+                    <Text style={styles.altRowIndex}>#{idx + 1}</Text>
+                    {rows.length > 1 && (
+                      <TouchableOpacity onPress={() => removeRow(row.id)}>
+                        <X size={18} color={colors.error} />
+                      </TouchableOpacity>
+                    )}
                   </View>
-                  <View style={[styles.inputGroup, { flex: 1 }]}>
-                    <Text style={styles.label}>{t("ctc.published")}</Text>
-                    <View style={styles.inputWrapper}>
+
+                  <View style={styles.altInputRow}>
+                    <View style={[styles.inputGroup, { flex: 1.2 }]}>
+                      <Text style={styles.label}>{t("ctc.label")}</Text>
                       <TextInput
-                        style={styles.input}
-                        value={row.publishedAlt}
-                        onChangeText={(v) =>
-                          updateRow(row.id, "publishedAlt", v)
-                        }
-                        keyboardType="number-pad"
-                        placeholder="3000"
+                        style={[styles.input, styles.inputBordered]}
+                        value={row.label}
+                        onChangeText={(v) => updateRow(row.id, "label", v)}
+                        placeholder="FAF"
                         placeholderTextColor={colors.textTertiary}
                       />
-                      <Text style={styles.inputUnit}>{unitLabel}</Text>
+                    </View>
+                    <View style={[styles.inputGroup, { flex: 1 }]}>
+                      <Text style={styles.label}>{t("ctc.published")}</Text>
+                      <View style={styles.inputWrapper}>
+                        <TextInput
+                          style={styles.input}
+                          value={row.publishedAlt}
+                          onChangeText={(v) =>
+                            updateRow(row.id, "publishedAlt", v)
+                          }
+                          keyboardType="number-pad"
+                          placeholder="3000"
+                          placeholderTextColor={colors.textTertiary}
+                        />
+                        <Text style={styles.inputUnit}>{unitLabel}</Text>
+                      </View>
                     </View>
                   </View>
+
+                  {aboveMsa && (
+                    <View style={styles.aboveMsaBadge}>
+                      <Text style={styles.aboveMsaText}>
+                        {t("ctc.aboveMsa")}
+                      </Text>
+                    </View>
+                  )}
+
+                  {hasResult && (
+                    <View style={styles.resultRow}>
+                      <View style={styles.resultCell}>
+                        <Text style={styles.resultLabel}>
+                          {t("ctc.correction")}
+                        </Text>
+                        <Text style={styles.resultValue}>
+                          +{correction} {unitLabel}
+                        </Text>
+                      </View>
+                      <View style={[styles.resultCell, styles.resultCellRight]}>
+                        <Text style={styles.resultLabel}>
+                          {t("ctc.corrected")}
+                        </Text>
+                        <Text
+                          style={[styles.resultValue, styles.resultHighlight]}
+                        >
+                          {corrected} {unitLabel}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
                 </View>
+              );
+            })}
 
-                {aboveMsa && (
-                  <View style={styles.aboveMsaBadge}>
-                    <Text style={styles.aboveMsaText}>{t("ctc.aboveMsa")}</Text>
-                  </View>
-                )}
-
-                {hasResult && (
-                  <View style={styles.resultRow}>
-                    <View style={styles.resultCell}>
-                      <Text style={styles.resultLabel}>
-                        {t("ctc.correction")}
-                      </Text>
-                      <Text style={styles.resultValue}>
-                        +{correction} {unitLabel}
-                      </Text>
-                    </View>
-                    <View style={[styles.resultCell, styles.resultCellRight]}>
-                      <Text style={styles.resultLabel}>
-                        {t("ctc.corrected")}
-                      </Text>
-                      <Text
-                        style={[styles.resultValue, styles.resultHighlight]}
-                      >
-                        {corrected} {unitLabel}
-                      </Text>
-                    </View>
-                  </View>
-                )}
-              </View>
-            );
-          })}
-
-          <TouchableOpacity style={styles.addBtn} onPress={addRow}>
-            <Plus size={18} color={colors.primary} />
-            <Text style={styles.addBtnText}>{t("ctc.addRow")}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Non-applicability info box */}
-        <View style={styles.infoCard}>
-          <View style={styles.infoCardHeader}>
-            <Info size={16} color={colors.primary} />
-            <Text style={styles.infoCardTitle}>
-              {t("ctc.notApplicableTitle")}
-            </Text>
+            <TouchableOpacity style={styles.addBtn} onPress={addRow}>
+              <Plus size={18} color={colors.primary} />
+              <Text style={styles.addBtnText}>{t("ctc.addRow")}</Text>
+            </TouchableOpacity>
           </View>
-          {(
-            t("ctc.notApplicableItems", { returnObjects: true }) as string[]
-          ).map((item, i) => (
-            <View key={i} style={styles.infoItem}>
-              <Text style={styles.infoBullet}>•</Text>
-              <Text style={styles.infoItemText}>{item}</Text>
-            </View>
-          ))}
-        </View>
 
-        {/* Source note */}
-        <View style={styles.sourceBox}>
-          <Thermometer size={14} color={colors.textTertiary} />
-          <Text style={styles.sourceText}>{t("ctc.info")}</Text>
-        </View>
-      </ScrollView>
+          {/* Non-applicability info box */}
+          <View style={styles.infoCard}>
+            <View style={styles.infoCardHeader}>
+              <Info size={16} color={colors.primary} />
+              <Text style={styles.infoCardTitle}>
+                {t("ctc.notApplicableTitle")}
+              </Text>
+            </View>
+            {(
+              t("ctc.notApplicableItems", { returnObjects: true }) as string[]
+            ).map((item, i) => (
+              <View key={i} style={styles.infoItem}>
+                <Text style={styles.infoBullet}>•</Text>
+                <Text style={styles.infoItemText}>{item}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Source note */}
+          <View style={styles.sourceBox}>
+            <Thermometer size={14} color={colors.textTertiary} />
+            <Text style={styles.sourceText}>{t("ctc.info")}</Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 };

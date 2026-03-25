@@ -6,6 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Menu } from "lucide-react-native";
@@ -66,170 +68,184 @@ export const InputScreen: React.FC = () => {
         </View>
       </SafeAreaView>
 
-      <ScrollView style={styles.content}>
-        <View style={styles.card}>
-          <MonthPicker
-            value={input.date}
-            onChange={(date) => setInput({ date })}
-          />
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>{t("payslip.flightActivity")}</Text>
-          <SbhPicker value={input.sbh} onChange={(sbh) => setInput({ sbh })} />
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>{t("payslip.perDiem")}</Text>
-          <NumberInput
-            label={t("payslip.flyingPerDiem")}
-            value={input.flyDiaria}
-            onChange={(flyDiaria) => setInput({ flyDiaria })}
-          />
-          <NumberInput
-            label={t("payslip.nonFlyingPerDiem")}
-            value={input.noFlyDiaria}
-            onChange={(noFlyDiaria) => setInput({ noFlyDiaria })}
-          />
-          <NumberInput
-            label={t("payslip.outOfBase")}
-            value={input.oob}
-            onChange={(oob) => setInput({ oob })}
-          />
-          {isPilot && (
-            <NumberInput
-              label={t("payslip.workingDayOff")}
-              value={input.woff}
-              onChange={(woff) => setInput({ woff })}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView style={styles.content}>
+          <View style={styles.card}>
+            <MonthPicker
+              value={input.date}
+              onChange={(date) => setInput({ date })}
             />
-          )}
-        </View>
+          </View>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>{t("payslip.leaveAbsences")}</Text>
-          <NumberInput
-            label={t("payslip.annualLeave")}
-            value={input.al}
-            onChange={(al) => setInput({ al })}
-          />
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>
+              {t("payslip.flightActivity")}
+            </Text>
+            <SbhPicker
+              value={input.sbh}
+              onChange={(sbh) => setInput({ sbh })}
+            />
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>{t("payslip.perDiem")}</Text>
+            <NumberInput
+              label={t("payslip.flyingPerDiem")}
+              value={input.flyDiaria}
+              onChange={(flyDiaria) => setInput({ flyDiaria })}
+            />
+            <NumberInput
+              label={t("payslip.nonFlyingPerDiem")}
+              value={input.noFlyDiaria}
+              onChange={(noFlyDiaria) => setInput({ noFlyDiaria })}
+            />
+            <NumberInput
+              label={t("payslip.outOfBase")}
+              value={input.oob}
+              onChange={(oob) => setInput({ oob })}
+            />
+            {isPilot && (
+              <NumberInput
+                label={t("payslip.workingDayOff")}
+                value={input.woff}
+                onChange={(woff) => setInput({ woff })}
+              />
+            )}
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>
+              {t("payslip.leaveAbsences")}
+            </Text>
+            <NumberInput
+              label={t("payslip.annualLeave")}
+              value={input.al}
+              onChange={(al) => setInput({ al })}
+            />
+            {!isPilot && (
+              <NumberInput
+                label={t("payslip.bankHolidays")}
+                value={input.bankHolydays}
+                onChange={(bankHolydays) => setInput({ bankHolydays })}
+              />
+            )}
+            {!isPilot && (
+              <NumberInput
+                label={t("payslip.oobUnplanned")}
+                value={input.oobUnplanned}
+                onChange={(oobUnplanned) => setInput({ oobUnplanned })}
+              />
+            )}
+            <NumberInput
+              label={t("payslip.unpaidLeave")}
+              value={input.ul}
+              onChange={(ul) => setInput({ ul })}
+            />
+            <NumberInput
+              label={t("payslip.parentalLeave")}
+              value={input.parentalDays}
+              onChange={(parentalDays) => setInput({ parentalDays })}
+            />
+            <NumberInput
+              label={t("payslip.law104")}
+              value={input.days104}
+              onChange={(days104) => setInput({ days104 })}
+            />
+          </View>
+
+          {isLTC && (
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>
+                {t("payslip.ltcTraining")}
+              </Text>
+              <NumberInput
+                label={t("payslip.trainingSectors")}
+                value={input.trainingSectors}
+                onChange={(trainingSectors) => setInput({ trainingSectors })}
+              />
+            </View>
+          )}
+
+          {isInstructor && (
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>{t("payslip.instructor")}</Text>
+              <NumberInput
+                label={t("payslip.simulatorDays")}
+                value={input.simDays}
+                onChange={(simDays) => setInput({ simDays })}
+              />
+            </View>
+          )}
+
           {!isPilot && (
-            <NumberInput
-              label={t("payslip.bankHolidays")}
-              value={input.bankHolydays}
-              onChange={(bankHolydays) => setInput({ bankHolydays })}
-            />
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>{t("members.cabinCrew")}</Text>
+              <NumberInput
+                label={t("payslip.cabinCrewTraining")}
+                value={input.ccTrainingDays}
+                onChange={(ccTrainingDays) => setInput({ ccTrainingDays })}
+              />
+              <NumberInput
+                label={t("payslip.landingsOffDay")}
+                value={input.landingInOffDay}
+                onChange={(landingInOffDay) => setInput({ landingInOffDay })}
+              />
+              <NumberInput
+                label={t("payslip.commissions")}
+                value={input.commissions}
+                onChange={(commissions) => setInput({ commissions })}
+              />
+            </View>
           )}
-          {!isPilot && (
-            <NumberInput
-              label={t("payslip.oobUnplanned")}
-              value={input.oobUnplanned}
-              onChange={(oobUnplanned) => setInput({ oobUnplanned })}
-            />
+
+          {hasItud && (
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>{t("payslip.other")}</Text>
+              <NumberInput
+                label={t("payslip.itudDays")}
+                value={input.itud}
+                onChange={(itud) => setInput({ itud })}
+              />
+            </View>
           )}
-          <NumberInput
-            label={t("payslip.unpaidLeave")}
-            value={input.ul}
-            onChange={(ul) => setInput({ ul })}
-          />
-          <NumberInput
-            label={t("payslip.parentalLeave")}
-            value={input.parentalDays}
-            onChange={(parentalDays) => setInput({ parentalDays })}
-          />
-          <NumberInput
-            label={t("payslip.law104")}
-            value={input.days104}
-            onChange={(days104) => setInput({ days104 })}
-          />
-        </View>
 
-        {isLTC && (
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>{t("payslip.ltcTraining")}</Text>
-            <NumberInput
-              label={t("payslip.trainingSectors")}
-              value={input.trainingSectors}
-              onChange={(trainingSectors) => setInput({ trainingSectors })}
+            <AdditionalPaymentsSection
+              items={input.additional}
+              onAdd={() =>
+                addAdditionalPayment({
+                  amount: 0,
+                  tax: 100,
+                  isSLR: false,
+                  isConguaglio: false,
+                })
+              }
+              onUpdate={updateAdditionalPayment}
+              onRemove={removeAdditionalPayment}
             />
           </View>
-        )}
 
-        {isInstructor && (
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>{t("payslip.instructor")}</Text>
-            <NumberInput
-              label={t("payslip.simulatorDays")}
-              value={input.simDays}
-              onChange={(simDays) => setInput({ simDays })}
+            <AdditionalDeductionsSection
+              items={input.additionalDeductions}
+              onAdd={() =>
+                addAdditionalDeduction({
+                  amount: 0,
+                  tax: 100,
+                  isConguaglio: false,
+                })
+              }
+              onUpdate={updateAdditionalDeduction}
+              onRemove={removeAdditionalDeduction}
             />
           </View>
-        )}
 
-        {!isPilot && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>{t("members.cabinCrew")}</Text>
-            <NumberInput
-              label={t("payslip.cabinCrewTraining")}
-              value={input.ccTrainingDays}
-              onChange={(ccTrainingDays) => setInput({ ccTrainingDays })}
-            />
-            <NumberInput
-              label={t("payslip.landingsOffDay")}
-              value={input.landingInOffDay}
-              onChange={(landingInOffDay) => setInput({ landingInOffDay })}
-            />
-            <NumberInput
-              label={t("payslip.commissions")}
-              value={input.commissions}
-              onChange={(commissions) => setInput({ commissions })}
-            />
-          </View>
-        )}
-
-        {hasItud && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>{t("payslip.other")}</Text>
-            <NumberInput
-              label={t("payslip.itudDays")}
-              value={input.itud}
-              onChange={(itud) => setInput({ itud })}
-            />
-          </View>
-        )}
-
-        <View style={styles.card}>
-          <AdditionalPaymentsSection
-            items={input.additional}
-            onAdd={() =>
-              addAdditionalPayment({
-                amount: 0,
-                tax: 100,
-                isSLR: false,
-                isConguaglio: false,
-              })
-            }
-            onUpdate={updateAdditionalPayment}
-            onRemove={removeAdditionalPayment}
-          />
-        </View>
-
-        <View style={styles.card}>
-          <AdditionalDeductionsSection
-            items={input.additionalDeductions}
-            onAdd={() =>
-              addAdditionalDeduction({
-                amount: 0,
-                tax: 100,
-                isConguaglio: false,
-              })
-            }
-            onUpdate={updateAdditionalDeduction}
-            onRemove={removeAdditionalDeduction}
-          />
-        </View>
-
-        <View style={styles.bottomSpace} />
-      </ScrollView>
+          <View style={styles.bottomSpace} />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 };

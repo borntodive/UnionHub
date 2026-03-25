@@ -384,6 +384,7 @@ export const MembersScreen: React.FC = () => {
         data={allMembers || []}
         keyExtractor={(item) => item.id}
         renderItem={renderMember}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.listContainer}
         refreshControl={
           <RefreshControl

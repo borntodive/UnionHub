@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   View,
@@ -114,6 +114,8 @@ export const MemberEditScreen: React.FC = () => {
     role: UserRole.USER,
     ruolo: null as Ruolo | null,
   });
+
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const [activePicker, setActivePicker] = useState<
     "dataIscrizione" | "dateOfEntry" | "dateOfCaptaincy" | null
@@ -360,8 +362,10 @@ export const MemberEditScreen: React.FC = () => {
           keyboardVerticalOffset={insets.top + 56}
         >
           <ScrollView
+            ref={scrollViewRef}
             style={styles.content}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
             {/* Personal Info Section */}
             <Card style={styles.sectionCard}>
@@ -743,6 +747,9 @@ export const MemberEditScreen: React.FC = () => {
                     value={formData.note}
                     onChangeText={(text) =>
                       setFormData({ ...formData, note: text })
+                    }
+                    onFocus={() =>
+                      scrollViewRef.current?.scrollToEnd({ animated: true })
                     }
                     placeholder="Add notes..."
                     placeholderTextColor={colors.textTertiary}

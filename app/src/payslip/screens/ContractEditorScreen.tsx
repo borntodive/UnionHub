@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   Switch,
   StatusBar,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -533,221 +535,240 @@ export default function ContractEditorScreen() {
         </View>
       </SafeAreaView>
 
-      <ScrollView style={styles.scrollView}>
-        {/* Role Selection */}
-        {renderSelect("Role", role, setRole, ROLES)}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView style={styles.scrollView}>
+          {/* Role Selection */}
+          {renderSelect("Role", role, setRole, ROLES)}
 
-        {/* Rank Selection */}
-        {renderSelect(
-          "Rank",
-          rank,
-          setRank,
-          RANKS[role as keyof typeof RANKS] || [],
-        )}
+          {/* Rank Selection */}
+          {renderSelect(
+            "Rank",
+            rank,
+            setRank,
+            RANKS[role as keyof typeof RANKS] || [],
+          )}
 
-        {/* Year and Month */}
-        <View style={{ flexDirection: "row", gap: 16 }}>
-          <View style={{ flex: 1 }}>
-            {renderInput("Effective Year", year, setYear, "2026", "numeric")}
+          {/* Year and Month */}
+          <View style={{ flexDirection: "row", gap: 16 }}>
+            <View style={{ flex: 1 }}>
+              {renderInput("Effective Year", year, setYear, "2026", "numeric")}
+            </View>
+            <View style={{ flex: 1 }}>
+              {renderInput(
+                "Effective Month (1-12)",
+                month,
+                setMonth,
+                "4",
+                "numeric",
+              )}
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
+
+          {/* Contract Values */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Salary Components (Annual)</Text>
+            {renderInput("Basic Salary (annual)", basic, setBasic, "15000")}
             {renderInput(
-              "Effective Month (1-12)",
-              month,
-              setMonth,
-              "4",
-              "numeric",
+              "FFP - Fixed Flight Pay (annual)",
+              ffp,
+              setFfp,
+              "82044",
+            )}
+            {renderInput("Allowance (annual)", allowance, setAllowance, "8000")}
+            {renderInput(
+              "Scheduled Block Hours Rate (SBH)",
+              sbh,
+              setSbh,
+              "18.21",
+            )}
+            {renderInput("Annual Leave Daily Rate (AL)", al, setAl, "165.00")}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Allowances</Text>
+            {renderInput("Out of Base Daily (OOB)", oob, setOob, "155.00")}
+            {role === "pil" &&
+              renderInput("Working Day Off (WOFF)", woff, setWoff, "450.00")}
+            {renderInput("Per Diem Rate (Diaria)", diaria, setDiaria, "46.48")}
+            {renderInput("RSA Amount (monthly)", rsa, setRsa, "51.92")}
+            {renderInput("ITUD Daily Rate", itud, setItud, "120")}
+          </View>
+
+          {/* Training Configuration */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Training Configuration</Text>
+
+            <View style={styles.switchContainer}>
+              <Text style={styles.label}>Enable Training Pay</Text>
+              <Switch
+                value={hasTraining}
+                onValueChange={setHasTraining}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={colors.textInverse}
+              />
+            </View>
+
+            {hasTraining && (
+              <>
+                {renderInput(
+                  "Training Allowance (annual)",
+                  trainingAllowance,
+                  setTrainingAllowance,
+                  "4000",
+                )}
+
+                {/* Non-BTC Section */}
+                <View style={styles.subSection}>
+                  <View style={styles.switchContainer}>
+                    <Text style={styles.subSectionTitle}>Non-BTC Training</Text>
+                    <Switch
+                      value={hasNonBtc}
+                      onValueChange={setHasNonBtc}
+                      trackColor={{
+                        false: colors.border,
+                        true: colors.primary,
+                      }}
+                      thumbColor={colors.textInverse}
+                    />
+                  </View>
+                  {hasNonBtc && (
+                    <>
+                      {renderInput(
+                        "Non-BTC Allowance (annual)",
+                        nonBtcAllowance,
+                        setNonBtcAllowance,
+                        "3000",
+                      )}
+                      {renderInput(
+                        "Non-BTC Sim Rate (per day)",
+                        nonBtcSimRate,
+                        setNonBtcSimRate,
+                        "15.00",
+                      )}
+                    </>
+                  )}
+                </View>
+
+                {/* BTC Section */}
+                <View style={styles.subSection}>
+                  <View style={styles.switchContainer}>
+                    <Text style={styles.subSectionTitle}>BTC Training</Text>
+                    <Switch
+                      value={hasBtc}
+                      onValueChange={setHasBtc}
+                      trackColor={{
+                        false: colors.border,
+                        true: colors.primary,
+                      }}
+                      thumbColor={colors.textInverse}
+                    />
+                  </View>
+                  {hasBtc && (
+                    <>
+                      {renderInput(
+                        "BTC Allowance (annual)",
+                        btcAllowance,
+                        setBtcAllowance,
+                        "2500",
+                      )}
+                      <Text style={styles.tierLabel}>Tier 1 (Days 1-10)</Text>
+                      {renderInput(
+                        "BTC Sim Rate Tier 1",
+                        btcSimRate1,
+                        setBtcSimRate1,
+                        "12.00",
+                      )}
+                      <Text style={styles.tierLabel}>Tier 2 (Days 11+)</Text>
+                      {renderInput(
+                        "BTC Sim Rate Tier 2",
+                        btcSimRate2,
+                        setBtcSimRate2,
+                        "6.00",
+                      )}
+                    </>
+                  )}
+                </View>
+
+                {/* LTC Bonus Section */}
+                <View style={styles.subSection}>
+                  <View style={styles.switchContainer}>
+                    <Text style={styles.subSectionTitle}>LTC Sector Bonus</Text>
+                    <Switch
+                      value={hasLtcBonus}
+                      onValueChange={setHasLtcBonus}
+                      trackColor={{
+                        false: colors.border,
+                        true: colors.primary,
+                      }}
+                      thumbColor={colors.textInverse}
+                    />
+                  </View>
+                  {hasLtcBonus && (
+                    <>
+                      {renderInput(
+                        "Min Sectors for Bonus",
+                        ltcMinSectors,
+                        setLtcMinSectors,
+                        "21",
+                        "numeric",
+                      )}
+                    </>
+                  )}
+                </View>
+              </>
             )}
           </View>
-        </View>
 
-        {/* Contract Values */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Salary Components (Annual)</Text>
-          {renderInput("Basic Salary (annual)", basic, setBasic, "15000")}
-          {renderInput("FFP - Fixed Flight Pay (annual)", ffp, setFfp, "82044")}
-          {renderInput("Allowance (annual)", allowance, setAllowance, "8000")}
-          {renderInput(
-            "Scheduled Block Hours Rate (SBH)",
-            sbh,
-            setSbh,
-            "18.21",
-          )}
-          {renderInput("Annual Leave Daily Rate (AL)", al, setAl, "165.00")}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Allowances</Text>
-          {renderInput("Out of Base Daily (OOB)", oob, setOob, "155.00")}
-          {role === "pil" &&
-            renderInput("Working Day Off (WOFF)", woff, setWoff, "450.00")}
-          {renderInput("Per Diem Rate (Diaria)", diaria, setDiaria, "46.48")}
-          {renderInput("RSA Amount (monthly)", rsa, setRsa, "51.92")}
-          {renderInput("ITUD Daily Rate", itud, setItud, "120")}
-        </View>
-
-        {/* Training Configuration */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Training Configuration</Text>
-
+          {/* Active Status */}
           <View style={styles.switchContainer}>
-            <Text style={styles.label}>Enable Training Pay</Text>
+            <Text style={styles.label}>Active</Text>
             <Switch
-              value={hasTraining}
-              onValueChange={setHasTraining}
+              value={isActive}
+              onValueChange={setIsActive}
               trackColor={{ false: colors.border, true: colors.primary }}
               thumbColor={colors.textInverse}
             />
           </View>
 
-          {hasTraining && (
-            <>
-              {renderInput(
-                "Training Allowance (annual)",
-                trainingAllowance,
-                setTrainingAllowance,
-                "4000",
-              )}
-
-              {/* Non-BTC Section */}
-              <View style={styles.subSection}>
-                <View style={styles.switchContainer}>
-                  <Text style={styles.subSectionTitle}>Non-BTC Training</Text>
-                  <Switch
-                    value={hasNonBtc}
-                    onValueChange={setHasNonBtc}
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={colors.textInverse}
-                  />
-                </View>
-                {hasNonBtc && (
-                  <>
-                    {renderInput(
-                      "Non-BTC Allowance (annual)",
-                      nonBtcAllowance,
-                      setNonBtcAllowance,
-                      "3000",
-                    )}
-                    {renderInput(
-                      "Non-BTC Sim Rate (per day)",
-                      nonBtcSimRate,
-                      setNonBtcSimRate,
-                      "15.00",
-                    )}
-                  </>
-                )}
-              </View>
-
-              {/* BTC Section */}
-              <View style={styles.subSection}>
-                <View style={styles.switchContainer}>
-                  <Text style={styles.subSectionTitle}>BTC Training</Text>
-                  <Switch
-                    value={hasBtc}
-                    onValueChange={setHasBtc}
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={colors.textInverse}
-                  />
-                </View>
-                {hasBtc && (
-                  <>
-                    {renderInput(
-                      "BTC Allowance (annual)",
-                      btcAllowance,
-                      setBtcAllowance,
-                      "2500",
-                    )}
-                    <Text style={styles.tierLabel}>Tier 1 (Days 1-10)</Text>
-                    {renderInput(
-                      "BTC Sim Rate Tier 1",
-                      btcSimRate1,
-                      setBtcSimRate1,
-                      "12.00",
-                    )}
-                    <Text style={styles.tierLabel}>Tier 2 (Days 11+)</Text>
-                    {renderInput(
-                      "BTC Sim Rate Tier 2",
-                      btcSimRate2,
-                      setBtcSimRate2,
-                      "6.00",
-                    )}
-                  </>
-                )}
-              </View>
-
-              {/* LTC Bonus Section */}
-              <View style={styles.subSection}>
-                <View style={styles.switchContainer}>
-                  <Text style={styles.subSectionTitle}>LTC Sector Bonus</Text>
-                  <Switch
-                    value={hasLtcBonus}
-                    onValueChange={setHasLtcBonus}
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={colors.textInverse}
-                  />
-                </View>
-                {hasLtcBonus && (
-                  <>
-                    {renderInput(
-                      "Min Sectors for Bonus",
-                      ltcMinSectors,
-                      setLtcMinSectors,
-                      "21",
-                      "numeric",
-                    )}
-                  </>
-                )}
-              </View>
-            </>
+          {/* Clone for New Period Button (only when editing) */}
+          {isEditing && (
+            <TouchableOpacity
+              style={[styles.cloneBtn, loading && styles.saveBtnDisabled]}
+              onPress={handleClonePeriod}
+              disabled={loading}
+            >
+              <Text style={styles.cloneBtnText}>Clone for New Period</Text>
+            </TouchableOpacity>
           )}
-        </View>
 
-        {/* Active Status */}
-        <View style={styles.switchContainer}>
-          <Text style={styles.label}>Active</Text>
-          <Switch
-            value={isActive}
-            onValueChange={setIsActive}
-            trackColor={{ false: colors.border, true: colors.primary }}
-            thumbColor={colors.textInverse}
-          />
-        </View>
-
-        {/* Clone for New Period Button (only when editing) */}
-        {isEditing && (
+          {/* Save Button */}
           <TouchableOpacity
-            style={[styles.cloneBtn, loading && styles.saveBtnDisabled]}
-            onPress={handleClonePeriod}
+            style={[styles.saveBtn, loading && styles.saveBtnDisabled]}
+            onPress={handleSave}
             disabled={loading}
           >
-            <Text style={styles.cloneBtnText}>Clone for New Period</Text>
+            {loading ? (
+              <ActivityIndicator color={colors.textInverse} />
+            ) : (
+              <Text style={styles.saveBtnText}>
+                {isEditing ? "Update Contract" : "Create Contract"}
+              </Text>
+            )}
           </TouchableOpacity>
-        )}
 
-        {/* Save Button */}
-        <TouchableOpacity
-          style={[styles.saveBtn, loading && styles.saveBtnDisabled]}
-          onPress={handleSave}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color={colors.textInverse} />
-          ) : (
-            <Text style={styles.saveBtnText}>
-              {isEditing ? "Update Contract" : "Create Contract"}
-            </Text>
-          )}
-        </TouchableOpacity>
-
-        {/* Cancel Button */}
-        <TouchableOpacity
-          style={styles.cancelBtn}
-          onPress={() => navigation.navigate("ClaContracts")}
-          disabled={loading}
-        >
-          <Text style={styles.cancelBtnText}>Cancel</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          {/* Cancel Button */}
+          <TouchableOpacity
+            style={styles.cancelBtn}
+            onPress={() => navigation.navigate("ClaContracts")}
+            disabled={loading}
+          >
+            <Text style={styles.cancelBtnText}>Cancel</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
