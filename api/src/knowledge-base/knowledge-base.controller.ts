@@ -12,6 +12,7 @@ import {
   HttpCode,
   HttpStatus,
   Req,
+  BadRequestException,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -40,6 +41,15 @@ export class KnowledgeBaseController {
     @Body() dto: UploadDocumentDto,
     @Req() req: any,
   ) {
+    if (!file) {
+      throw new BadRequestException("No file uploaded");
+    }
+    if (file.mimetype !== "application/pdf") {
+      throw new BadRequestException("Only PDF files are allowed");
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      throw new BadRequestException("File too large (max 50MB)");
+    }
     return this.kbService.uploadDocument(
       file.buffer,
       file.originalname,

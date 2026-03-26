@@ -2,7 +2,7 @@ import Constants from "expo-constants";
 import { createApiClient } from "@unionhub/shared/api";
 import { useAuthStore } from "../store/authStore";
 
-const API_BASE_URL: string =
+export const API_BASE_URL: string =
   (Constants.expoConfig?.extra?.apiUrl as string | undefined) ||
   (__DEV__
     ? "http://localhost:3000/api/v1"

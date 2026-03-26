@@ -41,6 +41,7 @@ import { colors, spacing, typography, borderRadius } from "../../theme";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { usersApi } from "../../api/users";
+import { API_BASE_URL } from "../../api/client";
 import { useAuthStore } from "../../store/authStore";
 import { RootStackParamList } from "../../navigation/types";
 import { Ruolo, UserRole } from "../../types";
@@ -391,7 +392,7 @@ export const MemberDetailScreen: React.FC = () => {
                 onPress={async () => {
                   // Open PDF in in-app browser (Safari View Controller)
                   // This prevents the white screen issue when returning to the app
-                  const baseUrl = "http://localhost:3000";
+                  const baseUrl = API_BASE_URL.replace(/\/api\/v1$/, "");
                   const fullUrl = `${baseUrl}${member.registrationFormUrl}`;
                   try {
                     await WebBrowser.openBrowserAsync(fullUrl, {

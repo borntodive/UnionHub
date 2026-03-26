@@ -46,6 +46,7 @@ export class AuthController {
     return this.authService.login(loginDto, ip, userAgent);
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 3 } })
   @Post("refresh")
   @HttpCode(HttpStatus.OK)
   async refreshTokens(
@@ -79,6 +80,7 @@ export class AuthController {
     return { message: "Logged out from all devices successfully" };
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 3 } })
   @Post("change-password")
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)

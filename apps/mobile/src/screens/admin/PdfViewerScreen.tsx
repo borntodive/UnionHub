@@ -143,7 +143,6 @@ export const PdfViewerScreen: React.FC = () => {
             style={styles.webView}
             originWhitelist={["file://*", "http://*", "https://*"]}
             allowFileAccess
-            allowFileAccessFromFileURLs
           />
         ) : (
           // Android: WebView doesn't render local PDFs — wrap in HTML embed
@@ -158,8 +157,6 @@ export const PdfViewerScreen: React.FC = () => {
             }}
             style={styles.webView}
             allowFileAccess
-            allowFileAccessFromFileURLs
-            allowUniversalAccessFromFileURLs
           />
         )}
       </SafeAreaView>

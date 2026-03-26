@@ -80,7 +80,10 @@ export class ChatbotService {
     // 4. Build context block from retrieved chunks
     const contextBlock = chunks.length
       ? chunks
-          .map((c) => `[Document: "${c.documentTitle}"]\n${c.content}`)
+          .map((c) => {
+            const safeTitle = c.documentTitle.replace(/["\\\n\r]/g, " ");
+            return `[Document: "${safeTitle}"]\n${c.content}`;
+          })
           .join("\n\n---\n\n")
       : "";
 
@@ -187,7 +190,10 @@ ${contextBlock ? `CONTEXT:\n${contextBlock}` : "CONTEXT: (no relevant documents 
 
     const contextBlock = chunks.length
       ? chunks
-          .map((c) => `[Document: "${c.documentTitle}"]\n${c.content}`)
+          .map((c) => {
+            const safeTitle = c.documentTitle.replace(/["\\\n\r]/g, " ");
+            return `[Document: "${safeTitle}"]\n${c.content}`;
+          })
           .join("\n\n---\n\n")
       : "";
 
