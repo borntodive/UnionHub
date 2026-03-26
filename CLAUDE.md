@@ -197,6 +197,7 @@ npm run lint               # ESLint check
   - `useNotifications.ts` - Push notifications + silent cache-invalidation handler; **must be mounted at app root** (`AppNavigator`) to be always active
 - `payslip/` - Payslip calculator module with Italian tax calculations
 - `ftl/` - FTL Calculator (EASA Part-ORO.FTL, Malta Air OMA)
+- `screens/CtcScreen.tsx` - Cold Temperature Correction (CTC) calculator
 - `chatbot/` - RAG chatbot (Admin/SuperAdmin only); streaming via XHR onprogress
   - `screens/ChatbotScreen.tsx` - bubble UI, progressive token rendering, sources badge
   - `api/chatbot.ts` - `chatbotApi` (Axios) + `chatStream()` (XHR streaming)
@@ -246,6 +247,7 @@ npm run lint               # ESLint check
   - **Contract tab** (`ContractScreen`): displays all contract amounts adjusted for part-time %, CU reduction, and legacy overrides; RSA and ITUD rows shown only if `user.rsa === true` / `user.itud === true`
   - **Reverse tab** (`ReverseScreen`): enter sector pay (€) → get hours at contract rate (HH:MM) + effective rate using Input tab SBH hours; enter diaria (€) → get days at contract rate + effective rate using Input tab diaria days
   - **Legacy contract flag**: available in both Settings (general) and Override (admin). In general mode stores `Δ = custom − contract` so future CLA updates preserve the relative difference; in override mode uses custom values directly (`legacyDirect: true`, injected at runtime, never persisted)
+- **CTC Calculator** (`screens/CtcScreen.tsx`): Cold Temperature Correction per ICAO Doc 9365. Inputs: airport temp (°C), elevation, MSA (optional filter), altitude rows (label + published alt). Outputs: correction + corrected altitude per row. Unit toggle ft/m, round-up to 100 option. No correction shown when temp > 0°C.
 
 **Date Fields on Users**:
 
@@ -388,6 +390,13 @@ All accounts use `password` as the default password. `mustChangePassword` is `fa
 - Screens in DrawerNavigator use `navigation.openDrawer()` (not `goBack()`) for hamburger
 - Screens that are entry points from the drawer use `navigation.navigate("ScreenName")` to go back (not `goBack()`)
 
+**Keyboard / Input handling**:
+
+- Every `ScrollView` that contains `TextInput` fields **must** be wrapped with `KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}` placed between the header and the ScrollView.
+- `FlatList` components that coexist with a search `TextInput` must have `keyboardShouldPersistTaps="handled"` so tapping a list item while the keyboard is open registers correctly.
+- Multiline `TextInput` fields at the bottom of a long form (e.g. Notes) need `onFocus={() => scrollViewRef.current?.scrollToEnd({ animated: true })}` in addition to KAV, because the auto-scroll is unreliable for multiline inputs.
+- Screens that already include a manually-positioned header outside SafeAreaView (e.g. `MemberEditScreen`, `MemberCreateScreen`) use `keyboardVerticalOffset={insets.top + 56}` on the KAV to account for the header height.
+
 ### Naming
 
 - Files: kebab-case for services, PascalCase for components/classes
@@ -448,3 +457,5 @@ rm -rf node_modules && npm install
 - **pgvector FK violation during indexing**: TypeORM entity identity-map goes stale after many async Ollama calls. Use raw SQL `INSERT INTO knowledge_base_chunks … RETURNING id` instead of `chunkRepo.save()`.
 - **IVFFlat index broken (empty table)**: Creating the IVFFlat index on an empty table produces broken centroids. Drop and recreate the index after loading data: `DROP INDEX … ; CREATE INDEX … USING ivfflat … WITH (lists = 10);`
 - **pdf-parse v2 incompatibility**: v2 exports a class, not a function. Pin to v1.1.1 and import via `require("pdf-parse")` with explicit type annotation.
+- **Keyboard covering inputs**: wrap every `ScrollView` with inputs in a `KeyboardAvoidingView`. For multiline inputs at the bottom of a long scroll, also add `onFocus={() => scrollViewRef.current?.scrollToEnd({ animated: true })}` — KAV alone doesn't reliably scroll to multiline fields.
+- **FlatList tap not registering with keyboard open**: add `keyboardShouldPersistTaps="handled"` to the FlatList (e.g. MembersScreen, DeactivatedMembersScreen search + list pattern).
