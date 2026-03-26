@@ -1,12 +1,21 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePayslipStore } from "../payslip/usePayslipStore";
 import { useAuthStore } from "../store/authStore";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
 import { Card } from "../components/Card";
 import { UserRole } from "@unionhub/shared/types";
-import type { Payroll, PayslipSettings } from "@unionhub/shared/payslip";
-import { getContractData, RYR_CONFIG } from "@unionhub/shared/payslip";
+import type {
+  Payroll,
+  PayslipSettings,
+  UserContext,
+} from "@unionhub/shared/payslip";
+import {
+  getContractData,
+  RYR_CONFIG,
+  getSeniorityDate,
+  computeSeniorityYears,
+} from "@unionhub/shared/payslip";
 
 type Tab = "input" | "contract" | "reverse" | "override";
 
@@ -187,10 +196,12 @@ function ContractTab({
   settings,
   hasRSA,
   hasITUD,
+  seniorityYears,
 }: {
   settings: PayslipSettings;
   hasRSA: boolean;
   hasITUD: boolean;
+  seniorityYears: number | null;
 }) {
   const contract = getContractData(
     settings.company || "RYR",
@@ -250,13 +261,18 @@ function ContractTab({
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
         <h2 className="text-lg font-bold text-gray-900">
           Contratto CLA — {settings.rank.toUpperCase()}
         </h2>
         {settings.legacy && (
           <span className="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
             Override legacy attivo
+          </span>
+        )}
+        {seniorityYears !== null && (
+          <span className="text-xs bg-indigo-100 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full">
+            Anzianità: {seniorityYears} anni
           </span>
         )}
       </div>
@@ -563,6 +579,19 @@ export function PayslipPage() {
   const ccRanks = ["ju", "jpu", "cc", "sepe", "sepi"];
   const ranks = store.settings.role === "pil" ? pilotRanks : ccRanks;
 
+  // Compute seniority years for display in ContractTab
+  const seniorityYears = useMemo(() => {
+    if (!user) return null;
+    const senDate = getSeniorityDate({
+      gradeCode: user.grade?.codice,
+      dateOfEntry: user.dateOfEntry,
+      dateOfCaptaincy: user.dateOfCaptaincy,
+    });
+    if (!senDate) return null;
+    const today = new Date().toISOString().split("T")[0];
+    return computeSeniorityYears(senDate, today);
+  }, [user]);
+
   const tabs: { id: Tab; label: string }[] = [
     { id: "input", label: "Input" },
     { id: "contract", label: "Contratto" },
@@ -571,10 +600,14 @@ export function PayslipPage() {
   ];
 
   const handleCalculate = () => {
-    const userFlags: { itud?: boolean; rsa?: boolean } = {};
-    if (overrideITUD !== null) userFlags.itud = overrideITUD;
-    if (overrideRSA !== null) userFlags.rsa = overrideRSA;
-    store.calculate(userFlags);
+    const userContext: UserContext = {
+      itud: overrideITUD !== null ? overrideITUD : user?.itud,
+      rsa: overrideRSA !== null ? overrideRSA : user?.rsa,
+      dateOfEntry: user?.dateOfEntry,
+      dateOfCaptaincy: user?.dateOfCaptaincy,
+      gradeCode: user?.grade?.codice,
+    };
+    store.calculate(userContext);
   };
 
   const TabBar = () => (
@@ -1082,6 +1115,7 @@ export function PayslipPage() {
               settings={store.settings}
               hasRSA={user?.rsa ?? false}
               hasITUD={user?.itud ?? false}
+              seniorityYears={seniorityYears}
             />
           )}
 
