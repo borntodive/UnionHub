@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsBoolean,
   IsInt,
+  IsArray,
   Min,
   Max,
   IsObject,
@@ -120,6 +121,23 @@ export class CreateClaContractDto {
   @IsNumber()
   @Min(0)
   itud?: number;
+
+  @IsOptional()
+  @IsArray()
+  seniorityBrackets?: {
+    minYears: number;
+    maxYears: number | null;
+    basic?: number;
+    ffp?: number;
+    sbh?: number;
+    al?: number;
+    oob?: number;
+    diaria?: number;
+    rsa?: number;
+    itud?: number;
+    allowance?: number;
+    woff?: number;
+  }[];
 
   @IsOptional()
   @IsObject()

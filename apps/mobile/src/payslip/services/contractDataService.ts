@@ -106,7 +106,9 @@ function convertToCalculatorFormat(contract: ClaContract): any {
     allowance: contract.allowance,
     diaria: contract.diaria,
     rsa: contract.rsa,
+    itud: contract.itud,
     training: contract.trainingConfig,
+    seniorityBrackets: contract.seniorityBrackets ?? undefined,
     // Add metadata for debugging
     _source: "backend",
     _version: contract.version,

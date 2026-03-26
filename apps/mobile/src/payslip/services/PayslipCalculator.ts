@@ -11,6 +11,7 @@ import {
   INPS,
   IRPEF,
   AdditionalItem,
+  UserContext,
 } from "../types";
 import {
   getContractData,
@@ -40,19 +41,26 @@ import {
   calculateBonus,
 } from "../utils/calculations";
 import { parseSbh, isDecember, getYear } from "../utils/formatters";
+import {
+  getSeniorityDate,
+  computeSeniorityYears,
+  findSeniorityBracket,
+  applySeniorityBracket,
+} from "../utils/seniority";
 
 export class PayslipCalculator {
   private contractData: ReturnType<typeof getContractData>;
   private input: PayslipInput;
   private settings: PayslipSettings;
-  private userFlags: { itud?: boolean; rsa?: boolean };
+  private userFlags: UserContext;
   private year: number;
   private month: number;
+  public seniorityYears: number = 0;
 
   constructor(
     input: PayslipInput,
     settings: PayslipSettings,
-    userFlags: { itud?: boolean; rsa?: boolean } = {},
+    userFlags: UserContext = {},
   ) {
     this.input = input;
     this.settings = settings;
@@ -78,6 +86,22 @@ export class PayslipCalculator {
         return;
       }
 
+      // Apply seniority bracket if user context and brackets are available
+      let withBracket = corrected;
+      const seniorityDate = getSeniorityDate(userFlags);
+      if (seniorityDate) {
+        const years = computeSeniorityYears(seniorityDate, input.date);
+        this.seniorityYears = years;
+        const brackets =
+          userFlags.seniorityBrackets ?? corrected.seniorityBrackets;
+        if (brackets && brackets.length > 0) {
+          const bracket = findSeniorityBracket(brackets, years);
+          if (bracket) {
+            withBracket = applySeniorityBracket(corrected, bracket);
+          }
+        }
+      }
+
       // Apply legacy contract overrides
       if (settings.legacy) {
         const lc = settings.legacyCustom;
@@ -85,24 +109,24 @@ export class PayslipCalculator {
         if (settings.legacyDirect && lc) {
           // Override mode: use custom values directly as contract rates
           this.contractData = {
-            ...corrected,
-            ffp: lc.ffp > 0 ? lc.ffp : corrected.ffp,
-            sbh: lc.sbh > 0 ? lc.sbh : corrected.sbh,
-            al: lc.al > 0 ? lc.al : corrected.al,
+            ...withBracket,
+            ffp: lc.ffp > 0 ? lc.ffp : withBracket.ffp,
+            sbh: lc.sbh > 0 ? lc.sbh : withBracket.sbh,
+            al: lc.al > 0 ? lc.al : withBracket.al,
           };
         } else if (ld) {
           // General settings mode: apply saved deltas on top of current contract
           this.contractData = {
-            ...corrected,
-            ffp: corrected.ffp + ld.ffp,
-            sbh: corrected.sbh + ld.sbh,
-            al: corrected.al + ld.al,
+            ...withBracket,
+            ffp: withBracket.ffp + ld.ffp,
+            sbh: withBracket.sbh + ld.sbh,
+            al: withBracket.al + ld.al,
           };
         } else {
-          this.contractData = corrected;
+          this.contractData = withBracket;
         }
       } else {
-        this.contractData = corrected;
+        this.contractData = withBracket;
       }
     } else {
       this.contractData = null;
@@ -671,7 +695,7 @@ export class PayslipCalculator {
 export async function calculatePayroll(
   input: PayslipInput,
   settings: PayslipSettings,
-  userFlags: { itud?: boolean; rsa?: boolean } = {},
+  userFlags: UserContext = {},
 ): Promise<Payroll | null> {
   const calculator = new PayslipCalculator(input, settings, userFlags);
   return calculator.calculatePayroll();

@@ -22,6 +22,7 @@ import {
 } from "../data/contractData";
 import { formatCurrency, formatNumber } from "../utils/formatters";
 import { RankContract } from "../types";
+import { getSeniorityDate, computeSeniorityYears } from "../utils/seniority";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -222,6 +223,20 @@ export const ContractScreen: React.FC = () => {
   const alEffective = cd.al * cuPct;
   const woffEffective = cd.woff ? cd.woff * cuPct : null;
 
+  // Seniority years — computed from user dates relative to today's date
+  const seniorityYears = (() => {
+    if (overrideActive) return null;
+    const userContext = {
+      gradeCode: user?.grade?.codice,
+      dateOfEntry: user?.dateOfEntry,
+      dateOfCaptaincy: user?.dateOfCaptaincy,
+    };
+    const senDate = getSeniorityDate(userContext);
+    if (!senDate) return null;
+    const today = new Date().toISOString().split("T")[0];
+    return computeSeniorityYears(senDate, today);
+  })();
+
   const activeBadges: { label: string; color: string }[] = [];
   if (overrideActive)
     activeBadges.push({
@@ -273,6 +288,12 @@ export const ContractScreen: React.FC = () => {
               <Text style={styles.headerCompany}>{s.company}</Text>
               <Text style={styles.headerRank}>{s.rank.toUpperCase()}</Text>
               <Text style={styles.headerRole}>{roleLabel}</Text>
+              {seniorityYears !== null && (
+                <Text style={styles.headerSeniority}>
+                  {t("payslip.seniority")}: {seniorityYears}{" "}
+                  {t("payslip.seniorityYears")}
+                </Text>
+              )}
             </View>
             {activeBadges.length > 0 && (
               <View style={styles.badgeList}>
@@ -498,6 +519,11 @@ const styles = StyleSheet.create({
   headerRole: {
     fontSize: typography.sizes.sm,
     color: colors.textInverse + "CC",
+  },
+  headerSeniority: {
+    fontSize: typography.sizes.xs,
+    color: colors.textInverse + "99",
+    marginTop: 4,
   },
   badgeList: {
     alignItems: "flex-end",

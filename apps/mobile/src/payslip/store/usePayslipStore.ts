@@ -8,8 +8,10 @@ import {
   SavedCalculation,
   AdditionalInput,
   AdditionalDeductionInput,
+  UserContext,
 } from "../types";
 import { calculatePayroll } from "../services/PayslipCalculator";
+import { getContractData as getLiveContractData } from "../services/contractDataService";
 import { payslipSettingsApi } from "../../api/payslipSettings";
 import { useOfflineStore } from "../../store/offlineStore";
 
@@ -36,7 +38,7 @@ interface PayslipState {
   setOverrideSettings: (settings: Partial<PayslipSettings>) => void;
   setOverrideRsa: (v: boolean) => void;
   setOverrideItud: (v: boolean) => void;
-  calculate: (userFlags?: { itud?: boolean; rsa?: boolean }) => Promise<void>;
+  calculate: (userContext?: UserContext) => Promise<void>;
   saveCalculation: (name?: string) => void;
   deleteCalculation: (id: string) => void;
   loadCalculation: (id: string) => void;
@@ -156,18 +158,42 @@ export const usePayslipStore = create<PayslipState>()(
         }));
       },
 
-      calculate: async (userFlags = {}) => {
+      calculate: async (userContext = {}) => {
         const { input, settings, overrideActive, overrideSettings } = get();
         const activeSettings = overrideActive
           ? { ...overrideSettings, legacyDirect: true }
           : { ...settings, legacyDirect: false };
         set({ isCalculating: true, error: null });
 
+        // Pre-fetch live contract to inject seniority brackets (if available)
+        let enrichedContext: UserContext = userContext;
+        if (
+          !overrideActive &&
+          (userContext.dateOfEntry || userContext.dateOfCaptaincy)
+        ) {
+          try {
+            const liveContract = await getLiveContractData(
+              activeSettings.company,
+              activeSettings.role,
+              activeSettings.rank,
+              input.date,
+            );
+            if (liveContract?.seniorityBrackets) {
+              enrichedContext = {
+                ...userContext,
+                seniorityBrackets: liveContract.seniorityBrackets,
+              };
+            }
+          } catch {
+            // Ignore — fall through to static data
+          }
+        }
+
         try {
           const result = await calculatePayroll(
             input,
             activeSettings,
-            userFlags,
+            enrichedContext,
           );
           if (result) {
             set({ result, isCalculating: false });

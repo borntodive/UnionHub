@@ -246,6 +246,7 @@ npm run lint               # ESLint check
   - **Tabs**: Input → Results → Contract → Reverse (all users) + Settings/Override (Admin+) + Debug (SuperAdmin)
   - **Contract tab** (`ContractScreen`): displays all contract amounts adjusted for part-time %, CU reduction, and legacy overrides; RSA and ITUD rows shown only if `user.rsa === true` / `user.itud === true`
   - **Reverse tab** (`ReverseScreen`): enter sector pay (€) → get hours at contract rate (HH:MM) + effective rate using Input tab SBH hours; enter diaria (€) → get days at contract rate + effective rate using Input tab diaria days
+  - **Results tab** (`ResultScreen`): shows full payslip breakdown (earnings, INPS, IRPEF, TFR). Has a "Apri la vera busta paga" button at the top (above the scroll) that opens the Ryanair SuccessFactors portal via `Linking.openURL`
   - **Legacy contract flag**: available in both Settings (general) and Override (admin). In general mode stores `Δ = custom − contract` so future CLA updates preserve the relative difference; in override mode uses custom values directly (`legacyDirect: true`, injected at runtime, never persisted)
 - **CTC Calculator** (`screens/CtcScreen.tsx`): Cold Temperature Correction per ICAO Doc 9365. Inputs: airport temp (°C), elevation, MSA (optional filter), altitude rows (label + published alt). Outputs: correction + corrected altitude per row. Unit toggle ft/m, round-up to 100 option. No correction shown when temp > 0°C.
 

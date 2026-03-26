@@ -148,6 +148,50 @@ function randomFrom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+/**
+ * Returns a deterministic dateOfEntry (and optionally dateOfCaptaincy) for a grade/index combo.
+ * Uses a fixed offset per grade so seniority brackets can be tested.
+ */
+function seedDates(
+  gradeCode: string,
+  index: number,
+): {
+  dateOfEntry: string;
+  dateOfCaptaincy?: string;
+} {
+  // Years of entry spread by grade seniority level (deterministic, not random)
+  const entryYearByGrade: Record<string, number> = {
+    SO: 2023,
+    JFO: 2022,
+    FO: 2018,
+    SFI: 2013,
+    CPT: 2014,
+    LTC: 2010,
+    LCC: 2009,
+    TRI: 2008,
+    TRE: 2007,
+    JU: 2023,
+    JPU: 2020,
+    CC: 2016,
+    SEPE: 2012,
+    SEPI: 2008,
+  };
+  const captainGrades = ["CPT", "LTC", "LCC", "TRI", "TRE"];
+  const baseYear = entryYearByGrade[gradeCode] ?? 2018;
+  // Spread members ±1 year around the base year using index parity
+  const yearOffset = index % 3 === 0 ? -1 : index % 3 === 1 ? 0 : 1;
+  const entryYear = baseYear + yearOffset;
+  const dateOfEntry = `${entryYear}-${String((index % 6) + 1).padStart(2, "0")}-15`;
+
+  if (captainGrades.includes(gradeCode)) {
+    // Captaincy typically 5-8 years after entry
+    const capYear = entryYear + 5 + (index % 4);
+    const dateOfCaptaincy = `${capYear}-${String(((index + 2) % 6) + 1).padStart(2, "0")}-01`;
+    return { dateOfEntry, dateOfCaptaincy };
+  }
+  return { dateOfEntry };
+}
+
 // 100 pilots across 9 grades: [SO=11, JFO=11, FO=12, CPT=12, LTC=11, SFI=11, LCC=11, TRI=10, TRE=11]
 const PILOT_DISTRIBUTION: { codice: string; count: number }[] = [
   { codice: "SO", count: 11 },
@@ -394,6 +438,7 @@ async function runSeed() {
         const base = randomFrom(allBases);
         const contratto = randomFrom(pilotContracts);
 
+        const { dateOfEntry, dateOfCaptaincy } = seedDates(codice, i);
         await usersRepository.save(
           usersRepository.create({
             crewcode,
@@ -408,6 +453,8 @@ async function runSeed() {
             base,
             contratto,
             grade,
+            dateOfEntry,
+            dateOfCaptaincy,
           }),
         );
         pilotsCreated++;
@@ -433,6 +480,7 @@ async function runSeed() {
         const base = randomFrom(allBases);
         const contratto = randomFrom(ccContracts);
 
+        const { dateOfEntry } = seedDates(codice, i);
         await usersRepository.save(
           usersRepository.create({
             crewcode,
@@ -447,6 +495,7 @@ async function runSeed() {
             base,
             contratto,
             grade,
+            dateOfEntry,
           }),
         );
         ccCreated++;

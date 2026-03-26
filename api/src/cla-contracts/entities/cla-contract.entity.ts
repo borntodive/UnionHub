@@ -66,6 +66,25 @@ export class ClaContract {
   @Column({ type: "decimal", precision: 10, scale: 2, default: 120 })
   itud: number;
 
+  // Seniority brackets — optional array of year-range → value overrides
+  @Column({ type: "jsonb", nullable: true })
+  seniorityBrackets:
+    | {
+        minYears: number;
+        maxYears: number | null; // null = open-ended (e.g. "10+")
+        basic?: number;
+        ffp?: number;
+        sbh?: number;
+        al?: number;
+        oob?: number;
+        diaria?: number;
+        rsa?: number;
+        itud?: number;
+        allowance?: number;
+        woff?: number;
+      }[]
+    | null;
+
   // Training configuration (JSON for flexibility)
   @Column({ type: "jsonb", nullable: true })
   trainingConfig: {

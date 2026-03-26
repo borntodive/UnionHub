@@ -1,1 +1,738 @@
-import{o as X,f as H,g as J,u as Y,U as w,k as S,r as y,v as Z,R,j as e,F as ee,X as se,t as ae,m as N}from"./index-lyt0rc2Z.js";import{b as re,c as te,g as ie}from"./references-Bs44Uh4F.js";import{A as oe}from"./arrow-left-Yahj8gCt.js";import{U as le}from"./upload-CfyOW7on.js";import{L as ne}from"./loader-Bj7K-uvd.js";import{C as ce}from"./circle-check-big-D0IipEAt.js";const de=["CPT","LTC","LCC","TRI","TRE"],D=t=>{if(!t)return"";const[l,x,g]=t.split("-");return`${g}/${x}/${l}`},f=t=>{if(!t.trim())return;const l=t.split("/");if(l.length!==3)return;const[x,g,b]=l;return`${b}-${g.padStart(2,"0")}-${x.padStart(2,"0")}`},o="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#177246]/30 focus:border-[#177246]",n="block text-xs font-medium text-gray-700 mb-1.5";function fe({mode:t}){const{id:l}=X(),x=H(),g=J(),b=Y(s=>s.user),G=(b==null?void 0:b.role)===w.SUPERADMIN,{data:r,isLoading:k}=S({queryKey:["user",l],queryFn:()=>N.getUserById(l),enabled:t==="edit"&&!!l}),{data:L}=S({queryKey:["bases"],queryFn:re.getBases}),{data:A}=S({queryKey:["contracts"],queryFn:te.getContracts}),{data:h}=S({queryKey:["grades"],queryFn:ie.getGrades}),v=y.useRef(null),[I,z]=y.useState(null),[O,C]=y.useState("idle"),[E,U]=y.useState(null),{register:i,handleSubmit:$,watch:F,reset:q,formState:{errors:d,isSubmitting:M},setError:K,setValue:m}=Z({defaultValues:{crewcode:"",nome:"",cognome:"",email:"",telefono:"",ruolo:"",role:"",baseId:"",contrattoId:"",gradeId:"",note:"",itud:!1,rsa:!1,rls:!1,isUSO:!1,dataIscrizione:"",dateOfEntry:"",dateOfCaptaincy:""}});y.useEffect(()=>{var s,c,u;t==="edit"&&r&&q({crewcode:r.crewcode,nome:r.nome,cognome:r.cognome,email:r.email,telefono:r.telefono??"",ruolo:r.ruolo??"",role:r.role??"",baseId:((s=r.base)==null?void 0:s.id)??"",contrattoId:((c=r.contratto)==null?void 0:c.id)??"",gradeId:((u=r.grade)==null?void 0:u.id)??"",note:r.note??"",itud:r.itud??!1,rsa:r.rsa??!1,rls:r.rls??!1,isUSO:r.isUSO??!1,dataIscrizione:D(r.dataIscrizione),dateOfEntry:D(r.dateOfEntry),dateOfCaptaincy:D(r.dateOfCaptaincy)})},[r,t,q]);const j=F("ruolo"),B=F("gradeId"),Q=j&&A?A.filter(s=>s.nome.toLowerCase().includes(j===R.PILOT?"pilot":"cabin")||!0):A??[],V=j&&h?h.filter(s=>s.ruolo===j):h??[],T=h==null?void 0:h.find(s=>s.id===B),P=T?de.includes(T.codice):!1,_=async s=>{var p;const c=(p=s.target.files)==null?void 0:p[0];if(!c)return;z(c);const u=j;if(!u){alert("Seleziona prima il ruolo professionale (Pilota / Cabin Crew) prima di caricare il PDF."),z(null),s.target.value="";return}C("extracting"),U(null);try{const a=await N.extractPdf(c,u);U(a),C("success"),a.crewcode&&m("crewcode",a.crewcode),a.nome&&m("nome",a.nome),a.cognome&&m("cognome",a.cognome),a.email&&m("email",a.email),a.telefono&&m("telefono",a.telefono),a.baseId&&m("baseId",a.baseId),a.contrattoId&&m("contrattoId",a.contrattoId),a.gradeId&&m("gradeId",a.gradeId),a.dataIscrizione&&m("dataIscrizione",a.dataIscrizione),a.ruolo&&m("ruolo",a.ruolo)}catch{C("error")}},W=async s=>{var c,u;try{if(t==="create"){const p={crewcode:s.crewcode.trim().toUpperCase(),nome:s.nome.trim(),cognome:s.cognome.trim(),email:s.email.trim(),telefono:s.telefono.trim()||void 0,ruolo:s.ruolo||void 0,role:s.role||void 0,baseId:s.baseId||void 0,contrattoId:s.contrattoId||void 0,gradeId:s.gradeId||void 0,note:s.note.trim()||void 0,itud:s.itud,rsa:s.rsa,rls:s.rls,isUSO:s.isUSO,dataIscrizione:f(s.dataIscrizione),dateOfEntry:f(s.dateOfEntry),dateOfCaptaincy:P?f(s.dateOfCaptaincy):void 0},a=await N.createUser(p);if(I)try{await N.uploadRegistrationForm(a.id,I)}catch{}g.invalidateQueries({queryKey:["users"]}),x("/members")}else{const p={nome:s.nome.trim(),cognome:s.cognome.trim(),email:s.email.trim(),telefono:s.telefono.trim()||void 0,ruolo:s.ruolo||null,role:s.role||void 0,baseId:s.baseId||void 0,contrattoId:s.contrattoId||void 0,gradeId:s.gradeId||void 0,note:s.note.trim()||void 0,itud:s.itud,rsa:s.rsa,rls:s.rls,isUSO:s.isUSO,dataIscrizione:f(s.dataIscrizione),dateOfEntry:f(s.dateOfEntry),dateOfCaptaincy:P?f(s.dateOfCaptaincy):void 0};await N.updateUser(l,p),g.invalidateQueries({queryKey:["users"]}),g.invalidateQueries({queryKey:["user",l]}),x(`/members/${l}`)}}catch(p){const a=((u=(c=p.response)==null?void 0:c.data)==null?void 0:u.message)??"Errore durante il salvataggio";K("root",{message:a})}};return t==="edit"&&k?e.jsx("div",{className:"flex items-center justify-center py-24",children:e.jsx("div",{className:"w-8 h-8 border-4 border-[#177246] border-t-transparent rounded-full animate-spin"})}):e.jsxs("div",{className:"p-6 max-w-3xl mx-auto",children:[e.jsxs("button",{onClick:()=>x(t==="edit"?`/members/${l}`:"/members"),className:"flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-5 transition-colors",children:[e.jsx(oe,{size:16}),t==="edit"?"Torna al dettaglio":"Torna ai soci"]}),e.jsx("h1",{className:"text-xl font-bold text-gray-900 mb-6",children:t==="create"?"Nuovo socio":"Modifica socio"}),d.root&&e.jsx("div",{className:"p-3 mb-4 bg-red-50 text-red-700 rounded-lg text-sm",children:d.root.message}),e.jsxs("form",{onSubmit:$(W),className:"space-y-6",children:[t==="create"&&e.jsxs("div",{className:"bg-white rounded-xl border border-gray-200 p-5",children:[e.jsx("h2",{className:"text-sm font-semibold text-gray-700 mb-1",children:"Modulo di iscrizione PDF"}),e.jsx("p",{className:"text-xs text-gray-400 mb-4",children:"Carica il PDF per compilare automaticamente i campi. Seleziona prima il ruolo professionale."}),e.jsx("div",{onClick:()=>{var s;return(s=v.current)==null?void 0:s.click()},className:"border-2 border-dashed border-gray-300 rounded-xl p-5 text-center cursor-pointer hover:border-[#177246] transition-colors",children:I?e.jsxs("div",{className:"flex items-center justify-center gap-2 text-sm text-gray-700",children:[e.jsx(ee,{size:16,className:"text-[#177246] shrink-0"}),e.jsx("span",{className:"font-medium truncate max-w-xs",children:I.name}),e.jsx("button",{type:"button",onClick:s=>{s.stopPropagation(),z(null),C("idle"),U(null),v.current&&(v.current.value="")},className:"ml-1 text-gray-400 hover:text-gray-600",children:e.jsx(se,{size:14})})]}):e.jsxs("div",{className:"text-gray-400 text-sm",children:[e.jsx(le,{size:20,className:"mx-auto mb-1"}),"Clicca per selezionare un PDF"]})}),e.jsx("input",{ref:v,type:"file",accept:".pdf,application/pdf",className:"hidden",onChange:_}),O==="extracting"&&e.jsxs("div",{className:"flex items-center gap-2 mt-3 text-sm text-blue-600",children:[e.jsx(ne,{size:14,className:"animate-spin"}),"Estrazione dati in corso…"]}),O==="success"&&E&&e.jsxs("div",{className:"flex items-start gap-2 mt-3 p-3 bg-emerald-50 rounded-lg text-sm text-emerald-700",children:[e.jsx(ce,{size:15,className:"mt-0.5 shrink-0"}),e.jsxs("div",{children:[e.jsxs("span",{className:"font-medium",children:["Dati estratti con"," ",Math.round(E.confidence*100),"% di confidenza"]})," ","(",E.extractionMethod,") — verifica i campi compilati prima di salvare."]})]}),O==="error"&&e.jsxs("div",{className:"flex items-center gap-2 mt-3 p-3 bg-red-50 rounded-lg text-sm text-red-600",children:[e.jsx(ae,{size:15,className:"shrink-0"}),"Impossibile estrarre i dati dal PDF. Compila i campi manualmente."]})]}),e.jsxs("div",{className:"bg-white rounded-xl border border-gray-200 p-5",children:[e.jsx("h2",{className:"text-sm font-semibold text-gray-700 mb-4",children:"Dati anagrafici"}),e.jsxs("div",{className:"grid grid-cols-1 md:grid-cols-2 gap-4",children:[t==="create"&&e.jsxs("div",{children:[e.jsx("label",{className:n,children:"Crewcode *"}),e.jsx("input",{...i("crewcode",{required:"Campo obbligatorio"}),className:o,placeholder:"es. CPT0001",style:{textTransform:"uppercase"}}),d.crewcode&&e.jsx("p",{className:"text-xs text-red-500 mt-1",children:d.crewcode.message})]}),e.jsxs("div",{children:[e.jsx("label",{className:n,children:"Nome *"}),e.jsx("input",{...i("nome",{required:"Campo obbligatorio"}),className:o}),d.nome&&e.jsx("p",{className:"text-xs text-red-500 mt-1",children:d.nome.message})]}),e.jsxs("div",{children:[e.jsx("label",{className:n,children:"Cognome *"}),e.jsx("input",{...i("cognome",{required:"Campo obbligatorio"}),className:o}),d.cognome&&e.jsx("p",{className:"text-xs text-red-500 mt-1",children:d.cognome.message})]}),e.jsxs("div",{children:[e.jsx("label",{className:n,children:"Email *"}),e.jsx("input",{...i("email",{required:"Campo obbligatorio"}),type:"email",className:o}),d.email&&e.jsx("p",{className:"text-xs text-red-500 mt-1",children:d.email.message})]}),e.jsxs("div",{children:[e.jsx("label",{className:n,children:"Telefono"}),e.jsx("input",{...i("telefono"),className:o})]})]})]}),e.jsxs("div",{className:"bg-white rounded-xl border border-gray-200 p-5",children:[e.jsx("h2",{className:"text-sm font-semibold text-gray-700 mb-4",children:"Ruolo professionale"}),e.jsxs("div",{className:"grid grid-cols-1 md:grid-cols-2 gap-4",children:[e.jsxs("div",{children:[e.jsx("label",{className:n,children:"Ruolo professionale"}),e.jsxs("select",{...i("ruolo"),className:o,children:[e.jsx("option",{value:"",children:"— Seleziona —"}),e.jsx("option",{value:R.PILOT,children:"Pilota"}),e.jsx("option",{value:R.CABIN_CREW,children:"Cabin Crew"})]})]}),G&&e.jsxs("div",{children:[e.jsx("label",{className:n,children:"Ruolo sistema"}),e.jsxs("select",{...i("role"),className:o,children:[e.jsx("option",{value:"",children:"— Seleziona —"}),e.jsx("option",{value:w.USER,children:"Utente"}),e.jsx("option",{value:w.ADMIN,children:"Admin"}),e.jsx("option",{value:w.SUPERADMIN,children:"SuperAdmin"})]})]}),e.jsxs("div",{children:[e.jsx("label",{className:n,children:"Base"}),e.jsxs("select",{...i("baseId"),className:o,children:[e.jsx("option",{value:"",children:"— Nessuna —"}),(L??[]).map(s=>e.jsxs("option",{value:s.id,children:[s.codice," – ",s.nome]},s.id))]})]}),e.jsxs("div",{children:[e.jsx("label",{className:n,children:"Contratto"}),e.jsxs("select",{...i("contrattoId"),className:o,children:[e.jsx("option",{value:"",children:"— Nessuno —"}),Q.map(s=>e.jsx("option",{value:s.id,children:s.nome},s.id))]})]}),e.jsxs("div",{children:[e.jsx("label",{className:n,children:"Grado"}),e.jsxs("select",{...i("gradeId"),className:o,children:[e.jsx("option",{value:"",children:"— Nessuno —"}),V.map(s=>e.jsxs("option",{value:s.id,children:[s.codice," – ",s.nome]},s.id))]})]})]})]}),e.jsxs("div",{className:"bg-white rounded-xl border border-gray-200 p-5",children:[e.jsx("h2",{className:"text-sm font-semibold text-gray-700 mb-4",children:"Date"}),e.jsxs("div",{className:"grid grid-cols-1 md:grid-cols-2 gap-4",children:[e.jsxs("div",{children:[e.jsx("label",{className:n,children:"Data iscrizione (GG/MM/AAAA)"}),e.jsx("input",{...i("dataIscrizione"),className:o,placeholder:"01/01/2024"})]}),e.jsxs("div",{children:[e.jsx("label",{className:n,children:"Data ingresso azienda (GG/MM/AAAA)"}),e.jsx("input",{...i("dateOfEntry"),className:o,placeholder:"01/01/2024"})]}),P&&e.jsxs("div",{children:[e.jsx("label",{className:n,children:"Data nomina capitano (GG/MM/AAAA)"}),e.jsx("input",{...i("dateOfCaptaincy"),className:o,placeholder:"01/01/2024"})]})]})]}),e.jsxs("div",{className:"bg-white rounded-xl border border-gray-200 p-5",children:[e.jsx("h2",{className:"text-sm font-semibold text-gray-700 mb-4",children:"Flag"}),e.jsx("div",{className:"flex flex-wrap gap-6",children:[{name:"itud",label:"ITUD"},{name:"rsa",label:"RSA"},{name:"rls",label:"RLS"},{name:"isUSO",label:"USO"}].map(({name:s,label:c})=>e.jsxs("label",{className:"flex items-center gap-2 cursor-pointer",children:[e.jsx("input",{type:"checkbox",...i(s),className:"w-4 h-4 rounded accent-[#177246]"}),e.jsx("span",{className:"text-sm text-gray-700",children:c})]},s))})]}),e.jsxs("div",{className:"bg-white rounded-xl border border-gray-200 p-5",children:[e.jsx("h2",{className:"text-sm font-semibold text-gray-700 mb-4",children:"Note"}),e.jsx("textarea",{...i("note"),rows:3,className:`${o} resize-none`,placeholder:"Note interne…"})]}),e.jsxs("div",{className:"flex justify-end gap-3",children:[e.jsx("button",{type:"button",onClick:()=>x(t==="edit"?`/members/${l}`:"/members"),className:"px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50",children:"Annulla"}),e.jsx("button",{type:"submit",disabled:M,className:"px-5 py-2 text-sm font-medium bg-[#177246] text-white rounded-lg hover:bg-[#177246]/90 disabled:opacity-50 transition-colors",children:M?"Salvataggio…":t==="create"?"Crea socio":"Salva modifiche"})]})]})]})}export{fe as MemberFormPage};
+import {
+  o as X,
+  f as H,
+  g as J,
+  u as Y,
+  U as w,
+  k as S,
+  r as y,
+  v as Z,
+  R,
+  j as e,
+  F as ee,
+  X as se,
+  t as ae,
+  m as N,
+} from "./index-lyt0rc2Z.js";
+import { b as re, c as te, g as ie } from "./references-Bs44Uh4F.js";
+import { A as oe } from "./arrow-left-Yahj8gCt.js";
+import { U as le } from "./upload-CfyOW7on.js";
+import { L as ne } from "./loader-Bj7K-uvd.js";
+import { C as ce } from "./circle-check-big-D0IipEAt.js";
+const de = ["CPT", "LTC", "LCC", "TRI", "TRE"],
+  D = (t) => {
+    if (!t) return "";
+    const [l, x, g] = t.split("-");
+    return `${g}/${x}/${l}`;
+  },
+  f = (t) => {
+    if (!t.trim()) return;
+    const l = t.split("/");
+    if (l.length !== 3) return;
+    const [x, g, b] = l;
+    return `${b}-${g.padStart(2, "0")}-${x.padStart(2, "0")}`;
+  },
+  o =
+    "w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#177246]/30 focus:border-[#177246]",
+  n = "block text-xs font-medium text-gray-700 mb-1.5";
+function fe({ mode: t }) {
+  const { id: l } = X(),
+    x = H(),
+    g = J(),
+    b = Y((s) => s.user),
+    G = (b == null ? void 0 : b.role) === w.SUPERADMIN,
+    { data: r, isLoading: k } = S({
+      queryKey: ["user", l],
+      queryFn: () => N.getUserById(l),
+      enabled: t === "edit" && !!l,
+    }),
+    { data: L } = S({ queryKey: ["bases"], queryFn: re.getBases }),
+    { data: A } = S({ queryKey: ["contracts"], queryFn: te.getContracts }),
+    { data: h } = S({ queryKey: ["grades"], queryFn: ie.getGrades }),
+    v = y.useRef(null),
+    [I, z] = y.useState(null),
+    [O, C] = y.useState("idle"),
+    [E, U] = y.useState(null),
+    {
+      register: i,
+      handleSubmit: $,
+      watch: F,
+      reset: q,
+      formState: { errors: d, isSubmitting: M },
+      setError: K,
+      setValue: m,
+    } = Z({
+      defaultValues: {
+        crewcode: "",
+        nome: "",
+        cognome: "",
+        email: "",
+        telefono: "",
+        ruolo: "",
+        role: "",
+        baseId: "",
+        contrattoId: "",
+        gradeId: "",
+        note: "",
+        itud: !1,
+        rsa: !1,
+        rls: !1,
+        isUSO: !1,
+        dataIscrizione: "",
+        dateOfEntry: "",
+        dateOfCaptaincy: "",
+      },
+    });
+  y.useEffect(() => {
+    var s, c, u;
+    t === "edit" &&
+      r &&
+      q({
+        crewcode: r.crewcode,
+        nome: r.nome,
+        cognome: r.cognome,
+        email: r.email,
+        telefono: r.telefono ?? "",
+        ruolo: r.ruolo ?? "",
+        role: r.role ?? "",
+        baseId: ((s = r.base) == null ? void 0 : s.id) ?? "",
+        contrattoId: ((c = r.contratto) == null ? void 0 : c.id) ?? "",
+        gradeId: ((u = r.grade) == null ? void 0 : u.id) ?? "",
+        note: r.note ?? "",
+        itud: r.itud ?? !1,
+        rsa: r.rsa ?? !1,
+        rls: r.rls ?? !1,
+        isUSO: r.isUSO ?? !1,
+        dataIscrizione: D(r.dataIscrizione),
+        dateOfEntry: D(r.dateOfEntry),
+        dateOfCaptaincy: D(r.dateOfCaptaincy),
+      });
+  }, [r, t, q]);
+  const j = F("ruolo"),
+    B = F("gradeId"),
+    Q =
+      j && A
+        ? A.filter(
+            (s) =>
+              s.nome
+                .toLowerCase()
+                .includes(j === R.PILOT ? "pilot" : "cabin") || !0,
+          )
+        : (A ?? []),
+    V = j && h ? h.filter((s) => s.ruolo === j) : (h ?? []),
+    T = h == null ? void 0 : h.find((s) => s.id === B),
+    P = T ? de.includes(T.codice) : !1,
+    _ = async (s) => {
+      var p;
+      const c = (p = s.target.files) == null ? void 0 : p[0];
+      if (!c) return;
+      z(c);
+      const u = j;
+      if (!u) {
+        (alert(
+          "Seleziona prima il ruolo professionale (Pilota / Cabin Crew) prima di caricare il PDF.",
+        ),
+          z(null),
+          (s.target.value = ""));
+        return;
+      }
+      (C("extracting"), U(null));
+      try {
+        const a = await N.extractPdf(c, u);
+        (U(a),
+          C("success"),
+          a.crewcode && m("crewcode", a.crewcode),
+          a.nome && m("nome", a.nome),
+          a.cognome && m("cognome", a.cognome),
+          a.email && m("email", a.email),
+          a.telefono && m("telefono", a.telefono),
+          a.baseId && m("baseId", a.baseId),
+          a.contrattoId && m("contrattoId", a.contrattoId),
+          a.gradeId && m("gradeId", a.gradeId),
+          a.dataIscrizione && m("dataIscrizione", a.dataIscrizione),
+          a.ruolo && m("ruolo", a.ruolo));
+      } catch {
+        C("error");
+      }
+    },
+    W = async (s) => {
+      var c, u;
+      try {
+        if (t === "create") {
+          const p = {
+              crewcode: s.crewcode.trim().toUpperCase(),
+              nome: s.nome.trim(),
+              cognome: s.cognome.trim(),
+              email: s.email.trim(),
+              telefono: s.telefono.trim() || void 0,
+              ruolo: s.ruolo || void 0,
+              role: s.role || void 0,
+              baseId: s.baseId || void 0,
+              contrattoId: s.contrattoId || void 0,
+              gradeId: s.gradeId || void 0,
+              note: s.note.trim() || void 0,
+              itud: s.itud,
+              rsa: s.rsa,
+              rls: s.rls,
+              isUSO: s.isUSO,
+              dataIscrizione: f(s.dataIscrizione),
+              dateOfEntry: f(s.dateOfEntry),
+              dateOfCaptaincy: P ? f(s.dateOfCaptaincy) : void 0,
+            },
+            a = await N.createUser(p);
+          if (I)
+            try {
+              await N.uploadRegistrationForm(a.id, I);
+            } catch {}
+          (g.invalidateQueries({ queryKey: ["users"] }), x("/members"));
+        } else {
+          const p = {
+            nome: s.nome.trim(),
+            cognome: s.cognome.trim(),
+            email: s.email.trim(),
+            telefono: s.telefono.trim() || void 0,
+            ruolo: s.ruolo || null,
+            role: s.role || void 0,
+            baseId: s.baseId || void 0,
+            contrattoId: s.contrattoId || void 0,
+            gradeId: s.gradeId || void 0,
+            note: s.note.trim() || void 0,
+            itud: s.itud,
+            rsa: s.rsa,
+            rls: s.rls,
+            isUSO: s.isUSO,
+            dataIscrizione: f(s.dataIscrizione),
+            dateOfEntry: f(s.dateOfEntry),
+            dateOfCaptaincy: P ? f(s.dateOfCaptaincy) : void 0,
+          };
+          (await N.updateUser(l, p),
+            g.invalidateQueries({ queryKey: ["users"] }),
+            g.invalidateQueries({ queryKey: ["user", l] }),
+            x(`/members/${l}`));
+        }
+      } catch (p) {
+        const a =
+          ((u = (c = p.response) == null ? void 0 : c.data) == null
+            ? void 0
+            : u.message) ?? "Errore durante il salvataggio";
+        K("root", { message: a });
+      }
+    };
+  return t === "edit" && k
+    ? e.jsx("div", {
+        className: "flex items-center justify-center py-24",
+        children: e.jsx("div", {
+          className:
+            "w-8 h-8 border-4 border-[#177246] border-t-transparent rounded-full animate-spin",
+        }),
+      })
+    : e.jsxs("div", {
+        className: "p-6 max-w-3xl mx-auto",
+        children: [
+          e.jsxs("button", {
+            onClick: () => x(t === "edit" ? `/members/${l}` : "/members"),
+            className:
+              "flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-5 transition-colors",
+            children: [
+              e.jsx(oe, { size: 16 }),
+              t === "edit" ? "Torna al dettaglio" : "Torna ai soci",
+            ],
+          }),
+          e.jsx("h1", {
+            className: "text-xl font-bold text-gray-900 mb-6",
+            children: t === "create" ? "Nuovo socio" : "Modifica socio",
+          }),
+          d.root &&
+            e.jsx("div", {
+              className: "p-3 mb-4 bg-red-50 text-red-700 rounded-lg text-sm",
+              children: d.root.message,
+            }),
+          e.jsxs("form", {
+            onSubmit: $(W),
+            className: "space-y-6",
+            children: [
+              t === "create" &&
+                e.jsxs("div", {
+                  className: "bg-white rounded-xl border border-gray-200 p-5",
+                  children: [
+                    e.jsx("h2", {
+                      className: "text-sm font-semibold text-gray-700 mb-1",
+                      children: "Modulo di iscrizione PDF",
+                    }),
+                    e.jsx("p", {
+                      className: "text-xs text-gray-400 mb-4",
+                      children:
+                        "Carica il PDF per compilare automaticamente i campi. Seleziona prima il ruolo professionale.",
+                    }),
+                    e.jsx("div", {
+                      onClick: () => {
+                        var s;
+                        return (s = v.current) == null ? void 0 : s.click();
+                      },
+                      className:
+                        "border-2 border-dashed border-gray-300 rounded-xl p-5 text-center cursor-pointer hover:border-[#177246] transition-colors",
+                      children: I
+                        ? e.jsxs("div", {
+                            className:
+                              "flex items-center justify-center gap-2 text-sm text-gray-700",
+                            children: [
+                              e.jsx(ee, {
+                                size: 16,
+                                className: "text-[#177246] shrink-0",
+                              }),
+                              e.jsx("span", {
+                                className: "font-medium truncate max-w-xs",
+                                children: I.name,
+                              }),
+                              e.jsx("button", {
+                                type: "button",
+                                onClick: (s) => {
+                                  (s.stopPropagation(),
+                                    z(null),
+                                    C("idle"),
+                                    U(null),
+                                    v.current && (v.current.value = ""));
+                                },
+                                className:
+                                  "ml-1 text-gray-400 hover:text-gray-600",
+                                children: e.jsx(se, { size: 14 }),
+                              }),
+                            ],
+                          })
+                        : e.jsxs("div", {
+                            className: "text-gray-400 text-sm",
+                            children: [
+                              e.jsx(le, {
+                                size: 20,
+                                className: "mx-auto mb-1",
+                              }),
+                              "Clicca per selezionare un PDF",
+                            ],
+                          }),
+                    }),
+                    e.jsx("input", {
+                      ref: v,
+                      type: "file",
+                      accept: ".pdf,application/pdf",
+                      className: "hidden",
+                      onChange: _,
+                    }),
+                    O === "extracting" &&
+                      e.jsxs("div", {
+                        className:
+                          "flex items-center gap-2 mt-3 text-sm text-blue-600",
+                        children: [
+                          e.jsx(ne, { size: 14, className: "animate-spin" }),
+                          "Estrazione dati in corso…",
+                        ],
+                      }),
+                    O === "success" &&
+                      E &&
+                      e.jsxs("div", {
+                        className:
+                          "flex items-start gap-2 mt-3 p-3 bg-emerald-50 rounded-lg text-sm text-emerald-700",
+                        children: [
+                          e.jsx(ce, { size: 15, className: "mt-0.5 shrink-0" }),
+                          e.jsxs("div", {
+                            children: [
+                              e.jsxs("span", {
+                                className: "font-medium",
+                                children: [
+                                  "Dati estratti con",
+                                  " ",
+                                  Math.round(E.confidence * 100),
+                                  "% di confidenza",
+                                ],
+                              }),
+                              " ",
+                              "(",
+                              E.extractionMethod,
+                              ") — verifica i campi compilati prima di salvare.",
+                            ],
+                          }),
+                        ],
+                      }),
+                    O === "error" &&
+                      e.jsxs("div", {
+                        className:
+                          "flex items-center gap-2 mt-3 p-3 bg-red-50 rounded-lg text-sm text-red-600",
+                        children: [
+                          e.jsx(ae, { size: 15, className: "shrink-0" }),
+                          "Impossibile estrarre i dati dal PDF. Compila i campi manualmente.",
+                        ],
+                      }),
+                  ],
+                }),
+              e.jsxs("div", {
+                className: "bg-white rounded-xl border border-gray-200 p-5",
+                children: [
+                  e.jsx("h2", {
+                    className: "text-sm font-semibold text-gray-700 mb-4",
+                    children: "Dati anagrafici",
+                  }),
+                  e.jsxs("div", {
+                    className: "grid grid-cols-1 md:grid-cols-2 gap-4",
+                    children: [
+                      t === "create" &&
+                        e.jsxs("div", {
+                          children: [
+                            e.jsx("label", {
+                              className: n,
+                              children: "Crewcode *",
+                            }),
+                            e.jsx("input", {
+                              ...i("crewcode", {
+                                required: "Campo obbligatorio",
+                              }),
+                              className: o,
+                              placeholder: "es. CPT0001",
+                              style: { textTransform: "uppercase" },
+                            }),
+                            d.crewcode &&
+                              e.jsx("p", {
+                                className: "text-xs text-red-500 mt-1",
+                                children: d.crewcode.message,
+                              }),
+                          ],
+                        }),
+                      e.jsxs("div", {
+                        children: [
+                          e.jsx("label", { className: n, children: "Nome *" }),
+                          e.jsx("input", {
+                            ...i("nome", { required: "Campo obbligatorio" }),
+                            className: o,
+                          }),
+                          d.nome &&
+                            e.jsx("p", {
+                              className: "text-xs text-red-500 mt-1",
+                              children: d.nome.message,
+                            }),
+                        ],
+                      }),
+                      e.jsxs("div", {
+                        children: [
+                          e.jsx("label", {
+                            className: n,
+                            children: "Cognome *",
+                          }),
+                          e.jsx("input", {
+                            ...i("cognome", { required: "Campo obbligatorio" }),
+                            className: o,
+                          }),
+                          d.cognome &&
+                            e.jsx("p", {
+                              className: "text-xs text-red-500 mt-1",
+                              children: d.cognome.message,
+                            }),
+                        ],
+                      }),
+                      e.jsxs("div", {
+                        children: [
+                          e.jsx("label", { className: n, children: "Email *" }),
+                          e.jsx("input", {
+                            ...i("email", { required: "Campo obbligatorio" }),
+                            type: "email",
+                            className: o,
+                          }),
+                          d.email &&
+                            e.jsx("p", {
+                              className: "text-xs text-red-500 mt-1",
+                              children: d.email.message,
+                            }),
+                        ],
+                      }),
+                      e.jsxs("div", {
+                        children: [
+                          e.jsx("label", {
+                            className: n,
+                            children: "Telefono",
+                          }),
+                          e.jsx("input", { ...i("telefono"), className: o }),
+                        ],
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+              e.jsxs("div", {
+                className: "bg-white rounded-xl border border-gray-200 p-5",
+                children: [
+                  e.jsx("h2", {
+                    className: "text-sm font-semibold text-gray-700 mb-4",
+                    children: "Ruolo professionale",
+                  }),
+                  e.jsxs("div", {
+                    className: "grid grid-cols-1 md:grid-cols-2 gap-4",
+                    children: [
+                      e.jsxs("div", {
+                        children: [
+                          e.jsx("label", {
+                            className: n,
+                            children: "Ruolo professionale",
+                          }),
+                          e.jsxs("select", {
+                            ...i("ruolo"),
+                            className: o,
+                            children: [
+                              e.jsx("option", {
+                                value: "",
+                                children: "— Seleziona —",
+                              }),
+                              e.jsx("option", {
+                                value: R.PILOT,
+                                children: "Pilota",
+                              }),
+                              e.jsx("option", {
+                                value: R.CABIN_CREW,
+                                children: "Cabin Crew",
+                              }),
+                            ],
+                          }),
+                        ],
+                      }),
+                      G &&
+                        e.jsxs("div", {
+                          children: [
+                            e.jsx("label", {
+                              className: n,
+                              children: "Ruolo sistema",
+                            }),
+                            e.jsxs("select", {
+                              ...i("role"),
+                              className: o,
+                              children: [
+                                e.jsx("option", {
+                                  value: "",
+                                  children: "— Seleziona —",
+                                }),
+                                e.jsx("option", {
+                                  value: w.USER,
+                                  children: "Utente",
+                                }),
+                                e.jsx("option", {
+                                  value: w.ADMIN,
+                                  children: "Admin",
+                                }),
+                                e.jsx("option", {
+                                  value: w.SUPERADMIN,
+                                  children: "SuperAdmin",
+                                }),
+                              ],
+                            }),
+                          ],
+                        }),
+                      e.jsxs("div", {
+                        children: [
+                          e.jsx("label", { className: n, children: "Base" }),
+                          e.jsxs("select", {
+                            ...i("baseId"),
+                            className: o,
+                            children: [
+                              e.jsx("option", {
+                                value: "",
+                                children: "— Nessuna —",
+                              }),
+                              (L ?? []).map((s) =>
+                                e.jsxs(
+                                  "option",
+                                  {
+                                    value: s.id,
+                                    children: [s.codice, " – ", s.nome],
+                                  },
+                                  s.id,
+                                ),
+                              ),
+                            ],
+                          }),
+                        ],
+                      }),
+                      e.jsxs("div", {
+                        children: [
+                          e.jsx("label", {
+                            className: n,
+                            children: "Contratto",
+                          }),
+                          e.jsxs("select", {
+                            ...i("contrattoId"),
+                            className: o,
+                            children: [
+                              e.jsx("option", {
+                                value: "",
+                                children: "— Nessuno —",
+                              }),
+                              Q.map((s) =>
+                                e.jsx(
+                                  "option",
+                                  { value: s.id, children: s.nome },
+                                  s.id,
+                                ),
+                              ),
+                            ],
+                          }),
+                        ],
+                      }),
+                      e.jsxs("div", {
+                        children: [
+                          e.jsx("label", { className: n, children: "Grado" }),
+                          e.jsxs("select", {
+                            ...i("gradeId"),
+                            className: o,
+                            children: [
+                              e.jsx("option", {
+                                value: "",
+                                children: "— Nessuno —",
+                              }),
+                              V.map((s) =>
+                                e.jsxs(
+                                  "option",
+                                  {
+                                    value: s.id,
+                                    children: [s.codice, " – ", s.nome],
+                                  },
+                                  s.id,
+                                ),
+                              ),
+                            ],
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+              e.jsxs("div", {
+                className: "bg-white rounded-xl border border-gray-200 p-5",
+                children: [
+                  e.jsx("h2", {
+                    className: "text-sm font-semibold text-gray-700 mb-4",
+                    children: "Date",
+                  }),
+                  e.jsxs("div", {
+                    className: "grid grid-cols-1 md:grid-cols-2 gap-4",
+                    children: [
+                      e.jsxs("div", {
+                        children: [
+                          e.jsx("label", {
+                            className: n,
+                            children: "Data iscrizione (GG/MM/AAAA)",
+                          }),
+                          e.jsx("input", {
+                            ...i("dataIscrizione"),
+                            className: o,
+                            placeholder: "01/01/2024",
+                          }),
+                        ],
+                      }),
+                      e.jsxs("div", {
+                        children: [
+                          e.jsx("label", {
+                            className: n,
+                            children: "Data ingresso azienda (GG/MM/AAAA)",
+                          }),
+                          e.jsx("input", {
+                            ...i("dateOfEntry"),
+                            className: o,
+                            placeholder: "01/01/2024",
+                          }),
+                        ],
+                      }),
+                      P &&
+                        e.jsxs("div", {
+                          children: [
+                            e.jsx("label", {
+                              className: n,
+                              children: "Data nomina capitano (GG/MM/AAAA)",
+                            }),
+                            e.jsx("input", {
+                              ...i("dateOfCaptaincy"),
+                              className: o,
+                              placeholder: "01/01/2024",
+                            }),
+                          ],
+                        }),
+                    ],
+                  }),
+                ],
+              }),
+              e.jsxs("div", {
+                className: "bg-white rounded-xl border border-gray-200 p-5",
+                children: [
+                  e.jsx("h2", {
+                    className: "text-sm font-semibold text-gray-700 mb-4",
+                    children: "Flag",
+                  }),
+                  e.jsx("div", {
+                    className: "flex flex-wrap gap-6",
+                    children: [
+                      { name: "itud", label: "ITUD" },
+                      { name: "rsa", label: "RSA" },
+                      { name: "rls", label: "RLS" },
+                      { name: "isUSO", label: "USO" },
+                    ].map(({ name: s, label: c }) =>
+                      e.jsxs(
+                        "label",
+                        {
+                          className: "flex items-center gap-2 cursor-pointer",
+                          children: [
+                            e.jsx("input", {
+                              type: "checkbox",
+                              ...i(s),
+                              className: "w-4 h-4 rounded accent-[#177246]",
+                            }),
+                            e.jsx("span", {
+                              className: "text-sm text-gray-700",
+                              children: c,
+                            }),
+                          ],
+                        },
+                        s,
+                      ),
+                    ),
+                  }),
+                ],
+              }),
+              e.jsxs("div", {
+                className: "bg-white rounded-xl border border-gray-200 p-5",
+                children: [
+                  e.jsx("h2", {
+                    className: "text-sm font-semibold text-gray-700 mb-4",
+                    children: "Note",
+                  }),
+                  e.jsx("textarea", {
+                    ...i("note"),
+                    rows: 3,
+                    className: `${o} resize-none`,
+                    placeholder: "Note interne…",
+                  }),
+                ],
+              }),
+              e.jsxs("div", {
+                className: "flex justify-end gap-3",
+                children: [
+                  e.jsx("button", {
+                    type: "button",
+                    onClick: () =>
+                      x(t === "edit" ? `/members/${l}` : "/members"),
+                    className:
+                      "px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50",
+                    children: "Annulla",
+                  }),
+                  e.jsx("button", {
+                    type: "submit",
+                    disabled: M,
+                    className:
+                      "px-5 py-2 text-sm font-medium bg-[#177246] text-white rounded-lg hover:bg-[#177246]/90 disabled:opacity-50 transition-colors",
+                    children: M
+                      ? "Salvataggio…"
+                      : t === "create"
+                        ? "Crea socio"
+                        : "Salva modifiche",
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      });
+}
+export { fe as MemberFormPage };
