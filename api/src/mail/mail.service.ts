@@ -38,9 +38,8 @@ export class MailService {
   ): Promise<void> {
     const from = this.configService.get<string>(
       "MAIL_FROM",
-      "UnionHub <noreply@unionhub.app>",
+      "FIT-CISL Malta Air Pilot Board <pilmalta.fitcisl@gmail.com>",
     );
-    const appName = "UnionHub";
     const iosUrl = this.configService.get<string>("APP_STORE_URL", "");
     const androidUrl = this.configService.get<string>("PLAY_STORE_URL", "");
 
@@ -662,7 +661,7 @@ export class MailService {
       await this.transporter.sendMail({
         from,
         to: user.email,
-        subject: `Benvenuto in ${appName} — le tue credenziali di accesso`,
+        subject: `Benvenuto in FIT-CISL, ${user.nome}! / Welcome to FIT-CISL, ${user.nome}!`,
         html,
       });
       this.logger.log(`Welcome email sent to ${user.email} (${user.crewcode})`);
@@ -689,7 +688,7 @@ export class MailService {
 
     const from = this.configService.get<string>(
       "MAIL_FROM",
-      "UnionHub <noreply@unionhub.app>",
+      "FIT-CISL Malta Air Pilot Board <pilmalta.fitcisl@gmail.com>",
     );
     const ruoloLabel =
       user.ruolo === "pilot"
