@@ -227,6 +227,31 @@ export interface CompanyConfig {
   };
 }
 
+export interface SeniorityBracket {
+  minYears: number;
+  maxYears: number | null;
+  basic?: number;
+  ffp?: number;
+  sbh?: number;
+  al?: number;
+  oob?: number;
+  diaria?: number;
+  rsa?: number;
+  itud?: number;
+  allowance?: number;
+  woff?: number;
+}
+
+export interface UserContext {
+  itud?: boolean;
+  rsa?: boolean;
+  dateOfEntry?: string | null;
+  dateOfCaptaincy?: string | null;
+  gradeCode?: string;
+  /** Pre-fetched seniority brackets from live API */
+  seniorityBrackets?: SeniorityBracket[];
+}
+
 export interface RankContract {
   basic: number; // Monthly base
   ffp: number; // Monthly FFP
@@ -241,6 +266,7 @@ export interface RankContract {
   itud: number; // Daily rate for injury days
   basicDays?: number; // Days for basic calculation
   maxContributoAziendaleTfr?: number; // Max company TFR contribution
+  seniorityBrackets?: SeniorityBracket[];
 }
 
 export interface TrainingConfig {

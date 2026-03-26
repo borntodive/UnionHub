@@ -27,6 +27,7 @@ import {
   closeClaContract,
   CreateClaContractData,
   ClaContract,
+  SeniorityBracket,
 } from "../services/claContractsApi";
 import { clearContractCache } from "../services/contractDataService";
 import { colors, spacing, typography, shadows } from "../../theme";
@@ -101,6 +102,14 @@ export default function ContractEditorScreen() {
   const [rsa, setRsa] = useState(existingContract?.rsa?.toString() || "51.92");
   const [itud, setItud] = useState(existingContract?.itud?.toString() || "120");
   const [isActive, setIsActive] = useState(existingContract?.isActive ?? true);
+
+  // Seniority brackets
+  const [seniorityEnabled, setSeniorityEnabled] = useState(
+    !!existingContract?.seniorityBrackets?.length,
+  );
+  const [seniorityBrackets, setSeniorityBrackets] = useState<
+    SeniorityBracket[]
+  >(existingContract?.seniorityBrackets ?? []);
 
   // Training config states
   const [hasTraining, setHasTraining] = useState(
@@ -202,6 +211,8 @@ export default function ContractEditorScreen() {
       setBtcSimRate2(tc?.btc?.simDiaria?.[1]?.pay?.sectorPay?.toString() || "");
       setHasLtcBonus(!!tc?.bonus);
       setLtcMinSectors(tc?.bonus?.minSectors?.toString() || "21");
+      setSeniorityEnabled(!!existingContract.seniorityBrackets?.length);
+      setSeniorityBrackets(existingContract.seniorityBrackets ?? []);
     }
   }, [existingContract]);
 
@@ -244,6 +255,7 @@ export default function ContractEditorScreen() {
         effectiveYear: parseInt(year),
         effectiveMonth: parseInt(month),
         isActive,
+        seniorityBrackets: seniorityEnabled ? seniorityBrackets : [],
         trainingConfig: hasTraining
           ? {
               allowance: trainingAllowance
@@ -370,6 +382,7 @@ export default function ContractEditorScreen() {
                 effectiveYear: currentYear,
                 effectiveMonth: currentMonth,
                 isActive: true,
+                seniorityBrackets: seniorityEnabled ? seniorityBrackets : [],
                 trainingConfig: hasTraining
                   ? {
                       allowance: trainingAllowance
@@ -733,6 +746,224 @@ export default function ContractEditorScreen() {
             />
           </View>
 
+          {/* Seniority Brackets */}
+          <View style={styles.section}>
+            <View style={styles.switchContainer}>
+              <Text style={styles.sectionTitle}>Fasce Anzianità</Text>
+              <Switch
+                value={seniorityEnabled}
+                onValueChange={(v) => {
+                  setSeniorityEnabled(v);
+                  if (v && seniorityBrackets.length === 0) {
+                    setSeniorityBrackets([{ minYears: 0, maxYears: 4 }]);
+                  }
+                }}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={colors.textInverse}
+              />
+            </View>
+
+            {seniorityEnabled && (
+              <>
+                {seniorityBrackets.map((bracket, i) => (
+                  <View key={i} style={styles.bracketCard}>
+                    <View style={styles.bracketHeader}>
+                      <Text style={styles.bracketTitle}>Fascia {i + 1}</Text>
+                      <TouchableOpacity
+                        onPress={() =>
+                          setSeniorityBrackets((prev) =>
+                            prev.filter((_, idx) => idx !== i),
+                          )
+                        }
+                      >
+                        <Text style={styles.bracketRemove}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={{ flexDirection: "row", gap: 12 }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.bracketLabel}>Anni min *</Text>
+                        <TextInput
+                          style={styles.bracketInput}
+                          value={bracket.minYears.toString()}
+                          onChangeText={(v) =>
+                            setSeniorityBrackets((prev) =>
+                              prev.map((b, idx) =>
+                                idx === i
+                                  ? { ...b, minYears: parseInt(v) || 0 }
+                                  : b,
+                              ),
+                            )
+                          }
+                          keyboardType="numeric"
+                          placeholderTextColor={colors.textSecondary}
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.bracketLabel}>
+                          Anni max (∞ = vuoto)
+                        </Text>
+                        <TextInput
+                          style={styles.bracketInput}
+                          value={
+                            bracket.maxYears != null
+                              ? bracket.maxYears.toString()
+                              : ""
+                          }
+                          onChangeText={(v) =>
+                            setSeniorityBrackets((prev) =>
+                              prev.map((b, idx) =>
+                                idx === i
+                                  ? {
+                                      ...b,
+                                      maxYears:
+                                        v === "" ? null : parseInt(v) || 0,
+                                    }
+                                  : b,
+                              ),
+                            )
+                          }
+                          keyboardType="numeric"
+                          placeholder="∞"
+                          placeholderTextColor={colors.textSecondary}
+                        />
+                      </View>
+                    </View>
+
+                    <Text style={styles.bracketHint}>
+                      Lascia vuoto i valori che non cambiano dal contratto base
+                    </Text>
+
+                    {(
+                      [
+                        ["FFP (€/mese)", "ffp"],
+                        ["SBH (€/ora)", "sbh"],
+                        ["AL (€/giorno)", "al"],
+                        ["Basic", "basic"],
+                        ["Diaria", "diaria"],
+                        ["OOB", "oob"],
+                        ["WOFF", "woff"],
+                        ["Allowance", "allowance"],
+                        ["RSA", "rsa"],
+                        ["ITUD", "itud"],
+                      ] as [string, keyof SeniorityBracket][]
+                    ).reduce<React.ReactNode[]>((rows, [label, field], fi) => {
+                      if (fi % 2 === 0) {
+                        const nextPair = (
+                          [
+                            ["FFP (€/mese)", "ffp"],
+                            ["SBH (€/ora)", "sbh"],
+                            ["AL (€/giorno)", "al"],
+                            ["Basic", "basic"],
+                            ["Diaria", "diaria"],
+                            ["OOB", "oob"],
+                            ["WOFF", "woff"],
+                            ["Allowance", "allowance"],
+                            ["RSA", "rsa"],
+                            ["ITUD", "itud"],
+                          ] as [string, keyof SeniorityBracket][]
+                        )[fi + 1];
+                        rows.push(
+                          <View
+                            key={fi}
+                            style={{ flexDirection: "row", gap: 12 }}
+                          >
+                            <View style={{ flex: 1 }}>
+                              <Text style={styles.bracketLabel}>{label}</Text>
+                              <TextInput
+                                style={styles.bracketInput}
+                                value={
+                                  (bracket as any)[field] != null
+                                    ? String((bracket as any)[field])
+                                    : ""
+                                }
+                                onChangeText={(v) =>
+                                  setSeniorityBrackets((prev) =>
+                                    prev.map((b, idx) => {
+                                      if (idx !== i) return b;
+                                      if (v === "") {
+                                        const clone = { ...b };
+                                        delete (clone as any)[field];
+                                        return clone;
+                                      }
+                                      return {
+                                        ...b,
+                                        [field]: parseFloat(v) || 0,
+                                      };
+                                    }),
+                                  )
+                                }
+                                placeholder="—"
+                                keyboardType="decimal-pad"
+                                placeholderTextColor={colors.textSecondary}
+                              />
+                            </View>
+                            {nextPair && (
+                              <View style={{ flex: 1 }}>
+                                <Text style={styles.bracketLabel}>
+                                  {nextPair[0]}
+                                </Text>
+                                <TextInput
+                                  style={styles.bracketInput}
+                                  value={
+                                    (bracket as any)[nextPair[1]] != null
+                                      ? String((bracket as any)[nextPair[1]])
+                                      : ""
+                                  }
+                                  onChangeText={(v) =>
+                                    setSeniorityBrackets((prev) =>
+                                      prev.map((b, idx) => {
+                                        if (idx !== i) return b;
+                                        if (v === "") {
+                                          const clone = { ...b };
+                                          delete (clone as any)[nextPair[1]];
+                                          return clone;
+                                        }
+                                        return {
+                                          ...b,
+                                          [nextPair[1]]: parseFloat(v) || 0,
+                                        };
+                                      }),
+                                    )
+                                  }
+                                  placeholder="—"
+                                  keyboardType="decimal-pad"
+                                  placeholderTextColor={colors.textSecondary}
+                                />
+                              </View>
+                            )}
+                          </View>,
+                        );
+                      }
+                      return rows;
+                    }, [])}
+                  </View>
+                ))}
+
+                <TouchableOpacity
+                  style={styles.addBracketBtn}
+                  onPress={() => {
+                    const last =
+                      seniorityBrackets[seniorityBrackets.length - 1];
+                    const min = last
+                      ? last.maxYears !== null
+                        ? last.maxYears + 1
+                        : 0
+                      : 0;
+                    setSeniorityBrackets((prev) => [
+                      ...prev,
+                      { minYears: min, maxYears: null },
+                    ]);
+                  }}
+                >
+                  <Text style={styles.addBracketBtnText}>
+                    + Aggiungi fascia
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+
           {/* Clone for New Period Button (only when editing) */}
           {isEditing && (
             <TouchableOpacity
@@ -918,5 +1149,58 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
+  },
+  bracketCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
+  },
+  bracketHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  bracketTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  bracketRemove: {
+    fontSize: 16,
+    color: colors.error,
+    paddingHorizontal: spacing.sm,
+  },
+  bracketLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  bracketInput: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 6,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    fontSize: 13,
+    color: colors.text,
+  },
+  bracketHint: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontStyle: "italic",
+  },
+  addBracketBtn: {
+    alignSelf: "flex-start",
+    paddingVertical: spacing.sm,
+  },
+  addBracketBtnText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: "600",
   },
 });
