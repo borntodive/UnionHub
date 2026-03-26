@@ -76,7 +76,15 @@ export const AppNavigator: React.FC = () => {
   // Profile completion required for users with a professional role (not superadmin)
   const needsProfileCompletion =
     !!user?.ruolo &&
-    (!user?.dateOfEntry || (isCaptainGrade && !user?.dateOfCaptaincy));
+    (!user?.nome ||
+      !user?.cognome ||
+      !user?.email ||
+      !user?.telefono ||
+      !user?.base ||
+      !user?.contratto ||
+      !user?.grade ||
+      !user?.dateOfEntry ||
+      (isCaptainGrade && !user?.dateOfCaptaincy));
 
   // Show loading while checking auth state
   if (isLoading) {

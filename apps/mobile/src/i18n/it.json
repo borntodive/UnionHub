@@ -9,7 +9,7 @@
     "create": "Crea",
     "back": "Indietro",
     "next": "Avanti",
-    "done": "Fatto",
+    "done": "Fine",
     "error": "Errore",
     "success": "Successo",
     "confirm": "Conferma",
@@ -35,8 +35,7 @@
     "connectToLoad": "Connettiti a internet almeno una volta per scaricare le categorie e le urgenze disponibili.",
     "required": "Obbligatorio",
     "optional": "Opzionale",
-    "actions": "Azioni",
-    "done": "Fine"
+    "actions": "Azioni"
   },
   "auth": {
     "login": "Accedi",
@@ -112,7 +111,6 @@
     "filterByRole": "Filtra per ruolo",
     "allDocuments": "Tutti i documenti",
     "filterBy": "Filtra per",
-    "enterContent": "Inserisci il contenuto del comunicato...",
     "originalText": "Testo Originale",
     "aiReviewedVersion": "Versione Revisionata dall'AI",
     "versionToApprove": "Versione da Approvare",
@@ -336,7 +334,14 @@
     "dateOfEntry": "Data di Ingresso",
     "dateOfCaptaincy": "Data di Promozione Comandante",
     "dateOfEntryRequired": "La data di ingresso è obbligatoria",
-    "dateOfCaptaincyRequired": "La data di promozione è obbligatoria per il tuo grado"
+    "dateOfCaptaincyRequired": "La data di promozione è obbligatoria per il tuo grado",
+    "emailRequired": "L'email è obbligatoria",
+    "phoneRequired": "Il numero di telefono è obbligatorio",
+    "firstNameRequired": "Il nome è obbligatorio",
+    "lastNameRequired": "Il cognome è obbligatorio",
+    "baseRequired": "La base è obbligatoria",
+    "contractRequired": "Il contratto è obbligatorio",
+    "gradeRequired": "La qualifica è obbligatoria"
   },
   "payslip": {
     "title": "Calcolo Busta Paga",
@@ -531,7 +536,7 @@
   },
   "completeProfile": {
     "title": "Completa il tuo profilo",
-    "description": "Prima di accedere all'app, fornisci alcuni dettagli sulla tua storia lavorativa.",
+    "description": "Prima di accedere all'app, completa il tuo profilo con le informazioni mancanti.",
     "selectDate": "Seleziona data",
     "save": "Continua all'app"
   },
