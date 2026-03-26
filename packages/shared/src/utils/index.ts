@@ -1,0 +1,1 @@
+export { truncateHtml } from "./truncateHtml";

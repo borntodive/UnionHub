@@ -1,0 +1,29 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@/*": ["./*"],
+      "@api/*": ["./src/api/*"],
+      "@components/*": ["./src/components/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@navigation/*": ["./src/navigation/*"],
+      "@screens/*": ["./src/screens/*"],
+      "@store/*": ["./src/store/*"],
+      "@theme/*": ["./src/theme/*"],
+      "@types/*": ["./src/types/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@unionhub/shared": ["../../packages/shared/src/index.ts"],
+      "@unionhub/shared/api": ["../../packages/shared/src/api/index.ts"],
+      "@unionhub/shared/types": ["../../packages/shared/src/types/index.ts"],
+      "@unionhub/shared/theme": ["../../packages/shared/src/theme/index.ts"],
+      "@unionhub/shared/utils": ["../../packages/shared/src/utils/index.ts"],
+      "@unionhub/shared/store": ["../../packages/shared/src/store/index.ts"],
+      "@unionhub/shared/payslip": [
+        "../../packages/shared/src/payslip/index.ts"
+      ],
+      "@unionhub/shared/ftl": ["../../packages/shared/src/ftl/index.ts"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}

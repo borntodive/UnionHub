@@ -1,0 +1,11 @@
+{
+  "name": "unionhub-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "mobile": "pnpm --filter mobile start",
+    "web": "pnpm --filter web dev",
+    "shared:build": "pnpm --filter @unionhub/shared build"
+  }
+}
