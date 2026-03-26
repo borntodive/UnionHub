@@ -40,6 +40,7 @@ interface Statistics {
   recentRegistrations: number;
   itudCount: number;
   rsaCount: number;
+  usoCount: number;
 }
 
 const { width } = Dimensions.get("window");
@@ -203,6 +204,13 @@ export const StatisticsScreen: React.FC = () => {
                   {statistics?.rsaCount || 0}
                 </Text>
                 <Text style={styles.membershipLabel}>RSA Members</Text>
+              </View>
+              <View style={styles.membershipCard}>
+                <FileText size={24} color={colors.primary} />
+                <Text style={styles.membershipNumber}>
+                  {statistics?.usoCount || 0}
+                </Text>
+                <Text style={styles.membershipLabel}>USO Members</Text>
               </View>
             </View>
           </View>
