@@ -33,6 +33,7 @@ export interface CreateUserData {
   itud?: boolean;
   rsa?: boolean;
   rls?: boolean;
+  isUSO?: boolean;
   dataIscrizione?: string;
   dateOfEntry?: string;
   dateOfCaptaincy?: string;
@@ -52,6 +53,7 @@ export interface UpdateUserData {
   itud?: boolean;
   rsa?: boolean;
   rls?: boolean;
+  isUSO?: boolean;
   dataIscrizione?: string;
   dateOfEntry?: string;
   dateOfCaptaincy?: string;
@@ -82,6 +84,7 @@ export interface UserStatistics {
   recentRegistrations: number;
   itudCount: number;
   rsaCount: number;
+  usoCount: number;
 }
 
 export const usersApi = {

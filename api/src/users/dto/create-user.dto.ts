@@ -74,6 +74,10 @@ export class CreateUserDto {
   rls?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  isUSO?: boolean;
+
+  @IsOptional()
   @IsDateString()
   dataIscrizione?: string;
 

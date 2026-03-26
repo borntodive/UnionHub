@@ -53,6 +53,7 @@ export interface User {
   itud?: boolean;
   rsa?: boolean;
   rls?: boolean;
+  isUSO?: boolean;
   registrationFormUrl?: string | null;
   dataIscrizione?: string | null;
   dateOfEntry?: string | null;

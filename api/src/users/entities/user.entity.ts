@@ -109,6 +109,9 @@ export class User {
   @Column({ type: "boolean", default: false })
   rls: boolean;
 
+  @Column({ type: "boolean", default: false })
+  isUSO: boolean;
+
   // PDF Registration Form
   @Column({ type: "varchar", length: 500, nullable: true })
   registrationFormUrl: string | null;
@@ -171,6 +174,7 @@ export class User {
       dateOfCaptaincy: this.dateOfCaptaincy,
       rsa: this.rsa,
       rls: this.rls,
+      isUSO: this.isUSO,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };
@@ -183,6 +187,7 @@ export class User {
         itud: this.itud,
         rsa: this.rsa,
         rls: this.rls,
+        isUSO: this.isUSO,
         statusLog: this.statusLog,
       };
     }

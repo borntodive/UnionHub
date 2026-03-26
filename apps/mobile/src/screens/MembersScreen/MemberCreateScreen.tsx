@@ -108,6 +108,7 @@ export const MemberCreateScreen: React.FC = () => {
     itud: false,
     rsa: false,
     rls: false,
+    isUSO: false,
     dataIscrizione: "",
     dateOfEntry: "",
     dateOfCaptaincy: "",
@@ -373,6 +374,7 @@ export const MemberCreateScreen: React.FC = () => {
       itud: formData.itud,
       rsa: formData.rsa,
       rls: formData.rls,
+      isUSO: formData.isUSO,
       role: formData.role,
       ruolo: formData.ruolo,
       dateOfEntry: formData.dateOfEntry || undefined,
@@ -874,6 +876,28 @@ export const MemberCreateScreen: React.FC = () => {
                         value={formData.rls}
                         onValueChange={(value) =>
                           setFormData({ ...formData, rls: value })
+                        }
+                        trackColor={{
+                          false: colors.border,
+                          true: colors.primary,
+                        }}
+                        thumbColor={colors.background}
+                      />
+                    </View>
+
+                    <View style={styles.switchRow}>
+                      <View style={styles.switchLabelContainer}>
+                        <Shield
+                          size={20}
+                          color={colors.primary}
+                          style={styles.switchIcon}
+                        />
+                        <Text style={styles.switchLabel}>USO</Text>
+                      </View>
+                      <Switch
+                        value={formData.isUSO}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, isUSO: value })
                         }
                         trackColor={{
                           false: colors.border,

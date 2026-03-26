@@ -185,6 +185,12 @@ export function StatisticsPage() {
           sub={`${Math.round((data.rsaCount / Math.max(data.totalUsers, 1)) * 100)}% degli iscritti`}
           color="text-cyan-600"
         />
+        <StatCard
+          label="Collaboratori USO"
+          value={data.usoCount}
+          sub={`${Math.round((data.usoCount / Math.max(data.totalUsers, 1)) * 100)}% degli iscritti`}
+          color="text-amber-600"
+        />
       </div>
     </div>
   );

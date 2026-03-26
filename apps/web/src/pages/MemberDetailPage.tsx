@@ -209,6 +209,9 @@ export function MemberDetailPage() {
               {member.rsa && (
                 <Badge label="RSA" color="bg-cyan-100 text-cyan-700" />
               )}
+              {member.isUSO && (
+                <Badge label="USO" color="bg-amber-100 text-amber-700" />
+              )}
             </div>
           </div>
         </div>

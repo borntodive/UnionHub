@@ -755,6 +755,7 @@ export class UsersService {
       "Data Iscrizione",
       "ITUD",
       "RSA",
+      "USO",
       "Note",
     ];
 
@@ -772,6 +773,7 @@ export class UsersService {
       user.dataIscrizione || "",
       user.itud ? "Sì" : "No",
       user.rsa ? "Sì" : "No",
+      user.isUSO ? "Sì" : "No",
       user.note || "",
     ]);
 
@@ -885,6 +887,13 @@ export class UsersService {
       .createQueryBuilder("user")
       .where(whereClause + " AND user.rsa = :rsa", { ...parameters, rsa: true })
       .getCount();
+    const usoCount = await this.usersRepository
+      .createQueryBuilder("user")
+      .where(whereClause + " AND user.isUSO = :isUSO", {
+        ...parameters,
+        isUSO: true,
+      })
+      .getCount();
 
     return {
       totalUsers,
@@ -900,6 +909,7 @@ export class UsersService {
       recentRegistrations,
       itudCount,
       rsaCount,
+      usoCount,
     };
   }
 
@@ -1077,6 +1087,7 @@ export class UsersService {
           itud: false, // Default false
           rsa: false, // Default false
           rls: false, // Default false
+          isUSO: false, // Default false
           note: note || null,
           dataIscrizione: null, // Empty for now
         });

@@ -58,6 +58,7 @@ interface FormFields {
   itud: boolean;
   rsa: boolean;
   rls: boolean;
+  isUSO: boolean;
   dataIscrizione: string;
   dateOfEntry: string;
   dateOfCaptaincy: string;
@@ -130,6 +131,7 @@ export function MemberFormPage({ mode }: { mode: "create" | "edit" }) {
       itud: false,
       rsa: false,
       rls: false,
+      isUSO: false,
       dataIscrizione: "",
       dateOfEntry: "",
       dateOfCaptaincy: "",
@@ -154,6 +156,7 @@ export function MemberFormPage({ mode }: { mode: "create" | "edit" }) {
         itud: member.itud ?? false,
         rsa: member.rsa ?? false,
         rls: member.rls ?? false,
+        isUSO: member.isUSO ?? false,
         dataIscrizione: toDisplay(member.dataIscrizione),
         dateOfEntry: toDisplay(member.dateOfEntry),
         dateOfCaptaincy: toDisplay(member.dateOfCaptaincy),
@@ -243,6 +246,7 @@ export function MemberFormPage({ mode }: { mode: "create" | "edit" }) {
           itud: data.itud,
           rsa: data.rsa,
           rls: data.rls,
+          isUSO: data.isUSO,
           dataIscrizione: toIso(data.dataIscrizione),
           dateOfEntry: toIso(data.dateOfEntry),
           dateOfCaptaincy: isCaptainGrade
@@ -275,6 +279,7 @@ export function MemberFormPage({ mode }: { mode: "create" | "edit" }) {
           itud: data.itud,
           rsa: data.rsa,
           rls: data.rls,
+          isUSO: data.isUSO,
           dataIscrizione: toIso(data.dataIscrizione),
           dateOfEntry: toIso(data.dateOfEntry),
           dateOfCaptaincy: isCaptainGrade
@@ -580,6 +585,7 @@ export function MemberFormPage({ mode }: { mode: "create" | "edit" }) {
               { name: "itud" as const, label: "ITUD" },
               { name: "rsa" as const, label: "RSA" },
               { name: "rls" as const, label: "RLS" },
+              { name: "isUSO" as const, label: "USO" },
             ].map(({ name, label }) => (
               <label
                 key={name}
