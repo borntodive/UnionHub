@@ -4,12 +4,16 @@ import { config as dotenvConfig } from "dotenv";
 
 dotenvConfig({ path: ".env" });
 
+if (!process.env.DB_PASSWORD) {
+  throw new Error("DB_PASSWORD environment variable is required");
+}
+
 const config = {
   type: "postgres" as const,
   host: process.env.DB_HOST || "localhost",
   port: parseInt(process.env.DB_PORT || "5432", 10),
   username: process.env.DB_USERNAME || "postgres",
-  password: process.env.DB_PASSWORD || "password",
+  password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE || "unionhub",
   entities: [__dirname + "/../**/*.entity{.ts,.js}"],
   migrations: [__dirname + "/../database/migrations/*{.ts,.js}"],

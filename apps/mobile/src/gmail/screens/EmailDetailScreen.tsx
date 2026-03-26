@@ -205,7 +205,8 @@ export const EmailDetailScreen: React.FC = () => {
                   scrollEnabled={true}
                   scalesPageToFit={false}
                   showsVerticalScrollIndicator={false}
-                  originWhitelist={["*"]}
+                  originWhitelist={["data:*"]}
+                  javaScriptEnabled={false}
                 />
               ) : data.bodyText ? (
                 <ScrollView style={styles.textBody}>

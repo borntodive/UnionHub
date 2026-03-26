@@ -285,6 +285,7 @@ export function MembersPage() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const debounceRef = useMemo(() => ({ timer: 0 }), []);
+  useEffect(() => () => clearTimeout(debounceRef.timer), [debounceRef]);
   const handleSearch = (v: string) => {
     setSearch(v);
     clearTimeout(debounceRef.timer);

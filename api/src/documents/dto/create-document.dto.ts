@@ -1,12 +1,20 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum } from "class-validator";
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  MaxLength,
+} from "class-validator";
 
 export class CreateDocumentDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(255)
   title: string;
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100000)
   content: string;
 
   @IsEnum(["fit-cisl", "joint"])
@@ -33,6 +41,7 @@ export class ApproveDocumentDto {
 export class UpdateTranslationDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(50000)
   englishTranslation: string;
 }
 

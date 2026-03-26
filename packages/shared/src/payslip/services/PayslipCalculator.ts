@@ -11,6 +11,7 @@ import {
   INPS,
   IRPEF,
   AdditionalItem,
+  UserContext,
 } from "../types";
 import {
   getContractData,
@@ -40,21 +41,55 @@ import {
   calculateBonus,
 } from "../utils/calculations";
 import { parseSbh, isDecember, getYear } from "../utils/formatters";
+import {
+  getSeniorityDate,
+  computeSeniorityYears,
+  findSeniorityBracket,
+  applySeniorityBracket,
+} from "../utils/seniority";
+
+/** Round a monetary value to 2 decimal places to avoid floating-point drift. */
+const r2 = (n: number): number => Math.round(n * 100) / 100;
 
 export class PayslipCalculator {
   private contractData: ReturnType<typeof getContractData>;
   private input: PayslipInput;
   private settings: PayslipSettings;
-  private userFlags: { itud?: boolean; rsa?: boolean };
+  private userFlags: UserContext;
   private year: number;
   private month: number;
+  public seniorityYears: number = 0;
+
+  /** Clamp all numeric input fields to >= 0 so negative values cannot corrupt calculations. */
+  private static sanitizeInput(input: PayslipInput): PayslipInput {
+    const nn = (n: number) => Math.max(0, isFinite(n) ? n : 0);
+    return {
+      ...input,
+      flyDiaria: nn(input.flyDiaria),
+      noFlyDiaria: nn(input.noFlyDiaria),
+      al: nn(input.al),
+      woff: nn(input.woff),
+      oob: nn(input.oob),
+      ul: nn(input.ul),
+      parentalDays: nn(input.parentalDays),
+      days104: nn(input.days104),
+      trainingSectors: nn(input.trainingSectors),
+      simDays: nn(input.simDays),
+      itud: nn(input.itud),
+      oobUnplanned: nn(input.oobUnplanned),
+      ccTrainingDays: nn(input.ccTrainingDays),
+      commissions: nn(input.commissions),
+      bankHolydays: nn(input.bankHolydays),
+      inpsDays: nn(input.inpsDays),
+    };
+  }
 
   constructor(
     input: PayslipInput,
     settings: PayslipSettings,
-    userFlags: { itud?: boolean; rsa?: boolean } = {},
+    userFlags: UserContext = {},
   ) {
-    this.input = input;
+    this.input = PayslipCalculator.sanitizeInput(input);
     this.settings = settings;
     this.userFlags = userFlags;
     this.year = getYear(input.date);
@@ -78,6 +113,23 @@ export class PayslipCalculator {
         return;
       }
 
+      // Apply seniority bracket if user context and brackets are available
+      let withBracket = corrected;
+      const seniorityDate = getSeniorityDate(userFlags);
+      if (seniorityDate) {
+        const years = computeSeniorityYears(seniorityDate, input.date);
+        this.seniorityYears = years;
+        // userFlags.seniorityBrackets (pre-fetched from live API) takes priority
+        const brackets =
+          userFlags.seniorityBrackets ?? corrected.seniorityBrackets;
+        if (brackets && brackets.length > 0) {
+          const bracket = findSeniorityBracket(brackets, years);
+          if (bracket) {
+            withBracket = applySeniorityBracket(corrected, bracket);
+          }
+        }
+      }
+
       // Apply legacy contract overrides
       if (settings.legacy) {
         const lc = settings.legacyCustom;
@@ -85,24 +137,24 @@ export class PayslipCalculator {
         if (settings.legacyDirect && lc) {
           // Override mode: use custom values directly as contract rates
           this.contractData = {
-            ...corrected,
-            ffp: lc.ffp > 0 ? lc.ffp : corrected.ffp,
-            sbh: lc.sbh > 0 ? lc.sbh : corrected.sbh,
-            al: lc.al > 0 ? lc.al : corrected.al,
+            ...withBracket,
+            ffp: lc.ffp > 0 ? lc.ffp : withBracket.ffp,
+            sbh: lc.sbh > 0 ? lc.sbh : withBracket.sbh,
+            al: lc.al > 0 ? lc.al : withBracket.al,
           };
         } else if (ld) {
           // General settings mode: apply saved deltas on top of current contract
           this.contractData = {
-            ...corrected,
-            ffp: corrected.ffp + ld.ffp,
-            sbh: corrected.sbh + ld.sbh,
-            al: corrected.al + ld.al,
+            ...withBracket,
+            ffp: withBracket.ffp + ld.ffp,
+            sbh: withBracket.sbh + ld.sbh,
+            al: withBracket.al + ld.al,
           };
         } else {
-          this.contractData = corrected;
+          this.contractData = withBracket;
         }
       } else {
-        this.contractData = corrected;
+        this.contractData = withBracket;
       }
     } else {
       this.contractData = null;
@@ -145,7 +197,7 @@ export class PayslipCalculator {
       areaIRPEF.addizionaliComunali +
       areaIRPEF.accontoAddizionaliComunali;
 
-    const netPayment = totaleCompetenze - totaleTrattenute;
+    const netPayment = r2(totaleCompetenze - totaleTrattenute);
 
     return {
       payslipItems,
@@ -524,11 +576,11 @@ export class PayslipCalculator {
     const imponibile = Math.max(taxArea, minImponibile);
 
     const contribuzione = {
-      ivs: imponibile * INPS_RATES.ivs,
-      ivsAdd: imponibile * INPS_RATES.ivsAdd,
-      fis: imponibile * INPS_RATES.fis,
-      cigs: imponibile * INPS_RATES.cigs,
-      fsta: imponibile * INPS_RATES.fsta,
+      ivs: r2(imponibile * INPS_RATES.ivs),
+      ivsAdd: r2(imponibile * INPS_RATES.ivsAdd),
+      fis: r2(imponibile * INPS_RATES.fis),
+      cigs: r2(imponibile * INPS_RATES.cigs),
+      fsta: r2(imponibile * INPS_RATES.fsta),
     };
 
     const contribuzioneTotale = sumValues(contribuzione);
@@ -585,9 +637,11 @@ export class PayslipCalculator {
     const taglioCuneo = calculateCuneoFiscale(imponibile, this.year);
 
     // Net tax
-    const ritenute = Math.max(
-      0,
-      irpefLorda - detrazioniLavoro - detrazioniConiuge - taglioCuneo.amount,
+    const ritenute = r2(
+      Math.max(
+        0,
+        irpefLorda - detrazioniLavoro - detrazioniConiuge - taglioCuneo.amount,
+      ),
     );
 
     // Average tax rate
@@ -634,7 +688,7 @@ export class PayslipCalculator {
       payslip.ul.ffpQuota.total;
 
     // TFR = (RUT / 13.5) - (INPS imponibile * 0.5%)
-    const tfr = retribuzioneUtileTFR / 13.5 - imponibileINPS * 0.005;
+    const tfr = r2(retribuzioneUtileTFR / 13.5 - imponibileINPS * 0.005);
 
     return { retribuzioneUtileTFR, tfr };
   }
@@ -671,7 +725,7 @@ export class PayslipCalculator {
 export async function calculatePayroll(
   input: PayslipInput,
   settings: PayslipSettings,
-  userFlags: { itud?: boolean; rsa?: boolean } = {},
+  userFlags: UserContext = {},
 ): Promise<Payroll | null> {
   const calculator = new PayslipCalculator(input, settings, userFlags);
   return calculator.calculatePayroll();

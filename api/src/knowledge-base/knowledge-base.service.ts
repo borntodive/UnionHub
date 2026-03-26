@@ -239,17 +239,23 @@ export class KnowledgeBaseService {
     const embedding = await this.ollamaService.generateEmbedding(query);
     const vectorLiteral = `[${embedding.join(",")}]`;
 
-    // Build access filter: admin can see everything; user sees only 'all'
+    // Build parameterized query — all dynamic values go into params array
+    const params: unknown[] = [vectorLiteral, limit];
+    let paramIndex = 3;
+
     const accessFilter =
       accessLevel === "admin" ? "" : `AND d.access_level = 'all'`;
 
-    // Build ruolo filter: admins see all ruoli; users see their role + global docs
-    const ruoloFilter =
-      accessLevel === "admin"
-        ? ""
-        : ruolo
-          ? `AND (d.ruolo IS NULL OR d.ruolo = '${ruolo}')`
-          : `AND d.ruolo IS NULL`;
+    let ruoloFilter = "";
+    if (accessLevel !== "admin") {
+      if (ruolo) {
+        ruoloFilter = `AND (d.ruolo IS NULL OR d.ruolo = $${paramIndex})`;
+        params.push(ruolo);
+        paramIndex++;
+      } else {
+        ruoloFilter = `AND d.ruolo IS NULL`;
+      }
+    }
 
     const rows: any[] = await this.dataSource.query(
       `SELECT
@@ -267,7 +273,7 @@ export class KnowledgeBaseService {
          ${ruoloFilter}
        ORDER BY distance ASC
        LIMIT $2`,
-      [vectorLiteral, limit],
+      params,
     );
 
     return rows;
