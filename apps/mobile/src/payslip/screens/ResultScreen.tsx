@@ -6,9 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Menu, AlertTriangle } from "lucide-react-native";
+import { Menu, AlertTriangle, ExternalLink } from "lucide-react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { colors, spacing, typography, borderRadius } from "../../theme";
@@ -41,7 +42,13 @@ export const ResultScreen: React.FC = () => {
   // Auto-calculate when screen is focused
   useFocusEffect(
     useCallback(() => {
-      calculate({ itud, rsa });
+      calculate({
+        itud,
+        rsa,
+        dateOfEntry: overrideActive ? undefined : user?.dateOfEntry,
+        dateOfCaptaincy: overrideActive ? undefined : user?.dateOfCaptaincy,
+        gradeCode: overrideActive ? undefined : user?.grade?.codice,
+      });
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [calculate, itud, rsa, activeSettings.voluntaryPensionContribution]),
   );
@@ -133,6 +140,20 @@ export const ResultScreen: React.FC = () => {
           </Text>
         </View>
       )}
+
+      <TouchableOpacity
+        style={styles.realPayslipButton}
+        onPress={() =>
+          Linking.openURL(
+            "https://performancemanager.successfactors.eu/sf/home?bplte_company=ryanairdac&_s.crb=9WYEkbdTXdTN7oM3XHBJPBiYTASEMKBYf3soohhvngk%253d",
+          )
+        }
+      >
+        <ExternalLink size={16} color={colors.textInverse} />
+        <Text style={styles.realPayslipButtonText}>
+          {t("payslip.viewRealPayslip")}
+        </Text>
+      </TouchableOpacity>
 
       <ScrollView style={styles.content}>
         <TotalCard
@@ -874,6 +895,24 @@ const styles = StyleSheet.create({
   },
   bottomSpace: {
     height: spacing.xl,
+  },
+  realPayslipButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xs,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  realPayslipButtonText: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+    color: colors.textInverse,
   },
   devCard: {
     backgroundColor: "#fff8e1", // Light yellow for dev mode
