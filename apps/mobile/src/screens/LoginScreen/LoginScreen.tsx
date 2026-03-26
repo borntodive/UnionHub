@@ -6,8 +6,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  TouchableWithoutFeedback,
-  Keyboard,
   Alert,
   TouchableOpacity,
 } from "react-native";
@@ -182,81 +180,79 @@ export const LoginScreen: React.FC = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* Logo Section */}
-            <View style={styles.logoContainer}>
-              <View style={styles.logoCircle}>
-                <Text style={styles.logoText}>UNION</Text>
-              </View>
-              <Text style={styles.appName}>{t("common.appName")}</Text>
-              <Text style={styles.appTagline}>
-                Platform for air transport workers
-              </Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Logo Section */}
+          <View style={styles.logoContainer}>
+            <View style={styles.logoCircle}>
+              <Text style={styles.logoText}>UNION</Text>
             </View>
+            <Text style={styles.appName}>{t("common.appName")}</Text>
+            <Text style={styles.appTagline}>
+              Platform for air transport workers
+            </Text>
+          </View>
 
-            {/* Form Section */}
-            <View style={styles.formContainer}>
-              <Text style={styles.formTitle}>{t("auth.login")}</Text>
+          {/* Form Section */}
+          <View style={styles.formContainer}>
+            <Text style={styles.formTitle}>{t("auth.login")}</Text>
 
-              <Input
-                label={t("auth.crewcode")}
-                placeholder={t("auth.enterCrewcode")}
-                value={crewcode}
-                onChangeText={setCrewcode}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                leftIcon={<User size={20} color={colors.textTertiary} />}
-                containerStyle={styles.inputContainer}
-              />
+            <Input
+              label={t("auth.crewcode")}
+              placeholder={t("auth.enterCrewcode")}
+              value={crewcode}
+              onChangeText={setCrewcode}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              leftIcon={<User size={20} color={colors.textTertiary} />}
+              containerStyle={styles.inputContainer}
+            />
 
-              <Input
-                label={t("auth.password")}
-                placeholder={t("auth.enterPassword")}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                leftIcon={<Lock size={20} color={colors.textTertiary} />}
-                containerStyle={styles.inputContainer}
-              />
+            <Input
+              label={t("auth.password")}
+              placeholder={t("auth.enterPassword")}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              leftIcon={<Lock size={20} color={colors.textTertiary} />}
+              containerStyle={styles.inputContainer}
+            />
 
-              <Button
-                title={t("auth.login")}
-                onPress={handleLogin}
-                loading={loginMutation.isPending}
-                disabled={!crewcode.trim() || !password.trim()}
-                size="lg"
-                style={styles.loginButton}
-              />
+            <Button
+              title={t("auth.login")}
+              onPress={handleLogin}
+              loading={loginMutation.isPending}
+              disabled={!crewcode.trim() || !password.trim()}
+              size="lg"
+              style={styles.loginButton}
+            />
 
-              {/* Biometric Login Button */}
-              {isAvailable && biometricCredentials && (
-                <TouchableOpacity
-                  style={styles.biometricButton}
-                  onPress={handleBiometricLogin}
-                  activeOpacity={0.8}
-                >
-                  <Fingerprint size={24} color={colors.primary} />
-                  <Text style={styles.biometricText}>
-                    {t("auth.biometricLogin", { method: getBiometricLabel() })}
-                  </Text>
-                </TouchableOpacity>
-              )}
+            {/* Biometric Login Button */}
+            {isAvailable && biometricCredentials && (
+              <TouchableOpacity
+                style={styles.biometricButton}
+                onPress={handleBiometricLogin}
+                activeOpacity={0.8}
+              >
+                <Fingerprint size={24} color={colors.primary} />
+                <Text style={styles.biometricText}>
+                  {t("auth.biometricLogin", { method: getBiometricLabel() })}
+                </Text>
+              </TouchableOpacity>
+            )}
 
-              <Text style={styles.hint}>
-                For access issues, contact your union delegate
-              </Text>
-            </View>
+            <Text style={styles.hint}>
+              For access issues, contact your union delegate
+            </Text>
+          </View>
 
-            {/* Footer */}
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>© 2025 UnionHub</Text>
-            </View>
-          </ScrollView>
-        </TouchableWithoutFeedback>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>© 2025 UnionHub</Text>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

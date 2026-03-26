@@ -805,6 +805,7 @@ export class UsersService {
     recentRegistrations: number;
     itudCount: number;
     rsaCount: number;
+    usoCount: number;
   }> {
     // Build base query conditions
     const baseConditions: string[] = ["user.isActive = :isActive"];
