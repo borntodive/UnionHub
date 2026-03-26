@@ -283,6 +283,8 @@ export class MailService {
                     <p style="margin:0;font-size:13px;color:#666;line-height:1.6;">
                       Ti invitiamo a scegliere una password sicura e a non condividerla con nessuno.
                     </p>
+
+                    ${storeBlock}
                   </td>
                 </tr>
               </table>
@@ -531,6 +533,8 @@ export class MailService {
                     <p style="margin:0;font-size:13px;color:#666;line-height:1.6;">
                       Please choose a strong password and do not share it with anyone.
                     </p>
+
+                    ${storeBlock}
                   </td>
                 </tr>
               </table>
