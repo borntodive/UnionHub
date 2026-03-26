@@ -68,6 +68,23 @@ export interface GetUsersParams {
   gradeId?: string;
 }
 
+export interface ScopedStats {
+  totalUsers: number;
+  recentRegistrations: number;
+  byBase: { base: string; count: number }[];
+  byContract: { contract: string; count: number }[];
+  byGrade: { grade: string; count: number }[];
+  itudCount: number;
+  rsaCount: number;
+  usoCount: number;
+}
+
+export interface DashboardStatistics extends ScopedStats {
+  byRole?: { pilot: number; cabin_crew: number };
+  pilot?: ScopedStats;
+  cabinCrew?: ScopedStats;
+}
+
 export const usersApi = {
   getMe: async (): Promise<User> => {
     const response = await apiClient.get<User>("/users/me");
@@ -201,15 +218,7 @@ export const usersApi = {
   },
 
   // Statistics and Export
-  getStatistics: async (): Promise<{
-    totalUsers: number;
-    byRole: { pilot: number; cabin_crew: number };
-    byBase: { base: string; count: number }[];
-    byContract: { contract: string; count: number }[];
-    recentRegistrations: number;
-    itudCount: number;
-    rsaCount: number;
-  }> => {
+  getStatistics: async (): Promise<DashboardStatistics> => {
     const response = await apiClient.get("/users/statistics/dashboard");
     return response.data;
   },

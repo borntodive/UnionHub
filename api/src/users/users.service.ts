@@ -797,108 +797,84 @@ export class UsersService {
     return { csv: csvContent, filename };
   }
 
-  async getDashboardStatistics(requestingUser: User): Promise<{
+  private async getScopedStats(ruolo?: Ruolo): Promise<{
     totalUsers: number;
-    byRole: { pilot: number; cabin_crew: number };
     byBase: { base: string; count: number }[];
     byContract: { contract: string; count: number }[];
+    byGrade: { grade: string; count: number }[];
     recentRegistrations: number;
     itudCount: number;
     rsaCount: number;
     usoCount: number;
   }> {
-    // Build base query conditions
-    const baseConditions: string[] = ["user.isActive = :isActive"];
-    const parameters: any = { isActive: true };
-
-    // Admin scoping
-    if (requestingUser.role === UserRole.ADMIN && requestingUser.ruolo) {
-      baseConditions.push("user.ruolo = :ruolo");
-      parameters.ruolo = requestingUser.ruolo;
+    const conditions: string[] = ["user.isActive = :isActive"];
+    const params: any = { isActive: true };
+    if (ruolo) {
+      conditions.push("user.ruolo = :ruolo");
+      params.ruolo = ruolo;
     }
+    const where = conditions.join(" AND ");
 
-    const whereClause = baseConditions.join(" AND ");
-
-    // Total users
     const totalUsers = await this.usersRepository
       .createQueryBuilder("user")
-      .where(whereClause, parameters)
+      .where(where, params)
       .getCount();
 
-    // By role
-    const pilotCount = await this.usersRepository
-      .createQueryBuilder("user")
-      .where(whereClause + " AND user.ruolo = :pilotRole", {
-        ...parameters,
-        pilotRole: Ruolo.PILOT,
-      })
-      .getCount();
-    const ccCount = await this.usersRepository
-      .createQueryBuilder("user")
-      .where(whereClause + " AND user.ruolo = :ccRole", {
-        ...parameters,
-        ccRole: Ruolo.CABIN_CREW,
-      })
-      .getCount();
-
-    // By base (top 10)
     const byBase = await this.usersRepository
       .createQueryBuilder("user")
       .select("base.nome", "base")
       .addSelect("COUNT(user.id)", "count")
       .leftJoin("user.base", "base")
-      .where(whereClause, parameters)
+      .where(where, params)
       .groupBy("base.nome")
       .orderBy("count", "DESC")
-      .limit(10)
       .getRawMany();
 
-    // By contract (top 10)
     const byContract = await this.usersRepository
       .createQueryBuilder("user")
       .select("contratto.nome", "contract")
       .addSelect("COUNT(user.id)", "count")
       .leftJoin("user.contratto", "contratto")
-      .where(whereClause, parameters)
+      .where(where, params)
       .groupBy("contratto.nome")
       .orderBy("count", "DESC")
-      .limit(10)
       .getRawMany();
 
-    // Recent registrations (last 30 days)
+    const byGrade = await this.usersRepository
+      .createQueryBuilder("user")
+      .select("grade.nome", "grade")
+      .addSelect("COUNT(user.id)", "count")
+      .leftJoin("user.grade", "grade")
+      .where(where, params)
+      .groupBy("grade.nome")
+      .orderBy("count", "DESC")
+      .getRawMany();
+
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const recentRegistrations = await this.usersRepository
       .createQueryBuilder("user")
-      .where(whereClause + " AND user.createdAt >= :thirtyDaysAgo", {
-        ...parameters,
+      .where(where + " AND user.createdAt >= :thirtyDaysAgo", {
+        ...params,
         thirtyDaysAgo,
       })
       .getCount();
 
-    // ITUD and RSA counts
     const itudCount = await this.usersRepository
       .createQueryBuilder("user")
-      .where(whereClause + " AND user.itud = :itud", {
-        ...parameters,
-        itud: true,
-      })
+      .where(where + " AND user.itud = :itud", { ...params, itud: true })
       .getCount();
     const rsaCount = await this.usersRepository
       .createQueryBuilder("user")
-      .where(whereClause + " AND user.rsa = :rsa", { ...parameters, rsa: true })
+      .where(where + " AND user.rsa = :rsa", { ...params, rsa: true })
       .getCount();
     const usoCount = await this.usersRepository
       .createQueryBuilder("user")
-      .where(whereClause + " AND user.isUSO = :isUSO", {
-        ...parameters,
-        isUSO: true,
-      })
+      .where(where + " AND user.isUSO = :isUSO", { ...params, isUSO: true })
       .getCount();
 
     return {
       totalUsers,
-      byRole: { pilot: pilotCount, cabin_crew: ccCount },
       byBase: byBase.map((b) => ({
         base: b.base || "N/A",
         count: parseInt(b.count),
@@ -907,10 +883,35 @@ export class UsersService {
         contract: c.contract || "N/A",
         count: parseInt(c.count),
       })),
+      byGrade: byGrade.map((g) => ({
+        grade: g.grade || "N/A",
+        count: parseInt(g.count),
+      })),
       recentRegistrations,
       itudCount,
       rsaCount,
       usoCount,
+    };
+  }
+
+  async getDashboardStatistics(requestingUser: User): Promise<any> {
+    if (requestingUser.role === UserRole.ADMIN) {
+      const scoped = await this.getScopedStats(
+        requestingUser.ruolo ?? undefined,
+      );
+      return scoped;
+    }
+
+    // SuperAdmin: global stats + breakdown per ruolo
+    const global = await this.getScopedStats();
+    const pilot = await this.getScopedStats(Ruolo.PILOT);
+    const cabinCrew = await this.getScopedStats(Ruolo.CABIN_CREW);
+
+    return {
+      ...global,
+      byRole: { pilot: pilot.totalUsers, cabin_crew: cabinCrew.totalUsers },
+      pilot,
+      cabinCrew,
     };
   }
 
