@@ -22,6 +22,18 @@ import { useAuthStore } from "../../store/authStore";
 import { useBiometricAuth } from "../../hooks/useBiometricAuth";
 import { syncPayslipSettings } from "../../payslip/hooks/usePayslipSettingsSync";
 
+const QUICK_USERS = [
+  { label: "SuperAdmin", crewcode: "SUPERADMIN", password: "password" },
+  { label: "Admin Piloti", crewcode: "ADMINPILOT", password: "password" },
+  { label: "Admin CC", crewcode: "ADMINCC", password: "password" },
+  { label: "SO0001", crewcode: "SO0001", password: "password" },
+  { label: "FO0001", crewcode: "FO0001", password: "password" },
+  { label: "CPT0001", crewcode: "CPT0001", password: "password" },
+  { label: "LTC0001", crewcode: "LTC0001", password: "password" },
+  { label: "CC0001", crewcode: "CC0001", password: "password" },
+  { label: "SEPE0001", crewcode: "SEPE0001", password: "password" },
+];
+
 export const LoginScreen: React.FC = () => {
   const { t } = useTranslation();
   const setAuth = useAuthStore((state) => state.setAuth);
@@ -252,6 +264,28 @@ export const LoginScreen: React.FC = () => {
           <View style={styles.footer}>
             <Text style={styles.footerText}>© 2025 UnionHub</Text>
           </View>
+
+          {/* Quick Login */}
+          <View style={styles.quickLoginContainer}>
+            <Text style={styles.quickLoginTitle}>Quick Login</Text>
+            <View style={styles.quickLoginGrid}>
+              {QUICK_USERS.map((u) => (
+                <TouchableOpacity
+                  key={u.crewcode}
+                  style={styles.quickLoginButton}
+                  onPress={() =>
+                    loginMutation.mutate({
+                      crewcode: u.crewcode,
+                      password: u.password,
+                    })
+                  }
+                  disabled={loginMutation.isPending}
+                >
+                  <Text style={styles.quickLoginButtonText}>{u.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -356,5 +390,40 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: typography.sizes.xs,
     color: colors.textTertiary,
+  },
+  quickLoginContainer: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.lg,
+    padding: spacing.md,
+    backgroundColor: "#fffbeb",
+    borderWidth: 1,
+    borderColor: "#fcd34d",
+    borderRadius: borderRadius.lg,
+  },
+  quickLoginTitle: {
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.bold,
+    color: "#92400e",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: spacing.sm,
+  },
+  quickLoginGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+  },
+  quickLoginButton: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#fcd34d",
+    borderRadius: borderRadius.md,
+  },
+  quickLoginButtonText: {
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.medium,
+    color: "#92400e",
   },
 });
