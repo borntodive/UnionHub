@@ -8,11 +8,13 @@ import {
   Copy,
   Trash2,
   ChevronDown,
+  X,
 } from "lucide-react";
 import {
   claContractsApi,
   ClaContract,
   CreateClaContractData,
+  SeniorityBracket,
 } from "../../api/cla-contracts";
 import { useForm } from "react-hook-form";
 import {
@@ -25,6 +27,132 @@ import {
 
 const fmt = (n: number) =>
   Number(n).toLocaleString("it-IT", { style: "currency", currency: "EUR" });
+
+/* ─── SeniorityBracketEditor ─────────────────────────────────── */
+function SeniorityBracketEditor({
+  brackets,
+  onChange,
+}: {
+  brackets: SeniorityBracket[];
+  onChange: (brackets: SeniorityBracket[]) => void;
+}) {
+  const addBracket = () => {
+    const last = brackets[brackets.length - 1];
+    const min = last ? (last.maxYears !== null ? last.maxYears + 1 : 0) : 0;
+    onChange([...brackets, { minYears: min, maxYears: null }]);
+  };
+
+  const removeBracket = (i: number) =>
+    onChange(brackets.filter((_, idx) => idx !== i));
+
+  const update = (i: number, field: keyof SeniorityBracket, raw: string) => {
+    const updated = brackets.map((b, idx) => {
+      if (idx !== i) return b;
+      if (field === "minYears") return { ...b, minYears: parseInt(raw) || 0 };
+      if (field === "maxYears")
+        return { ...b, maxYears: raw === "" ? null : parseInt(raw) || 0 };
+      const n = parseFloat(raw);
+      if (raw === "" || isNaN(n)) {
+        const clone = { ...b };
+        delete (clone as any)[field];
+        return clone;
+      }
+      return { ...b, [field]: n };
+    });
+    onChange(updated);
+  };
+
+  const numInput = (
+    i: number,
+    field: keyof SeniorityBracket,
+    label: string,
+    step = "0.01",
+  ) => (
+    <div>
+      <label className="text-xs text-gray-500">{label}</label>
+      <input
+        type="number"
+        step={step}
+        placeholder="—"
+        value={(brackets[i] as any)[field] ?? ""}
+        onChange={(e) => update(i, field, e.target.value)}
+        className="w-full border border-gray-200 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#177246]"
+      />
+    </div>
+  );
+
+  return (
+    <div className="space-y-3">
+      {brackets.map((b, i) => (
+        <div
+          key={i}
+          className="border border-gray-200 rounded-lg p-3 space-y-2 relative"
+        >
+          <button
+            type="button"
+            onClick={() => removeBracket(i)}
+            className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+          >
+            <X size={13} />
+          </button>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-gray-500">Anni min *</label>
+              <input
+                type="number"
+                step="1"
+                min="0"
+                value={b.minYears}
+                onChange={(e) => update(i, "minYears", e.target.value)}
+                className="w-full border border-gray-200 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#177246]"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-500">
+                Anni max (vuoto = ∞)
+              </label>
+              <input
+                type="number"
+                step="1"
+                min="0"
+                value={b.maxYears ?? ""}
+                onChange={(e) => update(i, "maxYears", e.target.value)}
+                placeholder="∞"
+                className="w-full border border-gray-200 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#177246]"
+              />
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-400 italic">
+            Lascia vuoto i valori che non cambiano rispetto al contratto base
+          </p>
+
+          <div className="grid grid-cols-3 gap-2">
+            {numInput(i, "ffp", "FFP (€/mese)")}
+            {numInput(i, "sbh", "SBH (€/ora)", "0.0001")}
+            {numInput(i, "al", "AL (€/giorno)")}
+            {numInput(i, "basic", "Stipendio base")}
+            {numInput(i, "diaria", "Diaria", "0.0001")}
+            {numInput(i, "oob", "OOB")}
+            {numInput(i, "woff", "WOFF")}
+            {numInput(i, "allowance", "Allowance")}
+            {numInput(i, "rsa", "RSA")}
+            {numInput(i, "itud", "ITUD")}
+          </div>
+        </div>
+      ))}
+
+      <button
+        type="button"
+        onClick={addBracket}
+        className="flex items-center gap-1 text-xs text-[#177246] hover:text-[#177246]/80"
+      >
+        <Plus size={13} /> Aggiungi fascia
+      </button>
+    </div>
+  );
+}
 
 /* ─── Form Modal ────────────────────────────────────────────── */
 function ClaContractModal({
@@ -39,6 +167,12 @@ function ClaContractModal({
   onSaved: () => void;
 }) {
   const [apiError, setApiError] = useState<string | null>(null);
+  const [seniorityEnabled, setSeniorityEnabled] = useState(
+    !!(item?.seniorityBrackets && item.seniorityBrackets.length > 0),
+  );
+  const [seniorityBrackets, setSeniorityBrackets] = useState<
+    SeniorityBracket[]
+  >(item?.seniorityBrackets ?? []);
   const {
     register,
     handleSubmit,
@@ -116,6 +250,7 @@ function ClaContractModal({
         itud: Number(data.itud),
         effectiveYear: Number(data.effectiveYear),
         effectiveMonth: Number(data.effectiveMonth ?? 1),
+        seniorityBrackets: seniorityEnabled ? seniorityBrackets : [],
       };
       if (item) {
         await claContractsApi.update(item.id, payload);
@@ -297,6 +432,36 @@ function ClaContractModal({
               {...register("itud", { valueAsNumber: true })}
             />
           </div>
+        </div>
+
+        <hr className="border-gray-100" />
+
+        {/* Seniority section */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Fasce anzianità
+            </p>
+            <button
+              type="button"
+              onClick={() => setSeniorityEnabled((v) => !v)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                seniorityEnabled ? "bg-[#177246]" : "bg-gray-200"
+              }`}
+            >
+              <span
+                className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                  seniorityEnabled ? "translate-x-4" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+          {seniorityEnabled && (
+            <SeniorityBracketEditor
+              brackets={seniorityBrackets}
+              onChange={setSeniorityBrackets}
+            />
+          )}
         </div>
 
         <div className="flex items-center gap-2 pt-1">

@@ -1,5 +1,20 @@
 import apiClient from "./client";
 
+export interface SeniorityBracket {
+  minYears: number;
+  maxYears: number | null;
+  basic?: number;
+  ffp?: number;
+  sbh?: number;
+  al?: number;
+  oob?: number;
+  diaria?: number;
+  rsa?: number;
+  itud?: number;
+  allowance?: number;
+  woff?: number;
+}
+
 export interface ClaContract {
   id: string;
   company: string;
@@ -15,6 +30,7 @@ export interface ClaContract {
   diaria: number;
   rsa: number;
   itud: number;
+  seniorityBrackets?: SeniorityBracket[] | null;
   trainingConfig: unknown;
   effectiveYear: number;
   effectiveMonth: number;
@@ -40,6 +56,7 @@ export interface CreateClaContractData {
   diaria: number;
   rsa?: number;
   itud?: number;
+  seniorityBrackets?: SeniorityBracket[];
   effectiveYear: number;
   effectiveMonth?: number;
   isActive?: boolean;

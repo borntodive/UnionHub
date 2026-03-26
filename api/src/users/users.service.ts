@@ -1123,8 +1123,11 @@ export class UsersService {
         "user.telefono",
         "user.rsa",
         "user.rls",
+        "user.isUSO",
       ])
-      .where("user.isActive = true AND (user.rsa = true OR user.rls = true)")
+      .where(
+        "user.isActive = true AND (user.rsa = true OR user.rls = true OR user.isUSO = true)",
+      )
       .getMany();
 
     return users.map((u) => ({
@@ -1133,6 +1136,7 @@ export class UsersService {
       telefono: u.telefono ?? null,
       isRsa: u.rsa === true,
       isRls: u.rls === true,
+      isUSO: u.isUSO === true,
     }));
   }
 

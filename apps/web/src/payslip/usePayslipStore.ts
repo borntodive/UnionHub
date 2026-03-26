@@ -6,6 +6,7 @@ import type {
   Payroll,
   AdditionalInput,
   AdditionalDeductionInput,
+  UserContext,
 } from "@unionhub/shared/payslip";
 import { calculatePayroll } from "@unionhub/shared/payslip";
 
@@ -18,7 +19,7 @@ interface PayslipState {
 
   setInput: (input: Partial<PayslipInput>) => void;
   setSettings: (settings: Partial<PayslipSettings>) => void;
-  calculate: (userFlags?: { itud?: boolean; rsa?: boolean }) => Promise<void>;
+  calculate: (userContext?: UserContext) => Promise<void>;
   reset: () => void;
   addAdditionalPayment: (item: AdditionalInput) => void;
   updateAdditionalPayment: (index: number, item: AdditionalInput) => void;
@@ -95,14 +96,14 @@ export const usePayslipStore = create<PayslipState>()(
       setSettings: (settings) =>
         set((state) => ({ settings: { ...state.settings, ...settings } })),
 
-      calculate: async (userFlags = {}) => {
+      calculate: async (userContext = {}) => {
         const { input, settings } = get();
         set({ isCalculating: true, error: null });
         try {
           const result = await calculatePayroll(
             input,
             { ...settings, legacyDirect: false },
-            userFlags,
+            userContext,
           );
           if (result) {
             set({ result, isCalculating: false });

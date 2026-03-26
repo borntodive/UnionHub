@@ -9,6 +9,7 @@ export interface RsaRlsContact {
   telefono?: string | null;
   isRsa: boolean;
   isRls: boolean;
+  isUSO: boolean;
 }
 
 @Injectable()
@@ -86,16 +87,20 @@ export class MailService {
               </table>`
       : "";
 
-    // ── Section 3: RSA / RLS contacts ─────────────────────────────────────────
+    // ── Section 3: RSA / RLS / USO contacts ──────────────────────────────────
     const rsaList = contacts.filter((c) => c.isRsa);
     const rlsList = contacts.filter((c) => c.isRls);
+    const usoList = contacts.filter((c) => c.isUSO);
 
-    const buildContactRows = (list: RsaRlsContact[]) =>
+    const buildContactRows = (
+      list: RsaRlsContact[],
+      emptyLabel = "Nessun rappresentante registrato",
+    ) =>
       list.length === 0
         ? `<tr>
              <td colspan="2" style="font-size:13px;color:#aaa;padding:10px 16px;
                                     font-style:italic;">
-               Nessun rappresentante registrato
+               ${emptyLabel}
              </td>
            </tr>`
         : list
@@ -352,7 +357,8 @@ export class MailService {
                       RLS — Rappresentante dei Lavoratori per la Sicurezza
                     </p>
                     <table width="100%" cellpadding="0" cellspacing="0"
-                           style="border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;">
+                           style="border:1px solid #e0e0e0;border-radius:6px;
+                                  margin-bottom:20px;overflow:hidden;">
                       <tr style="background:#f0f7f3;">
                         <td style="padding:8px 16px;font-size:11px;font-weight:bold;
                                    color:#177246;text-transform:uppercase;letter-spacing:0.5px;
@@ -365,6 +371,27 @@ export class MailService {
                         </td>
                       </tr>
                       ${buildContactRows(rlsList)}
+                    </table>
+
+                    <!-- USO -->
+                    <p style="margin:0 0 8px;font-size:12px;font-weight:bold;color:#177246;
+                               text-transform:uppercase;letter-spacing:1px;">
+                      USO — Collaboratori Sindacali
+                    </p>
+                    <table width="100%" cellpadding="0" cellspacing="0"
+                           style="border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;">
+                      <tr style="background:#f0f7f3;">
+                        <td style="padding:8px 16px;font-size:11px;font-weight:bold;
+                                   color:#177246;text-transform:uppercase;letter-spacing:0.5px;
+                                   width:60%;">
+                          Nome
+                        </td>
+                        <td style="padding:8px 16px;font-size:11px;font-weight:bold;
+                                   color:#177246;text-transform:uppercase;letter-spacing:0.5px;">
+                          Telefono
+                        </td>
+                      </tr>
+                      ${buildContactRows(usoList, "Nessun collaboratore registrato")}
                     </table>
                   </td>
                 </tr>
@@ -602,6 +629,25 @@ export class MailService {
                       RLS — Workers' Safety Representative
                     </p>
                     <table width="100%" cellpadding="0" cellspacing="0"
+                           style="border:1px solid #e0e0e0;border-radius:6px;
+                                  margin-bottom:20px;overflow:hidden;">
+                      <tr style="background:#f0f7f3;">
+                        <td style="padding:8px 16px;font-size:11px;font-weight:bold;
+                                   color:#177246;text-transform:uppercase;letter-spacing:0.5px;
+                                   width:60%;">Name</td>
+                        <td style="padding:8px 16px;font-size:11px;font-weight:bold;
+                                   color:#177246;text-transform:uppercase;letter-spacing:0.5px;">
+                          Phone</td>
+                      </tr>
+                      ${buildContactRows(rlsList, "No representative registered")}
+                    </table>
+
+                    <!-- USO EN -->
+                    <p style="margin:0 0 8px;font-size:12px;font-weight:bold;color:#177246;
+                               text-transform:uppercase;letter-spacing:1px;">
+                      USO — Union Support Officers
+                    </p>
+                    <table width="100%" cellpadding="0" cellspacing="0"
                            style="border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;">
                       <tr style="background:#f0f7f3;">
                         <td style="padding:8px 16px;font-size:11px;font-weight:bold;
@@ -611,7 +657,7 @@ export class MailService {
                                    color:#177246;text-transform:uppercase;letter-spacing:0.5px;">
                           Phone</td>
                       </tr>
-                      ${buildContactRows(rlsList)}
+                      ${buildContactRows(usoList, "No support officer registered")}
                     </table>
                   </td>
                 </tr>
