@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -6,22 +6,35 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
   Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
 } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import { useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Calendar, CheckCircle } from "lucide-react-native";
+import {
+  Calendar,
+  CheckCircle,
+  MapPin,
+  Briefcase,
+  Award,
+} from "lucide-react-native";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
+import { Select } from "../../components/Select";
 import { usersApi } from "../../api/users";
+import { basesApi } from "../../api/bases";
+import { contractsApi } from "../../api/contracts";
+import { gradesApi } from "../../api/grades";
 import { useAuthStore } from "../../store/authStore";
 
 const CAPTAIN_GRADES = ["CPT", "LTC", "LCC", "TRI", "TRE"];
@@ -48,11 +61,38 @@ const formatDate = (date: Date): string => {
 export const CompleteProfileScreen: React.FC = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView>(null);
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
 
   const isCaptainGrade = CAPTAIN_GRADES.includes(user?.grade?.codice || "");
 
+  // Determine which fields are missing
+  const missing = {
+    nome: !user?.nome,
+    cognome: !user?.cognome,
+    email: !user?.email,
+    telefono: !user?.telefono,
+    base: !user?.base,
+    contratto: !user?.contratto,
+    grade: !user?.grade,
+    dateOfEntry: !user?.dateOfEntry,
+    dateOfCaptaincy: isCaptainGrade && !user?.dateOfCaptaincy,
+  };
+
+  const needsPersonal = missing.nome || missing.cognome;
+  const needsContact = missing.email || missing.telefono;
+  const needsProfessional = missing.base || missing.contratto || missing.grade;
+  const needsDates = missing.dateOfEntry || missing.dateOfCaptaincy;
+
+  // Form state — pre-filled from existing user data
+  const [nome, setNome] = useState(user?.nome || "");
+  const [cognome, setCognome] = useState(user?.cognome || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [telefono, setTelefono] = useState(user?.telefono || "");
+  const [baseId, setBaseId] = useState(user?.base?.id || "");
+  const [contrattoId, setContrattoId] = useState(user?.contratto?.id || "");
+  const [gradeId, setGradeId] = useState(user?.grade?.id || "");
   const [dateOfEntry, setDateOfEntry] = useState(user?.dateOfEntry || "");
   const [dateOfCaptaincy, setDateOfCaptaincy] = useState(
     user?.dateOfCaptaincy || "",
@@ -61,12 +101,41 @@ export const CompleteProfileScreen: React.FC = () => {
     "dateOfEntry" | "dateOfCaptaincy" | null
   >(null);
 
+  // Load reference data only if needed
+  const { data: bases, isLoading: loadingBases } = useQuery({
+    queryKey: ["bases"],
+    queryFn: basesApi.getBases,
+    enabled: needsProfessional,
+  });
+
+  const { data: contracts, isLoading: loadingContracts } = useQuery({
+    queryKey: ["contracts"],
+    queryFn: contractsApi.getContracts,
+    enabled: needsProfessional,
+  });
+
+  const { data: grades, isLoading: loadingGrades } = useQuery({
+    queryKey: ["grades"],
+    queryFn: gradesApi.getGrades,
+    enabled: needsProfessional,
+  });
+
+  const isLoadingRefs = loadingBases || loadingContracts || loadingGrades;
+
   const mutation = useMutation({
-    mutationFn: () =>
-      usersApi.updateMe({
-        dateOfEntry: dateOfEntry || undefined,
-        dateOfCaptaincy: dateOfCaptaincy || undefined,
-      }),
+    mutationFn: () => {
+      const payload: Parameters<typeof usersApi.updateMe>[0] = {};
+      if (missing.nome) payload.nome = nome;
+      if (missing.cognome) payload.cognome = cognome;
+      if (missing.email) payload.email = email;
+      if (missing.telefono) payload.telefono = telefono;
+      if (missing.base) payload.baseId = baseId;
+      if (missing.contratto) payload.contrattoId = contrattoId;
+      if (missing.grade) payload.gradeId = gradeId;
+      if (missing.dateOfEntry) payload.dateOfEntry = dateOfEntry;
+      if (missing.dateOfCaptaincy) payload.dateOfCaptaincy = dateOfCaptaincy;
+      return usersApi.updateMe(payload);
+    },
     onSuccess: (updatedUser) => {
       setUser(updatedUser);
     },
@@ -79,11 +148,39 @@ export const CompleteProfileScreen: React.FC = () => {
   });
 
   const handleSave = () => {
-    if (!dateOfEntry) {
+    if (missing.nome && !nome) {
+      Alert.alert(t("common.error"), t("members.firstNameRequired"));
+      return;
+    }
+    if (missing.cognome && !cognome) {
+      Alert.alert(t("common.error"), t("members.lastNameRequired"));
+      return;
+    }
+    if (missing.email && !email) {
+      Alert.alert(t("common.error"), t("members.emailRequired"));
+      return;
+    }
+    if (missing.telefono && !telefono) {
+      Alert.alert(t("common.error"), t("members.phoneRequired"));
+      return;
+    }
+    if (missing.base && !baseId) {
+      Alert.alert(t("common.error"), t("members.baseRequired"));
+      return;
+    }
+    if (missing.contratto && !contrattoId) {
+      Alert.alert(t("common.error"), t("members.contractRequired"));
+      return;
+    }
+    if (missing.grade && !gradeId) {
+      Alert.alert(t("common.error"), t("members.gradeRequired"));
+      return;
+    }
+    if (missing.dateOfEntry && !dateOfEntry) {
       Alert.alert(t("common.error"), t("members.dateOfEntryRequired"));
       return;
     }
-    if (isCaptainGrade && !dateOfCaptaincy) {
+    if (missing.dateOfCaptaincy && !dateOfCaptaincy) {
       Alert.alert(t("common.error"), t("members.dateOfCaptaincyRequired"));
       return;
     }
@@ -92,6 +189,18 @@ export const CompleteProfileScreen: React.FC = () => {
 
   const activeValue =
     activePicker === "dateOfEntry" ? dateOfEntry : dateOfCaptaincy;
+
+  const baseOptions = (bases || []).map((b) => ({
+    label: `${b.codice} — ${b.nome}`,
+    value: b.id,
+  }));
+  const contractOptions = (contracts || []).map((c) => ({
+    label: `${c.codice} — ${c.nome}`,
+    value: c.id,
+  }));
+  const gradeOptions = (grades || [])
+    .filter((g) => !user?.ruolo || g.ruolo === user.ruolo)
+    .map((g) => ({ label: g.nome, value: g.id }));
 
   return (
     <View style={styles.wrapper}>
@@ -108,80 +217,295 @@ export const CompleteProfileScreen: React.FC = () => {
           </Text>
         </View>
 
-        <ScrollView
-          style={styles.content}
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
         >
-          <Card style={styles.card}>
-            <Text style={styles.sectionTitle}>
-              {t("members.professionalDates")}
-            </Text>
-
-            {/* Date of Entry */}
-            <Text style={styles.fieldLabel}>
-              {t("members.dateOfEntry")}
-              <Text style={styles.required}> *</Text>
-            </Text>
-            <TouchableOpacity
-              style={styles.datePickerButton}
-              onPress={() => setActivePicker("dateOfEntry")}
-            >
-              <View style={styles.datePickerIcon}>
-                <Calendar size={20} color={colors.primary} />
-              </View>
-              <View style={styles.datePickerContent}>
-                <Text
-                  style={[
-                    styles.datePickerValue,
-                    !dateOfEntry && styles.datePickerPlaceholder,
-                  ]}
-                >
-                  {dateOfEntry || t("completeProfile.selectDate")}
+          <ScrollView
+            ref={scrollRef}
+            style={styles.content}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* ── Personal info ─────────────────────────────────── */}
+            {needsPersonal && (
+              <Card style={styles.card}>
+                <Text style={styles.sectionTitle}>
+                  {t("members.personalInfo")}
                 </Text>
-              </View>
-            </TouchableOpacity>
 
-            {/* Date of Captaincy — only for captain grades */}
-            {isCaptainGrade && (
-              <>
-                <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>
-                  {t("members.dateOfCaptaincy")}
-                  <Text style={styles.required}> *</Text>
-                </Text>
-                <TouchableOpacity
-                  style={styles.datePickerButton}
-                  onPress={() => setActivePicker("dateOfCaptaincy")}
-                >
-                  <View style={styles.datePickerIcon}>
-                    <Calendar size={20} color={colors.primary} />
-                  </View>
-                  <View style={styles.datePickerContent}>
+                {missing.nome && (
+                  <>
+                    <Text style={styles.fieldLabel}>
+                      {t("members.firstName")}
+                      <Text style={styles.required}> *</Text>
+                    </Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={nome}
+                      onChangeText={setNome}
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                    />
+                  </>
+                )}
+
+                {missing.cognome && (
+                  <>
                     <Text
                       style={[
-                        styles.datePickerValue,
-                        !dateOfCaptaincy && styles.datePickerPlaceholder,
+                        styles.fieldLabel,
+                        missing.nome && styles.fieldLabelSpaced,
                       ]}
                     >
-                      {dateOfCaptaincy || t("completeProfile.selectDate")}
+                      {t("members.lastName")}
+                      <Text style={styles.required}> *</Text>
                     </Text>
-                  </View>
-                </TouchableOpacity>
-              </>
+                    <TextInput
+                      style={styles.textInput}
+                      value={cognome}
+                      onChangeText={setCognome}
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                    />
+                  </>
+                )}
+              </Card>
             )}
-          </Card>
 
-          <Button
-            title={
-              mutation.isPending
-                ? t("common.pleaseWait")
-                : t("completeProfile.save")
-            }
-            onPress={handleSave}
-            loading={mutation.isPending}
-            style={styles.saveButton}
-          />
-        </ScrollView>
+            {/* ── Contact info ──────────────────────────────────── */}
+            {needsContact && (
+              <Card style={styles.card}>
+                <Text style={styles.sectionTitle}>
+                  {t("members.contactInfo")}
+                </Text>
+
+                {missing.email && (
+                  <>
+                    <Text style={styles.fieldLabel}>
+                      {t("members.email")}
+                      <Text style={styles.required}> *</Text>
+                    </Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={email}
+                      onChangeText={setEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                  </>
+                )}
+
+                {missing.telefono && (
+                  <>
+                    <Text
+                      style={[
+                        styles.fieldLabel,
+                        missing.email && styles.fieldLabelSpaced,
+                      ]}
+                    >
+                      {t("members.phone")}
+                      <Text style={styles.required}> *</Text>
+                    </Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={telefono}
+                      onChangeText={setTelefono}
+                      keyboardType="phone-pad"
+                      placeholder="+39 333 1234567"
+                      placeholderTextColor={colors.textTertiary}
+                      onFocus={() =>
+                        scrollRef.current?.scrollToEnd({ animated: true })
+                      }
+                    />
+                  </>
+                )}
+              </Card>
+            )}
+
+            {/* ── Professional info ─────────────────────────────── */}
+            {needsProfessional && (
+              <Card style={styles.card}>
+                <Text style={styles.sectionTitle}>
+                  {t("members.unionInfo")}
+                </Text>
+
+                {isLoadingRefs ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={colors.primary}
+                    style={{ marginVertical: spacing.md }}
+                  />
+                ) : (
+                  <>
+                    {missing.base && (
+                      <>
+                        <Text style={styles.fieldLabel}>
+                          {t("members.base")}
+                          <Text style={styles.required}> *</Text>
+                        </Text>
+                        <View style={styles.selectWrapper}>
+                          <MapPin
+                            size={18}
+                            color={colors.primary}
+                            style={styles.selectIcon}
+                          />
+                          <View style={styles.selectInner}>
+                            <Select
+                              label=""
+                              value={baseId || undefined}
+                              onValueChange={(v) => setBaseId(v || "")}
+                              options={baseOptions}
+                              placeholder={t("members.base")}
+                            />
+                          </View>
+                        </View>
+                      </>
+                    )}
+
+                    {missing.contratto && (
+                      <>
+                        <Text
+                          style={[
+                            styles.fieldLabel,
+                            missing.base && styles.fieldLabelSpaced,
+                          ]}
+                        >
+                          {t("members.contract")}
+                          <Text style={styles.required}> *</Text>
+                        </Text>
+                        <View style={styles.selectWrapper}>
+                          <Briefcase
+                            size={18}
+                            color={colors.primary}
+                            style={styles.selectIcon}
+                          />
+                          <View style={styles.selectInner}>
+                            <Select
+                              label=""
+                              value={contrattoId || undefined}
+                              onValueChange={(v) => setContrattoId(v || "")}
+                              options={contractOptions}
+                              placeholder={t("members.contract")}
+                            />
+                          </View>
+                        </View>
+                      </>
+                    )}
+
+                    {missing.grade && (
+                      <>
+                        <Text
+                          style={[
+                            styles.fieldLabel,
+                            (missing.base || missing.contratto) &&
+                              styles.fieldLabelSpaced,
+                          ]}
+                        >
+                          {t("members.grade")}
+                          <Text style={styles.required}> *</Text>
+                        </Text>
+                        <View style={styles.selectWrapper}>
+                          <Award
+                            size={18}
+                            color={colors.primary}
+                            style={styles.selectIcon}
+                          />
+                          <View style={styles.selectInner}>
+                            <Select
+                              label=""
+                              value={gradeId || undefined}
+                              onValueChange={(v) => setGradeId(v || "")}
+                              options={gradeOptions}
+                              placeholder={t("members.grade")}
+                            />
+                          </View>
+                        </View>
+                      </>
+                    )}
+                  </>
+                )}
+              </Card>
+            )}
+
+            {/* ── Professional dates ────────────────────────────── */}
+            {needsDates && (
+              <Card style={styles.card}>
+                <Text style={styles.sectionTitle}>
+                  {t("members.professionalDates")}
+                </Text>
+
+                {missing.dateOfEntry && (
+                  <>
+                    <Text style={styles.fieldLabel}>
+                      {t("members.dateOfEntry")}
+                      <Text style={styles.required}> *</Text>
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.datePickerButton}
+                      onPress={() => setActivePicker("dateOfEntry")}
+                    >
+                      <View style={styles.datePickerIcon}>
+                        <Calendar size={20} color={colors.primary} />
+                      </View>
+                      <Text
+                        style={[
+                          styles.datePickerValue,
+                          !dateOfEntry && styles.datePickerPlaceholder,
+                        ]}
+                      >
+                        {dateOfEntry || t("completeProfile.selectDate")}
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+
+                {missing.dateOfCaptaincy && (
+                  <>
+                    <Text
+                      style={[
+                        styles.fieldLabel,
+                        missing.dateOfEntry && styles.fieldLabelSpaced,
+                      ]}
+                    >
+                      {t("members.dateOfCaptaincy")}
+                      <Text style={styles.required}> *</Text>
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.datePickerButton}
+                      onPress={() => setActivePicker("dateOfCaptaincy")}
+                    >
+                      <View style={styles.datePickerIcon}>
+                        <Calendar size={20} color={colors.primary} />
+                      </View>
+                      <Text
+                        style={[
+                          styles.datePickerValue,
+                          !dateOfCaptaincy && styles.datePickerPlaceholder,
+                        ]}
+                      >
+                        {dateOfCaptaincy || t("completeProfile.selectDate")}
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </Card>
+            )}
+
+            <Button
+              title={
+                mutation.isPending
+                  ? t("common.pleaseWait")
+                  : t("completeProfile.save")
+              }
+              onPress={handleSave}
+              loading={mutation.isPending}
+              style={styles.saveButton}
+            />
+          </ScrollView>
+        </KeyboardAvoidingView>
 
         {/* Date Picker Modal */}
         <Modal
@@ -284,8 +608,37 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
+  fieldLabelSpaced: {
+    marginTop: spacing.md,
+  },
   required: {
     color: colors.error,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.background,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    fontSize: typography.sizes.base,
+    color: colors.text,
+  },
+  selectWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.background,
+    paddingLeft: spacing.md,
+    overflow: "hidden",
+  },
+  selectIcon: {
+    marginRight: spacing.sm,
+  },
+  selectInner: {
+    flex: 1,
   },
   datePickerButton: {
     flexDirection: "row",
@@ -300,13 +653,11 @@ const styles = StyleSheet.create({
   datePickerIcon: {
     marginRight: spacing.sm,
   },
-  datePickerContent: {
-    flex: 1,
-  },
   datePickerValue: {
     fontSize: typography.sizes.base,
     color: colors.text,
     fontWeight: typography.weights.medium,
+    flex: 1,
   },
   datePickerPlaceholder: {
     color: colors.textTertiary,

@@ -35,8 +35,7 @@
     "connectToLoad": "Connect to the internet at least once to download available categories and urgencies.",
     "required": "Required",
     "optional": "Optional",
-    "actions": "Actions",
-    "done": "Done"
+    "actions": "Actions"
   },
   "auth": {
     "login": "Sign In",
@@ -112,7 +111,6 @@
     "filterByRole": "Filter by role",
     "allDocuments": "All documents",
     "filterBy": "Filter by",
-    "enterContent": "Enter communication content...",
     "originalText": "Original Text",
     "aiReviewedVersion": "AI Reviewed Version",
     "versionToApprove": "Version to Approve",
@@ -336,7 +334,14 @@
     "dateOfEntry": "Date of Entry",
     "dateOfCaptaincy": "Date of Captaincy",
     "dateOfEntryRequired": "Date of entry is required",
-    "dateOfCaptaincyRequired": "Date of captaincy is required for your grade"
+    "dateOfCaptaincyRequired": "Date of captaincy is required for your grade",
+    "emailRequired": "Email is required",
+    "phoneRequired": "Phone number is required",
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required",
+    "baseRequired": "Base is required",
+    "contractRequired": "Contract is required",
+    "gradeRequired": "Grade is required"
   },
   "payslip": {
     "title": "Payslip Calculator",
@@ -531,7 +536,7 @@
   },
   "completeProfile": {
     "title": "Complete Your Profile",
-    "description": "Before accessing the app, please provide a few details about your employment history.",
+    "description": "Before accessing the app, please complete your profile with the missing information.",
     "selectDate": "Select date",
     "save": "Continue to App"
   },
