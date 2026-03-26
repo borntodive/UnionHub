@@ -1,0 +1,114 @@
+import {
+  u as j,
+  v as b,
+  D as O,
+  j as t,
+  C as g,
+  I as m,
+  B as E,
+  m as N,
+} from "./index-DFehVeka.js";
+const v = ["CPT", "LTC", "LCC", "TRI", "TRE"];
+function S(e) {
+  var s;
+  return v.includes(
+    ((s = e == null ? void 0 : e.codice) == null ? void 0 : s.toUpperCase()) ??
+      "",
+  );
+}
+function $() {
+  var o, l;
+  const { user: e, setUser: s } = j(),
+    n = !!(e != null && e.grade) && S(e.grade),
+    {
+      register: r,
+      handleSubmit: p,
+      formState: { errors: c },
+    } = b({
+      defaultValues: {
+        dateOfEntry:
+          e != null && e.dateOfEntry ? e.dateOfEntry.split("T")[0] : "",
+        dateOfCaptaincy:
+          e != null && e.dateOfCaptaincy ? e.dateOfCaptaincy.split("T")[0] : "",
+      },
+    }),
+    i = O({
+      mutationFn: async (a) => {
+        const [f, u, x] = a.dateOfEntry.split("-"),
+          d = { dateOfEntry: `${f}-${u}-${x}` };
+        if (n && a.dateOfCaptaincy) {
+          const [y, C, h] = a.dateOfCaptaincy.split("-");
+          d.dateOfCaptaincy = `${y}-${C}-${h}`;
+        }
+        return N.updateMe(d);
+      },
+      onSuccess: (a) => {
+        e && s({ ...e, ...a });
+      },
+    });
+  return t.jsx("div", {
+    className: "min-h-screen bg-gray-100 flex items-center justify-center p-4",
+    children: t.jsxs("div", {
+      className: "w-full max-w-sm",
+      children: [
+        t.jsxs("div", {
+          className: "text-center mb-8",
+          children: [
+            t.jsx("div", {
+              className:
+                "w-14 h-14 rounded-2xl bg-[#177246]/10 flex items-center justify-center mx-auto mb-4",
+              children: t.jsx("span", {
+                className: "text-2xl",
+                children: "📋",
+              }),
+            }),
+            t.jsx("h1", {
+              className: "text-2xl font-bold text-gray-900",
+              children: "Completa il profilo",
+            }),
+            t.jsx("p", {
+              className: "text-sm text-gray-500 mt-2",
+              children:
+                "Per continuare è necessario inserire alcune date obbligatorie.",
+            }),
+          ],
+        }),
+        t.jsx(g, {
+          children: t.jsxs("form", {
+            onSubmit: p((a) => i.mutate(a)),
+            className: "flex flex-col gap-4",
+            children: [
+              t.jsx(m, {
+                label: "Data di assunzione *",
+                type: "date",
+                ...r("dateOfEntry", { required: "Campo obbligatorio" }),
+                error: (o = c.dateOfEntry) == null ? void 0 : o.message,
+              }),
+              n &&
+                t.jsx(m, {
+                  label: "Data nomina comandante *",
+                  type: "date",
+                  ...r("dateOfCaptaincy", {
+                    required: n ? "Campo obbligatorio per comandanti" : !1,
+                  }),
+                  error: (l = c.dateOfCaptaincy) == null ? void 0 : l.message,
+                }),
+              i.isError &&
+                t.jsx("p", {
+                  className: "text-sm text-red-500 text-center",
+                  children: "Errore durante il salvataggio. Riprova.",
+                }),
+              t.jsx(E, {
+                type: "submit",
+                fullWidth: !0,
+                loading: i.isPending,
+                children: "Salva e continua",
+              }),
+            ],
+          }),
+        }),
+      ],
+    }),
+  });
+}
+export { $ as CompleteProfilePage };
