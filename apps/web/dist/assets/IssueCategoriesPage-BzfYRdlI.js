@@ -1,0 +1,403 @@
+import { r as c, g as P, k, j as e, R as n, v as R } from "./index-DFehVeka.js";
+import { i as p } from "./references-o1kGQSUn.js";
+import {
+  A as I,
+  C as T,
+  F as O,
+  l as C,
+  i as w,
+} from "./_components-CGCACVMB.js";
+import { P as q } from "./plus-CDecntoB.js";
+import { S as B } from "./search-CAlZuJmR.js";
+import { P as D } from "./pencil-DOr5JS38.js";
+import { T as F } from "./trash-2-tYxbyunj.js";
+const _ = {
+    [n.PILOT]: "bg-sky-100 text-sky-700",
+    [n.CABIN_CREW]: "bg-violet-100 text-violet-700",
+  },
+  z = { [n.PILOT]: "Piloti", [n.CABIN_CREW]: "Cabin Crew" };
+function M({ item: s, onClose: u, onSaved: x }) {
+  const [h, r] = c.useState(null),
+    {
+      register: o,
+      handleSubmit: m,
+      formState: { errors: l, isSubmitting: y },
+    } = R({
+      defaultValues: s
+        ? {
+            nameIt: s.nameIt,
+            nameEn: s.nameEn,
+            ruolo: s.ruolo,
+            active: s.active,
+          }
+        : { nameIt: "", nameEn: "", ruolo: n.PILOT, active: !0 },
+    }),
+    j = async (a) => {
+      var g, b;
+      r(null);
+      try {
+        if (s) {
+          const i = {
+            nameIt: a.nameIt,
+            nameEn: a.nameEn,
+            ruolo: a.ruolo,
+            active: a.active,
+          };
+          await p.updateCategory(s.id, i);
+        } else
+          await p.createCategory({
+            nameIt: a.nameIt,
+            nameEn: a.nameEn,
+            ruolo: a.ruolo,
+          });
+        (x(), u());
+      } catch (i) {
+        const v =
+          ((b = (g = i.response) == null ? void 0 : g.data) == null
+            ? void 0
+            : b.message) ?? "Errore durante il salvataggio";
+        r(v);
+      }
+    };
+  return e.jsxs(O, {
+    title: s ? "Modifica categoria" : "Nuova categoria",
+    onClose: u,
+    children: [
+      h && e.jsx(I, { message: h, onDismiss: () => r(null) }),
+      e.jsxs("form", {
+        onSubmit: m(j),
+        className: "space-y-4",
+        children: [
+          e.jsxs("div", {
+            children: [
+              e.jsx("label", { className: C, children: "Nome italiano *" }),
+              e.jsx("input", {
+                ...o("nameIt", { required: "Campo obbligatorio" }),
+                className: w,
+                placeholder: "es. Problemi contrattuali",
+              }),
+              l.nameIt &&
+                e.jsx("p", {
+                  className: "text-xs text-red-500 mt-1",
+                  children: l.nameIt.message,
+                }),
+            ],
+          }),
+          e.jsxs("div", {
+            children: [
+              e.jsx("label", { className: C, children: "Nome inglese *" }),
+              e.jsx("input", {
+                ...o("nameEn", { required: "Campo obbligatorio" }),
+                className: w,
+                placeholder: "es. Contract issues",
+              }),
+              l.nameEn &&
+                e.jsx("p", {
+                  className: "text-xs text-red-500 mt-1",
+                  children: l.nameEn.message,
+                }),
+            ],
+          }),
+          e.jsxs("div", {
+            children: [
+              e.jsx("label", { className: C, children: "Ruolo *" }),
+              e.jsxs("select", {
+                ...o("ruolo", { required: !0 }),
+                className: w,
+                children: [
+                  e.jsx("option", { value: n.PILOT, children: "Piloti" }),
+                  e.jsx("option", {
+                    value: n.CABIN_CREW,
+                    children: "Cabin Crew",
+                  }),
+                ],
+              }),
+            ],
+          }),
+          s &&
+            e.jsxs("div", {
+              className: "flex items-center gap-3",
+              children: [
+                e.jsx("input", {
+                  type: "checkbox",
+                  id: "active",
+                  ...o("active"),
+                  className: "w-4 h-4 rounded accent-[#177246]",
+                }),
+                e.jsx("label", {
+                  htmlFor: "active",
+                  className: "text-sm text-gray-700 cursor-pointer",
+                  children: "Categoria attiva",
+                }),
+              ],
+            }),
+          e.jsxs("div", {
+            className: "flex justify-end gap-3 pt-2",
+            children: [
+              e.jsx("button", {
+                type: "button",
+                onClick: u,
+                className:
+                  "px-4 py-2 text-sm text-gray-600 hover:text-gray-800",
+                children: "Annulla",
+              }),
+              e.jsx("button", {
+                type: "submit",
+                disabled: y,
+                className:
+                  "px-4 py-2 text-sm font-medium bg-[#177246] text-white rounded-lg hover:bg-[#177246]/90 disabled:opacity-50",
+                children: y ? "Salvataggio…" : s ? "Salva" : "Crea",
+              }),
+            ],
+          }),
+        ],
+      }),
+    ],
+  });
+}
+function H() {
+  const [s, u] = c.useState(""),
+    [x, h] = c.useState("all"),
+    [r, o] = c.useState(null),
+    [m, l] = c.useState(null),
+    [y, j] = c.useState(!1),
+    [a, g] = c.useState(null),
+    b = P(),
+    { data: i, isLoading: v } = k({
+      queryKey: ["issueCategories"],
+      queryFn: () => p.getCategories(),
+    }),
+    E = c.useMemo(() => {
+      let t = i ?? [];
+      if ((x !== "all" && (t = t.filter((d) => d.ruolo === x)), s)) {
+        const d = s.toLowerCase();
+        t = t.filter(
+          (f) =>
+            f.nameIt.toLowerCase().includes(d) ||
+            f.nameEn.toLowerCase().includes(d),
+        );
+      }
+      return t;
+    }, [i, s, x]),
+    N = () => b.invalidateQueries({ queryKey: ["issueCategories"] }),
+    S = async () => {
+      var t, d;
+      if (m) {
+        j(!0);
+        try {
+          (await p.deleteCategory(m.id), N(), l(null));
+        } catch (f) {
+          const A =
+            ((d = (t = f.response) == null ? void 0 : t.data) == null
+              ? void 0
+              : d.message) ?? "Impossibile eliminare la categoria";
+          (g(A), l(null));
+        } finally {
+          j(!1);
+        }
+      }
+    },
+    L = async (t) => {
+      try {
+        (await p.updateCategory(t.id, { active: !t.active }), N());
+      } catch {}
+    };
+  return e.jsxs("div", {
+    className: "p-6 max-w-5xl mx-auto",
+    children: [
+      e.jsxs("div", {
+        className: "flex items-center justify-between mb-6",
+        children: [
+          e.jsxs("div", {
+            children: [
+              e.jsx("h1", {
+                className: "text-2xl font-bold text-gray-900",
+                children: "Categorie segnalazioni",
+              }),
+              e.jsxs("p", {
+                className: "text-sm text-gray-500 mt-0.5",
+                children: [
+                  (i == null ? void 0 : i.length) ?? 0,
+                  " categorie configurate",
+                ],
+              }),
+            ],
+          }),
+          e.jsxs("button", {
+            onClick: () => o("new"),
+            className:
+              "flex items-center gap-2 px-4 py-2 text-sm font-medium bg-[#177246] text-white rounded-lg hover:bg-[#177246]/90 transition-colors",
+            children: [e.jsx(q, { size: 15 }), "Nuova categoria"],
+          }),
+        ],
+      }),
+      a && e.jsx(I, { message: a, onDismiss: () => g(null) }),
+      e.jsxs("div", {
+        className: "flex gap-2 mb-4",
+        children: [
+          e.jsxs("div", {
+            className: "relative flex-1 max-w-sm",
+            children: [
+              e.jsx(B, {
+                size: 14,
+                className:
+                  "absolute left-3 top-1/2 -translate-y-1/2 text-gray-400",
+              }),
+              e.jsx("input", {
+                type: "text",
+                value: s,
+                onChange: (t) => u(t.target.value),
+                placeholder: "Cerca nome…",
+                className:
+                  "pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#177246]/30 w-full",
+              }),
+            ],
+          }),
+          e.jsxs("select", {
+            value: x,
+            onChange: (t) => h(t.target.value),
+            className:
+              "text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#177246]/30 bg-white",
+            children: [
+              e.jsx("option", { value: "all", children: "Tutti i ruoli" }),
+              e.jsx("option", { value: n.PILOT, children: "Piloti" }),
+              e.jsx("option", { value: n.CABIN_CREW, children: "Cabin Crew" }),
+            ],
+          }),
+        ],
+      }),
+      v
+        ? e.jsx("div", {
+            className: "flex justify-center py-16",
+            children: e.jsx("div", {
+              className:
+                "w-7 h-7 border-4 border-[#177246] border-t-transparent rounded-full animate-spin",
+            }),
+          })
+        : e.jsx("div", {
+            className:
+              "bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden",
+            children: e.jsxs("table", {
+              className: "w-full text-sm",
+              children: [
+                e.jsx("thead", {
+                  className: "bg-gray-50 border-b border-gray-200",
+                  children: e.jsxs("tr", {
+                    children: [
+                      e.jsx("th", {
+                        className:
+                          "px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider",
+                        children: "Nome IT",
+                      }),
+                      e.jsx("th", {
+                        className:
+                          "px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider",
+                        children: "Nome EN",
+                      }),
+                      e.jsx("th", {
+                        className:
+                          "px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32",
+                        children: "Ruolo",
+                      }),
+                      e.jsx("th", {
+                        className:
+                          "px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28",
+                        children: "Stato",
+                      }),
+                      e.jsx("th", { className: "px-4 py-3 w-20" }),
+                    ],
+                  }),
+                }),
+                e.jsx("tbody", {
+                  className: "divide-y divide-gray-100",
+                  children:
+                    E.length === 0
+                      ? e.jsx("tr", {
+                          children: e.jsx("td", {
+                            colSpan: 5,
+                            className:
+                              "px-4 py-10 text-center text-sm text-gray-400",
+                            children: "Nessuna categoria",
+                          }),
+                        })
+                      : E.map((t) =>
+                          e.jsxs(
+                            "tr",
+                            {
+                              className:
+                                "group hover:bg-gray-50 transition-colors",
+                              children: [
+                                e.jsx("td", {
+                                  className:
+                                    "px-4 py-3 font-medium text-gray-900",
+                                  children: t.nameIt,
+                                }),
+                                e.jsx("td", {
+                                  className: "px-4 py-3 text-gray-600",
+                                  children: t.nameEn,
+                                }),
+                                e.jsx("td", {
+                                  className: "px-4 py-3",
+                                  children: e.jsx("span", {
+                                    className: `text-xs font-medium px-2 py-0.5 rounded-full ${_[t.ruolo]}`,
+                                    children: z[t.ruolo],
+                                  }),
+                                }),
+                                e.jsx("td", {
+                                  className: "px-4 py-3",
+                                  children: e.jsx("button", {
+                                    onClick: () => L(t),
+                                    className: `text-xs font-medium px-2 py-0.5 rounded-full transition-colors cursor-pointer ${t.active ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`,
+                                    title: t.active
+                                      ? "Clicca per disattivare"
+                                      : "Clicca per attivare",
+                                    children: t.active ? "Attiva" : "Inattiva",
+                                  }),
+                                }),
+                                e.jsx("td", {
+                                  className: "px-4 py-3",
+                                  children: e.jsxs("div", {
+                                    className:
+                                      "flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity",
+                                    children: [
+                                      e.jsx("button", {
+                                        onClick: () => o(t),
+                                        className:
+                                          "p-1.5 text-gray-400 hover:text-[#177246] hover:bg-[#177246]/10 rounded-lg transition-colors",
+                                        children: e.jsx(D, { size: 14 }),
+                                      }),
+                                      e.jsx("button", {
+                                        onClick: () => l(t),
+                                        className:
+                                          "p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors",
+                                        children: e.jsx(F, { size: 14 }),
+                                      }),
+                                    ],
+                                  }),
+                                }),
+                              ],
+                            },
+                            t.id,
+                          ),
+                        ),
+                }),
+              ],
+            }),
+          }),
+      r !== null &&
+        e.jsx(
+          M,
+          { item: r === "new" ? null : r, onClose: () => o(null), onSaved: N },
+          r === "new" ? "new" : r.id,
+        ),
+      m &&
+        e.jsx(T, {
+          name: m.nameIt,
+          loading: y,
+          onConfirm: S,
+          onClose: () => l(null),
+        }),
+    ],
+  });
+}
+export { H as IssueCategoriesPage };
