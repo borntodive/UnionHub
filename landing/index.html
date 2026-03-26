@@ -1,0 +1,1552 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>UnionHub — Aviation Union Management</title>
+    <meta
+      name="description"
+      content="UnionHub: l'app per la gestione sindacale del personale navigante. Calcolatore busta paga, FTL, segnalazioni offline, documenti e chatbot AI."
+    />
+    <link rel="icon" href="favicon.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --color-primary: #177246;
+        --color-primary-dark: #0f5233;
+        --color-secondary: #da0e32;
+        --color-bg: #f5f5f5;
+        --color-surface: #ffffff;
+        --color-text: #1a1a1a;
+        --color-text-muted: #666666;
+        --color-border: #e0e0e0;
+        --radius: 12px;
+        --shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+        --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.14);
+        --transition: 0.2s ease;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        background: var(--color-bg);
+        color: var(--color-text);
+        line-height: 1.6;
+      }
+
+      /* ─── NAVBAR ─── */
+      .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--color-primary);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+      }
+
+      .navbar-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 24px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .navbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+      }
+
+      .navbar-logo {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        object-fit: cover;
+      }
+
+      .navbar-title {
+        font-family: "Poppins", sans-serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: -0.02em;
+      }
+
+      .navbar-links {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .navbar-links a {
+        color: rgba(255, 255, 255, 0.88);
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        padding: 6px 12px;
+        border-radius: 6px;
+        transition:
+          background var(--transition),
+          color var(--transition);
+      }
+
+      .navbar-links a:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+      }
+
+      .navbar-accedi {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 18px;
+        border-radius: 8px;
+        background: #fff;
+        color: var(--color-primary);
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background var(--transition), opacity var(--transition);
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .navbar-accedi:hover {
+        opacity: 0.9;
+      }
+
+      .lang-toggle {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        padding: 3px;
+      }
+
+      .lang-toggle button {
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.7);
+        padding: 4px 10px;
+        border-radius: 6px;
+        transition:
+          background var(--transition),
+          color var(--transition);
+      }
+
+      .lang-toggle button.active {
+        background: #fff;
+        color: var(--color-primary);
+      }
+
+      /* ─── HERO ─── */
+      .hero {
+        background: linear-gradient(
+          135deg,
+          var(--color-primary) 0%,
+          var(--color-primary-dark) 100%
+        );
+        color: #fff;
+        padding: 80px 24px 96px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        top: -80px;
+        right: -80px;
+        width: 400px;
+        height: 400px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 50%;
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        bottom: -120px;
+        left: -60px;
+        width: 320px;
+        height: 320px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 50%;
+      }
+
+      .hero-inner {
+        max-width: 700px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero-icon {
+        width: 100px;
+        height: 100px;
+        border-radius: 22px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        margin-bottom: 28px;
+      }
+
+      .hero h1 {
+        font-family: "Poppins", sans-serif;
+        font-size: clamp(2.4rem, 6vw, 3.6rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin-bottom: 16px;
+        line-height: 1.1;
+      }
+
+      .hero-subtitle {
+        font-size: clamp(1rem, 2.5vw, 1.2rem);
+        color: rgba(255, 255, 255, 0.85);
+        margin-bottom: 40px;
+        font-weight: 400;
+      }
+
+      .hero-cta {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 28px;
+        border-radius: 10px;
+        font-family: "Inter", sans-serif;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition:
+          transform var(--transition),
+          box-shadow var(--transition),
+          background var(--transition);
+        cursor: pointer;
+        border: none;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+      }
+
+      .btn-white {
+        background: #fff;
+        color: var(--color-primary);
+      }
+
+      .btn-outline {
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+      }
+
+      .btn-outline:hover {
+        background: rgba(255, 255, 255, 0.22);
+        border-color: #fff;
+      }
+
+      .btn-primary {
+        background: var(--color-primary);
+        color: #fff;
+      }
+
+      .btn-secondary {
+        background: var(--color-secondary);
+        color: #fff;
+      }
+
+      /* ─── SECTIONS ─── */
+      .section {
+        padding: 80px 24px;
+      }
+
+      .section-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+
+      .section-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--color-primary);
+        margin-bottom: 8px;
+      }
+
+      .section-title {
+        font-family: "Poppins", sans-serif;
+        font-size: clamp(1.6rem, 4vw, 2.4rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--color-text);
+        margin-bottom: 12px;
+      }
+
+      .section-desc {
+        color: var(--color-text-muted);
+        font-size: 1.05rem;
+        max-width: 600px;
+        margin-bottom: 48px;
+      }
+
+      /* ─── FEATURES ─── */
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 24px;
+      }
+
+      .feature-card {
+        background: var(--color-surface);
+        border-radius: var(--radius);
+        padding: 28px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--color-border);
+        transition:
+          transform var(--transition),
+          box-shadow var(--transition);
+      }
+
+      .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-hover);
+      }
+
+      .feature-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(
+          135deg,
+          var(--color-primary),
+          var(--color-primary-dark)
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+      }
+
+      .feature-icon svg {
+        width: 24px;
+        height: 24px;
+        fill: none;
+        stroke: #fff;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .feature-card h3 {
+        font-family: "Poppins", sans-serif;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--color-text);
+        margin-bottom: 8px;
+      }
+
+      .feature-card p {
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+        line-height: 1.6;
+      }
+
+      .feature-badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+      }
+
+      .badge-new {
+        background: rgba(218, 14, 50, 0.1);
+        color: var(--color-secondary);
+      }
+
+      /* ─── APP VISUAL ─── */
+      .visual-section {
+        background: linear-gradient(
+          135deg,
+          #1a1a2e 0%,
+          #16213e 50%,
+          #0f3460 100%
+        );
+        padding: 80px 24px;
+      }
+
+      .visual-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 60px;
+        flex-wrap: wrap;
+      }
+
+      .visual-text {
+        flex: 1;
+        min-width: 280px;
+      }
+
+      .visual-text .section-label {
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .visual-text .section-title {
+        color: #fff;
+      }
+
+      .visual-text .section-desc {
+        color: rgba(255, 255, 255, 0.65);
+        margin-bottom: 32px;
+      }
+
+      .visual-image {
+        flex: 1;
+        min-width: 240px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .phone-mockup {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .phone-frame {
+        width: 220px;
+        height: 440px;
+        background: #222;
+        border-radius: 36px;
+        border: 6px solid #444;
+        box-shadow:
+          0 20px 60px rgba(0, 0, 0, 0.5),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+        overflow: hidden;
+        position: relative;
+      }
+
+      .phone-screen {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .phone-notch {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 6px;
+        background: #111;
+        border-radius: 3px;
+        z-index: 2;
+      }
+
+      .app-icon-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      }
+
+      /* ─── DOWNLOAD ─── */
+      .download-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 24px;
+        max-width: 700px;
+        margin: 0 auto;
+      }
+
+      .download-card {
+        background: var(--color-surface);
+        border-radius: var(--radius);
+        padding: 32px 28px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--color-border);
+        text-align: center;
+      }
+
+      .download-card h3 {
+        font-family: "Poppins", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: var(--color-text);
+      }
+
+      .download-card p {
+        font-size: 0.88rem;
+        color: var(--color-text-muted);
+        margin-bottom: 24px;
+      }
+
+      .store-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: #000;
+        color: #fff;
+        border-radius: 10px;
+        padding: 10px 20px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition:
+          opacity var(--transition),
+          transform var(--transition);
+      }
+
+      .store-badge:hover {
+        opacity: 0.85;
+        transform: translateY(-2px);
+      }
+
+      .store-badge svg {
+        width: 24px;
+        height: 24px;
+        fill: #fff;
+        flex-shrink: 0;
+      }
+
+      .store-badge-android {
+        background: var(--color-primary);
+      }
+
+      .store-badge-label {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .store-badge-label .store-sub {
+        font-size: 0.68rem;
+        font-weight: 400;
+        opacity: 0.8;
+      }
+
+      .store-badge-label .store-main {
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      /* ─── HOW TO INSTALL BUTTON ─── */
+      .btn-how-to {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 12px;
+        background: none;
+        border: none;
+        color: var(--color-primary);
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 4px 0;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        font-family: "Inter", sans-serif;
+        transition: opacity var(--transition);
+      }
+      .btn-how-to:hover {
+        opacity: 0.7;
+      }
+
+      /* ─── MODAL ─── */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .modal-overlay.open {
+        display: flex;
+      }
+
+      .modal-box {
+        background: var(--color-surface);
+        border-radius: 16px;
+        max-width: 540px;
+        width: 100%;
+        max-height: 85vh;
+        overflow-y: auto;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+        padding: 32px 28px 28px;
+        position: relative;
+      }
+
+      .modal-close {
+        position: absolute;
+        top: 16px;
+        right: 18px;
+        background: none;
+        border: none;
+        font-size: 1.4rem;
+        cursor: pointer;
+        color: var(--color-text-muted);
+        line-height: 1;
+        padding: 4px;
+        transition: color var(--transition);
+      }
+      .modal-close:hover {
+        color: var(--color-text);
+      }
+
+      .modal-title {
+        font-family: "Poppins", sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--color-text);
+        margin-bottom: 20px;
+        padding-right: 32px;
+      }
+
+      .install-steps {
+        list-style: none;
+        counter-reset: steps;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .install-steps li {
+        counter-increment: steps;
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+      }
+
+      .install-steps li::before {
+        content: counter(steps);
+        flex-shrink: 0;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--color-primary);
+        color: #fff;
+        font-size: 0.8rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 1px;
+      }
+
+      .install-steps li .step-text {
+        font-size: 0.9rem;
+        color: var(--color-text);
+        line-height: 1.5;
+      }
+
+      .install-steps li .step-text strong {
+        color: var(--color-text);
+        font-weight: 600;
+      }
+
+      .install-steps li .step-text em {
+        font-style: normal;
+        background: #f0f0f0;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-family: monospace;
+      }
+
+      .modal-warning {
+        margin-top: 20px;
+        padding: 12px 14px;
+        background: rgba(218, 14, 50, 0.07);
+        border-left: 3px solid var(--color-secondary);
+        border-radius: 6px;
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        line-height: 1.5;
+      }
+
+      /* ─── FOOTER ─── */
+      .footer {
+        background: var(--color-primary-dark);
+        color: rgba(255, 255, 255, 0.75);
+        padding: 32px 24px;
+        text-align: center;
+      }
+
+      .footer-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+
+      .footer-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .footer-logo {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        opacity: 0.9;
+      }
+
+      .footer-name {
+        font-family: "Poppins", sans-serif;
+        font-weight: 700;
+        color: #fff;
+        font-size: 1rem;
+      }
+
+      .footer-links {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .footer-links a {
+        color: rgba(255, 255, 255, 0.65);
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: color var(--transition);
+      }
+
+      .footer-links a:hover {
+        color: #fff;
+      }
+
+      .footer-copy {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.45);
+      }
+
+      /* ─── DIVIDER ─── */
+      .divider {
+        height: 4px;
+        background: linear-gradient(
+          90deg,
+          var(--color-primary),
+          var(--color-secondary)
+        );
+      }
+
+      /* ─── RESPONSIVE ─── */
+      @media (max-width: 640px) {
+        .navbar-links a {
+          padding: 5px 8px;
+          font-size: 0.8rem;
+        }
+        .hero {
+          padding: 56px 20px 72px;
+        }
+        .section {
+          padding: 56px 20px;
+        }
+        .visual-section {
+          padding: 56px 20px;
+        }
+        .footer-inner {
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+        }
+        .visual-inner {
+          gap: 36px;
+        }
+        .phone-frame {
+          width: 180px;
+          height: 360px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .navbar-links {
+          display: none;
+        }
+        .features-grid {
+          grid-template-columns: 1fr;
+        }
+        .download-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ─── NAVBAR ─── -->
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <a href="#" class="navbar-brand">
+          <img
+            src="icon.png"
+            alt="UnionHub"
+            class="navbar-logo"
+          />
+          <span class="navbar-title">UnionHub</span>
+        </a>
+        <div class="navbar-links">
+          <a href="#features" data-it="Funzionalità" data-en="Features"
+            >Funzionalità</a
+          >
+          <a href="#download" data-it="Download" data-en="Download">Download</a>
+        </div>
+        <a
+          href="https://web.unionhub.app"
+          class="navbar-accedi"
+          data-it="Accedi"
+          data-en="Log in"
+        >Accedi</a>
+        <div class="lang-toggle">
+          <button id="lang-it" class="active" onclick="setLang('it')">
+            IT
+          </button>
+          <button id="lang-en" onclick="setLang('en')">EN</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ─── HERO ─── -->
+    <section class="hero">
+      <div class="hero-inner">
+        <img
+          src="icon.png"
+          alt="UnionHub icon"
+          class="hero-icon"
+        />
+        <h1>UnionHub</h1>
+        <p
+          class="hero-subtitle"
+          data-it="L'app per il personale navigante. Gestisci la tua vita professionale, calcola la busta paga, segnala problemi e resta aggiornato — anche offline."
+          data-en="The app for aviation crew. Manage your professional life, calculate your payslip, report issues and stay informed — even offline."
+        >
+          L'app per il personale navigante. Gestisci la tua vita professionale,
+          calcola la busta paga, segnala problemi e resta aggiornato — anche
+          offline.
+        </p>
+        <div class="hero-cta">
+          <a href="#download" class="btn btn-white">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 17V3" />
+              <path d="m6 11 6 6 6-6" />
+              <path d="M19 21H5" />
+            </svg>
+            <span data-it="Scarica l'app" data-en="Download app"
+              >Scarica l'app</span
+            >
+          </a>
+          <a href="#features" class="btn btn-outline">
+            <span data-it="Scopri le funzionalità" data-en="Explore features"
+              >Scopri le funzionalità</span
+            >
+          </a>
+          <a
+            href="https://web.unionhub.app"
+            class="btn btn-outline"
+            style="border-color: rgba(255,255,255,0.8)"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+              <polyline points="10 17 15 12 10 7" />
+              <line x1="15" y1="12" x2="3" y2="12" />
+            </svg>
+            <span data-it="Accedi" data-en="Log in">Accedi</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ─── FEATURES ─── -->
+    <section class="section" id="features">
+      <div class="section-inner">
+        <div class="section-label" data-it="FUNZIONALITÀ" data-en="FEATURES">
+          FUNZIONALITÀ
+        </div>
+        <h2
+          class="section-title"
+          data-it="Tutto ciò di cui hai bisogno"
+          data-en="Everything you need"
+        >
+          Tutto ciò di cui hai bisogno
+        </h2>
+        <p
+          class="section-desc"
+          data-it="Strumenti professionali progettati per piloti e cabin crew, con supporto offline e aggiornamenti in tempo reale."
+          data-en="Professional tools designed for pilots and cabin crew, with offline support and real-time updates."
+        >
+          Strumenti professionali progettati per piloti e cabin crew, con
+          supporto offline e aggiornamenti in tempo reale.
+        </p>
+
+        <div class="features-grid">
+          <!-- Payslip Calculator -->
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+                />
+              </svg>
+            </div>
+            <h3 data-it="Calcolatore Busta Paga" data-en="Payslip Calculator">
+              Calcolatore Busta Paga
+            </h3>
+            <p
+              data-it="Calcola la tua retribuzione netta con regole fiscali italiane aggiornate: IRPEF, detrazioni, contributi INPS. Supporto contratti part-time e storici. Modalità Reverse per calcolare le ore dal guadagno."
+              data-en="Calculate your net pay with up-to-date Italian tax rules: IRPEF, deductions, INPS contributions. Part-time and legacy contract support. Reverse mode to calculate hours from earnings."
+            >
+              Calcola la tua retribuzione netta con regole fiscali italiane
+              aggiornate: IRPEF, detrazioni, contributi INPS. Supporto contratti
+              part-time e storici. Modalità Reverse per calcolare le ore dal
+              guadagno.
+            </p>
+          </div>
+
+          <!-- FTL Calculator -->
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+            <h3 data-it="FTL Calculator" data-en="FTL Calculator">
+              FTL Calculator
+            </h3>
+            <p
+              data-it="Calcolo limiti EASA Part-ORO.FTL e Malta Air OMA: massimo FDP, riposo minimo, acclimatazione. Aggiustamenti automatici per turni notturni, disruptive scheduling e zone di acclimatazione."
+              data-en="EASA Part-ORO.FTL and Malta Air OMA limits: maximum FDP, minimum rest, acclimatisation. Automatic adjustments for night duties, disruptive scheduling and acclimatisation windows."
+            >
+              Calcolo limiti EASA Part-ORO.FTL e Malta Air OMA: massimo FDP,
+              riposo minimo, acclimatazione. Aggiustamenti automatici per turni
+              notturni, disruptive scheduling e zone di acclimatazione.
+            </p>
+          </div>
+
+          <!-- CTC Calculator -->
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"
+                />
+              </svg>
+            </div>
+            <h3>CTC Calculator</h3>
+            <p
+              data-it="Correzione temperatura fredda (ICAO Doc 9365). Inserisci temperatura aeroporto, quota e altitudini pubblicate — ottieni le correzioni e le altitudini corrette per ogni step. Toggle ft/m e arrotondamento a 100."
+              data-en="Cold Temperature Correction (ICAO Doc 9365). Enter airport temperature, elevation and published altitudes — get corrections and corrected altitudes for each step. ft/m toggle and round-up to 100 option."
+            >
+              Correzione temperatura fredda (ICAO Doc 9365). Inserisci
+              temperatura aeroporto, quota e altitudini pubblicate — ottieni le
+              correzioni e le altitudini corrette per ogni step. Toggle ft/m e
+              arrotondamento a 100.
+            </p>
+          </div>
+
+          <!-- Segnalazioni -->
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <h3
+              data-it="Segnalazioni Offline-First"
+              data-en="Offline-First Reporting"
+            >
+              Segnalazioni Offline-First
+            </h3>
+            <p
+              data-it="Invia segnalazioni sindacali anche senza connessione. Le segnalazioni in coda si sincronizzano automaticamente al ripristino della rete. Categorie e urgenze sempre disponibili in locale."
+              data-en="Submit union reports even without connectivity. Queued reports sync automatically when the network is restored. Categories and urgencies always available locally."
+            >
+              Invia segnalazioni sindacali anche senza connessione. Le
+              segnalazioni in coda si sincronizzano automaticamente al
+              ripristino della rete. Categorie e urgenze sempre disponibili in
+              locale.
+            </p>
+          </div>
+
+          <!-- Documenti -->
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+            </div>
+            <h3 data-it="Documenti Sindacali" data-en="Union Documents">
+              Documenti Sindacali
+            </h3>
+            <p
+              data-it="Visualizza comunicati e documenti sindacali direttamente nell'app. PDF viewer integrato con condivisione e download. Generazione PDF con carta intestata FIT e layout bilingue IT/EN."
+              data-en="View union communications and documents directly in-app. Integrated PDF viewer with sharing and download. PDF generation with FIT letterhead and bilingual IT/EN layout."
+            >
+              Visualizza comunicati e documenti sindacali direttamente nell'app.
+              PDF viewer integrato con condivisione e download. Generazione PDF
+              con carta intestata FIT e layout bilingue IT/EN.
+            </p>
+          </div>
+
+          <!-- Chatbot AI -->
+          <div class="feature-card">
+            <span class="feature-badge badge-new" data-it="NOVITÀ" data-en="NEW"
+              >NOVITÀ</span
+            >
+            <div
+              class="feature-icon"
+              style="
+                background: linear-gradient(
+                  135deg,
+                  var(--color-secondary),
+                  #a00825
+                );
+              "
+            >
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                />
+              </svg>
+            </div>
+            <h3 data-it="Chatbot AI Sindacale" data-en="Union AI Chatbot">
+              Chatbot AI Sindacale
+            </h3>
+            <p
+              data-it="Assistente intelligente con RAG sulla knowledge base sindacale. Risposte in streaming con fonti citate. Basato su documenti caricati dagli amministratori — sempre aggiornato sul CCNL e le normative di settore."
+              data-en="Intelligent assistant with RAG on the union knowledge base. Streaming responses with cited sources. Based on documents uploaded by administrators — always up-to-date on collective agreements and sector regulations."
+            >
+              Assistente intelligente con RAG sulla knowledge base sindacale.
+              Risposte in streaming con fonti citate. Basato su documenti
+              caricati dagli amministratori — sempre aggiornato sul CCNL e le
+              normative di settore.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── VISUAL ─── -->
+    <section class="visual-section">
+      <div class="visual-inner">
+        <div class="visual-text">
+          <div class="section-label" data-it="L'APP" data-en="THE APP">
+            L'APP
+          </div>
+          <h2
+            class="section-title"
+            data-it="Progettata per il personale navigante"
+            data-en="Designed for aviation crew"
+          >
+            Progettata per il personale navigante
+          </h2>
+          <p
+            class="section-desc"
+            data-it="UnionHub è l'app ufficiale per i soci. Accedi al tuo profilo, consulta il contratto, calcola la paga, segnala problemi e parla con l'assistente AI — tutto in un'unica piattaforma mobile."
+            data-en="UnionHub is the official app for union members. Access your profile, review your contract, calculate your pay, report issues and chat with the AI assistant — all in one mobile platform."
+          >
+            UnionHub è l'app ufficiale per i soci. Accedi al tuo profilo,
+            consulta il contratto, calcola la paga, segnala problemi e parla con
+            l'assistente AI — tutto in un'unica piattaforma mobile.
+          </p>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: rgba(255, 255, 255, 0.75);
+                font-size: 0.9rem;
+              "
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="rgba(255,255,255,0.6)"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span data-it="iOS &amp; Android" data-en="iOS &amp; Android"
+                >iOS &amp; Android</span
+              >
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: rgba(255, 255, 255, 0.75);
+                font-size: 0.9rem;
+              "
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="rgba(255,255,255,0.6)"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span data-it="Supporto offline" data-en="Offline support"
+                >Supporto offline</span
+              >
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: rgba(255, 255, 255, 0.75);
+                font-size: 0.9rem;
+              "
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="rgba(255,255,255,0.6)"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span
+                data-it="Autenticazione biometrica"
+                data-en="Biometric authentication"
+                >Autenticazione biometrica</span
+              >
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: rgba(255, 255, 255, 0.75);
+                font-size: 0.9rem;
+              "
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="rgba(255,255,255,0.6)"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span data-it="Push notification" data-en="Push notifications"
+                >Push notification</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="visual-image">
+          <div class="phone-mockup">
+            <div class="phone-frame">
+              <div class="phone-notch"></div>
+              <img
+                src="splash.png"
+                alt="UnionHub app"
+                class="phone-screen"
+              />
+            </div>
+            <img
+              src="icon.png"
+              alt="UnionHub"
+              class="app-icon-large"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── DOWNLOAD ─── -->
+    <section class="section" id="download">
+      <div class="section-inner">
+        <div class="section-label" data-it="DOWNLOAD" data-en="DOWNLOAD">
+          DOWNLOAD
+        </div>
+        <h2
+          class="section-title"
+          data-it="Disponibile su iOS e Android"
+          data-en="Available on iOS and Android"
+        >
+          Disponibile su iOS e Android
+        </h2>
+        <p
+          class="section-desc"
+          data-it="Scarica UnionHub gratuitamente. L'app è riservata ai soci — le credenziali di accesso sono fornite dall'amministrazione."
+          data-en="Download UnionHub for free. The app is for members only — access credentials are provided by the administration."
+        >
+          Scarica UnionHub gratuitamente. L'app è riservata ai soci — le
+          credenziali di accesso sono fornite dall'amministrazione.
+        </p>
+
+        <div class="download-grid">
+          <!-- iOS -->
+          <div class="download-card">
+            <h3>iOS</h3>
+            <p
+              data-it="Richiede iPhone con iOS 16 o superiore."
+              data-en="Requires iPhone with iOS 16 or later."
+            >
+              Richiede iPhone con iOS 16 o superiore.
+            </p>
+            <a
+              href="https://apps.apple.com/app/unionhub/id0000000000"
+              id="link-appstore"
+              target="_blank"
+              rel="noopener"
+              class="store-badge"
+              aria-label="Download on the App Store"
+            >
+              <!-- Apple logo SVG -->
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"
+                />
+              </svg>
+              <span class="store-badge-label">
+                <span
+                  class="store-sub"
+                  data-it="Scarica su"
+                  data-en="Download on the"
+                  >Scarica su</span
+                >
+                <span class="store-main">App Store</span>
+              </span>
+            </a>
+          </div>
+
+          <!-- Android -->
+          <div class="download-card">
+            <h3>Android</h3>
+            <p
+              data-it="Richiede Android 10 o superiore. APK da installare manualmente."
+              data-en="Requires Android 10 or later. APK for manual installation."
+            >
+              Richiede Android 10 o superiore. APK da installare manualmente.
+            </p>
+            <a
+              href="unionhub-test.apk"
+              id="link-apk"
+              download="UnionHub.apk"
+              class="store-badge store-badge-android"
+              aria-label="Download APK for Android"
+            >
+              <!-- Android logo SVG -->
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M17.523 15.341a.943.943 0 1 1-.002-1.884.943.943 0 0 1 .002 1.884zm-11.046 0a.943.943 0 1 1 .002-1.884.943.943 0 0 1-.002 1.884zm11.405-6.461 1.888-3.27a.393.393 0 0 0-.682-.393l-1.912 3.312A11.814 11.814 0 0 0 12 7.82c-1.815 0-3.524.42-5.076 1.169L4.912 5.217a.393.393 0 1 0-.682.393l1.888 3.27C3.553 10.157 1.85 12.593 1.6 15.5h20.8c-.25-2.907-1.953-5.343-4.518-6.62z"
+                />
+              </svg>
+              <span class="store-badge-label">
+                <span class="store-sub" data-it="Scarica" data-en="Download"
+                  >Scarica</span
+                >
+                <span class="store-main">Android APK</span>
+              </span>
+            </a>
+            <br />
+            <button
+              class="btn-how-to"
+              onclick="
+                document.getElementById('modal-howto').classList.add('open')
+              "
+              data-it="❓ Come installare l'APK"
+              data-en="❓ How to install the APK"
+            >
+              ❓ Come installare l'APK
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── FOOTER ─── -->
+    <footer class="footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <img
+            src="icon.png"
+            alt="UnionHub"
+            class="footer-logo"
+          />
+          <span class="footer-name">UnionHub</span>
+        </div>
+        <div class="footer-links">
+          <a href="#features" data-it="Funzionalità" data-en="Features"
+            >Funzionalità</a
+          >
+          <a href="#download" data-it="Download" data-en="Download">Download</a>
+          <a href="mailto:info@unionhub.app">info@unionhub.app</a>
+        </div>
+        <span
+          class="footer-copy"
+          data-it="© 2025 UnionHub. Tutti i diritti riservati."
+          data-en="© 2025 UnionHub. All rights reserved."
+          >© 2025 UnionHub. Tutti i diritti riservati.</span
+        >
+      </div>
+    </footer>
+
+    <!-- ─── MODAL: HOW TO INSTALL APK ─── -->
+    <div
+      class="modal-overlay"
+      id="modal-howto"
+      onclick="if (event.target === this) this.classList.remove('open');"
+    >
+      <div class="modal-box">
+        <button
+          class="modal-close"
+          onclick="
+            document.getElementById('modal-howto').classList.remove('open')
+          "
+          aria-label="Chiudi"
+        >
+          ✕
+        </button>
+
+        <!-- IT -->
+        <div id="howto-it">
+          <div class="modal-title">📲 Come installare l'APK su Android</div>
+          <ol class="install-steps">
+            <li>
+              <span class="step-text"
+                ><strong>Abilita le sorgenti sconosciute</strong><br />Vai in
+                <em>Impostazioni → Sicurezza</em> (o
+                <em
+                  >Impostazioni → App → Accesso speciale → Installa app
+                  sconosciute</em
+                >) e abilita il tuo browser o file manager.</span
+              >
+            </li>
+            <li>
+              <span class="step-text"
+                ><strong>Scarica il file APK</strong><br />Tocca il pulsante
+                "Scarica Android APK" qui sopra. Il file
+                <em>UnionHub.apk</em> verrà salvato nella cartella
+                Download.</span
+              >
+            </li>
+            <li>
+              <span class="step-text"
+                ><strong>Apri il file scaricato</strong><br />Apri il pannello
+                notifiche e tocca la notifica di download, oppure usa un file
+                manager e naviga in <em>Download → UnionHub.apk</em>.</span
+              >
+            </li>
+            <li>
+              <span class="step-text"
+                ><strong>Conferma l'installazione</strong><br />Android mostrerà
+                una schermata di avviso. Tocca <em>Installa</em> per procedere.
+                L'app sarà visibile nella home dopo pochi secondi.</span
+              >
+            </li>
+            <li>
+              <span class="step-text"
+                ><strong>Accedi con le tue credenziali</strong><br />Usa il
+                <em>crewcode</em> e la password forniti dall'amministrazione per
+                effettuare il primo accesso.</span
+              >
+            </li>
+          </ol>
+          <div class="modal-warning">
+            ⚠️ Installa solo APK provenienti da fonti ufficiali. Questo file è
+            distribuito direttamente da FIT — Federazione Italiana Trasporti.
+          </div>
+        </div>
+
+        <!-- EN -->
+        <div id="howto-en" style="display: none">
+          <div class="modal-title">📲 How to install the APK on Android</div>
+          <ol class="install-steps">
+            <li>
+              <span class="step-text"
+                ><strong>Enable unknown sources</strong><br />Go to
+                <em>Settings → Security</em> (or
+                <em>Settings → Apps → Special access → Install unknown apps</em
+                >) and enable your browser or file manager.</span
+              >
+            </li>
+            <li>
+              <span class="step-text"
+                ><strong>Download the APK file</strong><br />Tap the "Download
+                Android APK" button above. The file <em>UnionHub.apk</em> will
+                be saved to your Downloads folder.</span
+              >
+            </li>
+            <li>
+              <span class="step-text"
+                ><strong>Open the downloaded file</strong><br />Pull down the
+                notification shade and tap the download notification, or use a
+                file manager and navigate to
+                <em>Downloads → UnionHub.apk</em>.</span
+              >
+            </li>
+            <li>
+              <span class="step-text"
+                ><strong>Confirm the installation</strong><br />Android will
+                show a warning screen. Tap <em>Install</em> to proceed. The app
+                will appear on your home screen within seconds.</span
+              >
+            </li>
+            <li>
+              <span class="step-text"
+                ><strong>Sign in with your credentials</strong><br />Use the
+                <em>crewcode</em> and password provided by your administration
+                for your first login.</span
+              >
+            </li>
+          </ol>
+          <div class="modal-warning">
+            ⚠️ Only install APKs from official sources. This file is distributed
+            directly by FIT — Federazione Italiana Trasporti.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentLang = "it";
+
+      function setLang(lang) {
+        currentLang = lang;
+
+        // Update all [data-it] / [data-en] elements
+        document.querySelectorAll("[data-it]").forEach(function (el) {
+          el.innerHTML = el.dataset[lang];
+        });
+
+        // Update lang buttons
+        document
+          .getElementById("lang-it")
+          .classList.toggle("active", lang === "it");
+        document
+          .getElementById("lang-en")
+          .classList.toggle("active", lang === "en");
+
+        // Update html lang attribute
+        document.documentElement.lang = lang;
+
+        // Sync how-to install modal language
+        document.getElementById("howto-it").style.display =
+          lang === "it" ? "" : "none";
+        document.getElementById("howto-en").style.display =
+          lang === "en" ? "" : "none";
+      }
+
+      // Detect browser language on load
+      (function () {
+        var browserLang = (navigator.language || navigator.userLanguage || "it")
+          .substring(0, 2)
+          .toLowerCase();
+        if (browserLang === "en") {
+          setLang("en");
+        }
+      })();
+    </script>
+  </body>
+</html>
