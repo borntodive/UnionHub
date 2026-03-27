@@ -242,7 +242,16 @@ export async function seedClaContracts2025(
 
   console.log("Seeding CLA Contracts 2025 (Apr 2025 - Mar 2026)...");
 
+  let created = 0;
   for (const contractData of CONTRACTS_2025) {
+    const existing = await repository.findOne({
+      where: {
+        rank: contractData.rank,
+        effectiveYear: contractData.effectiveYear,
+        effectiveMonth: contractData.effectiveMonth,
+      } as any,
+    });
+    if (existing) continue;
     const contract = repository.create({
       ...contractData,
       trainingConfig: contractData.trainingConfig || undefined,
@@ -251,7 +260,12 @@ export async function seedClaContracts2025(
     } as any);
     await repository.save(contract);
     console.log(`  Created ${contractData.rank} contract for 2025`);
+    created++;
   }
 
-  console.log(`Seeded ${CONTRACTS_2025.length} CLA Contracts for 2025`);
+  console.log(
+    created > 0
+      ? `Seeded ${created} CLA Contracts for 2025`
+      : "CLA Contracts 2025 already seeded — skipped",
+  );
 }
