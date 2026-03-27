@@ -538,7 +538,8 @@
     "title": "Complete Your Profile",
     "description": "Before accessing the app, please complete your profile with the missing information.",
     "selectDate": "Select date",
-    "save": "Continue to App"
+    "save": "Continue to App",
+    "backToLogin": "Back to Login"
   },
   "kb": {
     "title": "Knowledge Base",
