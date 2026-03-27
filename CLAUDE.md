@@ -6,19 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 STOP and remind the user to complete ALL of the following before building:
 
-1. **Rimuovere il Quick Login** — in `app/src/screens/LoginScreen/LoginScreen.tsx`:
+1. **Rimuovere il Quick Login** — in `apps/mobile/src/screens/LoginScreen/LoginScreen.tsx`:
    - Eliminare la costante `QUICK_USERS` e tutto il blocco del selettore utenti rapidi dall'UI
    - Assicurarsi che al login venga mostrato solo il form manuale (crewcode + password)
 
 2. **Usare il seed di produzione** — eseguire `npm run seed:prod` (non `npm run seed`):
-   - Il seed prod crea **solo il SuperAdmin** (`SUPERADMIN` / password da configurare via env `DEFAULT_ADMIN_PASSWORD`)
+   - Il seed prod crea il SuperAdmin + basi + contratti + gradi + CLA contracts + categorie issue + urgenze
+   - Password SuperAdmin configurabile via env `DEFAULT_ADMIN_PASSWORD`; crewcode via `DEFAULT_ADMIN_CREWCODE`
    - File: `api/src/database/seeds/run-seed-prod.ts`
-   - Script da aggiungere in `package.json`: `"seed:prod": "ts-node src/database/seeds/run-seed-prod.ts"`
 
-3. **Ripristinare il cambio password obbligatorio** — impostare `mustChangePassword: true` per tutti gli utenti nel seed prod (il SuperAdmin dovrà cambiare password al primo accesso)
+3. **Ripristinare il cambio password obbligatorio** — `mustChangePassword: true` già impostato nel seed prod
 
-4. \*_Cambiare il traspoter per mail_ — in `app/.env`:
-   - Usare GMAIL
+4. **Cambiare il trasportatore per mail** — in `api/.env` usare GMAIL
 
 ---
 
@@ -27,7 +26,7 @@ STOP and remind the user to complete ALL of the following before building:
 UnionConnect (also referred to as UnionHub) is a mobile app for CISL aviation union member management. It consists of:
 
 - **Backend API** (`api/`): NestJS 11 + TypeORM 0.3 + PostgreSQL
-- **Frontend Mobile App** (`app/`): Expo 52 + React Native 0.83
+- **Frontend Mobile App** (`apps/mobile/`): Expo 52 + React Native 0.83
 
 ## Common Commands
 
@@ -57,10 +56,10 @@ npm run build              # Build for production
 npm run start:prod         # Run production build
 ```
 
-### Frontend (app/)
+### Frontend (apps/mobile/)
 
 ```bash
-cd app
+cd apps/mobile
 
 # Development
 npx expo start             # Start Expo development server
@@ -170,7 +169,7 @@ npm run lint               # ESLint check
 
 **Database Schema** (PostgreSQL):
 
-- `users` - Unified auth + member data (crewcode, password, role, ruolo, nome, cognome, email, telefono, base_id, contratto_id, grade_id, note, itud, rsa, dataIscrizione, dateOfEntry, dateOfCaptaincy)
+- `users` - Unified auth + member data (crewcode, password, role, ruolo, nome, cognome, email, telefono, base_id, contratto_id, grade_id, note, itud, rsa, isUSO, dataIscrizione, dateOfEntry, dateOfCaptaincy)
 - `bases` - Operational bases (codice, nome)
 - `contracts` - Contract types (codice, nome)
 - `grades` - Professional grades (codice, nome, ruolo)
@@ -178,15 +177,15 @@ npm run lint               # ESLint check
 - `device_tokens` - Push notification tokens
 - `cla_contracts` / `cla_contract_history` - CLA with versioning
 - `issues` - Member issue/segnalazione reports
-- `issue_categories` - Issue categories (nameIt, nameEn, ruolo)
-- `issue_urgencies` - Issue urgency levels (level, nameIt, nameEn)
+- `issue_categories` - Issue categories (nameIt, nameEn, ruolo); **seeded by default** — 12 categories × 2 ruoli
+- `issue_urgencies` - Issue urgency levels (level, nameIt, nameEn); **seeded by default** — 4 levels (Critical/High/Medium/Low)
 - `knowledge_base_documents` - PDF metadata (title, filename, accessLevel, ruolo, extractedText, chunkCount, status)
 - `knowledge_base_chunks` - Text chunks with `embedding vector(768)` (pgvector, IVFFlat index); column NOT in TypeORM entity
 - `chat_messages` - Chatbot conversation history (userId, conversationId, role, content)
 
 ### Frontend Architecture (Expo + React Native)
 
-**Directory Structure** (`app/src/`):
+**Directory Structure** (`apps/mobile/src/`):
 
 - `api/` - Axios client with interceptors for JWT refresh
 - `components/` - Reusable UI components (incl. `RichTextEditor.tsx` — react-native-pell-rich-editor)
@@ -252,6 +251,8 @@ npm run lint               # ESLint check
   - **Results tab** (`ResultScreen`): shows full payslip breakdown (earnings, INPS, IRPEF, TFR). Has a "Apri la vera busta paga" button at the top (above the scroll) that opens the Ryanair SuccessFactors portal via `Linking.openURL`
   - **Legacy contract flag**: available in both Settings (general) and Override (admin). In general mode stores `Δ = custom − contract` so future CLA updates preserve the relative difference; in override mode uses custom values directly (`legacyDirect: true`, injected at runtime, never persisted)
 - **CTC Calculator** (`screens/CtcScreen.tsx`): Cold Temperature Correction per ICAO Doc 9365. Inputs: airport temp (°C), elevation, MSA (optional filter), altitude rows (label + published alt). Outputs: correction + corrected altitude per row. Unit toggle ft/m, round-up to 100 option. No correction shown when temp > 0°C.
+- **Statistics Screen** (`screens/admin/StatisticsScreen.tsx`): Redesigned. Admin: flat view with Top Grade/Basi/Contratti (top-3 + "Vedi tutti (N)" modal). SuperAdmin: 3-tab segmented control (General / Piloti / Cabin Crew). Backend uses `getScopedStats(ruolo?)` private helper; SuperAdmin response includes `pilot` and `cabinCrew` sub-objects. `byBase` and `byContract` return all records (no LIMIT) — frontend handles truncation.
+- **isUSO flag**: Boolean field on `users`. Marks a user as Union Support Officer (Collaboratore Sindacale). Displayed in member detail and used in welcome email to show/hide USO contact rows.
 
 **Date Fields on Users**:
 
@@ -266,9 +267,9 @@ After login, `AppNavigator` checks three conditions in order before showing the 
 
 1. `!isAuthenticated` → Login screen
 2. `mustChangePassword` → ChangePassword screen (forced, no back)
-3. `!!user.ruolo && (!user.dateOfEntry || (isCaptainGrade && !user.dateOfCaptaincy))` → `CompleteProfileScreen` (forced, no back)
+3. `!!user.ruolo && any of (nome, cognome, email, telefono, base, contratto, grade, dateOfEntry, or dateOfCaptaincy for captain grades) is missing` → `CompleteProfileScreen` (forced, no back)
 
-`CompleteProfileScreen` uses `PATCH /users/me` and calls `setUser()` on success — the store update re-triggers the gate check in `AppNavigator`, automatically releasing the user to the main app without explicit navigation. SuperAdmin users (no `ruolo`) skip the gate entirely.
+`CompleteProfileScreen` detects which fields are missing and shows only the relevant sections (Personal info, Contact info, Union info with Select pickers for base/contratto/grade, Professional dates). Has a "Back to Login" button that calls `logout()`. Uses `PATCH /users/me` and calls `setUser()` on success — the store update re-triggers the gate check in `AppNavigator`, automatically releasing the user to the main app without explicit navigation. SuperAdmin users (no `ruolo`) skip the gate entirely.
 
 ## Authentication Flow
 
@@ -428,7 +429,13 @@ Additional documentation in `docs/`:
 # Check PostgreSQL
 pg_isready
 
-# Reset database (DEVELOPMENT ONLY)
+# Reset tables only (keeps the DB, drops all tables + enum types, reruns migrations)
+# DEVELOPMENT ONLY — accepts optional path to .env file as first argument
+cd api && ./scripts/reset-tables.sh
+# Then reseed:
+npm run seed
+
+# Full DB reset (DEVELOPMENT ONLY)
 dropdb unionhub && createdb unionhub
 npm run migration:run
 npm run seed
@@ -463,3 +470,5 @@ rm -rf node_modules && npm install
 - **pdf-parse v2 incompatibility**: v2 exports a class, not a function. Pin to v1.1.1 and import via `require("pdf-parse")` with explicit type annotation.
 - **Keyboard covering inputs**: wrap every `ScrollView` with inputs in a `KeyboardAvoidingView`. For multiline inputs at the bottom of a long scroll, also add `onFocus={() => scrollViewRef.current?.scrollToEnd({ animated: true })}` — KAV alone doesn't reliably scroll to multiline fields.
 - **FlatList tap not registering with keyboard open**: add `keyboardShouldPersistTaps="handled"` to the FlatList (e.g. MembersScreen, DeactivatedMembersScreen search + list pattern).
+- **`QueryFailedError: type "ruolo_enum" already exists` after reset**: `DROP TABLE CASCADE` does not drop PostgreSQL ENUM types. Use `scripts/reset-tables.sh` which drops both tables and custom types (`pg_type.typtype IN ('e', 'c')`) before running migrations.
+- **CLA contracts duplicated after re-seed**: The CLA seed files did not check for existing records. Fixed — they now check `rank + effectiveYear + effectiveMonth` before inserting.
