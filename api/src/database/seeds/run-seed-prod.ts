@@ -25,6 +25,8 @@ import { RefreshToken } from "../../refresh-tokens/entities/refresh-token.entity
 import { UserStatusHistory } from "../../users/entities/user-status-history.entity";
 import { ClaContract } from "../../cla-contracts/entities/cla-contract.entity";
 import { ClaContractHistory } from "../../cla-contracts/entities/cla-contract-history.entity";
+import { IssueCategory } from "../../issue-categories/entities/issue-category.entity";
+import { IssueUrgency } from "../../issue-urgencies/entities/issue-urgency.entity";
 import { UserRole } from "../../common/enums/user-role.enum";
 import { Ruolo } from "../../common/enums/ruolo.enum";
 import * as bcrypt from "bcrypt";
@@ -49,6 +51,8 @@ const dataSource = new DataSource({
     UserStatusHistory,
     ClaContract,
     ClaContractHistory,
+    IssueCategory,
+    IssueUrgency,
   ],
   synchronize: false,
 });
@@ -206,6 +210,71 @@ async function runSeedProd() {
     if (superAdmin) {
       await seedClaContracts2025(dataSource, superAdmin.id);
       await seedClaContracts2026(dataSource, superAdmin.id);
+    }
+
+    // ── Issue Urgencies ───────────────────────────────────────────────────
+    console.log("[PROD SEED] Seeding issue urgencies...");
+    const urgenciesRepository = dataSource.getRepository(IssueUrgency);
+    const defaultUrgencies = [
+      { nameIt: "Critica", nameEn: "Critical", level: 1 },
+      { nameIt: "Alta", nameEn: "High", level: 2 },
+      { nameIt: "Media", nameEn: "Medium", level: 3 },
+      { nameIt: "Bassa", nameEn: "Low", level: 4 },
+    ];
+    for (const u of defaultUrgencies) {
+      const existing = await urgenciesRepository.findOne({
+        where: { level: u.level },
+      });
+      if (!existing) {
+        await urgenciesRepository.save(urgenciesRepository.create(u));
+        console.log(`  Created urgency: ${u.nameEn}`);
+      }
+    }
+
+    // ── Issue Categories ──────────────────────────────────────────────────
+    console.log("[PROD SEED] Seeding issue categories...");
+    const categoriesRepository = dataSource.getRepository(IssueCategory);
+    const categoryDefs = [
+      {
+        nameIt: "Limitazioni ore di volo (FTL)",
+        nameEn: "Flight time limitations (FTL)",
+      },
+      { nameIt: "Modifiche roster e turni", nameEn: "Roster and duty changes" },
+      { nameIt: "Fuori base", nameEn: "Out of base" },
+      { nameIt: "CCNL", nameEn: "CLA" },
+      { nameIt: "Busta paga", nameEn: "Payslip" },
+      {
+        nameIt: "Congedi obbligatori (L.104 ecc.)",
+        nameEn: "Statutory leaves (L.104 etc)",
+      },
+      { nameIt: "Malattia", nameEn: "Sick leaves" },
+      {
+        nameIt: "Maternità e congedi parentali",
+        nameEn: "Maternity and parentals",
+      },
+      { nameIt: "Salute e sicurezza", nameEn: "Health and Safety" },
+      {
+        nameIt: "Procedimenti disciplinari",
+        nameEn: "Disciplinary procedures",
+      },
+      {
+        nameIt: "Accordi sindacali e diritti",
+        nameEn: "Union agreements and rights",
+      },
+      { nameIt: "Altro", nameEn: "Other" },
+    ];
+    for (const ruolo of [Ruolo.PILOT, Ruolo.CABIN_CREW]) {
+      for (const cat of categoryDefs) {
+        const existing = await categoriesRepository.findOne({
+          where: { nameEn: cat.nameEn, ruolo },
+        });
+        if (!existing) {
+          await categoriesRepository.save(
+            categoriesRepository.create({ ...cat, ruolo }),
+          );
+          console.log(`  Created category [${ruolo}]: ${cat.nameEn}`);
+        }
+      }
     }
 
     console.log("\n[PROD SEED] Completed successfully!");
