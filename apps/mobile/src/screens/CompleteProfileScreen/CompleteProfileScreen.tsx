@@ -64,6 +64,7 @@ export const CompleteProfileScreen: React.FC = () => {
   const scrollRef = useRef<ScrollView>(null);
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
+  const logout = useAuthStore((state) => state.logout);
 
   const isCaptainGrade = CAPTAIN_GRADES.includes(user?.grade?.codice || "");
 
@@ -504,6 +505,12 @@ export const CompleteProfileScreen: React.FC = () => {
               loading={mutation.isPending}
               style={styles.saveButton}
             />
+
+            <TouchableOpacity onPress={logout} style={styles.backToLoginButton}>
+              <Text style={styles.backToLoginText}>
+                {t("completeProfile.backToLogin")}
+              </Text>
+            </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
 
@@ -665,6 +672,17 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: spacing.sm,
+  },
+  backToLoginButton: {
+    alignItems: "center",
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  backToLoginText: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    textDecorationLine: "underline",
   },
   actionSheetOverlay: {
     flex: 1,

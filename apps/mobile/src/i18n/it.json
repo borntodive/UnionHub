@@ -538,7 +538,8 @@
     "title": "Completa il tuo profilo",
     "description": "Prima di accedere all'app, completa il tuo profilo con le informazioni mancanti.",
     "selectDate": "Seleziona data",
-    "save": "Continua all'app"
+    "save": "Continua all'app",
+    "backToLogin": "Torna al login"
   },
   "kb": {
     "title": "Knowledge Base",
