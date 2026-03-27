@@ -17,6 +17,9 @@ STOP and remind the user to complete ALL of the following before building:
 
 3. **Ripristinare il cambio password obbligatorio** — impostare `mustChangePassword: true` per tutti gli utenti nel seed prod (il SuperAdmin dovrà cambiare password al primo accesso)
 
+4. \*_Cambiare il traspoter per mail_ — in `app/.env`:
+   - Usare GMAIL
+
 ---
 
 ## Project Overview
