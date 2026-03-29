@@ -68,7 +68,12 @@ export class KnowledgeBaseController {
 
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param("id", ParseUUIDPipe) id: string) {
-    await this.kbService.deleteDocument(id);
+  async remove(@Param("id", ParseUUIDPipe) id: string, @Req() req: any) {
+    await this.kbService.deleteDocument(
+      id,
+      req.user.userId,
+      req.user.role,
+      req.user.ruolo ?? null,
+    );
   }
 }

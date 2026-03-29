@@ -81,6 +81,8 @@ export class IssuesController {
   }
 
   @Patch(":id/reopen")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   reopen(@Param("id", ParseUUIDPipe) id: string, @Req() req: any) {
     return this.service.reopen(id, req.user);
   }
