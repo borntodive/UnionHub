@@ -120,6 +120,10 @@ export class User {
   @Column({ type: "varchar", length: 500, nullable: true })
   registrationFormUrl: string | null;
 
+  // Preferred language for the user
+  @Column({ type: "varchar", length: 10, default: "it" })
+  language: string;
+
   // Membership subscription date (from PDF signature date)
   @Column({ type: "date", nullable: true })
   dataIscrizione: Date | null;
@@ -174,6 +178,7 @@ export class User {
       mustChangePassword: this.mustChangePassword,
       registrationStatus: this.registrationStatus,
       registrationFormUrl: this.registrationFormUrl,
+      language: this.language,
       dataIscrizione: this.dataIscrizione,
       dateOfEntry: this.dateOfEntry,
       dateOfCaptaincy: this.dateOfCaptaincy,
