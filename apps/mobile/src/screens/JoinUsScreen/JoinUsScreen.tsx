@@ -18,6 +18,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { WebView } from "react-native-webview";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Check, X, FileText } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { Input } from "../../components/Input";
@@ -237,12 +238,19 @@ export const JoinUsScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [language, setLanguage] = useState<"it" | "en">("it");
+  const { t } = useTranslation();
+
+  // Get translations based on current language selection
+  const getT = (key: string) => t(`joinUs.${key}`);
 
   // ── Modal / preview state
   const [privacyModal, setPrivacyModal] = useState<0 | 1 | 2 | 3>(0);
   const [showPreview, setShowPreview] = useState(false);
   const [tempId, setTempId] = useState<string | null>(null);
   const [previewFileUri, setPreviewFileUri] = useState<string | null>(null);
+  const [hasViewedPreview, setHasViewedPreview] = useState(false);
+  const [hasConfirmed, setHasConfirmed] = useState(false);
 
   // ── Data fetching
   const { data: gradesData } = useQuery<Grade[]>({
@@ -303,7 +311,7 @@ export const JoinUsScreen: React.FC = () => {
         !via ||
         !numeroCivico
       ) {
-        Alert.alert("Campi mancanti", "Compila tutti i campi personali.");
+        Alert.alert(getT("alertMissingFields"), getT("alertMissingPersonal"));
         return;
       }
     }
@@ -317,27 +325,24 @@ export const JoinUsScreen: React.FC = () => {
         !telefono ||
         !tipoRapporto
       ) {
-        Alert.alert("Campi mancanti", "Compila tutti i campi lavorativi.");
+        Alert.alert(getT("alertMissingFields"), getT("alertMissingWork"));
         return;
       }
     }
     if (step === 3) {
       if (!luogo) {
-        Alert.alert("Campi mancanti", "Inserisci il luogo di firma.");
+        Alert.alert(getT("alertMissingFields"), getT("alertMissingPlace"));
         return;
       }
       if (!consenso1) {
-        Alert.alert(
-          "Consenso obbligatorio",
-          "Devi accettare il Consenso 1 per procedere.",
-        );
+        Alert.alert(getT("alertConsentRequired"), getT("alertConsentMsg"));
         return;
       }
       const sig = await captureSignature();
       if (!sig) {
         Alert.alert(
-          "Firma mancante",
-          "Firma nel campo apposito prima di continuare.",
+          getT("alertMissingSignature"),
+          getT("alertMissingSignatureMsg"),
         );
         return;
       }
@@ -370,14 +375,16 @@ export const JoinUsScreen: React.FC = () => {
           consenso1: consenso2, // promo Titolare → PDF Consenso1
           consenso2: consenso3, // promo CISL terzi → PDF Consenso2
           attivista: attivista || undefined,
+          language,
         });
         setTempId(result.tempId);
         setPreviewFileUri(null); // will be loaded on demand
       } catch (err: any) {
-        const msg =
-          err?.response?.data?.message ||
-          "Errore nella generazione del modulo. Riprova.";
-        Alert.alert("Errore", Array.isArray(msg) ? msg.join("\n") : msg);
+        const msg = err?.response?.data?.message || getT("alertFormError");
+        Alert.alert(
+          getT("alertError"),
+          Array.isArray(msg) ? msg.join("\n") : msg,
+        );
         setIsPreparing(false);
         return;
       }
@@ -390,10 +397,12 @@ export const JoinUsScreen: React.FC = () => {
     if (step === 1) {
       navigation.navigate("Login");
     } else {
-      // Going back from step 4 invalidates the temp PDF
+      // Going back from step 4 invalidates the temp PDF and resets confirmations
       if (step === 4) {
         setTempId(null);
         setPreviewFileUri(null);
+        setHasViewedPreview(false);
+        setHasConfirmed(false);
       }
       setStep((s) => s - 1);
     }
@@ -407,6 +416,7 @@ export const JoinUsScreen: React.FC = () => {
       const baseUrl = (apiClient.defaults.baseURL ?? "").replace(/\/$/, "");
       setPreviewFileUri(`${baseUrl}/auth/register/preview-file/${tempId}`);
     }
+    setHasViewedPreview(true);
     setShowPreview(true);
   };
 
@@ -437,13 +447,16 @@ export const JoinUsScreen: React.FC = () => {
         signatureBase64,
         attivista: attivista || undefined,
         tempId: tempId ?? undefined,
+        language,
       };
       await authApi.register(payload);
       setSubmitted(true);
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message || "Errore durante l'invio. Riprova.";
-      Alert.alert("Errore", Array.isArray(msg) ? msg.join("\n") : msg);
+      const msg = err?.response?.data?.message || getT("alertSubmitError");
+      Alert.alert(
+        getT("alertError"),
+        Array.isArray(msg) ? msg.join("\n") : msg,
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -452,20 +465,19 @@ export const JoinUsScreen: React.FC = () => {
   // ── Success screen
   if (submitted) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <View style={styles.successContainer}>
           <View style={styles.successIcon}>
             <Check size={40} color={colors.textInverse} />
           </View>
-          <Text style={styles.successTitle}>Richiesta inviata!</Text>
+          <Text style={styles.successTitle}>{getT("successTitle")}</Text>
           <Text style={styles.successText}>
-            La tua richiesta di adesione è stata inviata con successo.{"\n\n"}
-            Riceverai una email all'indirizzo{" "}
-            <Text style={styles.successEmail}>{email}</Text> quando un
-            amministratore approverà la tua iscrizione.
+            {getT("successTextBefore")}{" "}
+            <Text style={styles.successEmail}>{email}</Text>{" "}
+            {getT("successTextAfter")}
           </Text>
           <Button
-            title="Torna al Login"
+            title={getT("backToLogin")}
             onPress={() => navigation.navigate("Login")}
             style={styles.backToLoginBtn}
           />
@@ -475,13 +487,13 @@ export const JoinUsScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={goBack} style={styles.headerBtn}>
           <ArrowLeft size={24} color={colors.textInverse} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Unisciti a noi</Text>
+        <Text style={styles.headerTitle}>{getT("screenTitle")}</Text>
         <View style={styles.headerBtn} />
       </View>
 
@@ -524,35 +536,71 @@ export const JoinUsScreen: React.FC = () => {
             {/* ── STEP 1: Dati personali ── */}
             {step === 1 && (
               <View>
-                <Text style={styles.stepTitle}>Step 1 — Dati Personali</Text>
+                {/* Language selector */}
+                <View style={styles.langRow}>
+                  <TouchableOpacity
+                    style={[
+                      styles.langBtn,
+                      language === "it" && styles.langBtnActive,
+                    ]}
+                    onPress={() => setLanguage("it")}
+                  >
+                    <Text
+                      style={[
+                        styles.langBtnText,
+                        language === "it" && styles.langBtnTextActive,
+                      ]}
+                    >
+                      🇮🇹 Italiano
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.langBtn,
+                      language === "en" && styles.langBtnActive,
+                    ]}
+                    onPress={() => setLanguage("en")}
+                  >
+                    <Text
+                      style={[
+                        styles.langBtnText,
+                        language === "en" && styles.langBtnTextActive,
+                      ]}
+                    >
+                      🇬🇧 English
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.stepTitle}>{getT("step1Title")}</Text>
 
                 <Input
-                  label="Nome *"
+                  label={getT("firstName")}
                   value={nome}
                   onChangeText={setNome}
                   containerStyle={styles.input}
                 />
                 <Input
-                  label="Cognome *"
+                  label={getT("lastName")}
                   value={cognome}
                   onChangeText={setCognome}
                   containerStyle={styles.input}
                 />
                 <Input
-                  label="Codice Fiscale *"
+                  label={getT("taxCode")}
                   value={codiceFiscale}
                   onChangeText={(v) => setCodiceFiscale(v.toUpperCase())}
                   autoCapitalize="characters"
                   containerStyle={styles.input}
                 />
                 <Input
-                  label="Nato/a a (città) *"
+                  label={getT("bornIn")}
                   value={natoA}
                   onChangeText={setNatoA}
                   containerStyle={styles.input}
                 />
                 <Input
-                  label="Data di Nascita (GG/MM/AAAA) *"
+                  label={getT("dateOfBirth")}
                   value={dataNascita}
                   onChangeText={setDataNascita}
                   placeholder="01/01/1990"
@@ -560,7 +608,7 @@ export const JoinUsScreen: React.FC = () => {
                   containerStyle={styles.input}
                 />
                 <Input
-                  label="Residente a (città) *"
+                  label={getT("residentIn")}
                   value={residenteA}
                   onChangeText={setResidenteA}
                   containerStyle={styles.input}
@@ -568,7 +616,7 @@ export const JoinUsScreen: React.FC = () => {
                 <View style={styles.row}>
                   <View style={styles.rowCol2}>
                     <Input
-                      label="CAP *"
+                      label={getT("postcode")}
                       value={cap}
                       onChangeText={setCap}
                       keyboardType="numeric"
@@ -577,7 +625,7 @@ export const JoinUsScreen: React.FC = () => {
                   </View>
                   <View style={styles.rowCol1}>
                     <Input
-                      label="Provincia *"
+                      label={getT("province")}
                       value={provincia}
                       onChangeText={(v) => setProvincia(v.toUpperCase())}
                       autoCapitalize="characters"
@@ -589,7 +637,7 @@ export const JoinUsScreen: React.FC = () => {
                 <View style={styles.row}>
                   <View style={styles.rowCol3}>
                     <Input
-                      label="Via / Piazza *"
+                      label={getT("street")}
                       value={via}
                       onChangeText={setVia}
                       containerStyle={styles.input}
@@ -597,7 +645,7 @@ export const JoinUsScreen: React.FC = () => {
                   </View>
                   <View style={styles.rowCol1}>
                     <Input
-                      label="N° Civico *"
+                      label={getT("streetNumber")}
                       value={numeroCivico}
                       onChangeText={setNumeroCivico}
                       containerStyle={styles.input}
@@ -610,21 +658,21 @@ export const JoinUsScreen: React.FC = () => {
             {/* ── STEP 2: Dati lavorativi ── */}
             {step === 2 && (
               <View>
-                <Text style={styles.stepTitle}>Step 2 — Dati Lavorativi</Text>
+                <Text style={styles.stepTitle}>{getT("step2Title")}</Text>
 
                 <Input
-                  label="Crewcode *"
+                  label={getT("crewcode")}
                   value={crewcode}
                   onChangeText={(v) => setCrewcode(v.toUpperCase())}
                   autoCapitalize="characters"
                   containerStyle={styles.input}
                 />
 
-                <Text style={styles.fieldLabel}>Ruolo *</Text>
+                <Text style={styles.fieldLabel}>{getT("role")}</Text>
                 <View style={styles.radioGroup}>
                   {[
-                    { label: "Pilota", value: "pilot" },
-                    { label: "Cabin Crew", value: "cabin_crew" },
+                    { label: getT("rolePilot"), value: "pilot" },
+                    { label: getT("roleCabinCrew"), value: "cabin_crew" },
                   ].map((opt) => (
                     <TouchableOpacity
                       key={opt.value}
@@ -650,29 +698,29 @@ export const JoinUsScreen: React.FC = () => {
                 </View>
 
                 <Select
-                  label="Qualifica *"
+                  label={getT("grade")}
                   value={gradeId}
                   options={(filteredGrades || []).map((g) => ({
                     label: `${g.codice} – ${g.nome}`,
                     value: g.id,
                   }))}
                   onValueChange={(v) => setGradeId(v ?? "")}
-                  placeholder="Seleziona qualifica"
+                  placeholder={getT("gradePlaceholder")}
                 />
 
                 <Select
-                  label="Base Operativa *"
+                  label={getT("base")}
                   value={baseId}
                   options={(basesData || []).map((b) => ({
                     label: `${b.codice} – ${b.nome}`,
                     value: b.id,
                   }))}
                   onValueChange={(v) => setBaseId(v ?? "")}
-                  placeholder="Seleziona base"
+                  placeholder={getT("basePlaceholder")}
                 />
 
                 <Input
-                  label="Email *"
+                  label={getT("email")}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -680,20 +728,20 @@ export const JoinUsScreen: React.FC = () => {
                   containerStyle={styles.input}
                 />
                 <Input
-                  label="Cellulare *"
+                  label={getT("phone")}
                   value={telefono}
                   onChangeText={setTelefono}
                   keyboardType="phone-pad"
                   containerStyle={styles.input}
                 />
 
-                <Text style={styles.fieldLabel}>Tipo Rapporto *</Text>
+                <Text style={styles.fieldLabel}>{getT("contractType")}</Text>
                 <View style={styles.radioGroup}>
                   {[
-                    { label: "Full Time", value: "FULL_TIME" },
-                    { label: "T. Indeterminato", value: "TEMPO_INDETERMINATO" },
+                    { label: getT("fullTime"), value: "FULL_TIME" },
+                    { label: getT("permanent"), value: "TEMPO_INDETERMINATO" },
                     {
-                      label: "Part Time T.I.",
+                      label: getT("partTimePermanent"),
                       value: "PART_TIME_INDETERMINATO",
                     },
                   ].map((opt) => (
@@ -720,10 +768,10 @@ export const JoinUsScreen: React.FC = () => {
                 </View>
 
                 <Input
-                  label="Attivista (facoltativo)"
+                  label={getT("activist")}
                   value={attivista}
                   onChangeText={setAttivista}
-                  placeholder="Crewcode o nome dell'attivista"
+                  placeholder={getT("activistPlaceholder")}
                   containerStyle={styles.input}
                 />
               </View>
@@ -732,15 +780,15 @@ export const JoinUsScreen: React.FC = () => {
             {/* ── STEP 3: Firma + Consensi ── */}
             {step === 3 && (
               <View>
-                <Text style={styles.stepTitle}>Step 3 — Firma e Consensi</Text>
+                <Text style={styles.stepTitle}>{getT("step3Title")}</Text>
                 <Input
-                  label="Luogo di firma (città) *"
+                  label={getT("signaturePlace")}
                   value={luogo}
                   onChangeText={setLuogo}
                   containerStyle={styles.input}
                 />
 
-                <Text style={styles.fieldLabel}>Firma qui sotto *</Text>
+                <Text style={styles.fieldLabel}>{getT("signBelow")}</Text>
                 <View style={styles.signatureContainer}>
                   <WebView
                     ref={webViewRef}
@@ -759,10 +807,14 @@ export const JoinUsScreen: React.FC = () => {
                     )
                   }
                 >
-                  <Text style={styles.clearButtonText}>Cancella firma</Text>
+                  <Text style={styles.clearButtonText}>
+                    {getT("clearSignature")}
+                  </Text>
                 </TouchableOpacity>
 
-                <Text style={styles.sectionTitle}>Consensi Privacy</Text>
+                <Text style={styles.sectionTitle}>
+                  {getT("privacyConsents")}
+                </Text>
 
                 {/* Consenso 1 — obbligatorio, non va nel PDF */}
                 <View style={styles.consentBlock}>
@@ -774,10 +826,9 @@ export const JoinUsScreen: React.FC = () => {
                     />
                     <Text style={styles.consentText}>
                       <Text style={styles.consentRequired}>
-                        [Obbligatorio]{" "}
+                        {getT("required")}{" "}
                       </Text>
-                      Ho letto l'informativa e acconsento al trattamento dei
-                      miei dati per le finalità sindacali indicate nel modulo.
+                      {getT("consent1Text")}
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -785,7 +836,7 @@ export const JoinUsScreen: React.FC = () => {
                     onPress={() => setPrivacyModal(1)}
                   >
                     <Text style={styles.leggiBtnText}>
-                      Leggi informativa completa →
+                      {getT("readFullNotice")}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -799,10 +850,10 @@ export const JoinUsScreen: React.FC = () => {
                       trackColor={{ true: colors.primary }}
                     />
                     <Text style={styles.consentText}>
-                      <Text style={styles.consentOptional}>[Facoltativo] </Text>
-                      Presti il consenso al trattamento per l'invio di
-                      comunicazioni di carattere promozionale di
-                      servizi/attività forniti dal Titolare.
+                      <Text style={styles.consentOptional}>
+                        {getT("optional")}{" "}
+                      </Text>
+                      {getT("consent2Text")}
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -810,7 +861,7 @@ export const JoinUsScreen: React.FC = () => {
                     onPress={() => setPrivacyModal(2)}
                   >
                     <Text style={styles.leggiBtnText}>
-                      Leggi informativa completa →
+                      {getT("readFullNotice")}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -824,11 +875,10 @@ export const JoinUsScreen: React.FC = () => {
                       trackColor={{ true: colors.primary }}
                     />
                     <Text style={styles.consentText}>
-                      <Text style={styles.consentOptional}>[Facoltativo] </Text>
-                      Presti il consenso al trattamento, ivi compresa la
-                      comunicazione a terzi dei tuoi dati personali per l'invio
-                      di comunicazioni promozionali delle strutture CISL e
-                      organismi collegati.
+                      <Text style={styles.consentOptional}>
+                        {getT("optional")}{" "}
+                      </Text>
+                      {getT("consent3Text")}
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -836,7 +886,7 @@ export const JoinUsScreen: React.FC = () => {
                     onPress={() => setPrivacyModal(3)}
                   >
                     <Text style={styles.leggiBtnText}>
-                      Leggi informativa completa →
+                      {getT("readFullNotice")}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -846,44 +896,89 @@ export const JoinUsScreen: React.FC = () => {
             {/* ── STEP 4: Riepilogo + Consensi ── */}
             {step === 4 && (
               <View>
-                <Text style={styles.stepTitle}>Step 4 — Riepilogo e Invio</Text>
+                <Text style={styles.stepTitle}>{getT("step4Title")}</Text>
 
                 <View style={styles.summaryCard}>
-                  <SummaryRow label="Nome" value={`${nome} ${cognome}`} />
-                  <SummaryRow label="Codice Fiscale" value={codiceFiscale} />
-                  <SummaryRow label="Nato/a a" value={natoA} />
-                  <SummaryRow label="Data nascita" value={dataNascita} />
                   <SummaryRow
-                    label="Residenza"
+                    label={getT("summaryName")}
+                    value={`${nome} ${cognome}`}
+                  />
+                  <SummaryRow
+                    label={getT("summaryTaxCode")}
+                    value={codiceFiscale}
+                  />
+                  <SummaryRow label={getT("summaryBornIn")} value={natoA} />
+                  <SummaryRow label={getT("summaryDOB")} value={dataNascita} />
+                  <SummaryRow
+                    label={getT("summaryResidence")}
                     value={`${via} ${numeroCivico}, ${cap} ${residenteA} (${provincia})`}
                   />
                   <SummaryRow label="Crewcode" value={crewcode} />
                   <SummaryRow
-                    label="Ruolo"
-                    value={ruolo === "pilot" ? "Pilota" : "Cabin Crew"}
+                    label={getT("summaryRole")}
+                    value={
+                      ruolo === "pilot"
+                        ? getT("rolePilot")
+                        : getT("roleCabinCrew")
+                    }
                   />
-                  <SummaryRow label="Email" value={email} />
-                  <SummaryRow label="Cellulare" value={telefono} />
-                  <SummaryRow label="Tipo rapporto" value={tipoRapporto} />
-                  <SummaryRow label="Luogo firma" value={luogo} />
+                  <SummaryRow label={getT("summaryEmail")} value={email} />
+                  <SummaryRow label={getT("summaryPhone")} value={telefono} />
+                  <SummaryRow
+                    label={getT("summaryContract")}
+                    value={tipoRapporto}
+                  />
+                  <SummaryRow label={getT("summarySignPlace")} value={luogo} />
                 </View>
 
                 {/* Preview button */}
                 <TouchableOpacity
-                  style={styles.previewButton}
+                  style={[
+                    styles.previewButton,
+                    hasViewedPreview && styles.previewButtonViewed,
+                  ]}
                   onPress={handleShowPreview}
                 >
-                  <FileText size={16} color={colors.primary} />
-                  <Text style={styles.previewButtonText}>
-                    Vedi anteprima modulo
+                  <FileText
+                    size={16}
+                    color={hasViewedPreview ? colors.success : colors.primary}
+                  />
+                  <Text
+                    style={[
+                      styles.previewButtonText,
+                      hasViewedPreview && styles.previewButtonTextViewed,
+                    ]}
+                  >
+                    {hasViewedPreview
+                      ? getT("previewViewed")
+                      : getT("previewRequired")}
                   </Text>
                 </TouchableOpacity>
 
+                {/* Confirmation checkbox */}
+                <TouchableOpacity
+                  style={styles.confirmRow}
+                  onPress={() => setHasConfirmed((v) => !v)}
+                  activeOpacity={0.7}
+                >
+                  <View
+                    style={[
+                      styles.checkbox,
+                      hasConfirmed && styles.checkboxChecked,
+                    ]}
+                  >
+                    {hasConfirmed && (
+                      <Check size={14} color={colors.textInverse} />
+                    )}
+                  </View>
+                  <Text style={styles.confirmText}>{getT("confirmText")}</Text>
+                </TouchableOpacity>
+
                 <Button
-                  title="Invia richiesta"
+                  title={getT("submitBtn")}
                   onPress={handleSubmit}
                   loading={isSubmitting}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !hasViewedPreview || !hasConfirmed}
                   size="lg"
                   style={styles.submitButton}
                 />
@@ -893,7 +988,7 @@ export const JoinUsScreen: React.FC = () => {
             {/* Navigation buttons */}
             {step < 4 && (
               <Button
-                title={isPreparing ? "Generazione modulo..." : "Avanti →"}
+                title={isPreparing ? getT("generatingForm") : getT("nextBtn")}
                 onPress={goNext}
                 loading={isPreparing}
                 disabled={isPreparing}
@@ -916,10 +1011,10 @@ export const JoinUsScreen: React.FC = () => {
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>
               {privacyModal === 1
-                ? "Informativa sul Trattamento dei Dati"
+                ? getT("modal1Title")
                 : privacyModal === 2
-                  ? "Consenso — Comunicazioni del Titolare"
-                  : "Consenso — Comunicazione a Terzi CISL"}
+                  ? getT("modal2Title")
+                  : getT("modal3Title")}
             </Text>
             <TouchableOpacity
               style={styles.modalCloseBtn}
@@ -942,7 +1037,7 @@ export const JoinUsScreen: React.FC = () => {
           </ScrollView>
           <View style={styles.modalFooter}>
             <Button
-              title="Ho letto"
+              title={getT("modalClose")}
               onPress={() => setPrivacyModal(0)}
               size="lg"
             />
@@ -959,7 +1054,7 @@ export const JoinUsScreen: React.FC = () => {
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Anteprima modulo</Text>
+            <Text style={styles.modalTitle}>{getT("previewTitle")}</Text>
             <TouchableOpacity
               style={styles.modalCloseBtn}
               onPress={() => setShowPreview(false)}
@@ -1178,6 +1273,68 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     color: colors.primary,
     fontWeight: typography.weights.medium,
+  },
+  langRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  langBtn: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+  },
+  langBtnActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + "12",
+  },
+  langBtnText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+    color: colors.textSecondary,
+  },
+  langBtnTextActive: {
+    color: colors.primary,
+    fontWeight: typography.weights.bold,
+  },
+  previewButtonViewed: {
+    borderColor: colors.success,
+    backgroundColor: colors.success + "15",
+  },
+  previewButtonTextViewed: {
+    color: colors.success,
+  },
+  confirmRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
+    flexShrink: 0,
+  },
+  checkboxChecked: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+  },
+  confirmText: {
+    flex: 1,
+    fontSize: typography.sizes.sm,
+    color: colors.text,
+    lineHeight: 20,
   },
   sectionTitle: {
     fontSize: typography.sizes.md,

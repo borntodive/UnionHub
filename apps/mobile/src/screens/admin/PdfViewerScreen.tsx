@@ -16,6 +16,7 @@ import { WebView } from "react-native-webview";
 import * as FileSystem from "expo-file-system/legacy";
 import { ArrowLeft, Download } from "lucide-react-native";
 import * as Sharing from "expo-sharing";
+import { useTranslation } from "react-i18next";
 
 import { colors, spacing, typography } from "../../theme";
 import { documentsApi } from "../../api/documents";
@@ -24,6 +25,7 @@ import { RootStackParamList } from "../../navigation/types";
 type PdfViewerRouteProp = RouteProp<RootStackParamList, "PdfViewer">;
 
 export const PdfViewerScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const route = useRoute<PdfViewerRouteProp>();
   const insets = useSafeAreaInsets();
@@ -42,23 +44,37 @@ export const PdfViewerScreen: React.FC = () => {
         let base64: string;
 
         if (url) {
-          // Direct base64 data URL provided (e.g. from registrationFormUrl)
+          if (url.startsWith("http://") || url.startsWith("https://")) {
+            // Plain HTTP URL — load directly in WebView without caching
+            if (!cancelled) {
+              cachedUriRef.current = null;
+              setFileUri(url);
+            }
+            return;
+          }
+          // Direct base64 data URL provided
           const prefix = "data:application/pdf;base64,";
           base64 = url.startsWith(prefix) ? url.slice(prefix.length) : url;
         } else if (documentId) {
           const result = await documentsApi.getPdfBase64(documentId);
           if (!result) {
-            setError("PDF non disponibile");
+            setError(t("pdfViewer.error"));
             return;
           }
           base64 = result;
         } else {
-          setError("Nessun documento specificato");
+          setError(t("pdfViewer.noDocument"));
           return;
         }
 
         const id = documentId || "reg";
-        const uri = FileSystem.cacheDirectory + `doc_${id}_${Date.now()}.pdf`;
+        const uri =
+          FileSystem.cacheDirectory +
+          `doc_${id}_${Date.now()}_${Math.random().toString(36).slice(2)}.pdf`;
+        // Delete any pre-existing file at this path before writing — on iOS,
+        // writeAsStringAsync throws "is not writable" if the file already exists
+        // and is not writable (can happen with StrictMode double-invocation).
+        await FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
         await FileSystem.writeAsStringAsync(uri, base64, {
           encoding: FileSystem.EncodingType.Base64,
         });
@@ -69,7 +85,7 @@ export const PdfViewerScreen: React.FC = () => {
           FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
         }
       } catch (e: any) {
-        if (!cancelled) setError(e.message || "Errore nel caricamento del PDF");
+        if (!cancelled) setError(e.message || t("pdfViewer.error"));
       }
     };
 
@@ -147,7 +163,7 @@ export const PdfViewerScreen: React.FC = () => {
         ) : !fileUri ? (
           <View style={styles.centered}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Caricamento PDF…</Text>
+            <Text style={styles.loadingText}>{t("pdfViewer.loading")}</Text>
           </View>
         ) : Platform.OS === "ios" ? (
           <WebView
