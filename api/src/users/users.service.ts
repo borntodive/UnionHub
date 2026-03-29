@@ -1337,6 +1337,7 @@ export class UsersService {
       registrationStatus: "pending",
       mustChangePassword: true,
       registrationFormUrl,
+      language: dto.language ?? "it",
     });
 
     const savedUser = await this.usersRepository.save(user);
