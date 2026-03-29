@@ -12,6 +12,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useMutation } from "@tanstack/react-query";
 import { Lock, User, Fingerprint } from "lucide-react-native";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../../navigation/types";
 import { useTranslation } from "react-i18next";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
@@ -36,6 +39,8 @@ const QUICK_USERS = [
 
 export const LoginScreen: React.FC = () => {
   const { t } = useTranslation();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const setAuth = useAuthStore((state) => state.setAuth);
   const enableBiometric = useAuthStore((state) => state.enableBiometric);
   const biometricEnabled = useAuthStore((state) => state.biometricEnabled);
@@ -258,6 +263,16 @@ export const LoginScreen: React.FC = () => {
             <Text style={styles.hint}>
               For access issues, contact your union delegate
             </Text>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate("JoinUs")}
+              style={styles.joinUsLink}
+            >
+              <Text style={styles.joinUsText}>
+                Non sei ancora iscritto?{" "}
+                <Text style={styles.joinUsTextBold}>Unisciti a noi</Text>
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Footer */}
@@ -382,6 +397,20 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     textAlign: "center",
     marginTop: spacing.md,
+  },
+  joinUsLink: {
+    marginTop: spacing.md,
+    alignItems: "center",
+    paddingVertical: spacing.sm,
+  },
+  joinUsText: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    textAlign: "center",
+  },
+  joinUsTextBold: {
+    fontWeight: typography.weights.bold,
+    color: colors.primary,
   },
   footer: {
     marginTop: spacing.lg,

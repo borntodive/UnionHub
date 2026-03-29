@@ -38,6 +38,8 @@ import { colors } from "../theme";
 import { useAuthStore } from "../store/authStore";
 import { SharedFileHandler } from "../components/SharedFileHandler";
 import { CompleteProfileScreen } from "../screens/CompleteProfileScreen/CompleteProfileScreen";
+import { JoinUsScreen } from "../screens/JoinUsScreen/JoinUsScreen";
+import { PendingMembersScreen } from "../screens/admin/PendingMembersScreen";
 import { EmailDetailScreen } from "../gmail/screens/EmailDetailScreen";
 import { GmailSetupScreen } from "../gmail/screens/GmailSetupScreen";
 import { CtcScreen } from "../screens/CtcScreen";
@@ -98,6 +100,11 @@ export const AppNavigator: React.FC = () => {
           // Auth Stack
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen
+              name="JoinUs"
+              component={JoinUsScreen}
+              options={{ headerShown: false }}
+            />
             <Stack.Screen
               name="ChangePassword"
               component={ChangePasswordScreen}
@@ -263,6 +270,11 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen
               name="ColdTempCorrection"
               component={CtcScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="PendingMembers"
+              component={PendingMembersScreen}
               options={{ headerShown: false }}
             />
             {/* Note: CLA Contract screens moved to DrawerNavigator */}

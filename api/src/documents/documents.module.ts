@@ -16,6 +16,6 @@ import { NotificationsModule } from "../notifications/notifications.module";
   ],
   controllers: [DocumentsController, DocumentsPublicController],
   providers: [DocumentsService, PdfService],
-  exports: [DocumentsService],
+  exports: [DocumentsService, PdfService],
 })
 export class DocumentsModule {}

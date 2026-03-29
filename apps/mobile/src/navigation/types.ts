@@ -1,5 +1,6 @@
 export type RootStackParamList = {
   Login: undefined;
+  JoinUs: undefined;
   ChangePassword: undefined;
   CompleteProfile: undefined;
   MainTabs: undefined;
@@ -29,7 +30,8 @@ export type RootStackParamList = {
   // Documents / Communications
   Documents: undefined;
   DocumentEditor: { documentId?: string } | undefined;
-  PdfViewer: { documentId: string; title: string };
+  PdfViewer: { documentId?: string; url?: string; title: string };
+  PendingMembers: undefined;
   // Issues
   ReportIssue: undefined;
   MyIssues: undefined;

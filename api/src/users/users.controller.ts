@@ -80,6 +80,7 @@ export class UsersController {
     @Query("search") search?: string,
     @Query("page") page?: string,
     @Query("perPage") perPage?: string,
+    @Query("registrationStatus") registrationStatus?: string,
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
 
@@ -94,9 +95,25 @@ export class UsersController {
         search,
         page: page ? parseInt(page, 10) : 1,
         perPage: perPage ? parseInt(perPage, 10) : 20,
+        registrationStatus,
       },
       requestingUser,
     );
+  }
+
+  @Get("pending-count")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  async getPendingCount(
+    @Request() req: RequestWithUser,
+  ): Promise<{ count: number }> {
+    const requestingUser = await this.usersService.findById(req.user.userId);
+    const ruolo =
+      requestingUser.role === UserRole.ADMIN
+        ? (requestingUser.ruolo ?? undefined)
+        : undefined;
+    const count = await this.usersService.getPendingCount(ruolo);
+    return { count };
   }
 
   @Get("me/payslip-settings")
@@ -204,6 +221,32 @@ export class UsersController {
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
     const user = await this.usersService.create(createUserDto, requestingUser);
+    return user.serialize(requestingUser.role);
+  }
+
+  @Post(":id/approve")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @HttpCode(HttpStatus.OK)
+  async approveRegistration(
+    @Request() req: RequestWithUser,
+    @Param("id", ParseUUIDPipe) id: string,
+  ) {
+    const requestingUser = await this.usersService.findById(req.user.userId);
+    const user = await this.usersService.approveRegistration(id);
+    return user.serialize(requestingUser.role);
+  }
+
+  @Post(":id/reject")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @HttpCode(HttpStatus.OK)
+  async rejectRegistration(
+    @Request() req: RequestWithUser,
+    @Param("id", ParseUUIDPipe) id: string,
+  ) {
+    const requestingUser = await this.usersService.findById(req.user.userId);
+    const user = await this.usersService.rejectRegistration(id);
     return user.serialize(requestingUser.role);
   }
 

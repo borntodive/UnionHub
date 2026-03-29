@@ -13,3 +13,4 @@ export { IssueCategoriesScreen } from "./IssueCategoriesScreen";
 export { IssueCategoryFormScreen } from "./IssueCategoryFormScreen";
 export { IssueUrgenciesScreen } from "./IssueUrgenciesScreen";
 export { IssueUrgencyFormScreen } from "./IssueUrgencyFormScreen";
+export { PendingMembersScreen } from "./PendingMembersScreen";

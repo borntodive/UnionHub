@@ -1,10 +1,44 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import * as puppeteer from "puppeteer-core";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import {
+  PDFDocument,
+  rgb,
+  StandardFonts,
+  PDFTextField,
+  PDFDropdown,
+} from "pdf-lib";
 import * as fs from "fs";
 import * as path from "path";
 import { Document } from "./entities/document.entity";
+
+// Lightweight types for membership PDF — avoids circular module imports
+export interface MembershipPdfData {
+  nome: string;
+  cognome: string;
+  email: string;
+  crewcode: string;
+  telefono: string;
+  ruolo: string;
+  codiceFiscale: string;
+  natoA: string;
+  dataNascita: string;
+  residenteA: string;
+  cap: string;
+  provincia: string;
+  via: string;
+  numeroCivico: string;
+  tipoRapporto: string;
+  luogo: string;
+  consenso1: boolean;
+  consenso2: boolean;
+  signatureBase64: string;
+  gradeNome: string;
+  gradeCodice: string;
+  baseNome: string;
+  baseCodice: string;
+  attivista?: string;
+}
 
 @Injectable()
 export class PdfService {
@@ -983,5 +1017,205 @@ ${closingEn}
 
 </body>
 </html>`;
+  }
+
+  /**
+   * Fill the "DELEGA DI ADESIONE SINDACALE" FIT-CISL PDF template using pdf-lib.
+   * Returns the filled PDF as a Buffer.
+   */
+  async generateMembershipFormPdf(data: MembershipPdfData): Promise<Buffer> {
+    const templatePath = path.join(
+      PdfService.TEMPLATES_DIR,
+      "Modulo FIT-CISL - Piloti Malta Air - ITA.pdf",
+    );
+
+    const templateBytes = fs.readFileSync(templatePath);
+    const pdfDoc = await PDFDocument.load(templateBytes);
+    const form = pdfDoc.getForm();
+
+    const today = new Date();
+    const todayStr = today.toLocaleDateString("it-IT", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+
+    // Helper: set a text field, swallowing missing-field errors
+    const setText = (fieldName: string, value: string) => {
+      try {
+        form.getTextField(fieldName).setText(value);
+      } catch {
+        this.logger.warn(
+          `Membership form: text field "${fieldName}" not found`,
+        );
+      }
+    };
+
+    // ── Dati anagrafici ──────────────────────────────────────────────
+    setText("Cognome", data.cognome);
+    setText("Nome", data.nome);
+    setText("CF", data.codiceFiscale);
+    setText("Nato a", data.natoA);
+    setText("Nato il", data.dataNascita);
+    setText("Residente a", data.residenteA);
+    setText("CAP", data.cap);
+    setText("Provincia", data.provincia);
+    setText("Indirizzo", data.via);
+    setText("Civico", data.numeroCivico);
+    setText("Email", data.email);
+    setText("Cellulare", data.telefono);
+
+    // ── Dati lavorativi ───────────────────────────────────────────────
+    setText("Base", data.baseCodice);
+    setText("CREWCODE", data.crewcode);
+    setText("Attivista", data.attivista ?? "");
+
+    // Qualifica dropdown — template only contains pilot codes
+    const PILOT_QUALIFICHE = [
+      "TRE",
+      "TRI",
+      "LTC",
+      "CPT",
+      "SFI",
+      "FO",
+      "JFO",
+      "SO",
+    ];
+    try {
+      const qualificaField = form.getDropdown("Qualifica");
+      if (PILOT_QUALIFICHE.includes(data.gradeCodice)) {
+        qualificaField.select(data.gradeCodice);
+      }
+    } catch {
+      this.logger.warn("Membership form: dropdown 'Qualifica' not found");
+    }
+
+    // Tipo rapporto radio group
+    try {
+      const tipoValue =
+        data.tipoRapporto === "FULL_TIME"
+          ? "Fulltime"
+          : data.tipoRapporto === "PART_TIME_INDETERMINATO"
+            ? "PartTime Indete"
+            : "Tempo Indet";
+      form.getRadioGroup("Tipo Lavoro").select(tipoValue);
+    } catch {
+      this.logger.warn("Membership form: radio group 'Tipo Lavoro' not found");
+    }
+
+    // ── Date e luogo ──────────────────────────────────────────────────
+    setText("Luogo1", data.luogo);
+    setText("Data1", todayStr);
+    setText("Luogo2", data.luogo);
+    setText("Data2", todayStr);
+    // Clear signature text fields — will be replaced with the drawn image
+    setText("Firma1", "");
+    setText("Firma2", "");
+
+    // ── Consensi ─────────────────────────────────────────────────────
+    try {
+      form
+        .getRadioGroup("Consenso1")
+        .select(data.consenso1 ? "presto1" : "NonPresto1");
+    } catch {
+      this.logger.warn("Membership form: radio group 'Consenso1' not found");
+    }
+    try {
+      form
+        .getRadioGroup("Consenso2")
+        .select(data.consenso2 ? "Presto2" : "NonPresto2");
+    } catch {
+      this.logger.warn("Membership form: radio group 'Consenso2' not found");
+    }
+
+    // ── Firma (immagine PNG) ──────────────────────────────────────────
+    const sigBase64 = data.signatureBase64.replace(
+      /^data:image\/\w+;base64,/,
+      "",
+    );
+    const sigBytes = Buffer.from(sigBase64, "base64");
+
+    let sigImage: Awaited<ReturnType<typeof pdfDoc.embedPng>> | null = null;
+    try {
+      sigImage = await pdfDoc.embedPng(sigBytes);
+    } catch {
+      try {
+        sigImage = await pdfDoc.embedJpg(sigBytes);
+      } catch {
+        this.logger.warn("Membership form: could not embed signature image");
+      }
+    }
+
+    if (sigImage) {
+      const pages = pdfDoc.getPages();
+
+      // Draw signature over each Firma field using the field widget's rect
+      const drawSignatureOnField = (
+        fieldName: string,
+        fallbackPageIndex: number,
+      ) => {
+        try {
+          const field = form.getTextField(fieldName);
+          // Access widget annotations via the internal acroField (cast to any to
+          // work around pdf-lib's unexported PDFAcroTerminal typings)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const acrof = field.acroField as any;
+          const widgets: any[] = // eslint-disable-line @typescript-eslint/no-explicit-any
+            typeof acrof.getWidgets === "function" ? acrof.getWidgets() : [];
+          if (!widgets.length) {
+            this.logger.warn(
+              `Membership form: no widgets for "${fieldName}", skipping`,
+            );
+            return;
+          }
+          const rect: { x: number; y: number; width: number; height: number } =
+            widgets[0].getRectangle();
+          const pageRef =
+            typeof widgets[0].P === "function" ? widgets[0].P() : undefined;
+          const pageIndex = pageRef
+            ? pdfDoc.getPages().findIndex((p) => p.ref === pageRef)
+            : fallbackPageIndex;
+          const targetPage =
+            pageIndex >= 0 ? pages[pageIndex] : pages[fallbackPageIndex];
+          if (targetPage) {
+            targetPage.drawImage(sigImage!, {
+              x: rect.x,
+              y: rect.y,
+              width: rect.width,
+              height: rect.height,
+            });
+          }
+        } catch {
+          this.logger.warn(
+            `Membership form: could not draw signature on field "${fieldName}"`,
+          );
+        }
+      };
+
+      drawSignatureOnField("Firma1", 0);
+      drawSignatureOnField("Firma2", 1);
+    }
+
+    // Only regenerate appearance streams for text-based fields (TextField,
+    // Dropdown). Radio groups and checkboxes keep their original AP streams
+    // from the PDF template — their /AS (appearance state) was already set
+    // correctly by the select() calls above, and calling
+    // updateFieldAppearances() on them would replace the template's custom
+    // appearance streams with pdf-lib's generic ones (which render blank).
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    for (const field of form.getFields()) {
+      if (field instanceof PDFTextField || field instanceof PDFDropdown) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (field as any).updateAppearances(font);
+        } catch {
+          // ignore individual field errors
+        }
+      }
+    }
+    form.flatten();
+
+    const pdfBytes = await pdfDoc.save();
+    return Buffer.from(pdfBytes);
   }
 }

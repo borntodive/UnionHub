@@ -3,10 +3,15 @@ import * as fs from "fs";
 import * as path from "path";
 import { v4 as uuidv4 } from "uuid";
 
+// UUID v4 pattern — used to validate tempId and prevent path traversal
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 @Injectable()
 export class FileStorageService {
   private readonly logger = new Logger(FileStorageService.name);
   private readonly uploadDir: string;
+  private readonly tempDir: string;
 
   constructor() {
     // UPLOAD_BASE_DIR env var points to a persistent directory outside the
@@ -15,13 +20,74 @@ export class FileStorageService {
     const baseDir =
       process.env.UPLOAD_BASE_DIR || path.join(process.cwd(), "uploads");
     this.uploadDir = path.join(baseDir, "registration-forms");
+    this.tempDir = path.join(this.uploadDir, "temp");
     this.ensureUploadDirExists();
+    if (!fs.existsSync(this.tempDir)) {
+      fs.mkdirSync(this.tempDir, { recursive: true });
+    }
   }
 
   private ensureUploadDirExists(): void {
     if (!fs.existsSync(this.uploadDir)) {
       fs.mkdirSync(this.uploadDir, { recursive: true });
       this.logger.log(`Created upload directory: ${this.uploadDir}`);
+    }
+  }
+
+  private getTempFilePath(tempId: string): string {
+    if (!UUID_RE.test(tempId)) {
+      throw new Error("Invalid tempId");
+    }
+    return path.join(this.tempDir, `${tempId}.pdf`);
+  }
+
+  /** Save a PDF buffer to the temp directory. Returns the tempId (UUID). */
+  async savePdfTemp(buffer: Buffer): Promise<string> {
+    const tempId = uuidv4();
+    const filePath = this.getTempFilePath(tempId);
+    await fs.promises.writeFile(filePath, buffer);
+    this.logger.log(`Saved temp PDF: ${tempId}`);
+    return tempId;
+  }
+
+  /** Read a temp PDF and return it as a base64 string (no data: prefix). */
+  async getTempPdfBase64(tempId: string): Promise<string> {
+    const filePath = this.getTempFilePath(tempId);
+    if (!fs.existsSync(filePath)) {
+      throw new Error("Temp file not found");
+    }
+    const buf = await fs.promises.readFile(filePath);
+    return buf.toString("base64");
+  }
+
+  /** Move a temp file to the permanent registration-forms/{crewcode}/ directory. */
+  async moveTempToPermanent(tempId: string, crewcode: string): Promise<string> {
+    const tempPath = this.getTempFilePath(tempId);
+    if (!fs.existsSync(tempPath)) {
+      throw new Error(`Temp registration form not found: ${tempId}`);
+    }
+
+    const sanitizedCrewcode = crewcode.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const userDir = path.join(this.uploadDir, sanitizedCrewcode);
+    if (!fs.existsSync(userDir)) {
+      fs.mkdirSync(userDir, { recursive: true });
+    }
+
+    const filename = `${Date.now()}_registration.pdf`;
+    const destPath = path.join(userDir, filename);
+
+    await fs.promises.rename(tempPath, destPath);
+    const fileUrl = `/uploads/registration-forms/${sanitizedCrewcode}/${filename}`;
+    this.logger.log(`Moved temp ${tempId} → ${fileUrl}`);
+    return fileUrl;
+  }
+
+  /** Check whether a temp file with this ID exists. */
+  tempFileExists(tempId: string): boolean {
+    try {
+      return fs.existsSync(this.getTempFilePath(tempId));
+    } catch {
+      return false;
     }
   }
 

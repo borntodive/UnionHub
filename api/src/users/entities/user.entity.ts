@@ -112,6 +112,10 @@ export class User {
   @Column({ type: "boolean", default: false })
   isUSO: boolean;
 
+  // Registration status for self-registration flow
+  @Column({ type: "varchar", length: 20, default: "approved" })
+  registrationStatus: "pending" | "approved" | "rejected";
+
   // PDF Registration Form
   @Column({ type: "varchar", length: 500, nullable: true })
   registrationFormUrl: string | null;
@@ -168,6 +172,7 @@ export class User {
       grade: this.grade,
       isActive: this.isActive,
       mustChangePassword: this.mustChangePassword,
+      registrationStatus: this.registrationStatus,
       registrationFormUrl: this.registrationFormUrl,
       dataIscrizione: this.dataIscrizione,
       dateOfEntry: this.dateOfEntry,

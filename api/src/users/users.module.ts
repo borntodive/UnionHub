@@ -11,6 +11,8 @@ import { BasesModule } from "../bases/bases.module";
 import { ContractsModule } from "../contracts/contracts.module";
 import { GradesModule } from "../grades/grades.module";
 import { MailModule } from "../mail/mail.module";
+import { DocumentsModule } from "../documents/documents.module";
+import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { MailModule } from "../mail/mail.module";
     ContractsModule,
     GradesModule,
     MailModule,
+    DocumentsModule,
+    NotificationsModule,
   ],
   controllers: [UsersController],
   providers: [

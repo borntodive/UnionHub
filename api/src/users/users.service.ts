@@ -19,6 +19,12 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { UserRole } from "../common/enums/user-role.enum";
 import { Ruolo } from "../common/enums/ruolo.enum";
 import { MailService, RsaRlsContact } from "../mail/mail.service";
+import { PdfService } from "../documents/pdf.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { BasesService } from "../bases/bases.service";
+import { GradesService } from "../grades/grades.service";
+import { PublicRegisterDto } from "./dto/public-register.dto";
+import { FileStorageService } from "./services/file-storage.service";
 
 interface FindAllOptions {
   role?: UserRole;
@@ -30,6 +36,7 @@ interface FindAllOptions {
   search?: string;
   page?: number;
   perPage?: number;
+  registrationStatus?: string;
 }
 
 @Injectable()
@@ -40,6 +47,11 @@ export class UsersService {
     @InjectRepository(UserStatusHistory)
     private statusHistoryRepository: Repository<UserStatusHistory>,
     private readonly mailService: MailService,
+    private readonly pdfService: PdfService,
+    private readonly notificationsService: NotificationsService,
+    private readonly basesService: BasesService,
+    private readonly gradesService: GradesService,
+    private readonly fileStorageService: FileStorageService,
   ) {}
 
   // Helper to add entry to statusLog
@@ -80,6 +92,7 @@ export class UsersService {
       search,
       page = 1,
       perPage = 20,
+      registrationStatus,
     } = options;
 
     const where: any = {};
@@ -110,6 +123,10 @@ export class UsersService {
       where.gradeId = gradeId;
     }
 
+    if (registrationStatus) {
+      where.registrationStatus = registrationStatus;
+    }
+
     // Use QueryBuilder for more complex queries
     const queryBuilder = this.usersRepository
       .createQueryBuilder("user")
@@ -118,7 +135,14 @@ export class UsersService {
       .leftJoinAndSelect("user.grade", "grade")
       .where(where)
       .andWhere("user.isActive = :isActive", {
-        isActive: isActive !== undefined ? isActive : true,
+        // pending/rejected users are always isActive=false; skip the default true filter
+        isActive:
+          isActive !== undefined
+            ? isActive
+            : registrationStatus === "pending" ||
+                registrationStatus === "rejected"
+              ? false
+              : true,
       })
       .orderBy("user.cognome", "ASC")
       .addOrderBy("user.nome", "ASC")
@@ -1207,5 +1231,214 @@ export class UsersService {
       `modulo_iscrizione_${user.crewcode}_TEST.pdf`,
     );
     return { sent: true, to: user.email, crewcode: user.crewcode };
+  }
+
+  // ==================== SELF-REGISTRATION (PUBLIC) ====================
+
+  /**
+   * Register a new member via the public self-registration flow.
+   * Created with isActive=false and registrationStatus='pending'.
+   */
+  /**
+   * Generate a membership form PDF from dto + signature, save it to
+   * uploads/registration-forms/temp/ and return a tempId.
+   * Called between step 3 and step 4 of the wizard (pre-submit).
+   */
+  async prepareRegistration(
+    dto: PublicRegisterDto,
+  ): Promise<{ tempId: string }> {
+    const grade = await this.gradesService.findById(dto.gradeId);
+    const base = await this.basesService.findById(dto.baseId);
+
+    const pdfBuffer = await this.pdfService.generateMembershipFormPdf({
+      nome: dto.nome,
+      cognome: dto.cognome,
+      email: dto.email,
+      crewcode: dto.crewcode,
+      telefono: dto.telefono,
+      ruolo: dto.ruolo,
+      codiceFiscale: dto.codiceFiscale,
+      natoA: dto.natoA,
+      dataNascita: dto.dataNascita,
+      residenteA: dto.residenteA,
+      cap: dto.cap,
+      provincia: dto.provincia,
+      via: dto.via,
+      numeroCivico: dto.numeroCivico,
+      tipoRapporto: dto.tipoRapporto,
+      luogo: dto.luogo,
+      consenso1: dto.consenso1,
+      consenso2: dto.consenso2,
+      signatureBase64: dto.signatureBase64,
+      gradeNome: grade.nome,
+      gradeCodice: grade.codice,
+      baseNome: base.nome,
+      baseCodice: base.codice,
+      attivista: dto.attivista,
+    });
+
+    const tempId = await this.fileStorageService.savePdfTemp(pdfBuffer);
+    return { tempId };
+  }
+
+  /**
+   * Return the base64-encoded PDF for a temp registration form.
+   * Used by the mobile wizard to show a preview before submitting.
+   */
+  async getRegistrationPreview(tempId: string): Promise<string> {
+    if (!this.fileStorageService.tempFileExists(tempId)) {
+      throw new NotFoundException(
+        "Preview not found or expired. Please go back to step 3 and re-sign.",
+      );
+    }
+    return this.fileStorageService.getTempPdfBase64(tempId);
+  }
+
+  async registerPublic(dto: PublicRegisterDto): Promise<User> {
+    // 1. Check uniqueness
+    const existingByCrewcode = await this.usersRepository.findOne({
+      where: { crewcode: dto.crewcode },
+    });
+    if (existingByCrewcode) {
+      throw new ConflictException("A user with this crewcode already exists");
+    }
+
+    const existingByEmail = await this.usersRepository.findOne({
+      where: { email: dto.email },
+    });
+    if (existingByEmail) {
+      throw new ConflictException("A user with this email already exists");
+    }
+
+    // 2. Get the permanent registration form URL.
+    //    If a tempId was provided (normal wizard flow), move the already-generated
+    //    temp file to the permanent storage. Otherwise fall back to regenerating.
+    let registrationFormUrl: string;
+    if (dto.tempId && this.fileStorageService.tempFileExists(dto.tempId)) {
+      registrationFormUrl = await this.fileStorageService.moveTempToPermanent(
+        dto.tempId,
+        dto.crewcode,
+      );
+    } else {
+      // Fallback: generate PDF on the fly (no pre-generated temp)
+      const grade = await this.gradesService.findById(dto.gradeId);
+      const base = await this.basesService.findById(dto.baseId);
+      const pdfBuffer = await this.pdfService.generateMembershipFormPdf({
+        nome: dto.nome,
+        cognome: dto.cognome,
+        email: dto.email,
+        crewcode: dto.crewcode,
+        telefono: dto.telefono,
+        ruolo: dto.ruolo,
+        codiceFiscale: dto.codiceFiscale,
+        natoA: dto.natoA,
+        dataNascita: dto.dataNascita,
+        residenteA: dto.residenteA,
+        cap: dto.cap,
+        provincia: dto.provincia,
+        via: dto.via,
+        numeroCivico: dto.numeroCivico,
+        tipoRapporto: dto.tipoRapporto,
+        luogo: dto.luogo,
+        consenso1: dto.consenso1,
+        consenso2: dto.consenso2,
+        signatureBase64: dto.signatureBase64,
+        gradeNome: grade.nome,
+        gradeCodice: grade.codice,
+        baseNome: base.nome,
+        baseCodice: base.codice,
+      });
+      const tempId = await this.fileStorageService.savePdfTemp(pdfBuffer);
+      registrationFormUrl = await this.fileStorageService.moveTempToPermanent(
+        tempId,
+        dto.crewcode,
+      );
+    }
+
+    // 3. Hash default password
+    const hashedPassword = await bcrypt.hash("password", 10);
+
+    // 4. Create user
+    const user = this.usersRepository.create({
+      nome: dto.nome,
+      cognome: dto.cognome,
+      email: dto.email,
+      crewcode: dto.crewcode,
+      telefono: dto.telefono,
+      ruolo: dto.ruolo,
+      gradeId: dto.gradeId,
+      baseId: dto.baseId,
+      password: hashedPassword,
+      role: UserRole.USER,
+      isActive: false,
+      registrationStatus: "pending",
+      mustChangePassword: true,
+      registrationFormUrl,
+    });
+
+    const savedUser = await this.usersRepository.save(user);
+
+    // 5. Notify admins (fire-and-forget)
+    this.notificationsService
+      .notifyAdmins(
+        dto.ruolo,
+        "Nuova richiesta di iscrizione",
+        `${dto.nome} ${dto.cognome} ha inviato una richiesta di adesione`,
+        { type: "NEW_REGISTRATION", userId: savedUser.id },
+      )
+      .catch(() => {});
+
+    return savedUser;
+  }
+
+  /**
+   * Approve a pending registration → isActive=true, registrationStatus='approved'.
+   */
+  async approveRegistration(userId: string): Promise<User> {
+    const user = await this.findById(userId);
+
+    if (user.registrationStatus !== "pending") {
+      throw new ConflictException("User registration is not in pending status");
+    }
+
+    user.isActive = true;
+    user.registrationStatus = "approved";
+    user.dataIscrizione = new Date();
+
+    const saved = await this.usersRepository.save(user);
+
+    // Send welcome email (fire-and-forget)
+    this.mailService.sendWelcomeEmail(saved, "password").catch(() => {});
+
+    return saved;
+  }
+
+  /**
+   * Reject a pending registration → registrationStatus='rejected', isActive remains false.
+   */
+  async rejectRegistration(userId: string): Promise<User> {
+    const user = await this.findById(userId);
+
+    if (user.registrationStatus !== "pending") {
+      throw new ConflictException("User registration is not in pending status");
+    }
+
+    user.registrationStatus = "rejected";
+    return this.usersRepository.save(user);
+  }
+
+  /**
+   * Count pending registrations, scoped to ruolo for Admin users.
+   */
+  async getPendingCount(ruolo?: Ruolo): Promise<number> {
+    const query = this.usersRepository
+      .createQueryBuilder("user")
+      .where("user.registrationStatus = :status", { status: "pending" });
+
+    if (ruolo) {
+      query.andWhere("user.ruolo = :ruolo", { ruolo });
+    }
+
+    return query.getCount();
   }
 }
