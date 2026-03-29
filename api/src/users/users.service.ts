@@ -473,7 +473,7 @@ export class UsersService {
       });
     }
 
-    return savedUser;
+    return this.findById(savedUser.id);
   }
 
   async remove(id: string, requestingUser: User): Promise<void> {
