@@ -1023,11 +1023,15 @@ ${closingEn}
    * Fill the "DELEGA DI ADESIONE SINDACALE" FIT-CISL PDF template using pdf-lib.
    * Returns the filled PDF as a Buffer.
    */
-  async generateMembershipFormPdf(data: MembershipPdfData): Promise<Buffer> {
-    const templatePath = path.join(
-      PdfService.TEMPLATES_DIR,
-      "Modulo FIT-CISL - Piloti Malta Air - ITA.pdf",
-    );
+  async generateMembershipFormPdf(
+    data: MembershipPdfData,
+    language: "it" | "en" = "it",
+  ): Promise<Buffer> {
+    const templateFile =
+      language === "en"
+        ? "Modulo FIT-CISL - Piloti Malta Air - ENG.pdf"
+        : "Modulo FIT-CISL - Piloti Malta Air - ITA.pdf";
+    const templatePath = path.join(PdfService.TEMPLATES_DIR, templateFile);
 
     const templateBytes = fs.readFileSync(templatePath);
     const pdfDoc = await PDFDocument.load(templateBytes);
@@ -1090,18 +1094,54 @@ ${closingEn}
       this.logger.warn("Membership form: dropdown 'Qualifica' not found");
     }
 
+    // Helper: draw a filled circle on the widget that matches selectedValue.
+    // Uses getOptions() + getWidgets() index parity: pdf-lib builds both lists
+    // by iterating widgets in the same order, so options[i] === widgets[i].
+    // This avoids relying on appearance streams, which may be absent in the template.
+    const drawRadioMark = (groupName: string, selectedValue: string) => {
+      try {
+        const radioGroup = form.getRadioGroup(groupName);
+        const options = radioGroup.getOptions();
+        const idx = options.indexOf(selectedValue);
+        if (idx < 0) {
+          this.logger.warn(
+            `Membership form: '${selectedValue}' not in radio group '${groupName}' options [${options.join(", ")}]`,
+          );
+          return;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const widgets: any[] =
+          (radioGroup.acroField as any).getWidgets?.() ?? [];
+        const widget = widgets[idx];
+        if (!widget) return;
+
+        const rect: { x: number; y: number; width: number; height: number } =
+          widget.getRectangle();
+        const pageRef = typeof widget.P === "function" ? widget.P() : undefined;
+        const pageIndex = pageRef
+          ? pdfDoc.getPages().findIndex((p) => p.ref === pageRef)
+          : 0;
+        const targetPage = pdfDoc.getPage(pageIndex >= 0 ? pageIndex : 0);
+
+        const cx = rect.x + rect.width / 2;
+        const cy = rect.y + rect.height / 2;
+        const r = Math.min(rect.width, rect.height) * 0.28;
+        targetPage.drawCircle({ x: cx, y: cy, size: r, color: rgb(0, 0, 0) });
+      } catch {
+        this.logger.warn(
+          `Membership form: could not draw radio mark for group '${groupName}' value '${selectedValue}'`,
+        );
+      }
+    };
+
     // Tipo rapporto radio group
-    try {
-      const tipoValue =
-        data.tipoRapporto === "FULL_TIME"
-          ? "Fulltime"
-          : data.tipoRapporto === "PART_TIME_INDETERMINATO"
-            ? "PartTime Indete"
-            : "Tempo Indet";
-      form.getRadioGroup("Tipo Lavoro").select(tipoValue);
-    } catch {
-      this.logger.warn("Membership form: radio group 'Tipo Lavoro' not found");
-    }
+    const tipoValue =
+      data.tipoRapporto === "FULL_TIME"
+        ? "Fulltime"
+        : data.tipoRapporto === "PART_TIME_INDETERMINATO"
+          ? "PartTime Indete"
+          : "Tempo Indet";
+    drawRadioMark("Tipo Lavoro", tipoValue);
 
     // ── Date e luogo ──────────────────────────────────────────────────
     setText("Luogo1", data.luogo);
@@ -1113,20 +1153,8 @@ ${closingEn}
     setText("Firma2", "");
 
     // ── Consensi ─────────────────────────────────────────────────────
-    try {
-      form
-        .getRadioGroup("Consenso1")
-        .select(data.consenso1 ? "presto1" : "NonPresto1");
-    } catch {
-      this.logger.warn("Membership form: radio group 'Consenso1' not found");
-    }
-    try {
-      form
-        .getRadioGroup("Consenso2")
-        .select(data.consenso2 ? "Presto2" : "NonPresto2");
-    } catch {
-      this.logger.warn("Membership form: radio group 'Consenso2' not found");
-    }
+    drawRadioMark("Consenso1", data.consenso1 ? "presto1" : "NonPresto1");
+    drawRadioMark("Consenso2", data.consenso2 ? "Presto2" : "NonPresto2");
 
     // ── Firma (immagine PNG) ──────────────────────────────────────────
     const sigBase64 = data.signatureBase64.replace(
