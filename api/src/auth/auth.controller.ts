@@ -7,11 +7,18 @@ import {
   UseGuards,
   Request,
   Get,
+  Param,
   Headers,
   Ip,
+  NotFoundException,
+  Res,
 } from "@nestjs/common";
+import { Response } from "express";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
+import { UsersService } from "../users/users.service";
+import { BasesService } from "../bases/bases.service";
+import { GradesService } from "../grades/grades.service";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { LoginDto } from "./dto/login.dto";
 import { RefreshTokenDto } from "./dto/refresh-token.dto";
@@ -20,6 +27,7 @@ import {
   ForceChangePasswordDto,
 } from "./dto/change-password.dto";
 import { AuthResponseDto } from "./dto/auth-response.dto";
+import { PublicRegisterDto } from "../users/dto/public-register.dto";
 import { User } from "../users/entities/user.entity";
 
 interface RequestWithUser extends Request {
@@ -33,7 +41,62 @@ interface RequestWithUser extends Request {
 
 @Controller("auth")
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private usersService: UsersService,
+    private basesService: BasesService,
+    private gradesService: GradesService,
+  ) {}
+
+  /** Step 3→4: generate PDF, save to temp dir, return tempId for preview. */
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
+  @Post("register/prepare")
+  @HttpCode(HttpStatus.OK)
+  async prepareRegistration(
+    @Body() dto: PublicRegisterDto,
+  ): Promise<{ tempId: string }> {
+    return this.usersService.prepareRegistration(dto);
+  }
+
+  /** Serve the temp PDF as base64 so the wizard can show a preview. */
+  @Get("register/preview/:tempId")
+  async getRegistrationPreview(
+    @Param("tempId") tempId: string,
+  ): Promise<{ base64: string }> {
+    const base64 = await this.usersService.getRegistrationPreview(tempId);
+    return { base64 };
+  }
+
+  /** Serve the temp PDF as a raw binary file (application/pdf).
+   *  Used by the mobile WebView to display the preview inline via HTTP. */
+  @Get("register/preview-file/:tempId")
+  async getRegistrationPreviewFile(
+    @Param("tempId") tempId: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const base64 = await this.usersService.getRegistrationPreview(tempId);
+    const buffer = Buffer.from(base64, "base64");
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": "inline; filename=modulo_adesione.pdf",
+      "Content-Length": buffer.length,
+    });
+    res.end(buffer);
+  }
+
+  @Throttle({ default: { ttl: 60000, limit: 3 } })
+  @Post("register")
+  @HttpCode(HttpStatus.CREATED)
+  async register(
+    @Body() dto: PublicRegisterDto,
+  ): Promise<{ message: string; userId: string }> {
+    const user = await this.usersService.registerPublic(dto);
+    return {
+      message:
+        "Registration submitted successfully. You will receive an email once an admin approves your request.",
+      userId: user.id,
+    };
+  }
 
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post("login")
@@ -115,5 +178,16 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async getProfile(@Request() req: RequestWithUser): Promise<Partial<User>> {
     return this.authService.getProfile(req.user.userId);
+  }
+
+  /** Public — used by the self-registration wizard to populate dropdowns */
+  @Get("register/bases")
+  async getPublicBases() {
+    return this.basesService.findAll();
+  }
+
+  @Get("register/grades")
+  async getPublicGrades() {
+    return this.gradesService.findAll();
   }
 }

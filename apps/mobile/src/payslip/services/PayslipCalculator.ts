@@ -149,6 +149,7 @@ export class PayslipCalculator {
       taxArea,
       areaINPS,
       payslipItems.additionalPayments,
+      payslipItems.union.total,
     );
 
     // Add pension fund to IRPEF
@@ -529,11 +530,13 @@ export class PayslipCalculator {
       taxFreeArea += total - taxable;
     }
 
-    // Subtract deductions (all deductions have positive totals and isDeduction=true)
+    // Subtract deductions that reduce both INPS and IRPEF bases
+    // NOTE: union fee is intentionally excluded here — it does NOT reduce
+    //       INPS imponibile (art. 23 DPR 600/73). It is subtracted only in
+    //       calculateIRPEF() where it reduces the IRPEF taxable base.
     taxArea -= payslip.ul.total.total;
     taxArea -= payslip.parentalLeave.total.total;
     taxArea -= payslip.leave104.total.total;
-    taxArea -= payslip.union.total;
     for (const ded of payslip.additionalDeductions) {
       taxArea -= ded.total;
     }
@@ -575,6 +578,7 @@ export class PayslipCalculator {
     taxArea: number,
     inps: INPS,
     additionalPayments: AdditionalItem[],
+    unionFee: number,
   ): IRPEF {
     const inpsContribution = inps.contribuzioneTotale;
 
@@ -583,8 +587,10 @@ export class PayslipCalculator {
       .filter((ap) => ap.isSLR)
       .reduce((sum, ap) => sum + ap.total, 0);
 
-    // Taxable income after INPS
-    const imponibile = taxArea - inpsContribution + slrPayments;
+    // Taxable income after INPS.
+    // Union fee is deductible from IRPEF (art. 10 TUIR) but NOT from INPS,
+    // so it is subtracted here (not in calculateTaxAreas).
+    const imponibile = taxArea - inpsContribution + slrPayments - unionFee;
 
     // Annual projection
     const annualIncome = imponibile * 12;

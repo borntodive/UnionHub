@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -35,7 +35,9 @@ import {
   Database,
   Mail,
   Thermometer,
+  UserCheck,
 } from "lucide-react-native";
+import { usersApi } from "../api/users";
 
 import { colors, spacing, typography, borderRadius } from "../theme";
 import { useAuthStore } from "../store/authStore";
@@ -111,6 +113,16 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
   const isRsa = user?.rsa === true;
+
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    if (!isAdmin || !isOnline) return;
+    usersApi
+      .getPendingCount()
+      .then((c) => setPendingCount(c))
+      .catch(() => {});
+  }, [isAdmin, isOnline]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
@@ -311,6 +323,15 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                       props.navigation.closeDrawer();
                     }}
                   />
+                  <MenuItem
+                    icon={<UserCheck size={22} color={colors.primary} />}
+                    label="Iscrizioni Pendenti"
+                    badge={pendingCount > 0 ? pendingCount : undefined}
+                    onPress={() => {
+                      props.navigation.navigate("PendingMembers");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
 
                   {/* Sezione Comunicati */}
                   <View style={styles.sectionDivider} />
@@ -454,12 +475,20 @@ interface MenuItemProps {
   icon: React.ReactNode;
   label: string;
   onPress: () => void;
+  badge?: number;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress }) => (
+const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, badge }) => (
   <TouchableOpacity style={styles.menuItem} onPress={onPress}>
     <View style={styles.menuIcon}>{icon}</View>
     <Text style={styles.menuLabel}>{label}</Text>
+    {badge !== undefined && badge > 0 && (
+      <View style={styles.menuItemBadge}>
+        <Text style={styles.menuItemBadgeText}>
+          {badge > 99 ? "99+" : badge}
+        </Text>
+      </View>
+    )}
   </TouchableOpacity>
 );
 
@@ -797,6 +826,21 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginLeft: spacing.md,
     fontWeight: typography.weights.medium,
+    flex: 1,
+  },
+  menuItemBadge: {
+    backgroundColor: colors.error,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 5,
+  },
+  menuItemBadgeText: {
+    color: colors.textInverse,
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.bold,
   },
   drawerFooter: {
     borderTopWidth: 1,

@@ -100,6 +100,7 @@ export const ResultScreen: React.FC = () => {
     trainingPay: payslipItems.trainingPay.total,
     ccTraining: payslipItems.ccTraining.total,
     commissions: payslipItems.commissions.total,
+    itud: payslipItems.itud.total,
   };
 
   const deductionsBreakdown = {
@@ -109,14 +110,14 @@ export const ResultScreen: React.FC = () => {
     leave104: payslipItems.leave104.total.total,
   };
 
-  const sumOfEarnings = Object.values(earningsBreakdown).reduce(
-    (a, b) => a + b,
-    0,
-  );
-  const sumOfDeductions = Object.values(deductionsBreakdown).reduce(
-    (a, b) => a + b,
-    0,
-  );
+  const sumOfEarnings =
+    Object.values(earningsBreakdown).reduce((a, b) => a + b, 0) +
+    payslipItems.additionalPayments.reduce((sum, ap) => sum + ap.total, 0);
+
+  const sumOfDeductions =
+    Object.values(deductionsBreakdown).reduce((a, b) => a + b, 0) +
+    payslipItems.additionalDeductions.reduce((sum, ded) => sum + ded.total, 0);
+
   const totalEarnings = sumOfEarnings - sumOfDeductions;
 
   return (
@@ -242,6 +243,9 @@ export const ResultScreen: React.FC = () => {
               label={t("payslip.commissions")}
               item={payslipItems.commissions}
             />
+          )}
+          {payslipItems.itud.total > 0 && (
+            <PayslipItemRow label="ITUD" item={payslipItems.itud} />
           )}
 
           {/* Additional Payments */}

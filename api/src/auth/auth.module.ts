@@ -7,11 +7,15 @@ import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { UsersModule } from "../users/users.module";
+import { BasesModule } from "../bases/bases.module";
+import { GradesModule } from "../grades/grades.module";
 import { RefreshToken } from "../refresh-tokens/entities/refresh-token.entity";
 
 @Module({
   imports: [
     UsersModule,
+    BasesModule,
+    GradesModule,
     PassportModule.register({ defaultStrategy: "jwt" }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

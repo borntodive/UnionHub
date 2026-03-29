@@ -271,4 +271,28 @@ export const usersApi = {
     });
     return response.data;
   },
+
+  approveRegistration: async (userId: string): Promise<User> => {
+    const response = await apiClient.post<User>(`/users/${userId}/approve`);
+    return response.data;
+  },
+
+  rejectRegistration: async (userId: string): Promise<User> => {
+    const response = await apiClient.post<User>(`/users/${userId}/reject`);
+    return response.data;
+  },
+
+  getPendingCount: async (): Promise<number> => {
+    const response = await apiClient.get<{ count: number }>(
+      "/users/pending-count",
+    );
+    return response.data.count;
+  },
+
+  getPendingUsers: async (): Promise<PaginatedResponse<User>> => {
+    const response = await apiClient.get<PaginatedResponse<User>>("/users", {
+      params: { registrationStatus: "pending", perPage: 50 },
+    });
+    return response.data;
+  },
 };

@@ -27,7 +27,7 @@ export const PdfViewerScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<PdfViewerRouteProp>();
   const insets = useSafeAreaInsets();
-  const { documentId, title } = route.params;
+  const { documentId, url, title } = route.params;
 
   const [fileUri, setFileUri] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,13 +39,26 @@ export const PdfViewerScreen: React.FC = () => {
 
     const loadPdf = async () => {
       try {
-        const base64 = await documentsApi.getPdfBase64(documentId);
-        if (!base64) {
-          setError("PDF non disponibile");
+        let base64: string;
+
+        if (url) {
+          // Direct base64 data URL provided (e.g. from registrationFormUrl)
+          const prefix = "data:application/pdf;base64,";
+          base64 = url.startsWith(prefix) ? url.slice(prefix.length) : url;
+        } else if (documentId) {
+          const result = await documentsApi.getPdfBase64(documentId);
+          if (!result) {
+            setError("PDF non disponibile");
+            return;
+          }
+          base64 = result;
+        } else {
+          setError("Nessun documento specificato");
           return;
         }
-        const uri =
-          FileSystem.cacheDirectory + `doc_${documentId}_${Date.now()}.pdf`;
+
+        const id = documentId || "reg";
+        const uri = FileSystem.cacheDirectory + `doc_${id}_${Date.now()}.pdf`;
         await FileSystem.writeAsStringAsync(uri, base64, {
           encoding: FileSystem.EncodingType.Base64,
         });
@@ -53,7 +66,6 @@ export const PdfViewerScreen: React.FC = () => {
           cachedUriRef.current = uri;
           setFileUri(uri);
         } else {
-          // Component unmounted before write finished — delete immediately
           FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
         }
       } catch (e: any) {
@@ -72,7 +84,7 @@ export const PdfViewerScreen: React.FC = () => {
         cachedUriRef.current = null;
       }
     };
-  }, [documentId]);
+  }, [documentId, url]);
 
   const handleShare = async () => {
     if (!fileUri) return;
