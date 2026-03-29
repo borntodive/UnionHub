@@ -16,6 +16,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/types";
 import { useTranslation } from "react-i18next";
+import { setLanguage } from "../../i18n";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { Button } from "../../components/Button";
@@ -87,6 +88,10 @@ export const LoginScreen: React.FC = () => {
               password: biometricCredentials.password,
             });
             setAuth(response);
+            // Set language from user preference
+            if (response.user?.language) {
+              await setLanguage(response.user.language);
+            }
             syncPayslipSettings();
           } catch {
             Alert.alert(t("errors.generic"), t("auth.sessionExpired"), [
@@ -108,8 +113,12 @@ export const LoginScreen: React.FC = () => {
 
   const loginMutation = useMutation({
     mutationFn: authApi.login,
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       setAuth(data);
+      // Set language from user preference
+      if (data.user?.language) {
+        await setLanguage(data.user.language);
+      }
       syncPayslipSettings();
       // Store credentials used for this login
       setLastLoginCredentials({
@@ -184,6 +193,10 @@ export const LoginScreen: React.FC = () => {
           password: biometricCredentials.password,
         });
         setAuth(response);
+        // Set language from user preference
+        if (response.user?.language) {
+          await setLanguage(response.user.language);
+        }
         syncPayslipSettings();
       } catch (error: any) {
         Alert.alert(t("errors.generic"), t("auth.sessionExpired"));
