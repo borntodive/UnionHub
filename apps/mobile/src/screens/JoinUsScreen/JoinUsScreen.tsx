@@ -240,7 +240,7 @@ export const JoinUsScreen: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const { t, i18n } = useTranslation();
   const [language, setLanguage] = useState<"it" | "en">(
-    (i18n.language?.startsWith("it") ? "it" : "en") as "it" | "en"
+    (i18n.language?.startsWith("it") ? "it" : "en") as "it" | "en",
   );
 
   // Sync local language state with i18n when it changes (e.g., from Settings screen)
