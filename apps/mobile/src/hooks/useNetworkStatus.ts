@@ -3,6 +3,7 @@ import { NativeModules } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useOfflineStore } from "../store/offlineStore";
 import { issuesApi } from "../api/issues";
+import { usersApi } from "../api/users";
 
 // @react-native-community/netinfo requires a native module not available in Expo Go.
 // Guard the import so the app doesn't crash in Expo Go.
@@ -46,6 +47,23 @@ async function syncPendingIssues(
 }
 
 /**
+ * Syncs any pending language change to the server.
+ */
+async function syncPendingLanguageChange() {
+  const { pendingLanguageChange, setPendingLanguageChange } =
+    useOfflineStore.getState();
+  if (!pendingLanguageChange) return;
+
+  try {
+    await usersApi.updateMe({ language: pendingLanguageChange.language });
+    // Clear the pending change after successful sync
+    setPendingLanguageChange(null);
+  } catch {
+    // Keep in queue — will retry on next reconnect
+  }
+}
+
+/**
  * Monitors network connectivity and:
  * - Updates offlineStore.isOnline
  * - Syncs the pending issues queue when coming back online
@@ -62,6 +80,7 @@ export const useNetworkStatus = () => {
       // Native module unavailable (Expo Go) — assume online
       useOfflineStore.getState().setIsOnline(true);
       syncPendingIssues(queryClient);
+      syncPendingLanguageChange();
       return;
     }
 
@@ -73,6 +92,7 @@ export const useNetworkStatus = () => {
     });
 
     syncPendingIssues(queryClient);
+    syncPendingLanguageChange();
 
     return unsubscribe;
   }, [queryClient]); // queryClient is stable — this runs exactly once
@@ -81,6 +101,7 @@ export const useNetworkStatus = () => {
   useEffect(() => {
     if (prevOnlineRef.current === false && isOnline === true) {
       syncPendingIssues(queryClient);
+      syncPendingLanguageChange();
     }
     prevOnlineRef.current = isOnline;
   }, [isOnline, queryClient]);

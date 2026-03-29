@@ -27,6 +27,7 @@ import { colors, spacing, typography, borderRadius } from "../../theme";
 import { useAuthStore } from "../../store/authStore";
 import { UserRole } from "../../types";
 import apiClient from "../../api/client";
+import { usersApi } from "../../api/users";
 import { setLanguage, getLanguage } from "../../i18n";
 import { usePayslipStore } from "../../payslip/store/usePayslipStore";
 import { useOfflineStore } from "../../store/offlineStore";
@@ -566,8 +567,34 @@ export const SettingsScreen: React.FC = () => {
     );
   };
 
-  const handleLanguageChange = async (langCode: string) => {
+  const handleLanguageChange = async (langCode: "it" | "en") => {
+    // Always save locally first
     await setLanguage(langCode);
+
+    // If authenticated, sync with backend
+    if (user) {
+      const { isOnline, setPendingLanguageChange } = useOfflineStore.getState();
+
+      if (isOnline) {
+        // Online: save directly to backend
+        try {
+          await usersApi.updateMe({ language: langCode });
+        } catch {
+          // If fails, queue for later
+          setPendingLanguageChange({
+            language: langCode,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      } else {
+        // Offline: queue for later
+        setPendingLanguageChange({
+          language: langCode,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    }
+
     setShowLanguageModal(false);
   };
 
