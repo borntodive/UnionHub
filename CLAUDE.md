@@ -411,6 +411,14 @@ All accounts use `password` as the default password. `mustChangePassword` is `fa
 - Variables/functions: camelCase
 - Constants: UPPER_SNAKE_CASE
 
+### Internationalization (i18n)
+
+- Uses `react-i18next` with `useTranslation()` hook
+- Translation files in `apps/mobile/src/i18n/` — `en.json` (source), `it.json` (Italian)
+- **Namespace convention**: Use dot notation `t("namespace.key")` — NOT colon notation `t("namespace:key")`
+- Organize translations by feature/screen namespace (e.g., `navigation.pendingMembers`, `pdfViewer.loading`, `joinUs.step1Title`)
+- Access nested keys: `t("navigation.members")` not `t("navigation:members")`
+
 ## Documentation
 
 `AGENTS.md` (root) contains the complete reference: full API endpoint list, database schema with enums, security model, PDF generation details, and adding-a-new-module guide.
