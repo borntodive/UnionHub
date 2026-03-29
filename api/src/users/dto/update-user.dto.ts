@@ -101,4 +101,9 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   dateOfCaptaincy?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  language?: string;
 }

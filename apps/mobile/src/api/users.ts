@@ -49,6 +49,7 @@ export interface UpdateUserData {
   dataIscrizione?: string;
   dateOfEntry?: string;
   dateOfCaptaincy?: string;
+  language?: "it" | "en";
 }
 
 export interface PaginatedResponse<T> {

@@ -28,6 +28,11 @@ export interface NotificationPrefs {
   newDocument: boolean;
 }
 
+export interface PendingLanguageChange {
+  language: "it" | "en";
+  timestamp: string;
+}
+
 const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   issueStatusUpdate: true,
   newIssue: true,
@@ -39,6 +44,7 @@ export interface OfflineState {
   categories: IssueCategory[];
   urgencies: IssueUrgency[];
   pendingIssues: PendingIssue[];
+  pendingLanguageChange: PendingLanguageChange | null;
   notifications: StoredNotification[];
   notificationPrefs: NotificationPrefs;
   setIsOnline: (online: boolean) => void;
@@ -46,6 +52,9 @@ export interface OfflineState {
   setUrgencies: (urgencies: IssueUrgency[]) => void;
   addPendingIssue: (issue: Omit<PendingIssue, "localId" | "createdAt">) => void;
   removePendingIssue: (localId: string) => void;
+  setPendingLanguageChange: (
+    languageChange: PendingLanguageChange | null,
+  ) => void;
   addNotification: (notification: StoredNotification) => void;
   clearNotifications: () => void;
   setNotificationPrefs: (prefs: Partial<NotificationPrefs>) => void;
@@ -59,6 +68,7 @@ export function createOfflineStore(storage: StorageAdapter) {
         categories: [],
         urgencies: [],
         pendingIssues: [],
+        pendingLanguageChange: null,
         notifications: [],
         notificationPrefs: DEFAULT_NOTIFICATION_PREFS,
 
@@ -84,6 +94,9 @@ export function createOfflineStore(storage: StorageAdapter) {
               (i) => i.localId !== localId,
             ),
           })),
+
+        setPendingLanguageChange: (languageChange) =>
+          set({ pendingLanguageChange: languageChange }),
 
         addNotification: (notification) =>
           set((state) => {
@@ -111,6 +124,7 @@ export function createOfflineStore(storage: StorageAdapter) {
           categories: state.categories,
           urgencies: state.urgencies,
           pendingIssues: state.pendingIssues,
+          pendingLanguageChange: state.pendingLanguageChange,
           notifications: state.notifications,
           notificationPrefs: state.notificationPrefs,
         }),
