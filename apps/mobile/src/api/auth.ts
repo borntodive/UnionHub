@@ -25,6 +25,7 @@ export interface PublicRegisterPayload {
   signatureBase64: string;
   attivista?: string;
   tempId?: string;
+  language?: "it" | "en";
 }
 
 export const authApi = {

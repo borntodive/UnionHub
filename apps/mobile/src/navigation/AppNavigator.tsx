@@ -39,7 +39,6 @@ import { useAuthStore } from "../store/authStore";
 import { SharedFileHandler } from "../components/SharedFileHandler";
 import { CompleteProfileScreen } from "../screens/CompleteProfileScreen/CompleteProfileScreen";
 import { JoinUsScreen } from "../screens/JoinUsScreen/JoinUsScreen";
-import { PendingMembersScreen } from "../screens/admin/PendingMembersScreen";
 import { EmailDetailScreen } from "../gmail/screens/EmailDetailScreen";
 import { GmailSetupScreen } from "../gmail/screens/GmailSetupScreen";
 import { CtcScreen } from "../screens/CtcScreen";
@@ -281,12 +280,7 @@ export const AppNavigator: React.FC = () => {
               component={CtcScreen}
               options={{ headerShown: false }}
             />
-            <Stack.Screen
-              name="PendingMembers"
-              component={PendingMembersScreen}
-              options={{ headerShown: false }}
-            />
-            {/* Note: CLA Contract screens moved to DrawerNavigator */}
+            {/* Note: CLA Contract screens and PendingMembers moved to DrawerNavigator */}
           </>
         )}
       </Stack.Navigator>

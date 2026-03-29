@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsNotEmpty,
   IsOptional,
+  IsIn,
 } from "class-validator";
 import { Ruolo } from "../../common/enums/ruolo.enum";
 
@@ -100,4 +101,9 @@ export class PublicRegisterDto {
   @IsOptional()
   @IsString()
   tempId?: string;
+
+  // ── Form language (default: 'it') ─────────────────────────────────
+  @IsOptional()
+  @IsIn(["it", "en"])
+  language?: "it" | "en";
 }
