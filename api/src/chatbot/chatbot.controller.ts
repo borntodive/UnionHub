@@ -10,6 +10,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Logger,
 } from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
 import { Response } from "express";
@@ -25,6 +26,8 @@ import { ChatDto } from "./dto/chat.dto";
 @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
 @SkipThrottle()
 export class ChatbotController {
+  private readonly logger = new Logger(ChatbotController.name);
+
   constructor(private readonly chatbotService: ChatbotService) {}
 
   @Post("chat")
@@ -72,8 +75,12 @@ export class ChatbotController {
         flush();
       }
     } catch (err) {
+      this.logger.error(
+        "Chatbot stream error",
+        err instanceof Error ? err.stack : err,
+      );
       res.write(
-        `data: ${JSON.stringify({ error: "Stream error: " + err.message })}\n\n`,
+        `data: ${JSON.stringify({ error: "Generation failed. Please try again." })}\n\n`,
       );
       flush();
     }

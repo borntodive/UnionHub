@@ -3,6 +3,7 @@ import {
   Logger,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, DataSource } from "typeorm";
@@ -14,6 +15,7 @@ import { KnowledgeBaseDocument } from "./entities/knowledge-base-document.entity
 import { KnowledgeBaseChunk } from "./entities/knowledge-base-chunk.entity";
 import { OllamaService } from "../ollama/ollama.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { UserRole } from "../common/enums/user-role.enum";
 
 const CHUNK_WORDS = 300;
 const CHUNK_OVERLAP_WORDS = 30;
@@ -285,9 +287,23 @@ export class KnowledgeBaseService {
     return this.docRepo.find({ order: { createdAt: "DESC" } });
   }
 
-  async deleteDocument(id: string): Promise<void> {
+  async deleteDocument(
+    id: string,
+    requestingUserId: string,
+    requestingUserRole: string,
+    requestingUserRuolo: string | null,
+  ): Promise<void> {
     const doc = await this.docRepo.findOne({ where: { id } });
     if (!doc) throw new NotFoundException("Document not found");
+
+    // Admins can only delete documents scoped to their own professional role
+    // (SuperAdmin can delete any document)
+    if (requestingUserRole === UserRole.ADMIN) {
+      if (doc.ruolo !== null && doc.ruolo !== requestingUserRuolo) {
+        throw new ForbiddenException("Access denied");
+      }
+    }
+
     await this.docRepo.remove(doc);
   }
 }

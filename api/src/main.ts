@@ -2,6 +2,7 @@ import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AppModule } from "./app.module";
+import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
 import * as express from "express";
 import * as path from "path";
 import helmet from "helmet";
@@ -39,6 +40,9 @@ async function bootstrap() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
+  // Global exception filter — prevents raw stack traces from leaking to clients
+  app.useGlobalFilters(new AllExceptionsFilter());
+
   // Enable validation
   app.useGlobalPipes(
     new ValidationPipe({
@@ -54,6 +58,15 @@ async function bootstrap() {
     .split(",")
     .map((origin: string) => origin.trim())
     .filter((origin: string) => origin.length > 0);
+
+  if (
+    configService.get("NODE_ENV") === "production" &&
+    corsOrigins.includes("*")
+  ) {
+    throw new Error(
+      "CORS wildcard (*) is not allowed in production. Set CORS_ORIGIN in .env.",
+    );
+  }
 
   app.enableCors({
     origin: (

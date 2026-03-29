@@ -182,7 +182,7 @@ export class UsersController {
 
     // Users can only view their own profile
     if (requestingUser.role === UserRole.USER && requestingUser.id !== id) {
-      return null;
+      throw new ForbiddenException();
     }
 
     // Admin can only view users of their own role
@@ -191,7 +191,7 @@ export class UsersController {
       requestingUser.ruolo &&
       user.ruolo !== requestingUser.ruolo
     ) {
-      return null;
+      throw new ForbiddenException();
     }
 
     return user.serialize(requestingUser.role);

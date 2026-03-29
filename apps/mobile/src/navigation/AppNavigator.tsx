@@ -93,10 +93,19 @@ export const AppNavigator: React.FC = () => {
     return null; // Or a loading screen
   }
 
+  const getActiveStack = () => {
+    if (!isAuthenticated) return "auth";
+    if (mustChangePassword) return "changePassword";
+    if (needsProfileCompletion) return "completeProfile";
+    return "app";
+  };
+
+  const activeStack = getActiveStack();
+
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {!isAuthenticated ? (
+        {activeStack === "auth" ? (
           // Auth Stack
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
@@ -116,7 +125,7 @@ export const AppNavigator: React.FC = () => {
               }}
             />
           </>
-        ) : mustChangePassword ? (
+        ) : activeStack === "changePassword" ? (
           // Force password change
           <Stack.Screen
             name="ChangePassword"
@@ -130,7 +139,7 @@ export const AppNavigator: React.FC = () => {
               gestureEnabled: false,
             }}
           />
-        ) : needsProfileCompletion ? (
+        ) : activeStack === "completeProfile" ? (
           // Force profile completion
           <Stack.Screen
             name="CompleteProfile"

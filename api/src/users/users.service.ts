@@ -25,6 +25,7 @@ import { BasesService } from "../bases/bases.service";
 import { GradesService } from "../grades/grades.service";
 import { PublicRegisterDto } from "./dto/public-register.dto";
 import { FileStorageService } from "./services/file-storage.service";
+import { parseDMYOptional } from "../common/utils/date.utils";
 
 interface FindAllOptions {
   role?: UserRole;
@@ -53,6 +54,16 @@ export class UsersService {
     private readonly gradesService: GradesService,
     private readonly fileStorageService: FileStorageService,
   ) {}
+
+  // Helper: restrict a TypeORM where clause to the admin's professional role
+  private applyAdminScope(
+    where: Record<string, unknown>,
+    requestingUser: User,
+  ): void {
+    if (requestingUser.role === UserRole.ADMIN && requestingUser.ruolo) {
+      where.ruolo = requestingUser.ruolo;
+    }
+  }
 
   // Helper to add entry to statusLog
   private addStatusLogEntry(
@@ -98,9 +109,7 @@ export class UsersService {
     const where: any = {};
 
     // Admin scoping: Admin sees only members of their own professional role
-    if (requestingUser.role === UserRole.ADMIN && requestingUser.ruolo) {
-      where.ruolo = requestingUser.ruolo;
-    }
+    this.applyAdminScope(where, requestingUser);
 
     // SuperAdmin can filter by role
     if (role && requestingUser.role === UserRole.SUPERADMIN) {
@@ -220,10 +229,12 @@ export class UsersService {
           "Admin can only create users of their own professional role",
         );
       }
-      // Admin cannot create other admins or superadmins
+      // Admin cannot create other admins or superadmins — strip the role field
+      // so it cannot be persisted even if the guard check is somehow bypassed
       if (createUserDto.role && createUserDto.role !== UserRole.USER) {
         throw new ForbiddenException("Admin can only create regular users");
       }
+      delete createUserDto.role;
     }
 
     // Check crewcode first (includes inactive users for reactivation)
@@ -262,31 +273,9 @@ export class UsersService {
     // Hash default password
     const hashedPassword = await bcrypt.hash("password", 10);
 
-    // Convert dataIscrizione from DD/MM/YYYY to YYYY-MM-DD for PostgreSQL
-    let dataIscrizione = createUserDto.dataIscrizione;
-    if (dataIscrizione) {
-      const parts = dataIscrizione.split("/");
-      if (parts.length === 3) {
-        // DD/MM/YYYY -> YYYY-MM-DD
-        dataIscrizione = `${parts[2]}-${parts[1]}-${parts[0]}`;
-      }
-    }
-
-    let dateOfEntry = createUserDto.dateOfEntry;
-    if (dateOfEntry) {
-      const parts = dateOfEntry.split("/");
-      if (parts.length === 3) {
-        dateOfEntry = `${parts[2]}-${parts[1]}-${parts[0]}`;
-      }
-    }
-
-    let dateOfCaptaincy = createUserDto.dateOfCaptaincy;
-    if (dateOfCaptaincy) {
-      const parts = dateOfCaptaincy.split("/");
-      if (parts.length === 3) {
-        dateOfCaptaincy = `${parts[2]}-${parts[1]}-${parts[0]}`;
-      }
-    }
+    const dataIscrizione = parseDMYOptional(createUserDto.dataIscrizione);
+    const dateOfEntry = parseDMYOptional(createUserDto.dateOfEntry);
+    const dateOfCaptaincy = parseDMYOptional(createUserDto.dateOfCaptaincy);
 
     const user = this.usersRepository.create({
       ...createUserDto,
@@ -333,30 +322,9 @@ export class UsersService {
     // Hash default password
     const hashedPassword = await bcrypt.hash("password", 10);
 
-    // Convert dataIscrizione from DD/MM/YYYY to YYYY-MM-DD for PostgreSQL
-    let dataIscrizione = createUserDto.dataIscrizione;
-    if (dataIscrizione) {
-      const parts = dataIscrizione.split("/");
-      if (parts.length === 3) {
-        dataIscrizione = `${parts[2]}-${parts[1]}-${parts[0]}`;
-      }
-    }
-
-    let dateOfEntry = createUserDto.dateOfEntry;
-    if (dateOfEntry) {
-      const parts = dateOfEntry.split("/");
-      if (parts.length === 3) {
-        dateOfEntry = `${parts[2]}-${parts[1]}-${parts[0]}`;
-      }
-    }
-
-    let dateOfCaptaincy = createUserDto.dateOfCaptaincy;
-    if (dateOfCaptaincy) {
-      const parts = dateOfCaptaincy.split("/");
-      if (parts.length === 3) {
-        dateOfCaptaincy = `${parts[2]}-${parts[1]}-${parts[0]}`;
-      }
-    }
+    const dataIscrizione = parseDMYOptional(createUserDto.dataIscrizione);
+    const dateOfEntry = parseDMYOptional(createUserDto.dateOfEntry);
+    const dateOfCaptaincy = parseDMYOptional(createUserDto.dateOfCaptaincy);
 
     // Update user with new data
     Object.assign(existingUser, {
@@ -459,27 +427,18 @@ export class UsersService {
       updateUserDto.crewcode = updateUserDto.crewcode.toUpperCase();
     }
 
-    // Convert dataIscrizione from DD/MM/YYYY to YYYY-MM-DD for PostgreSQL
+    // Convert date fields from DD/MM/YYYY to YYYY-MM-DD for PostgreSQL
     if (updateUserDto.dataIscrizione) {
-      const parts = updateUserDto.dataIscrizione.split("/");
-      if (parts.length === 3) {
-        // DD/MM/YYYY -> YYYY-MM-DD
-        updateUserDto.dataIscrizione = `${parts[2]}-${parts[1]}-${parts[0]}`;
-      }
+      updateUserDto.dataIscrizione =
+        parseDMYOptional(updateUserDto.dataIscrizione) ?? undefined;
     }
-
     if (updateUserDto.dateOfEntry) {
-      const parts = updateUserDto.dateOfEntry.split("/");
-      if (parts.length === 3) {
-        updateUserDto.dateOfEntry = `${parts[2]}-${parts[1]}-${parts[0]}`;
-      }
+      updateUserDto.dateOfEntry =
+        parseDMYOptional(updateUserDto.dateOfEntry) ?? undefined;
     }
-
     if (updateUserDto.dateOfCaptaincy) {
-      const parts = updateUserDto.dateOfCaptaincy.split("/");
-      if (parts.length === 3) {
-        updateUserDto.dateOfCaptaincy = `${parts[2]}-${parts[1]}-${parts[0]}`;
-      }
+      updateUserDto.dateOfCaptaincy =
+        parseDMYOptional(updateUserDto.dateOfCaptaincy) ?? undefined;
     }
 
     Object.assign(user, updateUserDto);
@@ -580,9 +539,7 @@ export class UsersService {
     const where: any = { isActive: true };
 
     // Admin scoping
-    if (requestingUser.role === UserRole.ADMIN && requestingUser.ruolo) {
-      where.ruolo = requestingUser.ruolo;
-    }
+    this.applyAdminScope(where, requestingUser);
 
     return this.usersRepository.find({
       where,

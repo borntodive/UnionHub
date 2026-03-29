@@ -19,6 +19,8 @@ STOP and remind the user to complete ALL of the following before building:
 
 4. **Cambiare il trasportatore per mail** — in `api/.env` usare GMAIL
 
+5. **Configurare CORS_ORIGIN** — impostare `CORS_ORIGIN` in `api/.env` con il dominio esatto dell'app (es. `https://app.example.com`). Il valore `*` è bloccato a runtime in produzione (`NODE_ENV=production`).
+
 ---
 
 ## Project Overview

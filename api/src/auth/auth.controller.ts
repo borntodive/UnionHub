@@ -49,7 +49,7 @@ export class AuthController {
   ) {}
 
   /** Step 3→4: generate PDF, save to temp dir, return tempId for preview. */
-  @Throttle({ default: { ttl: 60000, limit: 10 } })
+  @Throttle({ default: { ttl: 60000, limit: 3 } })
   @Post("register/prepare")
   @HttpCode(HttpStatus.OK)
   async prepareRegistration(
@@ -59,6 +59,7 @@ export class AuthController {
   }
 
   /** Serve the temp PDF as base64 so the wizard can show a preview. */
+  @Throttle({ default: { ttl: 60000, limit: 20 } })
   @Get("register/preview/:tempId")
   async getRegistrationPreview(
     @Param("tempId") tempId: string,
@@ -69,6 +70,7 @@ export class AuthController {
 
   /** Serve the temp PDF as a raw binary file (application/pdf).
    *  Used by the mobile WebView to display the preview inline via HTTP. */
+  @Throttle({ default: { ttl: 60000, limit: 20 } })
   @Get("register/preview-file/:tempId")
   async getRegistrationPreviewFile(
     @Param("tempId") tempId: string,
@@ -143,7 +145,7 @@ export class AuthController {
     return { message: "Logged out from all devices successfully" };
   }
 
-  @Throttle({ default: { ttl: 60000, limit: 3 } })
+  @Throttle({ default: { ttl: 3600000, limit: 5 } })
   @Post("change-password")
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
