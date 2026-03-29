@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -238,8 +238,16 @@ export const JoinUsScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [language, setLanguage] = useState<"it" | "en">("it");
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [language, setLanguage] = useState<"it" | "en">(
+    (i18n.language?.startsWith("it") ? "it" : "en") as "it" | "en"
+  );
+
+  // Sync local language state with i18n when it changes (e.g., from Settings screen)
+  useEffect(() => {
+    const newLang = i18n.language?.startsWith("it") ? "it" : "en";
+    setLanguage(newLang as "it" | "en");
+  }, [i18n.language]);
 
   // Get translations based on current language selection
   const getT = (key: string) => t(`joinUs.${key}`);
@@ -543,7 +551,10 @@ export const JoinUsScreen: React.FC = () => {
                       styles.langBtn,
                       language === "it" && styles.langBtnActive,
                     ]}
-                    onPress={() => setLanguage("it")}
+                    onPress={() => {
+                      setLanguage("it");
+                      i18n.changeLanguage("it");
+                    }}
                   >
                     <Text
                       style={[
@@ -559,7 +570,10 @@ export const JoinUsScreen: React.FC = () => {
                       styles.langBtn,
                       language === "en" && styles.langBtnActive,
                     ]}
-                    onPress={() => setLanguage("en")}
+                    onPress={() => {
+                      setLanguage("en");
+                      i18n.changeLanguage("en");
+                    }}
                   >
                     <Text
                       style={[
