@@ -16,15 +16,18 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { FileText, Check, X, Menu } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { usersApi } from "../../api/users";
+import apiClient from "../../api/client";
 import { User } from "../../types";
 import { RootStackParamList } from "../../navigation/types";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export const PendingMembersScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -46,15 +49,12 @@ export const PendingMembersScreen: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pending-members"] });
       queryClient.invalidateQueries({ queryKey: ["pending-count"] });
-      Alert.alert(
-        "Approvato",
-        "Iscrizione approvata. Email di benvenuto inviata.",
-      );
+      Alert.alert(t("members.activated"), t("members.pendingApproval"));
     },
     onError: (err: any) => {
       Alert.alert(
-        "Errore",
-        err?.response?.data?.message || "Operazione fallita.",
+        t("common:error"),
+        err?.response?.data?.message || t("common:error"),
       );
     },
   });
@@ -67,20 +67,20 @@ export const PendingMembersScreen: React.FC = () => {
     },
     onError: (err: any) => {
       Alert.alert(
-        "Errore",
-        err?.response?.data?.message || "Operazione fallita.",
+        t("common:error"),
+        err?.response?.data?.message || t("common:error"),
       );
     },
   });
 
   const handleApprove = (user: User) => {
     Alert.alert(
-      "Approva iscrizione",
-      `Approvare la richiesta di ${user.nome} ${user.cognome}?`,
+      t("members.activate"),
+      `${t("members.activate")} ${user.nome} ${user.cognome}?`,
       [
-        { text: "Annulla", style: "cancel" },
+        { text: t("common:cancel"), style: "cancel" },
         {
-          text: "Approva",
+          text: t("members.activate"),
           onPress: () => approveMutation.mutate(user.id),
         },
       ],
@@ -89,12 +89,12 @@ export const PendingMembersScreen: React.FC = () => {
 
   const handleReject = (user: User) => {
     Alert.alert(
-      "Rifiuta iscrizione",
-      `Rifiutare la richiesta di ${user.nome} ${user.cognome}? L'utente rimarrà disattivo.`,
+      t("members.reject"),
+      `${t("members.reject")} ${user.nome} ${user.cognome}?`,
       [
-        { text: "Annulla", style: "cancel" },
+        { text: t("common:cancel"), style: "cancel" },
         {
-          text: "Rifiuta",
+          text: t("members.reject"),
           style: "destructive",
           onPress: () => rejectMutation.mutate(user.id),
         },
@@ -104,14 +104,17 @@ export const PendingMembersScreen: React.FC = () => {
 
   const handleViewForm = (user: User) => {
     if (!user.registrationFormUrl) {
-      Alert.alert(
-        "Non disponibile",
-        "Nessun modulo trovato per questo utente.",
-      );
+      Alert.alert(t("common:notFound"), t("pdfViewer:noDocument"));
       return;
     }
+    // registrationFormUrl is a relative path like /uploads/registration-forms/...
+    // Prepend the server root (strip /api/v1 suffix from baseURL).
+    const serverRoot = (apiClient.defaults.baseURL ?? "").replace(
+      /\/api\/v1\/?$/,
+      "",
+    );
     navigation.navigate("PdfViewer", {
-      url: user.registrationFormUrl,
+      url: `${serverRoot}${user.registrationFormUrl}`,
       title: `Delega – ${user.nome} ${user.cognome}`,
     });
   };
@@ -140,7 +143,7 @@ export const PendingMembersScreen: React.FC = () => {
               ]}
             >
               <Text style={styles.badgeText}>
-                {item.ruolo === "pilot" ? "Pilota" : "Cabin Crew"}
+                {item.ruolo === "pilot" ? t("home:pilot") : t("home:cabinCrew")}
               </Text>
             </View>
             {item.grade && (
@@ -167,7 +170,7 @@ export const PendingMembersScreen: React.FC = () => {
         >
           <FileText size={16} color={colors.primary} />
           <Text style={[styles.actionText, { color: colors.primary }]}>
-            Vedi modulo
+            {t("documents:viewDocument")}
           </Text>
         </TouchableOpacity>
 
@@ -178,7 +181,7 @@ export const PendingMembersScreen: React.FC = () => {
         >
           <Check size={16} color={colors.textInverse} />
           <Text style={[styles.actionText, { color: colors.textInverse }]}>
-            Approva
+            {t("members.activate")}
           </Text>
         </TouchableOpacity>
 
@@ -189,7 +192,7 @@ export const PendingMembersScreen: React.FC = () => {
         >
           <X size={16} color={colors.textInverse} />
           <Text style={[styles.actionText, { color: colors.textInverse }]}>
-            Rifiuta
+            {t("members.reject")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -211,7 +214,9 @@ export const PendingMembersScreen: React.FC = () => {
           >
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Iscrizioni Pendenti</Text>
+          <Text style={styles.headerTitle}>
+            {t("navigation.pendingMembers")}
+          </Text>
           <View style={styles.headerBtn} />
         </View>
 
@@ -222,9 +227,9 @@ export const PendingMembersScreen: React.FC = () => {
         ) : pending.length === 0 ? (
           <View style={styles.centered}>
             <FileText size={64} color={colors.border} />
-            <Text style={styles.emptyTitle}>Nessuna iscrizione in attesa</Text>
+            <Text style={styles.emptyTitle}>{t("members.noPending")}</Text>
             <Text style={styles.emptySubtitle}>
-              Le nuove richieste di adesione appariranno qui
+              {t("members.noPendingDesc")}
             </Text>
           </View>
         ) : (

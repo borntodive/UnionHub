@@ -207,9 +207,7 @@ export const LoginScreen: React.FC = () => {
               <Text style={styles.logoText}>UNION</Text>
             </View>
             <Text style={styles.appName}>{t("common.appName")}</Text>
-            <Text style={styles.appTagline}>
-              Platform for air transport workers
-            </Text>
+            <Text style={styles.appTagline}>{t("auth.tagline")}</Text>
           </View>
 
           {/* Form Section */}
@@ -260,17 +258,17 @@ export const LoginScreen: React.FC = () => {
               </TouchableOpacity>
             )}
 
-            <Text style={styles.hint}>
-              For access issues, contact your union delegate
-            </Text>
+            <Text style={styles.hint}>{t("auth.loginHint")}</Text>
 
             <TouchableOpacity
               onPress={() => navigation.navigate("JoinUs")}
               style={styles.joinUsLink}
             >
               <Text style={styles.joinUsText}>
-                Non sei ancora iscritto?{" "}
-                <Text style={styles.joinUsTextBold}>Unisciti a noi</Text>
+                {t("auth.joinUsPrompt")}{" "}
+                <Text style={styles.joinUsTextBold}>
+                  {t("auth.joinUsLink")}
+                </Text>
               </Text>
             </TouchableOpacity>
           </View>
@@ -282,7 +280,7 @@ export const LoginScreen: React.FC = () => {
 
           {/* Quick Login */}
           <View style={styles.quickLoginContainer}>
-            <Text style={styles.quickLoginTitle}>Quick Login</Text>
+            <Text style={styles.quickLoginTitle}>{t("auth.quickLogin")}</Text>
             <View style={styles.quickLoginGrid}>
               {QUICK_USERS.map((u) => (
                 <TouchableOpacity

@@ -5,8 +5,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   createDrawerNavigator,
   DrawerContentComponentProps,
@@ -60,6 +60,7 @@ import { ContractFormScreen } from "../screens/admin/ContractFormScreen";
 import { DocumentsScreen } from "../screens/admin/DocumentsScreen";
 import { DocumentEditorScreen } from "../screens/admin/DocumentEditorScreen";
 import { IssuesScreen } from "../screens/admin/IssuesScreen";
+import { PendingMembersScreen } from "../screens/admin/PendingMembersScreen";
 import { PublicDocumentsScreen } from "../screens/PublicDocumentsScreen";
 import { ReportIssueScreen } from "../screens/ReportIssueScreen/ReportIssueScreen";
 import { MyIssuesScreen } from "../screens/MyIssuesScreen/MyIssuesScreen";
@@ -325,7 +326,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                   />
                   <MenuItem
                     icon={<UserCheck size={22} color={colors.primary} />}
-                    label="Iscrizioni Pendenti"
+                    label={t("navigation.pendingMembers")}
                     badge={pendingCount > 0 ? pendingCount : undefined}
                     onPress={() => {
                       props.navigation.navigate("PendingMembers");
@@ -658,6 +659,15 @@ export const DrawerNavigator: React.FC = () => {
             component={IssuesScreen}
             options={{
               title: t("navigation.issues"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="PendingMembers"
+            component={PendingMembersScreen}
+            options={{
+              title: t("navigation.pendingMembers"),
               drawerItemStyle: { display: "none" },
               headerShown: false,
             }}
