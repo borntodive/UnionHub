@@ -241,6 +241,7 @@ export const usersApi = {
     ruolo?: Ruolo | null,
   ): Promise<{
     created: number;
+    formsAttached: number;
     errors: { row: number; error: string }[];
     total: number;
   }> => {

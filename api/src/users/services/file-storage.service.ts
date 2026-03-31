@@ -157,6 +157,36 @@ export class FileStorageService {
   }
 
   /**
+   * Move a PDF from the bulkimport staging directory to the permanent
+   * registration-forms/{crewcode}/ directory.
+   * Returns the fileUrl on success, or null if no matching PDF is staged.
+   */
+  async moveBulkImportPdf(crewcode: string): Promise<string | null> {
+    const baseDir =
+      process.env.UPLOAD_BASE_DIR || path.join(process.cwd(), "uploads");
+    const bulkimportDir = path.join(baseDir, "bulkimport");
+    const srcPath = path.join(bulkimportDir, `${crewcode.toUpperCase()}.pdf`);
+
+    if (!fs.existsSync(srcPath)) {
+      return null;
+    }
+
+    const sanitizedCrewcode = crewcode.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const userDir = path.join(this.uploadDir, sanitizedCrewcode);
+    if (!fs.existsSync(userDir)) {
+      fs.mkdirSync(userDir, { recursive: true });
+    }
+
+    const filename = `${Date.now()}_registration.pdf`;
+    const destPath = path.join(userDir, filename);
+
+    await fs.promises.rename(srcPath, destPath);
+    const fileUrl = `/uploads/registration-forms/${sanitizedCrewcode}/${filename}`;
+    this.logger.log(`Bulk import: moved ${crewcode}.pdf → ${fileUrl}`);
+    return fileUrl;
+  }
+
+  /**
    * Check if file exists
    */
   fileExists(fileUrl: string): boolean {
