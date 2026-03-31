@@ -15,9 +15,9 @@ import { NotificationsModule } from "./notifications/notifications.module";
 import { IssueCategoriesModule } from "./issue-categories/issue-categories.module";
 import { IssueUrgenciesModule } from "./issue-urgencies/issue-urgencies.module";
 import { IssuesModule } from "./issues/issues.module";
-import { KnowledgeBaseModule } from "./knowledge-base/knowledge-base.module";
-import { ChatbotModule } from "./chatbot/chatbot.module";
 import { GmailModule } from "./gmail/gmail.module";
+// Integration hook: RAG module (additive, removable without impact)
+import { RagModule } from "./rag/rag.module";
 
 @Module({
   providers: [
@@ -56,9 +56,8 @@ import { GmailModule } from "./gmail/gmail.module";
     IssueCategoriesModule,
     IssueUrgenciesModule,
     IssuesModule,
-    KnowledgeBaseModule,
-    ChatbotModule,
     GmailModule,
+    RagModule,
   ],
 })
 export class AppModule {}

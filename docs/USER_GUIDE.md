@@ -156,7 +156,7 @@ Le seguenti funzioni sono disponibili anche senza connessione internet:
 - Invio segnalazioni (con coda di sync automatico)
 - Impostazioni
 
-Le funzioni che richiedono connessione (documenti, chatbot, profilo) vengono nascoste automaticamente quando il dispositivo è offline.
+Le funzioni che richiedono connessione (documenti, profilo) vengono nascoste automaticamente quando il dispositivo è offline.
 
 ---
 

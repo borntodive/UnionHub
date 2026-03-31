@@ -22,8 +22,6 @@ export type RootStackParamList = {
   PayslipCalculator: undefined;
   FtlCalculator: undefined;
   ColdTempCorrection: undefined;
-  Chatbot: undefined;
-  KnowledgeBase: undefined;
   // CLA Contract Admin
   ClaContracts: undefined;
   ContractEditor: { contract?: any } | undefined;
@@ -46,6 +44,10 @@ export type RootStackParamList = {
   Gmail: undefined;
   EmailDetail: { messageId: string; subject: string; ruolo?: string };
   GmailSetup: undefined;
+  // RAG
+  RagAsk: undefined;
+  RagAdmin: undefined;
+  RagDocumentDetail: { documentId: string };
 };
 
 declare global {

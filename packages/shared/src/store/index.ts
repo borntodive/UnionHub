@@ -7,6 +7,4 @@ export type {
   StoredNotification,
   NotificationPrefs,
 } from "./offlineStore";
-export { createChatStore } from "./chatStore";
-export type { ChatState, ChatMessageLocal } from "./chatStore";
 export type { StorageAdapter, SecureStorageAdapter } from "./storageAdapter";

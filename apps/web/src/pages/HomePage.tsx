@@ -8,7 +8,6 @@ import {
   Users,
   BarChart2,
   FileText,
-  MessageSquare,
 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { usersApi } from "../api/users";
@@ -107,12 +106,6 @@ export function HomePage() {
               label="Segnalazioni"
               icon={AlertCircle}
               sub="Gestisci"
-            />
-            <QuickLink
-              to="/chatbot"
-              label="Assistente AI"
-              icon={MessageSquare}
-              sub="RAG chatbot"
             />
             <QuickLink
               to="/admin/statistics"

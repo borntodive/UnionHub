@@ -8,6 +8,7 @@ import { useAuthStore } from "../store/authStore";
 import { useOfflineStore } from "../store/offlineStore";
 import apiClient from "../api/client";
 import { QUERY_KEYS } from "../api/queryKeys";
+import { RAG_QUERY_KEYS } from "../api/rag";
 
 // Configure how notifications appear when the app is in the foreground.
 // Silent system notifications (CATEGORIES_UPDATED, URGENCIES_UPDATED) are
@@ -17,10 +18,7 @@ Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
     const type = notification.request.content.data?.type as string | undefined;
     const isSilent =
-      type === "CATEGORIES_UPDATED" ||
-      type === "URGENCIES_UPDATED" ||
-      type === "KB_INDEXED" ||
-      type === "KB_INDEX_ERROR";
+      type === "CATEGORIES_UPDATED" || type === "URGENCIES_UPDATED";
     if (isSilent) {
       return {
         shouldShowAlert: false,
@@ -124,10 +122,22 @@ export const useNotifications = () => {
           queryClient.invalidateQueries({
             queryKey: QUERY_KEYS.issueUrgencies,
           });
-        } else if (type === "KB_INDEXED" || type === "KB_INDEX_ERROR") {
-          queryClient.invalidateQueries({ queryKey: ["knowledge-base"] });
         } else if (type === "NEW_GMAIL") {
           queryClient.invalidateQueries({ queryKey: ["gmail-inbox"] });
+        } else if (
+          type === "RAG_INGESTION_COMPLETED" ||
+          type === "RAG_INGESTION_FAILED"
+        ) {
+          // Refresh RAG documents list and specific document
+          queryClient.invalidateQueries({
+            queryKey: RAG_QUERY_KEYS.documents,
+          });
+          const documentId = notification.request.content.data?.documentId;
+          if (documentId) {
+            queryClient.invalidateQueries({
+              queryKey: RAG_QUERY_KEYS.document(documentId),
+            });
+          }
         }
 
         if (notification.request.content.title) {
@@ -160,7 +170,19 @@ export const useNotifications = () => {
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         const data = response.notification.request.content.data;
-        if (data?.documentId) {
+        const type = data?.type as string | undefined;
+
+        if (
+          type === "RAG_INGESTION_COMPLETED" ||
+          type === "RAG_INGESTION_FAILED"
+        ) {
+          const documentId = data?.documentId as string | undefined;
+          if (documentId) {
+            // Navigate to document detail screen
+            // Note: navigation ref would be needed here for proper navigation from background
+            console.log("Navigate to RAG document:", documentId);
+          }
+        } else if (data?.documentId) {
           console.log("Navigate to document:", data.documentId);
         }
       });
