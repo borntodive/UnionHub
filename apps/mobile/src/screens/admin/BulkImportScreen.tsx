@@ -35,6 +35,7 @@ import { UserRole, Ruolo } from "../../types";
 
 interface ImportResult {
   created: number;
+  formsAttached: number;
   errors: { row: number; error: string }[];
   total: number;
 }
@@ -307,6 +308,16 @@ DEF456,Bianchi,Laura,laura.bianchi@email.com,+39987654321,MXP,Purser,`;
                   </Text>
                   <Text style={styles.statLabel}>Errors</Text>
                 </View>
+                {result.formsAttached > 0 && (
+                  <View style={styles.statItem}>
+                    <Text
+                      style={[styles.statNumber, { color: colors.primary }]}
+                    >
+                      {result.formsAttached}
+                    </Text>
+                    <Text style={styles.statLabel}>Forms</Text>
+                  </View>
+                )}
               </View>
 
               {result.errors.length > 0 && (

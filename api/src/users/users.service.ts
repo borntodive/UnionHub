@@ -903,6 +903,7 @@ export class UsersService {
     overrideRuolo?: Ruolo,
   ): Promise<{
     created: number;
+    formsAttached: number;
     errors: { row: number; error: string }[];
     total: number;
   }> {
@@ -941,6 +942,7 @@ export class UsersService {
 
     const results = {
       created: 0,
+      formsAttached: 0,
       errors: [] as { row: number; error: string }[],
       total: records.length,
     };
@@ -1084,6 +1086,16 @@ export class UsersService {
           reason: "User imported via bulk upload",
           changedById: requestingUser.id,
         });
+
+        // Attach registration form if a matching PDF is staged in bulkimport/
+        const formUrl = await this.fileStorageService.moveBulkImportPdf(
+          crewcode.toUpperCase(),
+        );
+        if (formUrl) {
+          user.registrationFormUrl = formUrl;
+          await this.usersRepository.save(user);
+          results.formsAttached++;
+        }
 
         results.created++;
       } catch (error: any) {
