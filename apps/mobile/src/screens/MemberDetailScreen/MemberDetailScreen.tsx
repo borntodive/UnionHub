@@ -677,6 +677,7 @@ const styles = StyleSheet.create({
   },
   flagsContainer: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.md,
   },
   flagItem: {
@@ -687,6 +688,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.md,
+    width: "47%",
   },
   flagItemActive: {
     backgroundColor: colors.success + "15",

@@ -42,6 +42,8 @@ import { JoinUsScreen } from "../screens/JoinUsScreen/JoinUsScreen";
 import { EmailDetailScreen } from "../gmail/screens/EmailDetailScreen";
 import { GmailSetupScreen } from "../gmail/screens/GmailSetupScreen";
 import { CtcScreen } from "../screens/CtcScreen";
+import { RagAdminScreen } from "../screens/RagAdminScreen/RagAdminScreen";
+import { RagDocumentDetailScreen } from "../screens/RagAdminScreen/RagDocumentDetailScreen";
 import { UserRole } from "../types";
 import { useNotifications } from "../hooks/useNotifications";
 import apiClient from "../api/client";
@@ -278,6 +280,16 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen
               name="ColdTempCorrection"
               component={CtcScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="RagAdmin"
+              component={RagAdminScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="RagDocumentDetail"
+              component={RagDocumentDetailScreen}
               options={{ headerShown: false }}
             />
             {/* Note: CLA Contract screens and PendingMembers moved to DrawerNavigator */}

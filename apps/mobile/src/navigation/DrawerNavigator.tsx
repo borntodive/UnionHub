@@ -31,11 +31,11 @@ import {
   Bell,
   AlertTriangle,
   Clock,
-  MessageSquare,
-  Database,
   Mail,
   Thermometer,
   UserCheck,
+  Search,
+  BookOpen,
 } from "lucide-react-native";
 import { usersApi } from "../api/users";
 
@@ -49,9 +49,9 @@ import { MembersScreen } from "../screens/MembersScreen/MembersScreen";
 import { PayslipTabs } from "../payslip/navigation/PayslipTabs";
 import { FtlTabs } from "../ftl";
 import { CtcScreen } from "../screens/CtcScreen";
-import { ChatbotScreen } from "../chatbot/screens/ChatbotScreen";
-import { KnowledgeBaseScreen } from "../knowledge-base/screens/KnowledgeBaseScreen";
 import { GmailScreen } from "../gmail/screens/GmailScreen";
+import { RagAskScreen } from "../screens/RagAskScreen/RagAskScreen";
+import { RagAdminScreen } from "../screens/RagAdminScreen/RagAdminScreen";
 import AdminContractsScreen from "../payslip/screens/AdminContractsScreen";
 import ContractEditorScreen from "../payslip/screens/ContractEditorScreen";
 import { SettingsScreen } from "../screens/SettingsScreen/SettingsScreen";
@@ -220,23 +220,23 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             }}
           />
 
-          {isOnline && isAdmin && (
-            <MenuItem
-              icon={<MessageSquare size={22} color={colors.primary} />}
-              label={t("navigation.chatbot")}
-              onPress={() => {
-                props.navigation.navigate("Chatbot");
-                props.navigation.closeDrawer();
-              }}
-            />
-          )}
-
           {isOnline && isRsa && (
             <MenuItem
               icon={<Mail size={22} color={colors.primary} />}
               label={t("navigation.gmail")}
               onPress={() => {
                 props.navigation.navigate("Gmail");
+                props.navigation.closeDrawer();
+              }}
+            />
+          )}
+
+          {isOnline && (
+            <MenuItem
+              icon={<Search size={22} color={colors.primary} />}
+              label={t("navigation.ragAssistant")}
+              onPress={() => {
+                props.navigation.navigate("RagAsk");
                 props.navigation.closeDrawer();
               }}
             />
@@ -425,18 +425,18 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                     }}
                   />
                   <MenuItem
-                    icon={<Database size={22} color={colors.primary} />}
-                    label={t("navigation.knowledgeBase")}
-                    onPress={() => {
-                      props.navigation.navigate("KnowledgeBase");
-                      props.navigation.closeDrawer();
-                    }}
-                  />
-                  <MenuItem
                     icon={<Mail size={22} color={colors.primary} />}
                     label={t("navigation.gmailSetup")}
                     onPress={() => {
                       props.navigation.navigate("GmailSetup");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                  <MenuItem
+                    icon={<BookOpen size={22} color={colors.primary} />}
+                    label={t("navigation.ragAdmin")}
+                    onPress={() => {
+                      props.navigation.navigate("RagAdmin");
                       props.navigation.closeDrawer();
                     }}
                   />
@@ -623,15 +623,6 @@ export const DrawerNavigator: React.FC = () => {
           headerShown: false,
         }}
       />
-      <Drawer.Screen
-        name="Chatbot"
-        component={ChatbotScreen}
-        options={{
-          title: t("navigation.chatbot"),
-          drawerIcon: ({ color }) => <MessageSquare size={22} color={color} />,
-          headerShown: false,
-        }}
-      />
       {/* Issues screens — hidden from drawer list, accessible to all users */}
       <Drawer.Screen
         name="ReportIssue"
@@ -695,15 +686,6 @@ export const DrawerNavigator: React.FC = () => {
       {isSuperAdmin && (
         <>
           <Drawer.Screen
-            name="KnowledgeBase"
-            component={KnowledgeBaseScreen}
-            options={{
-              title: t("navigation.knowledgeBase"),
-              drawerIcon: ({ color }) => <Database size={22} color={color} />,
-              headerShown: false,
-            }}
-          />
-          <Drawer.Screen
             name="ClaContracts"
             component={AdminContractsScreen}
             options={{
@@ -734,6 +716,24 @@ export const DrawerNavigator: React.FC = () => {
           }}
         />
       )}
+      <Drawer.Screen
+        name="RagAsk"
+        component={RagAskScreen}
+        options={{
+          title: t("navigation.ragAssistant"),
+          drawerItemStyle: { display: "none" },
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
+        name="RagAdmin"
+        component={RagAdminScreen}
+        options={{
+          title: t("navigation.ragAdmin"),
+          drawerItemStyle: { display: "none" },
+          headerShown: false,
+        }}
+      />
     </Drawer.Navigator>
   );
 };

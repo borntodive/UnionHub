@@ -37,19 +37,11 @@ const IssuesPage = lazy(() =>
 const MyIssuesPage = lazy(() =>
   import("../pages/MyIssuesPage").then((m) => ({ default: m.MyIssuesPage })),
 );
-const ChatbotPage = lazy(() =>
-  import("../pages/ChatbotPage").then((m) => ({ default: m.ChatbotPage })),
-);
 const DocumentsPage = lazy(() =>
   import("../pages/DocumentsPage").then((m) => ({ default: m.DocumentsPage })),
 );
 
 /* ─── admin+superadmin pages ─────────────────────────────────── */
-const KnowledgeBasePage = lazy(() =>
-  import("../pages/KnowledgeBasePage").then((m) => ({
-    default: m.KnowledgeBasePage,
-  })),
-);
 const StatisticsPage = lazy(() =>
   import("../pages/StatisticsPage").then((m) => ({
     default: m.StatisticsPage,
@@ -253,22 +245,6 @@ const router = createBrowserRouter([
             element: <RequireAdmin />,
             children: [
               /* tools */
-              {
-                path: "chatbot",
-                element: (
-                  <S>
-                    <ChatbotPage />
-                  </S>
-                ),
-              },
-              {
-                path: "knowledge-base",
-                element: (
-                  <S>
-                    <KnowledgeBasePage />
-                  </S>
-                ),
-              },
               {
                 path: "admin/statistics",
                 element: (

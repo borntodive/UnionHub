@@ -181,32 +181,6 @@ Dall'editor del documento sono disponibili:
 
 ---
 
-## Knowledge Base (Base di conoscenza)
-
-Carica documenti PDF che verranno indicizzati per il **chatbot AI sindacale**.
-
-### Carica documento
-
-- Carica un PDF (max 50 MB).
-- Imposta titolo, livello di accesso (`Tutti` o `Solo admin`) e ruolo destinatario (Piloti / Cabin Crew / Tutti).
-- L'indicizzazione avviene in background: riceverai una notifica push al completamento.
-
-### Stato indicizzazione
-
-| Stato             | Significato                                   |
-| ----------------- | --------------------------------------------- |
-| In attesa         | Il documento è in coda                        |
-| In indicizzazione | Estrazione testo ed embedding in corso        |
-| Pronto            | Il documento è ricercabile dal chatbot        |
-| Errore            | Indicizzazione fallita (riprova con Re-index) |
-
-### Operazioni
-
-- **Re-index**: rigenera gli embedding (utile dopo cambio modello AI).
-- **Elimina**: rimuove documento e tutti i chunk correlati.
-
----
-
 ## Configurazione (solo SuperAdmin)
 
 ### Basi
@@ -274,5 +248,4 @@ Nel menu di debug sono disponibili due endpoint per verificare il funzionamento 
 Gli admin ricevono notifiche push per:
 
 - Nuova iscrizione autonoma in attesa di approvazione
-- Indicizzazione Knowledge Base completata o fallita
 - Comunicazioni dal SuperAdmin

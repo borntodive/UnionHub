@@ -1,0 +1,54 @@
+version: "3.9"
+
+# RAG Infrastructure Services
+# PostgreSQL runs natively on the host — not included here.
+# Start with: docker compose -f docker-compose.rag.yml up -d
+# Stop with:  docker compose -f docker-compose.rag.yml down
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: unionhub-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - rag_network
+
+  python-rag:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+    container_name: unionhub-python-rag
+    ports:
+      - "8001:8001"
+    environment:
+      - HF_HOME=/app/.cache
+    volumes:
+      - rag_model_cache:/app/.cache
+      # Mount uploads dir read-only so Python can access PDFs by file path
+      - ${UPLOAD_BASE_DIR:-./api/uploads}/rag-docs:/data/rag-docs:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - rag_network
+
+volumes:
+  redis_data:
+  rag_model_cache:
+
+networks:
+  rag_network:
+    driver: bridge

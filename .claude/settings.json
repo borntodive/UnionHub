@@ -1,17 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
-
-    "ANTHROPIC_BASE_URL": "http://localhost:11434",
-    "ANTHROPIC_AUTH_TOKEN": "your-auth-token",
-    "API_TIMEOUT_MS": "3000000",
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
-    "ANTHROPIC_MODEL": "kimi-k2.5:cloud",
-    "ANTHROPIC_SMALL_FAST_MODEL": "kimi-k2.5:cloud",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "kimi-k2.5:cloud",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "kimi-k2.5:cloud",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "kimi-k2.5:cloud"
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "permissions": {
     "allow": [
