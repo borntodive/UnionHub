@@ -53,6 +53,28 @@ async function bootstrap() {
     }),
   );
 
+  // CardDAV — registered BEFORE CORS and global prefix.
+  // Must come first so OPTIONS /carddav/* is handled by our handler (which adds
+  // DAV: 1, 3, addressbook headers). If CORS middleware runs first it returns
+  // 204 without DAV headers and iOS fails with DAAccountValidationDomain 100.
+  const carddavService = app.get(CarddavService);
+  app.use(
+    "/.well-known/carddav",
+    (_req: express.Request, res: express.Response) => {
+      res.redirect(301, "/carddav/");
+    },
+  );
+  app.use(
+    "/carddav",
+    (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      carddavService.handleRequest(req, res, next).catch(next);
+    },
+  );
+
   // Enable CORS
   const corsOrigins = configService
     .get<string>("CORS_ORIGIN", "*")
@@ -87,25 +109,6 @@ async function bootstrap() {
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Accept"],
   });
-
-  // CardDAV — registered BEFORE global prefix so it stays at /carddav (not /api/v1/carddav)
-  const carddavService = app.get(CarddavService);
-  app.use(
-    "/.well-known/carddav",
-    (_req: express.Request, res: express.Response) => {
-      res.redirect(301, "/carddav/");
-    },
-  );
-  app.use(
-    "/carddav",
-    (
-      req: express.Request,
-      res: express.Response,
-      next: express.NextFunction,
-    ) => {
-      carddavService.handleRequest(req, res, next).catch(next);
-    },
-  );
 
   // Global prefix
   app.setGlobalPrefix("api/v1");
