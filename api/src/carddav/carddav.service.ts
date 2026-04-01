@@ -57,6 +57,9 @@ export class CarddavService {
       case "PROPFIND":
         await this.handlePropfind(req, res, user);
         break;
+      case "REPORT":
+        await this.handleReport(req, res, user);
+        break;
       case "GET":
       case "HEAD":
         if (req.path === "/profile" || req.path === "/profile/") {
@@ -234,6 +237,42 @@ export class CarddavService {
       .set("Content-Type", "text/vcard; charset=utf-8")
       .set("ETag", etag)
       .send(vcard);
+  }
+
+  // ─── REPORT (addressbook-query / addressbook-multiget) ───────────────────
+
+  private async handleReport(
+    req: express.Request,
+    res: express.Response,
+    user: User,
+  ): Promise<void> {
+    const parsed = this.parsePath(req.path);
+
+    if (
+      !parsed.crewcode ||
+      parsed.crewcode.toUpperCase() !== user.crewcode.toUpperCase()
+    ) {
+      res.status(403).end();
+      return;
+    }
+
+    // Respond with the same listing as PROPFIND depth:1 on the addressbook.
+    // iOS sends addressbook-query/addressbook-multiget REPORT to validate the
+    // account and to sync contacts. Returning the full contact list with ETags
+    // satisfies both use cases without parsing the request body.
+    const members = await this.getMembers(user);
+    const ctag = this.computeCtag(members);
+    const addressbookHref = `/carddav/${parsed.crewcode}/contacts/`;
+    const contacts = members.map((m) => ({
+      href: `/carddav/${parsed.crewcode}/contacts/${m.crewcode.toLowerCase()}.vcf`,
+      etag: getVCardEtag(m),
+    }));
+
+    res
+      .status(207)
+      .set("Content-Type", "text/xml; charset=utf-8")
+      .set("DAV", "1, 3, addressbook")
+      .send(xmlAddressbookListing(addressbookHref, contacts, ctag));
   }
 
   // ─── iOS .mobileconfig profile ───────────────────────────────────────────
