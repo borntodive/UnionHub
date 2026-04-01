@@ -27,7 +27,7 @@ export function generateVCard(user: User): string {
     "VERSION:3.0",
     `FN:${nome} ${cognome}`.trim(),
     `N:${cognome};${nome};;;`,
-    `ORG:UnionHub;${ruoloLabel};${escapeVCard(baseCode)}`,
+    `ORG:${escapeVCard(baseCode)}`,
     `NOTE:CREWCODE:${user.crewcode}`,
   ];
 
