@@ -10,6 +10,7 @@ import { generateVCard, getVCardEtag } from "./vcard.utils";
 import {
   xmlPrincipalResponse,
   xmlPrincipalHomeResponse,
+  xmlHomeWithAddressbook,
   xmlAddressbookResponse,
   xmlAddressbookListing,
 } from "./xml.utils";
@@ -140,20 +141,28 @@ export class CarddavService {
 
     const depth = req.headers["depth"] ?? "0";
 
-    // /carddav/{crewcode}/ — principal home, return addressbook-home-set
-    // iOS uses this to discover where the addressbook lives
+    // /carddav/{crewcode}/ — principal home
+    // depth:0 → return addressbook-home-set pointing to self (per RFC 6352)
+    // depth:1 → return home + addressbook child (iOS uses this to discover addressbooks)
     if (!parsed.inContacts) {
-      const addressbookHomeHref = `/carddav/${parsed.crewcode}/contacts/`;
-      res
-        .status(207)
-        .set("Content-Type", "text/xml; charset=utf-8")
-        .set("DAV", "1, 3, addressbook")
-        .send(
-          xmlPrincipalHomeResponse(
-            `/carddav/${parsed.crewcode}/`,
-            addressbookHomeHref,
-          ),
-        );
+      const homeHref = `/carddav/${parsed.crewcode}/`;
+      const addressbookHref = `/carddav/${parsed.crewcode}/contacts/`;
+
+      if (depth === "1") {
+        const members = await this.getMembers(user);
+        const ctag = this.computeCtag(members);
+        res
+          .status(207)
+          .set("Content-Type", "text/xml; charset=utf-8")
+          .set("DAV", "1, 3, addressbook")
+          .send(xmlHomeWithAddressbook(homeHref, addressbookHref, ctag));
+      } else {
+        res
+          .status(207)
+          .set("Content-Type", "text/xml; charset=utf-8")
+          .set("DAV", "1, 3, addressbook")
+          .send(xmlPrincipalHomeResponse(homeHref, homeHref));
+      }
       return;
     }
 
@@ -324,8 +333,6 @@ export class CarddavService {
 \t\t\t<string>${host}</string>
 \t\t\t<key>CardDAVPort</key>
 \t\t\t<integer>443</integer>
-\t\t\t<key>CardDAVPrincipalURL</key>
-\t\t\t<string>/carddav/${cc}/contacts/</string>
 \t\t\t<key>CardDAVUseSSL</key>
 \t\t\t<true/>
 \t\t\t<key>CardDAVUsername</key>
