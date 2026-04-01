@@ -21,6 +21,31 @@ export function xmlPrincipalResponse(
   ].join("\r\n");
 }
 
+// Response for the principal home (/carddav/{crewcode}/)
+// iOS needs to find addressbook-home-set here to discover the addressbook
+export function xmlPrincipalHomeResponse(
+  href: string,
+  addressbookHomeHref: string,
+): string {
+  return [
+    '<?xml version="1.0" encoding="utf-8"?>',
+    '<multistatus xmlns="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">',
+    "  <response>",
+    `    <href>${href}</href>`,
+    "    <propstat>",
+    "      <prop>",
+    "        <resourcetype><collection/></resourcetype>",
+    "        <card:addressbook-home-set>",
+    `          <href>${addressbookHomeHref}</href>`,
+    "        </card:addressbook-home-set>",
+    "      </prop>",
+    "      <status>HTTP/1.1 200 OK</status>",
+    "    </propstat>",
+    "  </response>",
+    "</multistatus>",
+  ].join("\r\n");
+}
+
 export function xmlAddressbookResponse(
   addressbookHref: string,
   ctag: string,
