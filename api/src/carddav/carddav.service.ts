@@ -325,7 +325,7 @@ export class CarddavService {
 \t\t\t<key>CardDAVPort</key>
 \t\t\t<integer>443</integer>
 \t\t\t<key>CardDAVPrincipalURL</key>
-\t\t\t<string>/carddav/</string>
+\t\t\t<string>/carddav/${cc}/contacts/</string>
 \t\t\t<key>CardDAVUseSSL</key>
 \t\t\t<true/>
 \t\t\t<key>CardDAVUsername</key>
