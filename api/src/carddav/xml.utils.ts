@@ -143,3 +143,34 @@ export function xmlAddressbookListing(
     "</multistatus>",
   ].join("\r\n");
 }
+
+// REPORT addressbook-multiget response — includes full vCard data.
+// iOS sends this request expecting card:address-data in the response;
+// without it, it never makes individual GET requests and shows no contacts.
+export function xmlMultigetResponse(
+  contacts: Array<{ href: string; etag: string; vcard: string }>,
+): string {
+  const rows = contacts
+    .map((c) =>
+      [
+        "  <response>",
+        `    <href>${c.href}</href>`,
+        "    <propstat>",
+        "      <prop>",
+        `        <getetag>${c.etag}</getetag>`,
+        `        <card:address-data>${c.vcard}</card:address-data>`,
+        "      </prop>",
+        "      <status>HTTP/1.1 200 OK</status>",
+        "    </propstat>",
+        "  </response>",
+      ].join("\r\n"),
+    )
+    .join("\r\n");
+
+  return [
+    '<?xml version="1.0" encoding="utf-8"?>',
+    '<multistatus xmlns="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">',
+    rows,
+    "</multistatus>",
+  ].join("\r\n");
+}
