@@ -51,6 +51,10 @@ export class CarddavService {
 
     const method = req.method.toUpperCase();
 
+    console.log(
+      `[CardDAV] ${method} ${req.path} | Depth:${req.headers["depth"] ?? "-"} | User:${user.crewcode}`,
+    );
+
     switch (method) {
       case "OPTIONS":
         this.handleOptions(res);
