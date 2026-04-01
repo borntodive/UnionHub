@@ -11,6 +11,7 @@ import {
 } from "class-validator";
 import { UserRole } from "../../common/enums/user-role.enum";
 import { Ruolo } from "../../common/enums/ruolo.enum";
+import { WhatsappStatus } from "../../common/enums/whatsapp-status.enum";
 
 export class UpdateUserDto {
   @IsOptional()
@@ -80,6 +81,10 @@ export class UpdateUserDto {
   @IsOptional()
   @IsBoolean()
   isUSO?: boolean;
+
+  @IsOptional()
+  @IsEnum(WhatsappStatus)
+  whatsappStatus?: WhatsappStatus | null;
 
   @IsOptional()
   @IsBoolean()

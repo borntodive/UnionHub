@@ -407,6 +407,30 @@ export const MemberDetailScreen: React.FC = () => {
                   isActive={member.secretaryEmailSent}
                 />
               </View>
+
+              {member.whatsappStatus != null && (
+                <View style={styles.whatsappRow}>
+                  <Text style={styles.whatsappLabel}>WhatsApp Group</Text>
+                  <View
+                    style={[
+                      styles.whatsappBadge,
+                      member.whatsappStatus === "yes" &&
+                        styles.whatsappBadgeYes,
+                      member.whatsappStatus === "no" && styles.whatsappBadgeNo,
+                      member.whatsappStatus === "declined" &&
+                        styles.whatsappBadgeDeclined,
+                    ]}
+                  >
+                    <Text style={styles.whatsappBadgeText}>
+                      {member.whatsappStatus === "yes"
+                        ? "Yes"
+                        : member.whatsappStatus === "no"
+                          ? "No"
+                          : "Doesn't want"}
+                    </Text>
+                  </View>
+                </View>
+              )}
               {!member.welcomeEmailSent && (
                 <TouchableOpacity
                   style={styles.sendEmailButton}
@@ -790,6 +814,39 @@ const styles = StyleSheet.create({
   flagTextActive: {
     color: colors.success,
     fontWeight: typography.weights.medium,
+  },
+  whatsappRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  whatsappLabel: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+  },
+  whatsappBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.border,
+  },
+  whatsappBadgeYes: {
+    backgroundColor: "#d1fae5",
+  },
+  whatsappBadgeNo: {
+    backgroundColor: "#fee2e2",
+  },
+  whatsappBadgeDeclined: {
+    backgroundColor: "#fef3c7",
+  },
+  whatsappBadgeText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: "600",
+    color: colors.text,
   },
   noteText: {
     fontSize: typography.sizes.base,
