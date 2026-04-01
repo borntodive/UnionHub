@@ -7,6 +7,7 @@ import { UserRole } from "../common/enums/user-role.enum";
 import { generateVCard, getVCardEtag } from "./vcard.utils";
 import {
   xmlPrincipalResponse,
+  xmlPrincipalHomeResponse,
   xmlAddressbookResponse,
   xmlAddressbookListing,
 } from "./xml.utils";
@@ -127,16 +128,20 @@ export class CarddavService {
 
     const depth = req.headers["depth"] ?? "0";
 
-    // /carddav/{crewcode}/ — user home, advertise addressbook
+    // /carddav/{crewcode}/ — principal home, return addressbook-home-set
+    // iOS uses this to discover where the addressbook lives
     if (!parsed.inContacts) {
-      const addressbookHref = `/carddav/${parsed.crewcode}/contacts/`;
-      const members = await this.getMembers(user);
-      const ctag = this.computeCtag(members);
+      const addressbookHomeHref = `/carddav/${parsed.crewcode}/contacts/`;
       res
         .status(207)
         .set("Content-Type", "text/xml; charset=utf-8")
         .set("DAV", "1, 3, addressbook")
-        .send(xmlAddressbookResponse(addressbookHref, ctag));
+        .send(
+          xmlPrincipalHomeResponse(
+            `/carddav/${parsed.crewcode}/`,
+            addressbookHomeHref,
+          ),
+        );
       return;
     }
 
