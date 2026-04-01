@@ -21,7 +21,7 @@ import {
   Mail,
   BookUser,
 } from "lucide-react-native";
-import { Linking } from "react-native";
+import { Linking, Share } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { Switch } from "react-native";
@@ -549,10 +549,29 @@ export const SettingsScreen: React.FC = () => {
   const currentLanguage = getLanguage();
   const [carddavLoading, setCarddavLoading] = useState(false);
 
+  const CARDDAV_SERVER_URL = "https://api.unionhub.app/carddav";
+
   const handleDownloadContactsProfile = async () => {
+    if (Platform.OS !== "ios") {
+      Alert.alert(
+        "Sync Contatti (Android)",
+        `Installa l'app DAVx⁵ dal Play Store, poi aggiungi un account CardDAV con questo URL:\n\n${CARDDAV_SERVER_URL}\n\nUsa il tuo crewcode e la tua password.`,
+        [
+          {
+            text: "Condividi URL",
+            onPress: () => Share.share({ message: CARDDAV_SERVER_URL }),
+          },
+          { text: "Chiudi", style: "cancel" },
+        ],
+      );
+      return;
+    }
+
     setCarddavLoading(true);
     try {
-      const res = await apiClient.post<{ url: string }>("/carddav/profile-token");
+      const res = await apiClient.post<{ url: string }>(
+        "/carddav/profile-token",
+      );
       await Linking.openURL(res.data.url);
     } catch {
       Alert.alert("Errore", "Impossibile generare il profilo contatti.");
