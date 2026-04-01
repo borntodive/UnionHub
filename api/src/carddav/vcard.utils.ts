@@ -19,14 +19,21 @@ export function generateVCard(user: User): string {
         ? "Cabin Crew"
         : "Staff";
 
+  const baseCode = user.base?.codice ?? "";
+  const gradeNome = user.grade?.nome ?? "";
+
   const lines = [
     "BEGIN:VCARD",
     "VERSION:3.0",
     `FN:${nome} ${cognome}`.trim(),
     `N:${cognome};${nome};;;`,
-    `ORG:UnionHub;${ruoloLabel}`,
-    `NOTE:unionconnect:${user.crewcode}`,
+    `ORG:UnionHub;${ruoloLabel};${escapeVCard(baseCode)}`,
+    `NOTE:CREWCODE:${user.crewcode}`,
   ];
+
+  if (gradeNome) {
+    lines.push(`TITLE:${escapeVCard(gradeNome)}`);
+  }
 
   if (user.email) {
     lines.push(`EMAIL;TYPE=WORK:${escapeVCard(user.email)}`);
