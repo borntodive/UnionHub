@@ -26,7 +26,8 @@
     "seed:dev": "ts-node src/database/seeds/run-seed.ts",
     "seed:prod": "ts-node src/database/seeds/run-seed-prod.ts",
     "db:reset": "dropdb --if-exists $DB_DATABASE && createdb $DB_DATABASE",
-    "db:reset:dev": "npm run db:reset && npm run migration:run && npm run seed:dev"
+    "db:reset:dev": "npm run db:reset && npm run migration:run && npm run seed:dev",
+    "backup": "bash scripts/backup.sh"
   },
   "dependencies": {
     "@nestjs/bullmq": "^11.0.4",
