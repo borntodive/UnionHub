@@ -285,10 +285,13 @@ export const MemberCreateScreen: React.FC = () => {
 
       return newUser;
     },
-    onSuccess: () => {
+    onSuccess: (newUser) => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      Alert.alert("Success", "Member created successfully");
-      navigation.goBack();
+      navigation.navigate("MemberOnboarding", {
+        memberId: newUser.id,
+        memberName: `${newUser.nome} ${newUser.cognome}`,
+        hasRegistrationForm: !!selectedPdf?.uri,
+      });
     },
     onError: (error: any) => {
       Alert.alert(

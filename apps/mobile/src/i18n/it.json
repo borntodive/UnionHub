@@ -864,6 +864,23 @@
     ],
     "info": "Tabella: ICAO Doc 8168 PANS-OPS. Applicare la CTC solo con OAT < 0°C su procedure barometriche (QNH) non compensate."
   },
+  "memberOnboarding": {
+    "title": "Iscritto creato",
+    "successTitle": "Membro creato con successo",
+    "sectionStatus": "Stato notifiche",
+    "profileCreated": "Profilo creato",
+    "profileCreatedValue": "Completato",
+    "welcomeEmail": "Email di benvenuto",
+    "secretaryEmail": "Modulo alla segreteria",
+    "statusPending": "In corso...",
+    "statusSent": "Inviata",
+    "statusTimeout": "In attesa / non confermata",
+    "whatsappTitle": "Invita al gruppo WhatsApp",
+    "whatsappDescription": "Invia a {{name}} il link per entrare nel gruppo sindacale.",
+    "whatsappButton": "Invia messaggio WhatsApp",
+    "goToProfile": "Vai al profilo",
+    "backToList": "Torna alla lista"
+  },
   "errors": {
     "generic": "Qualcosa è andato storto",
     "sessionExpired": "Sessione scaduta. Effettua nuovamente il login.",

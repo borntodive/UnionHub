@@ -120,6 +120,13 @@ export class User {
   @Column({ type: "varchar", length: 500, nullable: true })
   registrationFormUrl: string | null;
 
+  // Email tracking
+  @Column({ type: "boolean", default: false })
+  welcomeEmailSent: boolean;
+
+  @Column({ type: "boolean", default: false })
+  secretaryEmailSent: boolean;
+
   // Preferred language for the user
   @Column({ type: "varchar", length: 10, default: "it" })
   language: string;
@@ -199,6 +206,8 @@ export class User {
         rls: this.rls,
         isUSO: this.isUSO,
         statusLog: this.statusLog,
+        welcomeEmailSent: this.welcomeEmailSent,
+        secretaryEmailSent: this.secretaryEmailSent,
       };
     }
 

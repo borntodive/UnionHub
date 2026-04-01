@@ -194,6 +194,20 @@ export const usersApi = {
     return response.data;
   },
 
+  resendWelcomeEmail: async (userId: string): Promise<User> => {
+    const response = await apiClient.post<User>(
+      `/users/${userId}/resend-welcome-email`,
+    );
+    return response.data;
+  },
+
+  resendSecretaryEmail: async (userId: string): Promise<User> => {
+    const response = await apiClient.post<User>(
+      `/users/${userId}/resend-secretary-email`,
+    );
+    return response.data;
+  },
+
   // Deactivated users management (SuperAdmin only)
   getDeactivated: async (params?: {
     page?: number;

@@ -864,6 +864,23 @@
     ],
     "info": "Table: ICAO Doc 8168 PANS-OPS. Apply CTC only when OAT < 0°C on barometric (QNH) non-compensated procedures."
   },
+  "memberOnboarding": {
+    "title": "Member Created",
+    "successTitle": "Member created successfully",
+    "sectionStatus": "Notification Status",
+    "profileCreated": "Profile created",
+    "profileCreatedValue": "Completed",
+    "welcomeEmail": "Welcome email",
+    "secretaryEmail": "Form to secretary",
+    "statusPending": "In progress...",
+    "statusSent": "Sent",
+    "statusTimeout": "Pending / not confirmed",
+    "whatsappTitle": "Invite to WhatsApp group",
+    "whatsappDescription": "Send {{name}} the link to join the union group.",
+    "whatsappButton": "Send WhatsApp message",
+    "goToProfile": "Go to profile",
+    "backToList": "Back to list"
+  },
   "errors": {
     "generic": "Something went wrong",
     "sessionExpired": "Session expired. Please login again.",
