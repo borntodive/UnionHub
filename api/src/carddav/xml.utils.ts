@@ -46,6 +46,41 @@ export function xmlPrincipalHomeResponse(
   ].join("\r\n");
 }
 
+// PROPFIND depth:1 on the principal home — lists the addressbook within it.
+// Per RFC 6352, addressbook-home-set must point to a COLLECTION that
+// CONTAINS addressbooks; iOS then does depth:1 here to discover them.
+export function xmlHomeWithAddressbook(
+  homeHref: string,
+  addressbookHref: string,
+  ctag: string,
+): string {
+  return [
+    '<?xml version="1.0" encoding="utf-8"?>',
+    '<multistatus xmlns="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav" xmlns:cs="http://calendarserver.org/ns/">',
+    "  <response>",
+    `    <href>${homeHref}</href>`,
+    "    <propstat>",
+    "      <prop>",
+    "        <resourcetype><collection/></resourcetype>",
+    "      </prop>",
+    "      <status>HTTP/1.1 200 OK</status>",
+    "    </propstat>",
+    "  </response>",
+    "  <response>",
+    `    <href>${addressbookHref}</href>`,
+    "    <propstat>",
+    "      <prop>",
+    "        <resourcetype><collection/><card:addressbook/></resourcetype>",
+    "        <displayname>UnionHub</displayname>",
+    `        <cs:getctag>${ctag}</cs:getctag>`,
+    "      </prop>",
+    "      <status>HTTP/1.1 200 OK</status>",
+    "    </propstat>",
+    "  </response>",
+    "</multistatus>",
+  ].join("\r\n");
+}
+
 export function xmlAddressbookResponse(
   addressbookHref: string,
   ctag: string,
