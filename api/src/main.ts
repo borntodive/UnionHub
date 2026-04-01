@@ -2,6 +2,7 @@ import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AppModule } from "./app.module";
+import { CarddavService } from "./carddav/carddav.service";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
 import * as express from "express";
 import * as path from "path";
@@ -86,6 +87,25 @@ async function bootstrap() {
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Accept"],
   });
+
+  // CardDAV — registered BEFORE global prefix so it stays at /carddav (not /api/v1/carddav)
+  const carddavService = app.get(CarddavService);
+  app.use(
+    "/.well-known/carddav",
+    (_req: express.Request, res: express.Response) => {
+      res.redirect(301, "/carddav/");
+    },
+  );
+  app.use(
+    "/carddav",
+    (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      carddavService.handleRequest(req, res, next).catch(next);
+    },
+  );
 
   // Global prefix
   app.setGlobalPrefix("api/v1");

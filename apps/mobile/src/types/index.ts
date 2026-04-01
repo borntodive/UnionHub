@@ -57,6 +57,8 @@ export interface User {
   registrationFormUrl?: string | null;
   welcomeEmailSent?: boolean;
   secretaryEmailSent?: boolean;
+  whatsappStatus?: "yes" | "no" | "declined" | null;
+  isUSO?: boolean;
   dataIscrizione?: string | null;
   dateOfEntry?: string | null;
   dateOfCaptaincy?: string | null;

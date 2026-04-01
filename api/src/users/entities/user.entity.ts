@@ -11,6 +11,7 @@ import {
 } from "typeorm";
 import { UserRole } from "../../common/enums/user-role.enum";
 import { Ruolo } from "../../common/enums/ruolo.enum";
+import { WhatsappStatus } from "../../common/enums/whatsapp-status.enum";
 import { Base } from "../../bases/entities/base.entity";
 import { Contract } from "../../contracts/entities/contract.entity";
 import { Grade } from "../../grades/entities/grade.entity";
@@ -112,6 +113,14 @@ export class User {
   @Column({ type: "boolean", default: false })
   isUSO: boolean;
 
+  @Column({
+    type: "enum",
+    enum: WhatsappStatus,
+    nullable: true,
+    default: null,
+  })
+  whatsappStatus: WhatsappStatus | null;
+
   // Registration status for self-registration flow
   @Column({ type: "varchar", length: 20, default: "approved" })
   registrationStatus: "pending" | "approved" | "rejected";
@@ -205,6 +214,7 @@ export class User {
         rsa: this.rsa,
         rls: this.rls,
         isUSO: this.isUSO,
+        whatsappStatus: this.whatsappStatus,
         statusLog: this.statusLog,
         welcomeEmailSent: this.welcomeEmailSent,
         secretaryEmailSent: this.secretaryEmailSent,

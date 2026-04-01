@@ -27,6 +27,7 @@ import { GradesService } from "../grades/grades.service";
 import { PublicRegisterDto } from "./dto/public-register.dto";
 import { FileStorageService } from "./services/file-storage.service";
 import { parseDMYOptional } from "../common/utils/date.utils";
+import { WhatsappStatus } from "../common/enums/whatsapp-status.enum";
 
 interface FindAllOptions {
   role?: UserRole;
@@ -923,11 +924,15 @@ export class UsersService {
         skip_empty_lines: true,
       }) as Record<string, string>[];
     } else if (fileExtension === ".xlsx" || fileExtension === ".xls") {
-      const workbook = xlsx.read(fileBuffer, { type: "buffer" });
+      const workbook = xlsx.read(fileBuffer, {
+        type: "buffer",
+        cellDates: true,
+      });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const rawData = xlsx.utils.sheet_to_json(worksheet, {
         header: 1,
+        raw: true,
       }) as any[][];
 
       // Convert array to object format (first row is headers)
@@ -936,7 +941,16 @@ export class UsersService {
         records = rawData.slice(1).map((row: any[]) => {
           const obj: Record<string, string> = {};
           headers.forEach((header, index) => {
-            obj[header] = String(row[index] || "");
+            const val = row[index];
+            // Date objects from cellDates:true → YYYY-MM-DD directly
+            if (val instanceof Date) {
+              const y = val.getUTCFullYear();
+              const m = String(val.getUTCMonth() + 1).padStart(2, "0");
+              const d = String(val.getUTCDate()).padStart(2, "0");
+              obj[header] = `${y}-${m}-${d}`;
+            } else {
+              obj[header] = val == null ? "" : String(val);
+            }
           });
           return obj;
         });
@@ -988,6 +1002,30 @@ export class UsersService {
         const gradeCode =
           record.GRADE || record.Grade || record.grade || record.QUALIFICA;
         const note = record.NOTE || record.Note || record.note;
+        const dataIscrizioneRaw =
+          record["DATA ISCRIZIONE"] ||
+          record.DATA_ISCRIZIONE ||
+          record.dataIscrizione ||
+          null;
+        // Expand 2-digit year: DD/MM/YY → DD/MM/20YY
+        const dataIscrizioneNorm = dataIscrizioneRaw
+          ? dataIscrizioneRaw.replace(
+              /^(\d{1,2})\/(\d{1,2})\/(\d{2})$/,
+              (_, d, m, y) => `${d}/${m}/20${y}`,
+            )
+          : null;
+        const dataIscrizione = parseDMYOptional(dataIscrizioneNorm);
+        const waRaw = (record.WA || record.Wa || record.wa || "")
+          .trim()
+          .toUpperCase();
+        const whatsappStatus: WhatsappStatus | null =
+          waRaw === "SI"
+            ? WhatsappStatus.YES
+            : waRaw === "NO"
+              ? WhatsappStatus.NO
+              : waRaw === "NON VUOLE"
+                ? WhatsappStatus.DECLINED
+                : null;
 
         // Validate required fields
         if (!crewcode || !surname || !name || !email) {
@@ -1065,8 +1103,14 @@ export class UsersService {
         const hashedPassword = await bcrypt.hash("password", 10);
         const user = this.usersRepository.create({
           crewcode: crewcode.toUpperCase(),
-          nome: name,
-          cognome: surname,
+          nome: name
+            .trim()
+            .toLowerCase()
+            .replace(/\b\w/g, (c) => c.toUpperCase()),
+          cognome: surname
+            .trim()
+            .toLowerCase()
+            .replace(/\b\w/g, (c) => c.toUpperCase()),
           email: email.toLowerCase(),
           telefono: phone || null,
           ruolo,
@@ -1081,7 +1125,10 @@ export class UsersService {
           rls: false, // Default false
           isUSO: false, // Default false
           note: note || null,
-          dataIscrizione: null, // Empty for now
+          whatsappStatus: whatsappStatus,
+          dataIscrizione: dataIscrizione || null,
+          welcomeEmailSent: true,
+          secretaryEmailSent: true,
         });
 
         await this.usersRepository.save(user);

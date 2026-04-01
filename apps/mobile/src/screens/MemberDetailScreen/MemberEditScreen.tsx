@@ -33,7 +33,7 @@ import {
   User,
   Building2,
   FileText,
-  ToggleLeft,
+  MessageCircle,
   Calendar,
 } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -108,6 +108,7 @@ export const MemberEditScreen: React.FC = () => {
     rsa: false,
     rls: false,
     isUSO: false,
+    whatsappStatus: null as "yes" | "no" | "declined" | null,
     dataIscrizione: "",
     dateOfEntry: "",
     dateOfCaptaincy: "",
@@ -167,6 +168,7 @@ export const MemberEditScreen: React.FC = () => {
         rsa: member.rsa || false,
         rls: member.rls || false,
         isUSO: member.isUSO || false,
+        whatsappStatus: member.whatsappStatus ?? null,
         dataIscrizione: member.dataIscrizione || "",
         dateOfEntry: member.dateOfEntry || "",
         dateOfCaptaincy: member.dateOfCaptaincy || "",
@@ -285,6 +287,8 @@ export const MemberEditScreen: React.FC = () => {
       if (formData.rls !== (member.rls || false)) updateData.rls = formData.rls;
       if (formData.isUSO !== (member.isUSO || false))
         updateData.isUSO = formData.isUSO;
+      if (formData.whatsappStatus !== (member.whatsappStatus ?? null))
+        updateData.whatsappStatus = formData.whatsappStatus;
       if (formData.dataIscrizione !== (member.dataIscrizione || ""))
         updateData.dataIscrizione = formData.dataIscrizione || null;
       if (formData.dateOfEntry !== (member.dateOfEntry || ""))
@@ -696,24 +700,56 @@ export const MemberEditScreen: React.FC = () => {
                     thumbColor={colors.background}
                   />
                 </View>
+              </Card>
+            )}
 
-                <View style={styles.switchRow}>
-                  <View style={styles.switchLabelContainer}>
-                    <ToggleLeft
-                      size={20}
-                      color={formData.isActive ? colors.success : colors.error}
-                      style={styles.switchIcon}
-                    />
-                    <Text style={styles.switchLabel}>Active</Text>
-                  </View>
-                  <Switch
-                    value={formData.isActive}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, isActive: value })
-                    }
-                    trackColor={{ false: colors.error, true: colors.success }}
-                    thumbColor={colors.background}
+            {/* WhatsApp Status */}
+            {canEditAdminFields && (
+              <Card style={styles.sectionCard}>
+                <View style={styles.switchLabelContainer}>
+                  <MessageCircle
+                    size={20}
+                    color={colors.primary}
+                    style={styles.switchIcon}
                   />
+                  <Text style={styles.sectionTitle}>WhatsApp Group</Text>
+                </View>
+                <View style={styles.whatsappOptions}>
+                  {(
+                    [
+                      { value: "yes", label: "Yes" },
+                      { value: "no", label: "No" },
+                      { value: "declined", label: "Doesn't want" },
+                    ] as const
+                  ).map((opt) => (
+                    <TouchableOpacity
+                      key={opt.value}
+                      style={[
+                        styles.whatsappOption,
+                        formData.whatsappStatus === opt.value &&
+                          styles.whatsappOptionSelected,
+                      ]}
+                      onPress={() =>
+                        setFormData({
+                          ...formData,
+                          whatsappStatus:
+                            formData.whatsappStatus === opt.value
+                              ? null
+                              : opt.value,
+                        })
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.whatsappOptionText,
+                          formData.whatsappStatus === opt.value &&
+                            styles.whatsappOptionTextSelected,
+                        ]}
+                      >
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </Card>
             )}
@@ -1039,6 +1075,31 @@ const styles = StyleSheet.create({
   switchLabel: {
     fontSize: typography.sizes.base,
     color: colors.text,
+  },
+  whatsappOptions: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  whatsappOption: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+  },
+  whatsappOptionSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  whatsappOptionText: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    fontWeight: "500",
+  },
+  whatsappOptionTextSelected: {
+    color: colors.background,
   },
   textAreaContainer: {
     flexDirection: "row",
