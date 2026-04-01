@@ -1,5 +1,6 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, ForbiddenException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { randomBytes } from "crypto";
 import * as bcrypt from "bcrypt";
 import { createHash } from "crypto";
 import * as express from "express";
@@ -22,12 +23,45 @@ interface CardDavPath {
   filename?: string; // e.g. "CPT0001.vcf"
 }
 
+interface ProfileToken {
+  crewcode: string;
+  expiresAt: number;
+}
+
 @Injectable()
 export class CarddavService {
+  private readonly profileTokens = new Map<string, ProfileToken>();
+
   constructor(
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
   ) {}
+
+  // ─── Profile token (JWT-authenticated, from mobile app) ──────────────────
+
+  generateProfileToken(crewcode: string): string {
+    // Purge expired tokens
+    const now = Date.now();
+    for (const [token, data] of this.profileTokens) {
+      if (data.expiresAt < now) this.profileTokens.delete(token);
+    }
+
+    const token = randomBytes(32).toString("hex");
+    this.profileTokens.set(token, {
+      crewcode,
+      expiresAt: now + 5 * 60 * 1000, // 5 minutes
+    });
+    return token;
+  }
+
+  getProfileUrl(crewcode: string): string {
+    const token = this.generateProfileToken(crewcode);
+    const host = this.configService.get<string>(
+      "CARDDAV_HOST",
+      "api.unionhub.app",
+    );
+    return `https://${host}/carddav/profile?t=${token}`;
+  }
 
   // ─── Public entry point ──────────────────────────────────────────────────
 
@@ -36,6 +70,26 @@ export class CarddavService {
     res: express.Response,
     next: express.NextFunction,
   ): Promise<void> {
+    // Token-based auth for profile download (from mobile app via Linking.openURL)
+    const isProfilePath = req.path === "/profile" || req.path === "/profile/";
+    const tokenParam = req.query["t"] as string | undefined;
+    if (isProfilePath && tokenParam) {
+      const tokenData = this.profileTokens.get(tokenParam);
+      if (!tokenData || tokenData.expiresAt < Date.now()) {
+        this.profileTokens.delete(tokenParam);
+        res.status(401).end();
+        return;
+      }
+      this.profileTokens.delete(tokenParam); // one-time use
+      const user = await this.usersService.findByCrewcode(tokenData.crewcode);
+      if (!user || !user.isActive) {
+        res.status(401).end();
+        return;
+      }
+      this.handleProfile(req, res, user);
+      return;
+    }
+
     const user = await this.authenticate(req);
     if (!user) {
       res
@@ -74,6 +128,7 @@ export class CarddavService {
           await this.handleGet(req, res, user);
         }
         break;
+
       case "PUT":
       case "DELETE":
         res.status(403).end();

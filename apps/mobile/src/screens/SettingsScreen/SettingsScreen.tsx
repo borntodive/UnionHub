@@ -19,7 +19,9 @@ import {
   Info,
   Bug,
   Mail,
+  BookUser,
 } from "lucide-react-native";
+import { Linking } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { Switch } from "react-native";
@@ -545,6 +547,19 @@ export const SettingsScreen: React.FC = () => {
   );
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const currentLanguage = getLanguage();
+  const [carddavLoading, setCarddavLoading] = useState(false);
+
+  const handleDownloadContactsProfile = async () => {
+    setCarddavLoading(true);
+    try {
+      const res = await apiClient.post<{ url: string }>("/carddav/profile-token");
+      await Linking.openURL(res.data.url);
+    } catch {
+      Alert.alert("Errore", "Impossibile generare il profilo contatti.");
+    } finally {
+      setCarddavLoading(false);
+    }
+  };
 
   const handleDisableBiometric = () => {
     Alert.alert(
@@ -715,6 +730,36 @@ export const SettingsScreen: React.FC = () => {
           )}
         </View>
       </View>
+
+      {/* Contacts sync — admin only */}
+      {isAdmin && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Sync Contatti</Text>
+          <View style={styles.card}>
+            <TouchableOpacity
+              style={styles.row}
+              onPress={handleDownloadContactsProfile}
+              disabled={carddavLoading}
+            >
+              <View style={styles.iconContainer}>
+                <BookUser size={24} color={colors.primary} />
+              </View>
+              <View style={styles.textContainer}>
+                <Text style={styles.label}>Scarica profilo contatti</Text>
+                <Text style={styles.value}>
+                  Installa il profilo CardDAV per sincronizzare i contatti
+                  automaticamente
+                </Text>
+              </View>
+              {carddavLoading ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <ChevronRight size={20} color={colors.textSecondary} />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* Security */}
       <View style={styles.section}>
