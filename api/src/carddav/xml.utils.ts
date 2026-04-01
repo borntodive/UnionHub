@@ -144,6 +144,14 @@ export function xmlAddressbookListing(
   ].join("\r\n");
 }
 
+function xmlEscape(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 // REPORT addressbook-multiget response — includes full vCard data.
 // iOS sends this request expecting card:address-data in the response;
 // without it, it never makes individual GET requests and shows no contacts.
@@ -158,7 +166,7 @@ export function xmlMultigetResponse(
         "    <propstat>",
         "      <prop>",
         `        <getetag>${c.etag}</getetag>`,
-        `        <card:address-data>${c.vcard}</card:address-data>`,
+        `        <card:address-data>${xmlEscape(c.vcard)}</card:address-data>`,
         "      </prop>",
         "      <status>HTTP/1.1 200 OK</status>",
         "    </propstat>",
