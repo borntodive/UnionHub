@@ -213,6 +213,54 @@ export class UsersController {
     return this.usersService.sendTestRegistrationFormEmail();
   }
 
+  @Post(":id/resend-welcome-email")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @HttpCode(HttpStatus.OK)
+  async resendWelcomeEmail(
+    @Request() req: RequestWithUser,
+    @Param("id", ParseUUIDPipe) id: string,
+  ) {
+    const requestingUser = await this.usersService.findById(req.user.userId);
+    await this.usersService.resendWelcomeEmail(id);
+    const user = await this.usersService.findById(id);
+    return user.serialize(requestingUser.role);
+  }
+
+  @Post(":id/resend-secretary-email")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @HttpCode(HttpStatus.OK)
+  async resendSecretaryEmail(
+    @Request() req: RequestWithUser,
+    @Param("id", ParseUUIDPipe) id: string,
+  ) {
+    const requestingUser = await this.usersService.findById(req.user.userId);
+    const user = await this.usersService.findById(id);
+
+    if (!user.registrationFormUrl) {
+      throw new BadRequestException(
+        "No registration form available for this user",
+      );
+    }
+
+    const filePath = this.fileStorageService.getFilePathFromUrl(
+      user.registrationFormUrl,
+    );
+    const pdfBuffer = await fs.promises.readFile(filePath);
+    const filename = path.basename(filePath);
+
+    await this.mailService.sendRegistrationFormToSecretary(
+      user,
+      pdfBuffer,
+      filename,
+    );
+    await this.usersService.markSecretaryEmailSent(id);
+
+    const updated = await this.usersService.findById(id);
+    return updated.serialize(requestingUser.role);
+  }
+
   @Post()
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async create(
@@ -410,11 +458,15 @@ export class UsersController {
       this.usersService
         .findById(id)
         .then((fullUser) =>
-          this.mailService.sendRegistrationFormToSecretary(
-            fullUser,
-            pdfBuffer,
-            pdfName,
-          ),
+          this.mailService
+            .sendRegistrationFormToSecretary(fullUser, pdfBuffer, pdfName)
+            .then(() =>
+              this.usersService.update(
+                id,
+                { secretaryEmailSent: true },
+                requestingUser,
+              ),
+            ),
         )
         .catch((err) =>
           this.logger.error(

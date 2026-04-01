@@ -55,6 +55,8 @@ export interface User {
   rls?: boolean;
   registrationStatus?: "pending" | "approved" | "rejected";
   registrationFormUrl?: string | null;
+  welcomeEmailSent?: boolean;
+  secretaryEmailSent?: boolean;
   dataIscrizione?: string | null;
   dateOfEntry?: string | null;
   dateOfCaptaincy?: string | null;

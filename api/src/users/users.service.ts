@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   ForbiddenException,
+  BadRequestException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, Brackets, In } from "typeorm";
@@ -308,6 +309,9 @@ export class UsersService {
         .then((contacts) =>
           this.mailService.sendWelcomeEmail(savedUser, "password", contacts),
         )
+        .then(() =>
+          this.usersRepository.update(savedUser.id, { welcomeEmailSent: true }),
+        )
         .catch(() => {});
     }, 3000);
 
@@ -362,6 +366,9 @@ export class UsersService {
       this.getRsaRlsContacts()
         .then((contacts) =>
           this.mailService.sendWelcomeEmail(savedUser, "password", contacts),
+        )
+        .then(() =>
+          this.usersRepository.update(savedUser.id, { welcomeEmailSent: true }),
         )
         .catch(() => {});
     }, 3000);
@@ -1202,6 +1209,17 @@ export class UsersService {
     return { sent: true, to: user.email, crewcode: user.crewcode };
   }
 
+  async resendWelcomeEmail(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+    const contacts = await this.getRsaRlsContacts();
+    await this.mailService.sendWelcomeEmail(user, "password", contacts);
+    await this.usersRepository.update(userId, { welcomeEmailSent: true });
+  }
+
+  async markSecretaryEmailSent(userId: string): Promise<void> {
+    await this.usersRepository.update(userId, { secretaryEmailSent: true });
+  }
+
   // ==================== SELF-REGISTRATION (PUBLIC) ====================
 
   /**
@@ -1384,7 +1402,12 @@ export class UsersService {
     const saved = await this.usersRepository.save(user);
 
     // Send welcome email (fire-and-forget)
-    this.mailService.sendWelcomeEmail(saved, "password").catch(() => {});
+    this.mailService
+      .sendWelcomeEmail(saved, "password")
+      .then(() =>
+        this.usersRepository.update(saved.id, { welcomeEmailSent: true }),
+      )
+      .catch(() => {});
 
     return saved;
   }

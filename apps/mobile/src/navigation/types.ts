@@ -7,6 +7,11 @@ export type RootStackParamList = {
   MemberDetail: { memberId: string };
   MemberEdit: { memberId: string };
   MemberCreate: { sharedPdfUri?: string; extractedData?: any } | undefined;
+  MemberOnboarding: {
+    memberId: string;
+    memberName: string;
+    hasRegistrationForm: boolean;
+  };
   // Public routes
   PublicDocuments: undefined;
   // Admin routes

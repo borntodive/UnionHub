@@ -164,6 +164,34 @@ export const MemberDetailScreen: React.FC = () => {
     ]);
   };
 
+  const resendWelcomeMutation = useMutation({
+    mutationFn: () => usersApi.resendWelcomeEmail(memberId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user", memberId] });
+      Alert.alert("Done", "Welcome email sent successfully.");
+    },
+    onError: (error: any) => {
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to send welcome email.",
+      );
+    },
+  });
+
+  const resendSecretaryMutation = useMutation({
+    mutationFn: () => usersApi.resendSecretaryEmail(memberId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user", memberId] });
+      Alert.alert("Done", "Secretary email sent successfully.");
+    },
+    onError: (error: any) => {
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to send secretary email.",
+      );
+    },
+  });
+
   const handleEdit = () => {
     navigation.navigate("MemberEdit", { memberId });
   };
@@ -362,6 +390,53 @@ export const MemberDetailScreen: React.FC = () => {
             <Card style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>Notes</Text>
               <Text style={styles.noteText}>{member.note}</Text>
+            </Card>
+          )}
+
+          {/* Account Information */}
+          {isAdmin && (
+            <Card style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Account Information</Text>
+              <View style={styles.flagsContainer}>
+                <FlagItem
+                  label="Welcome Email"
+                  isActive={member.welcomeEmailSent}
+                />
+                <FlagItem
+                  label="Secretary Email"
+                  isActive={member.secretaryEmailSent}
+                />
+              </View>
+              {!member.welcomeEmailSent && (
+                <TouchableOpacity
+                  style={styles.sendEmailButton}
+                  onPress={() => resendWelcomeMutation.mutate()}
+                  disabled={resendWelcomeMutation.isPending}
+                >
+                  {resendWelcomeMutation.isPending ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <Text style={styles.sendEmailButtonText}>
+                      Send welcome email
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              )}
+              {!member.secretaryEmailSent && member.registrationFormUrl && (
+                <TouchableOpacity
+                  style={styles.sendEmailButton}
+                  onPress={() => resendSecretaryMutation.mutate()}
+                  disabled={resendSecretaryMutation.isPending}
+                >
+                  {resendSecretaryMutation.isPending ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <Text style={styles.sendEmailButtonText}>
+                      Send form to secretary
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              )}
             </Card>
           )}
 
@@ -679,6 +754,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.md,
+  },
+  sendEmailButton: {
+    marginTop: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.primary + "12",
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.primary + "30",
+    alignItems: "center",
+  },
+  sendEmailButtonText: {
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
+    fontWeight: typography.weights.medium,
   },
   flagItem: {
     flexDirection: "row",

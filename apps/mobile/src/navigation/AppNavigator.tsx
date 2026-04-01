@@ -12,6 +12,7 @@ import { ChangePasswordScreen } from "../screens/ChangePasswordScreen/ChangePass
 import { MemberDetailScreen } from "../screens/MemberDetailScreen/MemberDetailScreen";
 import { MemberEditScreen } from "../screens/MemberDetailScreen/MemberEditScreen";
 import { MemberCreateScreen } from "../screens/MembersScreen/MemberCreateScreen";
+import { MemberOnboardingScreen } from "../screens/MemberOnboardingScreen/MemberOnboardingScreen";
 import { DrawerNavigator } from "./DrawerNavigator";
 // Admin screens
 import {
@@ -181,6 +182,13 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen
               name="MemberCreate"
               component={MemberCreateScreen}
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="MemberOnboarding"
+              component={MemberOnboardingScreen}
               options={{
                 headerShown: false,
               }}

@@ -91,6 +91,14 @@ export class UpdateUserDto {
   registrationFormUrl?: string;
 
   @IsOptional()
+  @IsBoolean()
+  welcomeEmailSent?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  secretaryEmailSent?: boolean;
+
+  @IsOptional()
   @IsString()
   dataIscrizione?: string;
 

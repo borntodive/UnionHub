@@ -690,6 +690,14 @@ export class MailService {
       "MAIL_FROM",
       "FIT-CISL Malta Air Pilot Board <pilmalta.fitcisl@gmail.com>",
     );
+    const ruoloAbbr =
+      user.ruolo === "pilot"
+        ? "PIL"
+        : user.ruolo === "cabin_crew"
+          ? "CC"
+          : (user.ruolo ?? "");
+    const attachmentFilename = `MAY - ${ruoloAbbr} - ${user.cognome.toUpperCase()} ${user.nome.toUpperCase()}.pdf`;
+
     const ruoloLabel =
       user.ruolo === "pilot"
         ? "Pilota"
@@ -781,9 +789,7 @@ export class MailService {
         html,
         attachments: [
           {
-            filename: originalFilename.endsWith(".pdf")
-              ? originalFilename
-              : `${originalFilename}.pdf`,
+            filename: attachmentFilename,
             content: pdfBuffer,
             contentType: "application/pdf",
           },
