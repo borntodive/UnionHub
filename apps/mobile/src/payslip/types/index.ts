@@ -195,6 +195,7 @@ export interface PayslipSettings {
   btc: boolean; // BTC-based contract
   cu: boolean; // New captain
   voluntaryPensionContribution: number;
+  fondAer: boolean; // FondAer mandatory contribution (CCNL Aviazione)
 }
 
 // ============================================

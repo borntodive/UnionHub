@@ -714,10 +714,12 @@ export class PayslipCalculator {
     const aziendale = (retribuzioneUtileTFR * percAziendale) / 100;
 
     // FondAer: mandatory aviation-sector employee contribution (CCNL Aviazione)
-    const fondAer = retribuzioneUtileTFR * RYR_CONFIG.fondAerRate;
+    const fondAer = this.settings.fondAer
+      ? retribuzioneUtileTFR * RYR_CONFIG.fondAerRate
+      : 0;
 
     return {
-      totale: volontaria + aziendale,
+      totale: volontaria + aziendale + fondAer,
       volontaria,
       aziendale,
       fondAer,

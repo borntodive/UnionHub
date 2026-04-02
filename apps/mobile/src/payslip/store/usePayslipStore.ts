@@ -103,6 +103,7 @@ const defaultSettings: PayslipSettings = {
   btc: false,
   cu: false,
   voluntaryPensionContribution: 0,
+  fondAer: true,
 };
 
 export const usePayslipStore = create<PayslipState>()(
