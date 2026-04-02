@@ -10,20 +10,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { usePayslipStore } from "../store/usePayslipStore";
 import { useAuthStore } from "../../store/authStore";
 import { fetchClaContract } from "../services/claContractsApi";
-import { getContractData as getStaticContractData } from "../data/contractData";
 import { colors, spacing, typography } from "../../theme";
 
 export default function DebugContractScreen() {
   const { settings, input } = usePayslipStore();
   const { user } = useAuthStore();
   const [dbContract, setDbContract] = useState<any>(null);
-  const [staticContract, setStaticContract] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   const loadContracts = async () => {
     setLoading(true);
     try {
-      // Fetch from database
       const date = new Date(input.date);
       const dbResult = await fetchClaContract(
         settings.company,
@@ -33,16 +30,8 @@ export default function DebugContractScreen() {
         date.getMonth() + 1,
       );
       setDbContract(dbResult);
-
-      // Fetch static data
-      const staticResult = getStaticContractData(
-        settings.company,
-        settings.role,
-        settings.rank,
-      );
-      setStaticContract(staticResult);
     } catch (error) {
-      console.error("Error fetching contracts:", error);
+      console.error("Error fetching contract:", error);
     } finally {
       setLoading(false);
     }
@@ -237,14 +226,6 @@ export default function DebugContractScreen() {
 
         {renderContractData("Database Contract", dbContract, true)}
 
-        <View style={styles.spacer} />
-
-        {renderContractData(
-          "Static Contract (Fallback)",
-          staticContract,
-          false,
-        )}
-
         <View style={styles.footer}>
           <Text style={styles.footerText}>
             Pull down to refresh • Only visible to SuperAdmin
@@ -332,10 +313,6 @@ const styles = StyleSheet.create({
     color: colors.success,
     fontWeight: "bold",
   },
-  staticSource: {
-    color: colors.warning,
-    fontWeight: "bold",
-  },
   notFound: {
     fontSize: typography.sizes.base,
     color: colors.error,
@@ -345,9 +322,6 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.border,
     marginVertical: spacing.md,
-  },
-  spacer: {
-    height: spacing.md,
   },
   json: {
     fontSize: typography.sizes.xs,

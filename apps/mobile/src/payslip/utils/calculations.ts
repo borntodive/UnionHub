@@ -145,27 +145,50 @@ export function calculateTaxBrackets(
 }
 
 // Calculate work deductions (detrazioni lavoro dipendente)
+// When annualBaseOverride is provided (progressive / cumulative YTD method):
+//   - Uses 55,000/27,000 ceiling/range (SAP formula) instead of 50,000/22,000
+//   - Returns the already-prorated monthly amount (daysInMonth/365)
+// Without override: returns a daily amount (caller multiplies ×30)
 export function calculateWorkDeductions(
   annualIncome: number,
   year: number,
   date: Date,
+  annualBaseOverride?: number,
 ): number {
-  let detrazione = 0;
+  const base = annualBaseOverride ?? annualIncome;
 
-  if (annualIncome <= 15000) {
+  let detrazione = 0;
+  if (base <= 15000) {
     detrazione = 1955;
-  } else if (annualIncome <= 28000) {
-    detrazione = 1910 + 1190 * ((28000 - annualIncome) / 13000);
-  } else if (annualIncome <= 50000) {
-    detrazione = 1910 * ((50000 - annualIncome) / 22000);
+  } else if (base <= 28000) {
+    detrazione = 1910 + 1190 * ((28000 - base) / 13000);
+  } else if (annualBaseOverride != null ? base <= 55000 : base <= 50000) {
+    detrazione =
+      annualBaseOverride != null
+        ? 1910 * ((55000 - base) / 27000) // SAP progressive formula
+        : 1910 * ((50000 - base) / 22000); // standard formula
   }
 
-  // Bonus 65 euro only for 2024
-  if (year === 2024 && annualIncome >= 25000 && annualIncome <= 35000) {
+  // Bonus 65 euro only for 2024 (standard method only)
+  if (
+    annualBaseOverride == null &&
+    year === 2024 &&
+    annualIncome >= 25000 &&
+    annualIncome <= 35000
+  ) {
     detrazione += 65;
   }
 
-  return detrazione / 365; // Daily
+  if (annualBaseOverride != null) {
+    // Progressive: prorate by actual days in month
+    const daysInMonth = new Date(
+      date.getFullYear(),
+      date.getMonth() + 1,
+      0,
+    ).getDate();
+    return detrazione * (daysInMonth / 365);
+  }
+  return detrazione / 365; // Daily (caller multiplies ×30)
 }
 
 // Calculate spouse deductions
@@ -201,12 +224,21 @@ export function calculateSpouseDeductions(
 }
 
 // Calculate cuneo fiscale (tax cut)
+// When annualBaseOverride is provided (progressive method), uses that base
+// and prorates by daysInMonth/365 instead of dividing by 12.
 export function calculateCuneoFiscale(
   monthlyIncome: number,
   year: number,
+  annualBaseOverride?: number,
+  date?: Date,
 ): { percentage: number; amount: number } {
   if (monthlyIncome <= 0) return { percentage: 0, amount: 0 };
-  const annualIncome = monthlyIncome * 12;
+  const annualIncome = annualBaseOverride ?? monthlyIncome * 12;
+
+  const daysInMonth = date
+    ? new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+    : 30;
+  const monthFraction = annualBaseOverride != null ? daysInMonth / 365 : 1 / 12;
 
   if (year === 2024) {
     if (monthlyIncome <= 1923) {
@@ -222,11 +254,11 @@ export function calculateCuneoFiscale(
     } else if (annualIncome <= 20000) {
       return { percentage: 0.048, amount: monthlyIncome * 0.048 };
     } else if (annualIncome <= 32000) {
-      const amount = 1000 / 12;
+      const amount = 1000 * monthFraction;
       return { percentage: amount / monthlyIncome, amount };
     } else if (annualIncome <= 40000) {
       const detrazioneDecalage = (1000 * (40000 - annualIncome)) / 8000;
-      const amount = detrazioneDecalage / 12;
+      const amount = detrazioneDecalage * monthFraction;
       return { percentage: amount / monthlyIncome, amount };
     }
   }

@@ -8,9 +8,10 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Menu } from "lucide-react-native";
+import { Menu, RotateCcw } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { colors, spacing, typography, borderRadius } from "../../theme";
@@ -41,6 +42,7 @@ export const InputScreen: React.FC = () => {
     addAdditionalDeduction,
     updateAdditionalDeduction,
     removeAdditionalDeduction,
+    reset,
   } = usePayslipStore();
 
   const activeSettings = overrideActive ? overrideSettings : settings;
@@ -55,6 +57,13 @@ export const InputScreen: React.FC = () => {
     navigation.openDrawer?.();
   };
 
+  const handleReset = () => {
+    Alert.alert(t("payslip.resetInput"), t("payslip.resetInputConfirm"), [
+      { text: t("common.cancel"), style: "cancel" },
+      { text: t("payslip.resetInput"), style: "destructive", onPress: reset },
+    ]);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
@@ -64,7 +73,9 @@ export const InputScreen: React.FC = () => {
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t("payslip.title")}</Text>
-          <View style={styles.placeholder} />
+          <TouchableOpacity onPress={handleReset} style={styles.menuButton}>
+            <RotateCcw size={22} color={colors.textInverse} />
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
 
@@ -243,6 +254,22 @@ export const InputScreen: React.FC = () => {
             />
           </View>
 
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>
+              {t("payslip.progressiveData")}
+            </Text>
+            <Text style={styles.sectionHint}>
+              {t("payslip.progressiveDataHint")}
+            </Text>
+            <NumberInput
+              label={t("payslip.impFiscProg")}
+              value={input.pregressoIrpef}
+              onChangeValue={(v) => setInput({ pregressoIrpef: v })}
+              prefix="€"
+              decimals={2}
+            />
+          </View>
+
           <View style={styles.bottomSpace} />
         </ScrollView>
       </KeyboardAvoidingView>
@@ -274,9 +301,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: colors.textInverse,
   },
-  placeholder: {
-    width: 40,
-  },
   content: {
     flex: 1,
   },
@@ -293,6 +317,11 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
     color: colors.primary,
+    marginBottom: spacing.sm,
+  },
+  sectionHint: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
     marginBottom: spacing.md,
   },
   buttonContainer: {

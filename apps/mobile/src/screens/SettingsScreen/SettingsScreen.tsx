@@ -34,11 +34,7 @@ import { setLanguage, getLanguage } from "../../i18n";
 import { usePayslipStore } from "../../payslip/store/usePayslipStore";
 import { useOfflineStore } from "../../store/offlineStore";
 import { PayslipSettings, LegacyCustom } from "../../payslip/types";
-import {
-  getContractData,
-  getActiveCorrections,
-  applyCorrections,
-} from "../../payslip/data/contractData";
+import { useContractData } from "../../payslip/hooks/useContractData";
 
 const LANGUAGES = [
   { code: "en", label: "English" },
@@ -99,16 +95,16 @@ const PayslipForm: React.FC<PayslipFormProps> = ({
     lc.al > 0 ? lc.al.toFixed(2) : "",
   );
 
-  const getContractRef = () => {
-    const base = getContractData(s.company, s.role, s.rank);
-    if (!base) return null;
-    const today = new Date().toISOString().split("T")[0];
-    const corrections = getActiveCorrections(s.company, s.role, today);
-    return applyCorrections(base, corrections, s.rank);
-  };
+  const today = new Date().toISOString().split("T")[0];
+  const { contractData: contractRef } = useContractData(
+    s.company,
+    s.role,
+    s.rank,
+    today,
+  );
 
   const handleSaveLegacy = () => {
-    const cd = getContractRef();
+    const cd = contractRef;
     if (!cd) return;
     const ffp = parseFloat(legacyFfpText) || 0;
     const sbh = parseFloat(legacySbhText.replace(",", ".")) || 0;

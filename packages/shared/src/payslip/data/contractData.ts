@@ -1,5 +1,6 @@
 // Contract Data for Ryanair (RYR)
 // Based on PAYSLIP_CALCULATOR_EXPO_SPEC.md
+// LEGACY - not used by mobile app (mobile uses DB/cache via contractDataService)
 
 import { CompanyConfig, ClaCorrection } from "../types";
 

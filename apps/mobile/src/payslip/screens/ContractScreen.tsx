@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -15,11 +16,7 @@ import { AlertTriangle, Menu } from "lucide-react-native";
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { usePayslipStore } from "../store/usePayslipStore";
 import { useAuthStore } from "../../store/authStore";
-import {
-  getContractData,
-  getActiveCorrections,
-  applyCorrections,
-} from "../data/contractData";
+import { useContractData } from "../hooks/useContractData";
 import { formatCurrency, formatNumber } from "../utils/formatters";
 import { RankContract } from "../types";
 import { getSeniorityDate, computeSeniorityYears } from "../utils/seniority";
@@ -28,37 +25,27 @@ import { getSeniorityDate, computeSeniorityYears } from "../utils/seniority";
 
 const INSTRUCTOR_RANKS = ["sfi", "tri", "tre", "ltc", "lcc"];
 
-function resolveContract(
-  company: string,
-  role: string,
-  rank: string,
+function applyLegacyOverrides(
+  cd: RankContract,
   legacy: boolean,
   legacyDirect: boolean,
   legacyCustom: { ffp: number; sbh: number; al: number },
   legacyDeltas: { ffp: number; sbh: number; al: number },
-): RankContract | null {
-  const base = getContractData(company, role, rank);
-  if (!base) return null;
-  const today = new Date().toISOString().split("T")[0];
-  const corrections = getActiveCorrections(company, role, today);
-  const corrected = applyCorrections(base, corrections, rank);
-  if (!corrected) return null;
-
-  if (!legacy) return corrected;
-
+): RankContract {
+  if (!legacy) return cd;
   if (legacyDirect) {
     return {
-      ...corrected,
-      ffp: legacyCustom.ffp > 0 ? legacyCustom.ffp : corrected.ffp,
-      sbh: legacyCustom.sbh > 0 ? legacyCustom.sbh : corrected.sbh,
-      al: legacyCustom.al > 0 ? legacyCustom.al : corrected.al,
+      ...cd,
+      ffp: legacyCustom.ffp > 0 ? legacyCustom.ffp : cd.ffp,
+      sbh: legacyCustom.sbh > 0 ? legacyCustom.sbh : cd.sbh,
+      al: legacyCustom.al > 0 ? legacyCustom.al : cd.al,
     };
   }
   return {
-    ...corrected,
-    ffp: corrected.ffp + legacyDeltas.ffp,
-    sbh: corrected.sbh + legacyDeltas.sbh,
-    al: corrected.al + legacyDeltas.al,
+    ...cd,
+    ffp: cd.ffp + legacyDeltas.ffp,
+    sbh: cd.sbh + legacyDeltas.sbh,
+    al: cd.al + legacyDeltas.al,
   };
 }
 
@@ -67,8 +54,7 @@ function computeTrainingAllowances(
   rank: string,
   btc: boolean,
   triAndLtc: boolean,
-  company: string,
-  role: string,
+  ltcContractData: any | null,
 ): { base: number; instructor: number; ltc: number } {
   let base = 0;
   let instructor = 0;
@@ -83,9 +69,8 @@ function computeTrainingAllowances(
   }
 
   const isLtc = rank === "tre" || triAndLtc;
-  if (isLtc) {
-    const ltcData = getContractData(company, role, "ltc");
-    if (ltcData?.training?.allowance) ltc = ltcData.training.allowance;
+  if (isLtc && ltcContractData?.training?.allowance) {
+    ltc = ltcContractData.training.allowance;
   }
 
   return { base, instructor, ltc };
@@ -163,27 +148,32 @@ export const ContractScreen: React.FC = () => {
     ? { ...overrideSettings, legacyDirect: true }
     : { ...settings, legacyDirect: false };
 
-  const cd = useMemo(
-    () =>
-      resolveContract(
-        s.company,
-        s.role,
-        s.rank,
-        s.legacy,
-        s.legacyDirect ?? false,
-        s.legacyCustom ?? { ffp: 0, sbh: 0, al: 0 },
-        s.legacyDeltas ?? { ffp: 0, sbh: 0, al: 0 },
-      ),
-    [
-      s.company,
-      s.role,
-      s.rank,
-      s.legacy,
-      s.legacyDirect,
-      s.legacyCustom,
-      s.legacyDeltas,
-    ],
+  const today = new Date().toISOString().split("T")[0];
+  const { contractData: rawCd, loading } = useContractData(
+    s.company,
+    s.role,
+    s.rank,
+    today,
   );
+  // Also fetch LTC data for TRE/triAndLtc training allowance
+  const needsLtc = s.rank === "tre" || s.triAndLtc;
+  const { contractData: ltcContractData } = useContractData(
+    s.company,
+    s.role,
+    needsLtc ? "ltc" : s.rank,
+    today,
+  );
+
+  const cd = useMemo(() => {
+    if (!rawCd) return null;
+    return applyLegacyOverrides(
+      rawCd,
+      s.legacy,
+      s.legacyDirect ?? false,
+      s.legacyCustom ?? { ffp: 0, sbh: 0, al: 0 },
+      s.legacyDeltas ?? { ffp: 0, sbh: 0, al: 0 },
+    );
+  }, [rawCd, s.legacy, s.legacyDirect, s.legacyCustom, s.legacyDeltas]);
 
   const ptPct = s.parttime ? s.parttimePercentage : 1;
   const cuPct = s.cu ? 0.9 : 1;
@@ -196,12 +186,19 @@ export const ContractScreen: React.FC = () => {
             s.rank,
             s.btc,
             s.triAndLtc,
-            s.company,
-            s.role,
+            needsLtc ? ltcContractData : null,
           )
         : { base: 0, instructor: 0, ltc: 0 },
-    [cd, s.rank, s.btc, s.triAndLtc, s.company, s.role],
+    [cd, s.rank, s.btc, s.triAndLtc, needsLtc, ltcContractData],
   );
+
+  if (loading) {
+    return (
+      <View style={styles.emptyContainer}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
 
   if (!cd) {
     return (

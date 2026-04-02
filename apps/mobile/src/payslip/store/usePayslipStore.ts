@@ -165,28 +165,58 @@ export const usePayslipStore = create<PayslipState>()(
           : { ...settings, legacyDirect: false };
         set({ isCalculating: true, error: null });
 
-        // Pre-fetch live contract to inject seniority brackets (if available)
+        // Fetch live contract (DB/cache) for all modes including override
         let enrichedContext: UserContext = userContext;
-        if (
-          !overrideActive &&
-          (userContext.dateOfEntry || userContext.dateOfCaptaincy)
-        ) {
-          try {
-            const liveContract = await getLiveContractData(
-              activeSettings.company,
-              activeSettings.role,
-              activeSettings.rank,
-              input.date,
-            );
-            if (liveContract?.seniorityBrackets) {
-              enrichedContext = {
-                ...userContext,
+        try {
+          const liveContract = await getLiveContractData(
+            activeSettings.company,
+            activeSettings.role,
+            activeSettings.rank,
+            input.date,
+          );
+          if (liveContract) {
+            enrichedContext = {
+              ...userContext,
+              liveContractData: liveContract,
+              ...(liveContract.seniorityBrackets && {
                 seniorityBrackets: liveContract.seniorityBrackets,
-              };
+              }),
+            };
+
+            // Also fetch LTC contract for TRE/triAndLtc training allowance
+            const isLtcRank =
+              activeSettings.rank === "tre" || activeSettings.triAndLtc;
+            if (isLtcRank) {
+              try {
+                const ltcContract = await getLiveContractData(
+                  activeSettings.company,
+                  activeSettings.role,
+                  "ltc",
+                  input.date,
+                );
+                if (ltcContract) {
+                  enrichedContext = {
+                    ...enrichedContext,
+                    ltcContractData: ltcContract,
+                  };
+                }
+              } catch {
+                // LTC data not critical — calculation proceeds without it
+              }
             }
-          } catch {
-            // Ignore — fall through to static data
+          } else {
+            set({
+              error: "Contratto non trovato nel DB",
+              isCalculating: false,
+            });
+            return;
           }
+        } catch {
+          set({
+            error: "Errore nel caricamento contratto",
+            isCalculating: false,
+          });
+          return;
         }
 
         try {

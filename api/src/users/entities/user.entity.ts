@@ -200,6 +200,7 @@ export class User {
       dateOfCaptaincy: this.dateOfCaptaincy,
       rsa: this.rsa,
       rls: this.rls,
+      itud: this.itud,
       isUSO: this.isUSO,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
