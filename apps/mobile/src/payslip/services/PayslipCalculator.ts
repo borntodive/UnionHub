@@ -14,9 +14,6 @@ import {
   UserContext,
 } from "../types";
 import {
-  getContractData,
-  getActiveCorrections,
-  applyCorrections,
   getUnionFee,
   getUnpaidLeaveDays,
   RYR_CONFIG,
@@ -49,7 +46,7 @@ import {
 } from "../utils/seniority";
 
 export class PayslipCalculator {
-  private contractData: ReturnType<typeof getContractData>;
+  private contractData: any | null;
   private input: PayslipInput;
   private settings: PayslipSettings;
   private userFlags: UserContext;
@@ -68,23 +65,11 @@ export class PayslipCalculator {
     this.year = getYear(input.date);
     this.month = new Date(input.date).getMonth() + 1;
 
-    // Load and apply corrections to contract data
-    const baseData = getContractData(
-      settings.company,
-      settings.role,
-      settings.rank,
-    );
+    // Contract data comes from DB/cache via UserContext (no static fallback)
+    const baseData = userFlags.liveContractData ?? null;
     if (baseData) {
-      const corrections = getActiveCorrections(
-        settings.company,
-        settings.role,
-        input.date,
-      );
-      const corrected = applyCorrections(baseData, corrections, settings.rank);
-      if (!corrected) {
-        this.contractData = null;
-        return;
-      }
+      // Live data is already corrected for the date — no static corrections needed
+      const corrected = baseData;
 
       // Apply seniority bracket if user context and brackets are available
       let withBracket = corrected;
@@ -150,6 +135,7 @@ export class PayslipCalculator {
       areaINPS,
       payslipItems.additionalPayments,
       payslipItems.union.total,
+      fondoPensione,
     );
 
     // Add pension fund to IRPEF
@@ -157,18 +143,25 @@ export class PayslipCalculator {
     areaIRPEF.retribuzioneUtileTFR = tfr.retribuzioneUtileTFR;
     areaIRPEF.tfr = tfr.tfr;
 
+    // Italian payslip format: deductions show IMPOSTA LORDA in TRATTENUTE;
+    // detrazioni (lavoro, coniuge) and cuneo appear as positive credits in COMPETENZE.
     const totaleCompetenze =
       grossPay +
       areaINPS.esenzioneIVS.amount +
-      areaIRPEF.trattamentoIntegrativo;
+      areaIRPEF.trattamentoIntegrativo +
+      areaIRPEF.detrazioniLavoroDipendente +
+      areaIRPEF.detrazioneConiuge +
+      areaIRPEF.taglioCuneoFiscale.amount;
 
     const totaleTrattenute =
       areaINPS.contribuzioneTotale +
-      areaIRPEF.ritenute +
+      areaIRPEF.lordo +
       areaIRPEF.fondoPensione.volontaria +
+      areaIRPEF.fondoPensione.fondAer +
       areaIRPEF.addizionaliRegionali +
       areaIRPEF.addizionaliComunali +
-      areaIRPEF.accontoAddizionaliComunali;
+      areaIRPEF.accontoAddizionaliComunali +
+      payslipItems.union.total;
 
     const netPayment = totaleCompetenze - totaleTrattenute;
 
@@ -314,13 +307,24 @@ export class PayslipCalculator {
     );
 
     // Additional Payments
+    // tax=999 is a UI sentinel for "conguaglio" — cap at 100% for INPS computation
     const additionalPayments = this.input.additional.map((add) =>
-      createAdditionalItem(add.amount, add.tax, add.isSLR, add.isConguaglio),
+      createAdditionalItem(
+        add.amount,
+        add.tax > 100 ? 100 : add.tax,
+        add.isSLR,
+        add.isConguaglio,
+      ),
     );
 
     // Additional Deductions
     const additionalDeductions = this.input.additionalDeductions.map((ded) =>
-      createAdditionalItem(ded.amount, ded.tax, false, ded.isConguaglio),
+      createAdditionalItem(
+        ded.amount,
+        ded.tax > 100 ? 100 : ded.tax,
+        false,
+        ded.isConguaglio,
+      ),
     );
 
     // Union Fee (positive value, will be subtracted in tax calculation)
@@ -396,12 +400,7 @@ export class PayslipCalculator {
     // TRE is always considered LTC, TRI only when triAndLtc flag is set
     const isLtc = this.settings.rank === "tre" || this.settings.triAndLtc;
     if (isLtc) {
-      // Get LTC contract data for the additional allowance
-      const ltcData = getContractData(
-        this.settings.company,
-        this.settings.role,
-        "ltc",
-      );
+      const ltcData = this.userFlags.ltcContractData ?? null;
       if (ltcData?.training?.allowance) {
         // Add LTC training allowance (€14000/12 = €1166.67/month)
         ffp += ltcData.training.allowance;
@@ -549,13 +548,16 @@ export class PayslipCalculator {
     const minImponibile = minDailyAmount * this.input.inpsDays;
 
     const imponibile = Math.max(taxArea, minImponibile);
+    // INPS contributions are computed on the rounded imponibile; the raw
+    // (non-rounded) imponibile is used when deriving the IRPEF taxable base.
+    const imponibileArrotondato = Math.round(imponibile);
 
     const contribuzione = {
-      ivs: imponibile * INPS_RATES.ivs,
-      ivsAdd: imponibile * INPS_RATES.ivsAdd,
-      fis: imponibile * INPS_RATES.fis,
-      cigs: imponibile * INPS_RATES.cigs,
-      fsta: imponibile * INPS_RATES.fsta,
+      ivs: imponibileArrotondato * INPS_RATES.ivs,
+      ivsAdd: imponibileArrotondato * INPS_RATES.ivsAdd,
+      fis: imponibileArrotondato * INPS_RATES.fis,
+      cigs: imponibileArrotondato * INPS_RATES.cigs,
+      fsta: imponibileArrotondato * INPS_RATES.fsta,
     };
 
     const contribuzioneTotale = sumValues(contribuzione);
@@ -563,6 +565,7 @@ export class PayslipCalculator {
 
     return {
       imponibile,
+      imponibileArrotondato,
       contribuzione,
       contribuzioneTotale,
       pensionAcc: imponibile * INPS_RATES.pensionFactor,
@@ -579,6 +582,7 @@ export class PayslipCalculator {
     inps: INPS,
     additionalPayments: AdditionalItem[],
     unionFee: number,
+    fondoPensione: { volontaria: number; fondAer: number },
   ): IRPEF {
     const inpsContribution = inps.contribuzioneTotale;
 
@@ -587,32 +591,53 @@ export class PayslipCalculator {
       .filter((ap) => ap.isSLR)
       .reduce((sum, ap) => sum + ap.total, 0);
 
-    // Taxable income after INPS.
-    // Union fee is deductible from IRPEF (art. 10 TUIR) but NOT from INPS,
-    // so it is subtracted here (not in calculateTaxAreas).
-    const imponibile = taxArea - inpsContribution + slrPayments - unionFee;
+    // Taxable income after INPS and pension fund contributions.
+    // Pension fund (art. 8 d.lgs. 252/2005) is deducted by the employer in payslip.
+    // Union fee (art. 10 TUIR) is an "onere deducibile" claimed by the employee in the
+    // annual tax return — the withholding agent does NOT deduct it here.
+    const pensionEmployee = fondoPensione.volontaria + fondoPensione.fondAer;
+    const imponibile =
+      taxArea - inpsContribution + slrPayments - pensionEmployee;
 
     // Annual projection
     const annualIncome = imponibile * 12;
 
-    // Calculate gross tax
+    // Progressive (YTD) annual base: if the user supplied IMP.FISC.PROG,
+    // project annual income with the 13-month factor (months 1–11) or 12 (December).
+    // This matches the SAP cumulative withholding method used in real payslips.
+    let annualBaseOverride: number | undefined;
+    if (this.input.pregressoIrpef > 0) {
+      const factor = this.month === 12 ? 12 : 13;
+      annualBaseOverride = (this.input.pregressoIrpef / this.month) * factor;
+    }
+
+    // Calculate gross tax (always on standard monthly projection)
     const brackets = IRPEF_BRACKETS[this.year] || IRPEF_BRACKETS[2024];
     const irpefLorda = calculateTaxBrackets(annualIncome, brackets);
 
-    // Deductions
+    // Deductions — use progressive base when available (already returns monthly amount)
+    const inputDate = new Date(this.input.date);
     const detrazioniLavoro =
-      calculateWorkDeductions(
-        annualIncome,
-        this.year,
-        new Date(this.input.date),
-      ) * 30; // Monthly
+      annualBaseOverride != null
+        ? calculateWorkDeductions(
+            annualIncome,
+            this.year,
+            inputDate,
+            annualBaseOverride,
+          )
+        : calculateWorkDeductions(annualIncome, this.year, inputDate) * 30;
 
     const detrazioniConiuge = this.settings.coniugeCarico
       ? calculateSpouseDeductions(annualIncome, this.year)
       : 0;
 
-    // Tax cut
-    const taglioCuneo = calculateCuneoFiscale(imponibile, this.year);
+    // Tax cut — use progressive base when available
+    const taglioCuneo = calculateCuneoFiscale(
+      imponibile,
+      this.year,
+      annualBaseOverride,
+      annualBaseOverride != null ? inputDate : undefined,
+    );
 
     // Net tax
     const ritenute = Math.max(
@@ -639,7 +664,7 @@ export class PayslipCalculator {
       aliquotaMedia,
       trattamentoIntegrativo,
       taglioCuneoFiscale: taglioCuneo,
-      fondoPensione: { totale: 0, volontaria: 0, aziendale: 0 }, // Will be set later
+      fondoPensione: { totale: 0, volontaria: 0, aziendale: 0, fondAer: 0 }, // Will be set later
       addizionaliComunali: this.settings.addComunali,
       accontoAddizionaliComunali: this.settings.accontoAddComunali,
       addizionaliRegionali: this.settings.addRegionali,
@@ -659,7 +684,9 @@ export class PayslipCalculator {
       payslip.basic13th.total +
       payslip.noFlyDiaria.total +
       payslip.rsa.total +
-      payslip.additionalPayments.reduce((sum, ap) => sum + ap.total, 0) -
+      payslip.additionalPayments
+        .filter((ap) => !ap.isConguaglio)
+        .reduce((sum, ap) => sum + ap.total, 0) -
       payslip.ul.basicQuota.total -
       payslip.ul.ffpQuota.total;
 
@@ -673,6 +700,7 @@ export class PayslipCalculator {
     totale: number;
     volontaria: number;
     aziendale: number;
+    fondAer: number;
   } {
     const volontaria =
       (retribuzioneUtileTFR * this.settings.voluntaryPensionContribution) / 100;
@@ -685,10 +713,14 @@ export class PayslipCalculator {
         : 0;
     const aziendale = (retribuzioneUtileTFR * percAziendale) / 100;
 
+    // FondAer: mandatory aviation-sector employee contribution (CCNL Aviazione)
+    const fondAer = retribuzioneUtileTFR * RYR_CONFIG.fondAerRate;
+
     return {
       totale: volontaria + aziendale,
       volontaria,
       aziendale,
+      fondAer,
     };
   }
 

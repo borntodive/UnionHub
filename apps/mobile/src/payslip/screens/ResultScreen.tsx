@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   StatusBar,
   Linking,
+  Alert,
+  Platform,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Menu, AlertTriangle, ExternalLink } from "lucide-react-native";
@@ -25,12 +28,14 @@ export const ResultScreen: React.FC = () => {
   const { user } = useAuthStore();
   const {
     result,
+    input,
     settings,
     overrideActive,
     overrideSettings,
     overrideRsa,
     overrideItud,
     calculate,
+    setInput,
   } = usePayslipStore();
 
   const activeSettings = overrideActive ? overrideSettings : settings;
@@ -56,6 +61,41 @@ export const ResultScreen: React.FC = () => {
   const handleMenuPress = () => {
     // @ts-ignore - Now inside DrawerNavigator
     navigation.openDrawer?.();
+  };
+
+  const handleImpFiscProg = () => {
+    if (Platform.OS === "ios") {
+      Alert.prompt(
+        t("payslip.impFiscProgTitle"),
+        t("payslip.impFiscProgMessage"),
+        (value) => {
+          const n = parseFloat(value?.replace(",", ".") ?? "");
+          if (!isNaN(n) && n > 0) {
+            setInput({ pregressoIrpef: n });
+            calculate({
+              itud,
+              rsa,
+              dateOfEntry: overrideActive ? undefined : user?.dateOfEntry,
+              dateOfCaptaincy: overrideActive
+                ? undefined
+                : user?.dateOfCaptaincy,
+              gradeCode: overrideActive ? undefined : user?.grade?.codice,
+            });
+          }
+        },
+        "plain-text",
+        input.pregressoIrpef > 0 ? String(input.pregressoIrpef) : "",
+        "numeric",
+      );
+    } else {
+      // Android: use a simple Alert with a text input workaround via state
+      // For simplicity, navigate user to Input tab to edit the field
+      Alert.alert(
+        t("payslip.impFiscProgTitle"),
+        t("payslip.impFiscProgMessageAndroid"),
+        [{ text: t("common.ok") }],
+      );
+    }
   };
 
   if (!result) {
@@ -359,6 +399,14 @@ export const ResultScreen: React.FC = () => {
             </Text>
           </View>
           <View style={styles.row}>
+            <Text style={styles.label}>
+              {t("payslip.taxableAmountRounded")}
+            </Text>
+            <Text style={styles.value}>
+              {formatCurrency(areaINPS.imponibileArrotondato)}
+            </Text>
+          </View>
+          <View style={styles.row}>
             <Text style={styles.label}>IVS (9.19%)</Text>
             <Text style={styles.value}>
               {formatCurrency(areaINPS.contribuzione.ivs)}
@@ -609,6 +657,27 @@ export const ResultScreen: React.FC = () => {
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t("payslip.irpef")}</Text>
+          {input.pregressoIrpef === 0 && (
+            <TouchableOpacity
+              onPress={handleImpFiscProg}
+              style={styles.progressiveBanner}
+            >
+              <Text style={styles.progressiveBannerText}>
+                {t("payslip.detrazioniEstimate")}
+              </Text>
+            </TouchableOpacity>
+          )}
+          {input.pregressoIrpef > 0 && (
+            <TouchableOpacity
+              onPress={handleImpFiscProg}
+              style={styles.progressiveBannerActive}
+            >
+              <Text style={styles.progressiveBannerActiveText}>
+                {t("payslip.impFiscProg")}:{" "}
+                {formatCurrency(input.pregressoIrpef)}
+              </Text>
+            </TouchableOpacity>
+          )}
           <View style={styles.row}>
             <Text style={styles.label}>{t("payslip.taxableAmount")}</Text>
             <Text style={styles.value}>
@@ -724,12 +793,21 @@ export const ResultScreen: React.FC = () => {
             <Text style={styles.value}>{formatCurrency(areaIRPEF.tfr)}</Text>
           </View>
           {(areaIRPEF.fondoPensione.volontaria > 0 ||
-            areaIRPEF.fondoPensione.aziendale > 0) && (
+            areaIRPEF.fondoPensione.aziendale > 0 ||
+            areaIRPEF.fondoPensione.fondAer > 0) && (
             <>
               <View style={styles.divider} />
               <Text style={styles.subsectionTitle}>
                 {t("payslip.pensionFund")}
               </Text>
+              {areaIRPEF.fondoPensione.fondAer > 0 && (
+                <View style={styles.row}>
+                  <Text style={styles.label}>{t("payslip.fondAer")}</Text>
+                  <Text style={styles.value}>
+                    {formatCurrency(areaIRPEF.fondoPensione.fondAer)}
+                  </Text>
+                </View>
+              )}
               {areaIRPEF.fondoPensione.volontaria > 0 && (
                 <View style={styles.row}>
                   <Text style={styles.label}>
@@ -935,5 +1013,34 @@ const styles = StyleSheet.create({
   },
   devHighlight: {
     color: "#e65100",
+  },
+  progressiveBanner: {
+    backgroundColor: "#fff3e0",
+    borderRadius: borderRadius.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: "#f57c00",
+  },
+  progressiveBannerText: {
+    fontSize: typography.sizes.sm,
+    color: "#e65100",
+    textAlign: "center",
+  },
+  progressiveBannerActive: {
+    backgroundColor: "#e8f5e9",
+    borderRadius: borderRadius.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  progressiveBannerActiveText: {
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
+    textAlign: "center",
+    fontWeight: typography.weights.medium,
   },
 });

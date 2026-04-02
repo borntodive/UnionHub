@@ -60,7 +60,8 @@ export interface Payslip {
 // ============================================
 
 export interface INPS {
-  imponibile: number; // Taxable amount
+  imponibile: number; // Taxable amount (raw, used for IRPEF derivation)
+  imponibileArrotondato: number; // Rounded taxable amount (used for INPS contributions)
   contribuzione: {
     ivs: number;
     ivsAdd: number;
@@ -92,6 +93,7 @@ export interface IRPEF {
     totale: number;
     volontaria: number;
     aziendale: number;
+    fondAer: number; // FondAer mandatory aviation-sector contribution (1% of RUT)
   };
   addizionaliComunali: number;
   accontoAddizionaliComunali: number;
@@ -201,6 +203,7 @@ export interface PayslipSettings {
 
 export interface CompanyConfig {
   maxContributoAziendaleTfr: number;
+  fondAerRate: number; // FondAer mandatory employee pension rate (aviation CCNL)
   cuReduction: number;
   unpayedLeaveDays: {
     pil: number;
@@ -211,19 +214,6 @@ export interface CompanyConfig {
     cpt: number;
     fo: number;
     cc: number;
-  };
-  claRanks: {
-    cpt: string[];
-    fo: string[];
-    cc: string[];
-  };
-  claTables: {
-    pil: Record<string, RankContract>;
-    cc: Record<string, RankContract>;
-  };
-  claCorrection: {
-    pil: ClaCorrection[];
-    cc: ClaCorrection[];
   };
 }
 
@@ -250,6 +240,10 @@ export interface UserContext {
   gradeCode?: string;
   /** Pre-fetched seniority brackets from live API */
   seniorityBrackets?: SeniorityBracket[];
+  /** Pre-fetched contract data from DB/cache */
+  liveContractData?: any;
+  /** Pre-fetched LTC contract data (used for TRE/triAndLtc training allowance) */
+  ltcContractData?: any;
 }
 
 export interface RankContract {
@@ -306,11 +300,6 @@ export interface TieredPay {
   min: number;
   max: number;
   pay: number;
-}
-
-export interface ClaCorrection {
-  date: string;
-  corrections: Record<string, Partial<RankContract>> | null;
 }
 
 // ============================================

@@ -1,5 +1,6 @@
 // Payslip Calculator Service
 // Main calculation engine based on PAYSLIP_CALCULATOR_EXPO_SPEC.md
+// LEGACY - not used by mobile app (mobile uses apps/mobile/src/payslip/services/PayslipCalculator.ts)
 
 import {
   PayslipInput,

@@ -6,6 +6,7 @@ import { payslipSettingsApi } from "../../api/payslipSettings";
 import { PayslipSettings } from "../types";
 import { Ruolo } from "../../types";
 import { getUnionFee } from "../data/contractData";
+import { clearContractCache } from "../services/contractDataService";
 
 /** Build initial settings seeded from the logged-in user's profile */
 function buildSettingsFromUser(base: PayslipSettings): PayslipSettings {
@@ -77,6 +78,7 @@ export const usePayslipSettingsSync = () => {
 
   useEffect(() => {
     if (isOnline) {
+      clearContractCache();
       syncPayslipSettings();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

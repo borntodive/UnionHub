@@ -1,10 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { fetchClaContract, ClaContract } from "./claContractsApi";
-import {
-  getContractData as getStaticContractData,
-  applyCorrections,
-  getActiveCorrections,
-} from "../data/contractData";
 
 const CACHE_KEY_PREFIX = "cla_contract_";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -69,14 +64,8 @@ export async function getContractData(
     console.log("Cache read failed:", error);
   }
 
-  // 3. Fallback to static data
-  console.log("Using static contract data for", company, role, rank);
-  const staticData = getStaticContractData(company, role, rank);
-  if (!staticData) return null;
-
-  // Apply corrections based on date
-  const corrections = getActiveCorrections(company, role, date);
-  return applyCorrections(staticData, corrections, rank);
+  // No static fallback — return null if DB and cache both fail
+  return null;
 }
 
 /**
@@ -97,16 +86,16 @@ export async function clearContractCache(): Promise<void> {
  */
 function convertToCalculatorFormat(contract: ClaContract): any {
   return {
-    basic: contract.basic,
-    ffp: contract.ffp,
-    sbh: contract.sbh,
-    al: contract.al,
-    oob: contract.oob,
-    woff: contract.woff,
-    allowance: contract.allowance,
-    diaria: contract.diaria,
-    rsa: contract.rsa,
-    itud: contract.itud,
+    basic: Number(contract.basic),
+    ffp: Number(contract.ffp),
+    sbh: Number(contract.sbh),
+    al: Number(contract.al),
+    oob: Number(contract.oob),
+    woff: Number(contract.woff),
+    allowance: Number(contract.allowance),
+    diaria: Number(contract.diaria),
+    rsa: Number(contract.rsa),
+    itud: Number(contract.itud),
     training: contract.trainingConfig,
     seniorityBrackets: contract.seniorityBrackets ?? undefined,
     // Add metadata for debugging

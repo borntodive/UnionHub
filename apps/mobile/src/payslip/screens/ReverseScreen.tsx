@@ -17,49 +17,13 @@ import { Menu, AlertTriangle, ArrowLeftRight } from "lucide-react-native";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { usePayslipStore } from "../store/usePayslipStore";
-import {
-  getContractData,
-  getActiveCorrections,
-  applyCorrections,
-} from "../data/contractData";
+import { useContractData } from "../hooks/useContractData";
 import {
   formatCurrency,
   formatNumber,
   parseSbh,
   formatSbh,
 } from "../utils/formatters";
-
-// ── helpers ───────────────────────────────────────────────────────────────────
-
-function resolveRates(
-  company: string,
-  role: string,
-  rank: string,
-  legacy: boolean,
-  legacyDirect: boolean,
-  legacyCustom: { ffp: number; sbh: number; al: number },
-  legacyDeltas: { ffp: number; sbh: number; al: number },
-): { sbh: number; diaria: number } | null {
-  const base = getContractData(company, role, rank);
-  if (!base) return null;
-  const today = new Date().toISOString().split("T")[0];
-  const corrections = getActiveCorrections(company, role, today);
-  const corrected = applyCorrections(base, corrections, rank);
-  if (!corrected) return null;
-
-  let sbh = corrected.sbh;
-  let diaria = corrected.diaria;
-
-  if (legacy) {
-    if (legacyDirect) {
-      if (legacyCustom.sbh > 0) sbh = legacyCustom.sbh;
-    } else {
-      sbh = corrected.sbh + legacyDeltas.sbh;
-    }
-  }
-
-  return { sbh, diaria };
-}
 
 // ── sub-components ────────────────────────────────────────────────────────────
 
@@ -128,27 +92,29 @@ export const ReverseScreen: React.FC = () => {
     navigation.openDrawer?.();
   };
 
-  const rates = useMemo(
-    () =>
-      resolveRates(
-        s.company,
-        s.role,
-        s.rank,
-        s.legacy,
-        s.legacyDirect ?? false,
-        s.legacyCustom ?? { ffp: 0, sbh: 0, al: 0 },
-        s.legacyDeltas ?? { ffp: 0, sbh: 0, al: 0 },
-      ),
-    [
-      s.company,
-      s.role,
-      s.rank,
-      s.legacy,
-      s.legacyDirect,
-      s.legacyCustom,
-      s.legacyDeltas,
-    ],
+  const today = new Date().toISOString().split("T")[0];
+  const { contractData: rawContract } = useContractData(
+    s.company,
+    s.role,
+    s.rank,
+    today,
   );
+
+  const rates = useMemo(() => {
+    if (!rawContract) return null;
+    let sbh = rawContract.sbh;
+    const diaria = rawContract.diaria;
+    if (s.legacy) {
+      const lc = s.legacyCustom ?? { ffp: 0, sbh: 0, al: 0 };
+      const ld = s.legacyDeltas ?? { ffp: 0, sbh: 0, al: 0 };
+      if (s.legacyDirect) {
+        if (lc.sbh > 0) sbh = lc.sbh;
+      } else {
+        sbh = rawContract.sbh + ld.sbh;
+      }
+    }
+    return { sbh, diaria };
+  }, [rawContract, s.legacy, s.legacyDirect, s.legacyCustom, s.legacyDeltas]);
 
   // SBH hours from input tab (decimal)
   const inputSbhDecimal = parseSbh(input.sbh);
