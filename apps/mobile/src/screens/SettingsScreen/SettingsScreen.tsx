@@ -259,6 +259,13 @@ const PayslipForm: React.FC<PayslipFormProps> = ({
           <Text style={styles.inputSuffix}>%</Text>
         </View>
         <Text style={styles.hint}>{t("settings.payslipPensionHint")}</Text>
+        <View style={{ marginTop: spacing.lg }} />
+        <CheckboxRow
+          label={t("settings.payslipFondAer")}
+          value={s.fondAer}
+          onToggle={() => set({ fondAer: !s.fondAer })}
+        />
+        <Text style={styles.hint}>{t("settings.payslipFondAerHint")}</Text>
       </View>
 
       {/* Part-Time */}
@@ -305,8 +312,9 @@ const PayslipForm: React.FC<PayslipFormProps> = ({
         <Text style={styles.sectionTitle}>
           {t("settings.payslipLocalTaxes")}
         </Text>
+        <Text style={styles.hint}>{t("settings.payslipLocalTaxesHint")}</Text>
 
-        <Text style={styles.fieldLabel}>
+        <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>
           {t("settings.payslipMunicipalSurcharge")}
         </Text>
         <View style={styles.inputRow}>
