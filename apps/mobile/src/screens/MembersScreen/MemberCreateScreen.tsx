@@ -259,7 +259,7 @@ export const MemberCreateScreen: React.FC = () => {
 
   const normalizePhone = (s?: string) => {
     if (!s) return s;
-    const t = s.trim();
+    const t = s.trim().replace(/\s+/g, "");
     return t.startsWith("00") ? "+" + t.slice(2) : t;
   };
 
