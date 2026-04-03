@@ -18,6 +18,7 @@ import {
 } from "react-native";
 import { Clock, X } from "lucide-react-native";
 import { colors, spacing, typography, borderRadius } from "../../../theme";
+import { useTranslation } from "react-i18next";
 
 const ITEM_HEIGHT = 52;
 const VISIBLE_ITEMS = 5;
@@ -56,6 +57,9 @@ const PickerColumn: React.FC<PickerColumnProps> = ({
 
   const initialIndex = Math.floor(REPEAT / 2) * items.length + selected;
   const [centeredIndex, setCenteredIndex] = useState(initialIndex);
+  const [scrollOffsetY, setScrollOffsetY] = useState(
+    initialIndex * ITEM_HEIGHT,
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -70,7 +74,9 @@ const PickerColumn: React.FC<PickerColumnProps> = ({
 
   const handleScroll = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+      const offsetY = e.nativeEvent.contentOffset.y;
+      setScrollOffsetY(offsetY);
+      const idx = Math.round(offsetY / ITEM_HEIGHT);
       setCenteredIndex(Math.max(0, Math.min(extended.length - 1, idx)));
     },
     [extended.length],
@@ -105,6 +111,7 @@ const PickerColumn: React.FC<PickerColumnProps> = ({
         >
           {extended.map((item, index) => {
             const isCenter = index === centeredIndex;
+
             return (
               <View key={index} style={colStyles.item}>
                 <Text
@@ -167,7 +174,7 @@ const colStyles = StyleSheet.create({
     fontWeight: typography.weights.medium,
   },
   itemTextSelected: {
-    color: colors.textInverse,
+    color: colors.surfaceVariant,
     fontWeight: typography.weights.bold,
   },
 });
@@ -180,6 +187,7 @@ interface SbhPickerProps {
 }
 
 export const SbhPicker: React.FC<SbhPickerProps> = ({ value, onChange }) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   const [hours, minutes] = useMemo(() => {
@@ -205,7 +213,7 @@ export const SbhPicker: React.FC<SbhPickerProps> = ({ value, onChange }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Scheduled Block Hours</Text>
+      <Text style={styles.label}>{t("payslip.scheduledBlockHours")}</Text>
       <TouchableOpacity style={styles.inputContainer} onPress={handleOpen}>
         <Clock size={20} color={colors.textSecondary} />
         <Text style={styles.valueText}>{value}</Text>
@@ -221,7 +229,7 @@ export const SbhPicker: React.FC<SbhPickerProps> = ({ value, onChange }) => {
           <Pressable style={styles.backdrop} onPress={() => setOpen(false)} />
           <View style={styles.sheet}>
             <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Select Hours</Text>
+              <Text style={styles.sheetTitle}>{t("payslip.selectHours")}</Text>
               <TouchableOpacity
                 onPress={() => setOpen(false)}
                 style={styles.closeButton}
@@ -252,7 +260,9 @@ export const SbhPicker: React.FC<SbhPickerProps> = ({ value, onChange }) => {
               style={styles.confirmButton}
               onPress={handleConfirm}
             >
-              <Text style={styles.confirmButtonText}>Confirm</Text>
+              <Text style={styles.confirmButtonText}>
+                {t("payslip.confirm")}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

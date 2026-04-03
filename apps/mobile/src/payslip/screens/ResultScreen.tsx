@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -36,6 +36,9 @@ export const ResultScreen: React.FC = () => {
     overrideItud,
     calculate,
     setInput,
+    setOverrideActive,
+    setOverrideSettings,
+    setOverrideItud,
   } = usePayslipStore();
 
   const activeSettings = overrideActive ? overrideSettings : settings;
@@ -98,6 +101,22 @@ export const ResultScreen: React.FC = () => {
     }
   };
 
+  const [devPresetTrigger, setDevPresetTrigger] = useState(0);
+
+  useEffect(() => {
+    if (devPresetTrigger === 0) return;
+    calculate({ itud: true, rsa: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [devPresetTrigger]);
+
+  const handleDevPreset = useCallback(() => {
+    setOverrideActive(true);
+    setOverrideSettings({ rank: "fo", triAndLtc: false });
+    setOverrideItud(true);
+    setInput({ sbh: "95:31", flyDiaria: 13, noFlyDiaria: 6, itud: 1 });
+    setDevPresetTrigger((v) => v + 1);
+  }, [setOverrideActive, setOverrideSettings, setOverrideItud, setInput]);
+
   if (!result) {
     return (
       <View style={styles.container}>
@@ -128,6 +147,9 @@ export const ResultScreen: React.FC = () => {
     basic: payslipItems.basic.total,
     basic13th: payslipItems.basic13th.total,
     ffp: payslipItems.ffp.total,
+    ffpAllowance: payslipItems.ffpAllowance.total,
+    ffpTraining: payslipItems.ffpTraining.total,
+    ffpTrainingLtc: payslipItems.ffpTrainingLtc.total,
     sbh: payslipItems.sbh.total,
     flyDiaria: payslipItems.flyDiaria.total,
     noFlyDiaria: payslipItems.noFlyDiaria.total,
@@ -224,6 +246,26 @@ export const ResultScreen: React.FC = () => {
             label={t("payslip.fixedFlightPay")}
             item={payslipItems.ffp}
           />
+          {payslipItems.ffpAllowance.total > 0 && (
+            <PayslipItemRow
+              label={t("payslip.fixedFlightPayAllowance")}
+              item={payslipItems.ffpAllowance}
+            />
+          )}
+          {payslipItems.ffpTraining.total > 0 && (
+            <PayslipItemRow
+              label={t("payslip.fixedFlightPayRank", {
+                rank: activeSettings.rank.toUpperCase(),
+              })}
+              item={payslipItems.ffpTraining}
+            />
+          )}
+          {payslipItems.ffpTrainingLtc.total > 0 && (
+            <PayslipItemRow
+              label={t("payslip.fixedFlightPayRank", { rank: "LTC" })}
+              item={payslipItems.ffpTrainingLtc}
+            />
+          )}
           <PayslipItemRow
             label={t("payslip.scheduledBlockHours")}
             item={payslipItems.sbh}
@@ -367,6 +409,77 @@ export const ResultScreen: React.FC = () => {
             </>
           )}
 
+          {/* DEV: Contract rates for instructor/LTC ranks */}
+          {__DEV__ && result.debugRates && (
+            <>
+              <View style={styles.divider} />
+              <Text style={styles.devSubtitle}>
+                DEV Contract Rates — {result.debugRates.rank.toUpperCase()}
+              </Text>
+              <View style={styles.row}>
+                <Text style={styles.label}>
+                  [{result.debugRates.rank.toUpperCase()}] FFP
+                </Text>
+                <Text style={styles.value}>
+                  {formatCurrency(result.debugRates.mainContract.ffp)}
+                </Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>
+                  [{result.debugRates.rank.toUpperCase()}] Basic
+                </Text>
+                <Text style={styles.value}>
+                  {formatCurrency(result.debugRates.mainContract.basic)}
+                </Text>
+              </View>
+              {result.debugRates.mainContract.trainingAllowance > 0 && (
+                <View style={styles.row}>
+                  <Text style={styles.label}>
+                    [{result.debugRates.rank.toUpperCase()}] Training Allowance
+                  </Text>
+                  <Text style={styles.value}>
+                    {formatCurrency(
+                      result.debugRates.mainContract.trainingAllowance,
+                    )}
+                  </Text>
+                </View>
+              )}
+              {result.debugRates.mainContract.instructorAllowance > 0 && (
+                <View style={styles.row}>
+                  <Text style={styles.label}>
+                    [{result.debugRates.rank.toUpperCase()}] Instructor
+                    Allowance ({activeSettings.btc ? "BTC" : "non-BTC"})
+                  </Text>
+                  <Text style={styles.value}>
+                    {formatCurrency(
+                      result.debugRates.mainContract.instructorAllowance,
+                    )}
+                  </Text>
+                </View>
+              )}
+              {result.debugRates.ltcContract && (
+                <>
+                  <View style={styles.row}>
+                    <Text style={styles.label}>[LTC] FFP</Text>
+                    <Text style={styles.value}>
+                      {formatCurrency(result.debugRates.ltcContract.ffp)}
+                    </Text>
+                  </View>
+                  {result.debugRates.ltcContract.trainingAllowance > 0 && (
+                    <View style={styles.row}>
+                      <Text style={styles.label}>[LTC] Training Allowance</Text>
+                      <Text style={styles.value}>
+                        {formatCurrency(
+                          result.debugRates.ltcContract.trainingAllowance,
+                        )}
+                      </Text>
+                    </View>
+                  )}
+                </>
+              )}
+            </>
+          )}
+
           {/* Totals */}
           <View style={styles.divider} />
           <View style={styles.row}>
@@ -460,7 +573,15 @@ export const ResultScreen: React.FC = () => {
             <Text style={[styles.cardTitle, styles.devTitle]}>
               DEV: INPS Imponibile Breakdown
             </Text>
-            <Text style={styles.devSubtitle}>Voci incluse nel calcolo:</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>Tax Area (INPS base)</Text>
+              <Text style={styles.value}>
+                {formatCurrency(result.areaINPS.taxArea)}
+              </Text>
+            </View>
+            <Text style={styles.devSubtitle}>
+              Voci incluse nel calcolo (IRPEF taxArea):
+            </Text>
 
             <View style={styles.row}>
               <Text style={styles.label}>Basic Pay (taxable)</Text>
@@ -475,11 +596,37 @@ export const ResultScreen: React.FC = () => {
               </Text>
             </View>
             <View style={styles.row}>
-              <Text style={styles.label}>FFP (taxable)</Text>
+              <Text style={styles.label}>FFP Base (taxable)</Text>
               <Text style={styles.value}>
                 {formatCurrency(payslipItems.ffp.taxable)}
               </Text>
             </View>
+            {payslipItems.ffpAllowance.total > 0 && (
+              <View style={styles.row}>
+                <Text style={styles.label}>FFP Allowance (taxable)</Text>
+                <Text style={styles.value}>
+                  {formatCurrency(payslipItems.ffpAllowance.taxable)}
+                </Text>
+              </View>
+            )}
+            {payslipItems.ffpTraining.total > 0 && (
+              <View style={styles.row}>
+                <Text style={styles.label}>
+                  FFP {activeSettings.rank.toUpperCase()} (taxable)
+                </Text>
+                <Text style={styles.value}>
+                  {formatCurrency(payslipItems.ffpTraining.taxable)}
+                </Text>
+              </View>
+            )}
+            {payslipItems.ffpTrainingLtc.total > 0 && (
+              <View style={styles.row}>
+                <Text style={styles.label}>FFP LTC (taxable)</Text>
+                <Text style={styles.value}>
+                  {formatCurrency(payslipItems.ffpTrainingLtc.taxable)}
+                </Text>
+              </View>
+            )}
             <View style={styles.row}>
               <Text style={styles.label}>SBH (taxable)</Text>
               <Text style={styles.value}>
@@ -625,22 +772,9 @@ export const ResultScreen: React.FC = () => {
             <View style={styles.divider} />
 
             <View style={styles.row}>
-              <Text style={styles.label}>
-                Min Imponibile INPS (
-                {result.areaINPS.imponibile > 0
-                  ? Math.round(
-                      result.areaINPS.imponibile /
-                        (result.areaINPS.imponibile / 26),
-                    )
-                  : 26}{" "}
-                gg × €
-                {formatCurrency(
-                  result.areaINPS.imponibile / 26 || 56.87,
-                ).replace("€", "")}
-                )
-              </Text>
+              <Text style={styles.label}>Min Imponibile INPS</Text>
               <Text style={styles.value}>
-                {formatCurrency(result.areaINPS.imponibile)}
+                {formatCurrency(result.areaINPS.minimoImponibile)}
               </Text>
             </View>
 
@@ -652,6 +786,16 @@ export const ResultScreen: React.FC = () => {
                 {formatCurrency(result.areaINPS.imponibile)}
               </Text>
             </View>
+
+            <View style={styles.divider} />
+            <TouchableOpacity
+              style={styles.devPresetButton}
+              onPress={handleDevPreset}
+            >
+              <Text style={styles.devPresetButtonText}>
+                DEV PRESET: FO + ITUD · 95:31 SBH · 13+6 diarie · 1 ITUD
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -1013,6 +1157,18 @@ const styles = StyleSheet.create({
   },
   devHighlight: {
     color: "#e65100",
+  },
+  devPresetButton: {
+    backgroundColor: "#e65100",
+    borderRadius: borderRadius.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    alignItems: "center",
+  },
+  devPresetButtonText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.bold,
+    color: "#ffffff",
   },
   progressiveBanner: {
     backgroundColor: "#fff3e0",

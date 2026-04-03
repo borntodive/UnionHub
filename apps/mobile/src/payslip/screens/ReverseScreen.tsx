@@ -24,6 +24,8 @@ import {
   parseSbh,
   formatSbh,
 } from "../utils/formatters";
+import { calculateSimDiariaPay } from "../utils/calculations";
+import { SimDiariaTier } from "../types";
 
 // ── sub-components ────────────────────────────────────────────────────────────
 
@@ -86,6 +88,7 @@ export const ReverseScreen: React.FC = () => {
 
   const [sectorPayText, setSectorPayText] = useState("");
   const [diariaText, setDiariaText] = useState("");
+  const [simPayText, setSimPayText] = useState("");
 
   const handleMenuPress = () => {
     // @ts-ignore
@@ -113,8 +116,26 @@ export const ReverseScreen: React.FC = () => {
         sbh = rawContract.sbh + ld.sbh;
       }
     }
-    return { sbh, diaria };
-  }, [rawContract, s.legacy, s.legacyDirect, s.legacyCustom, s.legacyDeltas]);
+
+    // Sim diaria tiers (only for instructor ranks: sfi/tri/tre)
+    let simDiaria: SimDiariaTier[] | null = null;
+    if (rawContract.training) {
+      if (s.btc && rawContract.training.btc?.simDiaria?.length) {
+        simDiaria = rawContract.training.btc.simDiaria;
+      } else if (rawContract.training.nonBtc?.simDiaria?.length) {
+        simDiaria = rawContract.training.nonBtc.simDiaria;
+      }
+    }
+
+    return { sbh, diaria, simDiaria };
+  }, [
+    rawContract,
+    s.legacy,
+    s.legacyDirect,
+    s.legacyCustom,
+    s.legacyDeltas,
+    s.btc,
+  ]);
 
   // SBH hours from input tab (decimal)
   const inputSbhDecimal = parseSbh(input.sbh);
@@ -143,6 +164,34 @@ export const ReverseScreen: React.FC = () => {
     diariaRate > 0 && diariaAmount > 0 ? diariaAmount / diariaRate : null;
   const effectiveDiariaRate =
     hasDiariaDays && diariaAmount > 0 ? diariaAmount / totalDiariaDays : null;
+
+  // Sim pay calculations (instructor ranks only)
+  const isInstructor = ["sfi", "tri", "tre"].includes(s.rank);
+  const simDiaria = rates?.simDiaria ?? null;
+  const hasSimSection = isInstructor && !!simDiaria;
+
+  const simPayAmount = parseFloat(simPayText) || 0;
+  const inputSimDays = input.simDays;
+  const hasSimDays = inputSimDays > 0;
+
+  // Inverse sim diaria: given a target sector pay, find how many sim days produce it.
+  // The pay function is piecewise-linear in days, so we walk tiers and interpolate.
+  const simDaysAtContractRate = useMemo<number | null>(() => {
+    if (!simDiaria || simPayAmount <= 0) return null;
+    const sorted = [...simDiaria].sort((a, b) => a.min - b.min);
+    for (let n = 1; n <= 200; n++) {
+      const pay = calculateSimDiariaPay(n, sorted).sectorPay;
+      if (pay >= simPayAmount) {
+        const prevPay = calculateSimDiariaPay(n - 1, sorted).sectorPay;
+        const delta = pay - prevPay;
+        return delta > 0 ? n - 1 + (simPayAmount - prevPay) / delta : n;
+      }
+    }
+    return null; // amount exceeds max tiers
+  }, [simDiaria, simPayAmount]);
+
+  const effectiveSimRate =
+    hasSimDays && simPayAmount > 0 ? simPayAmount / inputSimDays : null;
 
   return (
     <View style={styles.wrapper}>
@@ -264,6 +313,58 @@ export const ReverseScreen: React.FC = () => {
               )}
             </View>
           </View>
+
+          {/* Sim Pay section — visible only for instructor ranks with simDiaria data */}
+          {hasSimSection && (
+            <View style={styles.section}>
+              <View style={styles.sectionTitleRow}>
+                <ArrowLeftRight size={16} color={colors.primary} />
+                <Text style={styles.sectionTitle}>
+                  {t("payslip.reverseSimTitle")}
+                </Text>
+              </View>
+              <View style={styles.card}>
+                <AmountInput
+                  label={t("payslip.reverseEnterAmount")}
+                  value={simPayText}
+                  onChange={setSimPayText}
+                />
+
+                {simPayAmount > 0 && (
+                  <View style={styles.results}>
+                    {/* Days at contract rate (inverse tier calculation) */}
+                    {simDaysAtContractRate !== null && (
+                      <>
+                        <View style={styles.divider} />
+                        <ResultRow
+                          label={t("payslip.reverseSimDaysAtRate")}
+                          sub={`${s.btc ? "BTC" : "non-BTC"} sim tiers`}
+                          value={formatNumber(simDaysAtContractRate, 2)}
+                        />
+                      </>
+                    )}
+
+                    {/* Effective rate using input sim days */}
+                    <View style={styles.divider} />
+                    {hasSimDays ? (
+                      <ResultRow
+                        label={t("payslip.reverseEffectiveRate")}
+                        sub={`${inputSimDays} ${t("payslip.reverseDayShort")} ${t("payslip.reverseFromInput")}`}
+                        value={`${formatCurrency(effectiveSimRate!)}/${t("payslip.reverseDayShort")}`}
+                      />
+                    ) : (
+                      <View style={styles.warning}>
+                        <AlertTriangle size={14} color={colors.warning} />
+                        <Text style={styles.warningText}>
+                          {t("payslip.reverseNoSimWarning")}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
 
           <View style={styles.bottomSpace} />
         </ScrollView>

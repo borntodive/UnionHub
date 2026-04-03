@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -524,15 +524,25 @@ export const RagAdminScreen: React.FC = () => {
   const queryClient = useQueryClient();
   const [uploadVisible, setUploadVisible] = useState(false);
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const {
     data: documents = [],
     isLoading: docsLoading,
     refetch: refetchDocs,
-    isRefetching,
   } = useQuery({
     queryKey: RAG_QUERY_KEYS.documents,
     queryFn: ragApi.listDocuments,
   });
+
+  const handleRefreshDocs = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetchDocs();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchDocs]);
 
   const { data: health, isLoading: healthLoading } = useQuery({
     queryKey: RAG_QUERY_KEYS.health,
@@ -601,7 +611,10 @@ export const RagAdminScreen: React.FC = () => {
       <ScrollView
         style={{ backgroundColor: colors.background }}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetchDocs} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefreshDocs}
+          />
         }
       >
         {/* Health card */}

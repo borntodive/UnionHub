@@ -56,8 +56,33 @@ interface PayslipState {
   removeAdditionalDeduction: (index: number) => void;
 }
 
+// Calcola la data di default: mese precedente fino al 20, poi mese corrente
+const getDefaultDate = () => {
+  const now = new Date();
+  const day = now.getDate();
+  const year = now.getFullYear();
+  const month = now.getMonth(); // 0-11
+
+  let targetYear = year;
+  let targetMonth = month;
+
+  if (day <= 20) {
+    // Mese precedente
+    targetMonth = month - 1;
+    if (targetMonth < 0) {
+      targetMonth = 11;
+      targetYear = year - 1;
+    }
+  }
+
+  // Primo giorno del mese target - usa formato locale per evitare problemi timezone
+  // Formato: YYYY-MM-DD
+  const targetMonthStr = String(targetMonth + 1).padStart(2, "0");
+  return `${targetYear}-${targetMonthStr}-01`;
+};
+
 const defaultInput: PayslipInput = {
-  date: new Date().toISOString().split("T")[0],
+  date: getDefaultDate(),
   sbh: "00:00",
   flyDiaria: 0,
   noFlyDiaria: 0,

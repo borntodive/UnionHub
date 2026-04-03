@@ -32,7 +32,10 @@ export interface AdditionalItem {
 export interface Payslip {
   basic: PayslipItem;
   basic13th: PayslipItem;
-  ffp: PayslipItem; // Fixed Flight Pay
+  ffp: PayslipItem; // Fixed Flight Pay (base only)
+  ffpAllowance: PayslipItem; // Fixed Flight Pay - Allowance
+  ffpTraining: PayslipItem; // Fixed Flight Pay - rank-specific training (LTC/TRI/TRE/SFI)
+  ffpTrainingLtc: PayslipItem; // Fixed Flight Pay - LTC component added on top of TRE/triAndLtc
   flyDiaria: PayslipItem; // Flying per diem
   noFlyDiaria: PayslipItem; // Non-flying per diem
   ccTraining: PayslipItem; // Cabin crew training
@@ -60,8 +63,10 @@ export interface Payslip {
 // ============================================
 
 export interface INPS {
-  imponibile: number; // Taxable amount (raw, used for IRPEF derivation)
+  imponibile: number; // Taxable amount = max(taxArea, minimoImponibile)
   imponibileArrotondato: number; // Rounded taxable amount (used for INPS contributions)
+  taxArea: number; // Full IRPEF taxable area (before minimum comparison)
+  minimoImponibile: number; // minDaily × inpsDays
   contribuzione: {
     ivs: number;
     ivsAdd: number;
@@ -107,6 +112,20 @@ export interface IRPEF {
 // RESULT INTERFACE
 // ============================================
 
+export interface DebugContractRates {
+  rank: string;
+  mainContract: {
+    ffp: number;
+    basic: number;
+    trainingAllowance: number;
+    instructorAllowance: number; // btc or nonBtc allowance
+  };
+  ltcContract?: {
+    ffp: number;
+    trainingAllowance: number;
+  };
+}
+
 export interface Payroll {
   payslipItems: Payslip;
   sectorPay: PayslipItem;
@@ -118,6 +137,7 @@ export interface Payroll {
   netPayment: number;
   totaleCompetenze: number; // Total earnings
   totaleTrattenute: number; // Total deductions
+  debugRates?: DebugContractRates;
 }
 
 // ============================================

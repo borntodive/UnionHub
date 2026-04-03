@@ -974,7 +974,7 @@ export const SettingsScreen: React.FC = () => {
 
         {/* Info */}
         <View style={styles.infoCard}>
-          <Info size={20} color={colors.primary} />
+          <Info size={20} color={colors.textSecondary} />
           <Text style={styles.infoCardText}>
             Settings are automatically saved and applied to the payslip
             calculator.
@@ -1356,7 +1356,7 @@ const styles = StyleSheet.create({
   infoCardText: {
     flex: 1,
     fontSize: typography.sizes.sm,
-    color: colors.primary,
+    color: colors.textSecondary,
   },
   legacySaveBtn: {
     marginTop: spacing.md,
