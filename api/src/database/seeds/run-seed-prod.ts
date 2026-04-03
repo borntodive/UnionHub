@@ -92,6 +92,7 @@ async function runSeedProd() {
       { codice: "PMO", nome: "Palermo" },
       { codice: "PSR", nome: "Pescara" },
       { codice: "PSA", nome: "Pisa" },
+      { codice: "REG", nome: "Reggio Calabria" },
       { codice: "STN", nome: "Stansted" },
       { codice: "TRN", nome: "Torino" },
       { codice: "TSF", nome: "Treviso" },

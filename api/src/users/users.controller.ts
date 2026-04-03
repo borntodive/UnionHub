@@ -368,6 +368,18 @@ export class UsersController {
         this.gradesService.findAll(),
       ]);
 
+      // Debug: log raw extracted fields for grade diagnostics
+      console.log(
+        "[PDF extract] rawFields:",
+        JSON.stringify(extracted.rawFields),
+      );
+      console.log(
+        "[PDF extract] extracted baseId:",
+        extracted.baseId,
+        "gradeId:",
+        extracted.gradeId,
+      );
+
       // Match extracted text values to entity IDs
       const matched = this.pdfExtractionService.matchToEntities(
         extracted,
@@ -375,6 +387,7 @@ export class UsersController {
         contracts.map((c) => ({ id: c.id, codice: c.codice, nome: c.nome })),
         grades.map((g) => ({ id: g.id, codice: g.codice, nome: g.nome })),
       );
+      console.log("[PDF extract] matched gradeId:", matched.gradeId);
 
       // Set default contract if not found (MAY-PI or MAY-CC)
       if (!matched.contrattoId) {
