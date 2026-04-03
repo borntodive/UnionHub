@@ -26,7 +26,7 @@ import { BasesService } from "../bases/bases.service";
 import { GradesService } from "../grades/grades.service";
 import { PublicRegisterDto } from "./dto/public-register.dto";
 import { FileStorageService } from "./services/file-storage.service";
-import { parseDMYOptional } from "../common/utils/date.utils";
+import { parseDMYOptional, toTitleCase } from "../common/utils/date.utils";
 import { WhatsappStatus } from "../common/enums/whatsapp-status.enum";
 
 interface FindAllOptions {
@@ -282,6 +282,8 @@ export class UsersService {
     const user = this.usersRepository.create({
       ...createUserDto,
       crewcode: createUserDto.crewcode.toUpperCase(),
+      nome: toTitleCase(createUserDto.nome) ?? createUserDto.nome,
+      cognome: toTitleCase(createUserDto.cognome) ?? createUserDto.cognome,
       email: createUserDto.email.toLowerCase(),
       dataIscrizione,
       dateOfEntry,
@@ -335,6 +337,8 @@ export class UsersService {
     Object.assign(existingUser, {
       ...createUserDto,
       crewcode: createUserDto.crewcode.toUpperCase(),
+      nome: toTitleCase(createUserDto.nome) ?? createUserDto.nome,
+      cognome: toTitleCase(createUserDto.cognome) ?? createUserDto.cognome,
       email: createUserDto.email.toLowerCase(),
       dataIscrizione,
       dateOfEntry,
@@ -433,6 +437,12 @@ export class UsersService {
     }
     if (updateUserDto.crewcode) {
       updateUserDto.crewcode = updateUserDto.crewcode.toUpperCase();
+    }
+    if (updateUserDto.nome) {
+      updateUserDto.nome = toTitleCase(updateUserDto.nome) ?? updateUserDto.nome;
+    }
+    if (updateUserDto.cognome) {
+      updateUserDto.cognome = toTitleCase(updateUserDto.cognome) ?? updateUserDto.cognome;
     }
 
     // Convert date fields from DD/MM/YYYY to YYYY-MM-DD for PostgreSQL

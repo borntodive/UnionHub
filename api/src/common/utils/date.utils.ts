@@ -32,3 +32,15 @@ export function parseDMYOptional(
   if (dateStr.includes("/")) return parseDMY(dateStr);
   return dateStr;
 }
+
+/**
+ * Converts a string to Title Case (each word capitalized).
+ * e.g. "mario rossi" → "Mario Rossi", "D'ORIANO" → "D'Oriano"
+ * Returns the input unchanged if falsy.
+ */
+export function toTitleCase(s: string | undefined | null): string | undefined | null {
+  if (!s) return s;
+  return s
+    .toLowerCase()
+    .replace(/(?:^|[\s\-'])(\p{L})/gu, (_, c) => c.toUpperCase());
+}

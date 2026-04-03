@@ -181,10 +181,10 @@ export const MemberCreateScreen: React.FC = () => {
         setExtractionStatus("success");
         setFormData((prev) => ({
           ...prev,
-          crewcode: extractedData.crewcode || prev.crewcode,
-          nome: extractedData.nome || prev.nome,
-          cognome: extractedData.cognome || prev.cognome,
-          email: extractedData.email || prev.email,
+          crewcode: extractedData.crewcode?.toUpperCase() || prev.crewcode,
+          nome: toTitleCase(extractedData.nome) || prev.nome,
+          cognome: toTitleCase(extractedData.cognome) || prev.cognome,
+          email: extractedData.email?.toLowerCase() || prev.email,
           telefono: extractedData.telefono || prev.telefono,
           baseId: extractedData.baseId || prev.baseId,
           contrattoId: extractedData.contrattoId || prev.contrattoId,
@@ -249,6 +249,13 @@ export const MemberCreateScreen: React.FC = () => {
     return isNaN(date.getTime()) ? null : date;
   };
 
+  const toTitleCase = (s?: string) =>
+    s
+      ? s
+          .toLowerCase()
+          .replace(/(?:^|[\s\-'])(\p{L})/gu, (_, c) => c.toUpperCase())
+      : s;
+
   // Helper to format Date to DD/MM/YYYY
   const formatDate = (date: Date): string => {
     const day = date.getDate().toString().padStart(2, "0");
@@ -266,10 +273,10 @@ export const MemberCreateScreen: React.FC = () => {
       // Prepopulate form with extracted data
       setFormData((prev) => ({
         ...prev,
-        crewcode: data.crewcode || prev.crewcode,
-        nome: data.nome || prev.nome,
-        cognome: data.cognome || prev.cognome,
-        email: data.email || prev.email,
+        crewcode: data.crewcode?.toUpperCase() || prev.crewcode,
+        nome: toTitleCase(data.nome) || prev.nome,
+        cognome: toTitleCase(data.cognome) || prev.cognome,
+        email: data.email?.toLowerCase() || prev.email,
         telefono: data.telefono || prev.telefono,
         baseId: data.baseId || prev.baseId,
         contrattoId: data.contrattoId || prev.contrattoId,
