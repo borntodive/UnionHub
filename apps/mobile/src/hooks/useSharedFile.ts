@@ -20,6 +20,19 @@ export const useSharedFile = () => {
     try {
       setIsProcessing(true);
 
+      // iOS "Open In" and Android intent share pass the file URI directly
+      if (url.startsWith("file://") || url.startsWith("content://")) {
+        const fileName =
+          url.split("/").pop()?.split("?")[0] || "shared-file.pdf";
+        const file: SharedFile = {
+          uri: url,
+          mimeType: "application/pdf",
+          name: decodeURIComponent(fileName),
+        };
+        setSharedFile(file);
+        return file;
+      }
+
       // Parse the URL
       const parsedUrl = Linking.parse(url);
 
