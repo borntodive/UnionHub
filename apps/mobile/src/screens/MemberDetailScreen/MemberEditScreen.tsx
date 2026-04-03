@@ -35,6 +35,7 @@ import {
   FileText,
   MessageCircle,
   Calendar,
+  AlertTriangle,
 } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
@@ -242,6 +243,12 @@ export const MemberEditScreen: React.FC = () => {
     },
   });
 
+  const normalizePhone = (s?: string) => {
+    if (!s) return s;
+    const t = s.trim();
+    return t.startsWith("00") ? "+" + t.slice(2) : t;
+  };
+
   const handleSave = () => {
     if (
       !formData.nome.trim() ||
@@ -249,6 +256,14 @@ export const MemberEditScreen: React.FC = () => {
       !formData.email.trim()
     ) {
       Alert.alert("Error", "Name, surname and email are required");
+      return;
+    }
+
+    if (formData.telefono && !formData.telefono.trim().startsWith("+")) {
+      Alert.alert(
+        "Phone prefix required",
+        "Please include the country prefix (e.g. +39 for Italy).",
+      );
       return;
     }
 
@@ -415,11 +430,23 @@ export const MemberEditScreen: React.FC = () => {
                 label="Phone"
                 value={formData.telefono}
                 onChangeText={(text) =>
-                  setFormData({ ...formData, telefono: text })
+                  setFormData({
+                    ...formData,
+                    telefono: normalizePhone(text) ?? text,
+                  })
                 }
                 icon={<Phone size={20} color={colors.primary} />}
                 keyboardType="phone-pad"
               />
+              {!!formData.telefono &&
+                !formData.telefono.trim().startsWith("+") && (
+                  <View style={styles.phoneWarning}>
+                    <AlertTriangle size={14} color={colors.warning} />
+                    <Text style={styles.phoneWarningText}>
+                      Add country prefix (e.g. +39)
+                    </Text>
+                  </View>
+                )}
             </Card>
 
             {/* Professional Info Section */}
@@ -1193,5 +1220,15 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.medium,
     color: colors.primary,
+  },
+  phoneWarning: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  phoneWarningText: {
+    fontSize: typography.sizes.sm,
+    color: colors.warning,
   },
 });
