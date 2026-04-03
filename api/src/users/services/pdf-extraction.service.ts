@@ -39,7 +39,21 @@ const FIELD_MAPPINGS: Record<Ruolo, Record<string, string[]>> = {
     ],
     email: ["email", "e-mail", "mail", "email_address", "Email"],
     telefono: ["telefono", "phone", "cellulare", "mobile", "tel", "Cellulare"],
-    base: ["base", "base_operativa", "aeroporto", "airport", "Base"],
+    base: [
+      "base",
+      "base_operativa",
+      "aeroporto",
+      "airport",
+      "Base",
+      "sede",
+      "Sede",
+      "scalo",
+      "Scalo",
+      "sede_operativa",
+      "Sede Operativa",
+      "stazione",
+      "Stazione",
+    ],
     contratto: [
       "contratto",
       "contract",
@@ -47,7 +61,25 @@ const FIELD_MAPPINGS: Record<Ruolo, Record<string, string[]>> = {
       "contract_type",
       "Tipo Lavoro",
     ],
-    grade: ["grade", "grado", "qualifica", "rank", "Qualifica"],
+    grade: [
+      "grade",
+      "grado",
+      "qualifica",
+      "rank",
+      "Qualifica",
+      "mansione",
+      "Mansione",
+      "funzione",
+      "Funzione",
+      "categoria",
+      "Categoria",
+      "qualifica_professionale",
+      "categoria_professionale",
+      "ruolo_tecnico",
+      "Ruolo Tecnico",
+      "Tipo Qualifica",
+      "tipo_qualifica",
+    ],
     dataIscrizione: [
       "data_iscrizione",
       "data_firma",
@@ -88,7 +120,21 @@ const FIELD_MAPPINGS: Record<Ruolo, Record<string, string[]>> = {
     ],
     email: ["email", "e-mail", "mail", "email_address", "Email"],
     telefono: ["telefono", "phone", "cellulare", "mobile", "tel", "Cellulare"],
-    base: ["base", "base_operativa", "aeroporto", "airport", "Base"],
+    base: [
+      "base",
+      "base_operativa",
+      "aeroporto",
+      "airport",
+      "Base",
+      "sede",
+      "Sede",
+      "scalo",
+      "Scalo",
+      "sede_operativa",
+      "Sede Operativa",
+      "stazione",
+      "Stazione",
+    ],
     contratto: [
       "contratto",
       "contract",
@@ -96,7 +142,25 @@ const FIELD_MAPPINGS: Record<Ruolo, Record<string, string[]>> = {
       "contract_type",
       "Tipo Lavoro",
     ],
-    grade: ["grade", "grado", "qualifica", "rank", "Qualifica"],
+    grade: [
+      "grade",
+      "grado",
+      "qualifica",
+      "rank",
+      "Qualifica",
+      "mansione",
+      "Mansione",
+      "funzione",
+      "Funzione",
+      "categoria",
+      "Categoria",
+      "qualifica_professionale",
+      "categoria_professionale",
+      "ruolo_tecnico",
+      "Ruolo Tecnico",
+      "Tipo Qualifica",
+      "tipo_qualifica",
+    ],
     dataIscrizione: [
       "data_iscrizione",
       "data_firma",
@@ -177,6 +241,17 @@ export class PdfExtractionService {
           rawFields[name] = value.trim(); // Store with original name
           rawFields[nameLower] = value.trim(); // Also store lowercase
         }
+      }
+
+      // Collect checked checkbox names — useful when each grade IS a checkbox field
+      const checkedBoxNames: string[] = [];
+      for (const [key, value] of Object.entries(rawFields)) {
+        if (value === "true" && !key.startsWith("__")) {
+          checkedBoxNames.push(key);
+        }
+      }
+      if (checkedBoxNames.length > 0) {
+        rawFields["__checked__"] = checkedBoxNames.join(",");
       }
 
       // Map fields to our data structure
@@ -361,46 +436,124 @@ export class PdfExtractionService {
   ): ExtractedPdfData {
     const result = { ...extracted };
 
+    const checkedBoxNames: string[] = extracted.rawFields?.["__checked__"]
+      ? extracted.rawFields["__checked__"].split(",").filter(Boolean)
+      : [];
+
+    const entityMatchFn = (
+      codice: string,
+      nome: string,
+      value: string,
+    ): boolean => {
+      const v = value.toLowerCase().trim();
+      if (!v || v === "true" || v === "false") return false;
+      return (
+        codice.toLowerCase() === v ||
+        nome.toLowerCase().includes(v) ||
+        v.includes(codice.toLowerCase()) ||
+        v.includes(nome.toLowerCase())
+      );
+    };
+
     // Match base
     const baseId = extracted.baseId;
-    if (baseId && baseId !== "true" && baseId !== "false") {
-      const baseMatch = bases.find(
-        (b) =>
-          b.codice.toLowerCase() === baseId.toLowerCase() ||
-          b.nome.toLowerCase().includes(baseId.toLowerCase()) ||
-          baseId.toLowerCase().includes(b.codice.toLowerCase()),
-      );
-      if (baseMatch) {
-        result.baseId = baseMatch.id;
+    let baseMatch = baseId
+      ? bases.find((b) => entityMatchFn(b.codice, b.nome, baseId))
+      : undefined;
+    // Fallback: checked checkbox whose name matches a base code/name
+    if (!baseMatch) {
+      for (const boxName of checkedBoxNames) {
+        const m = bases.find((b) => entityMatchFn(b.codice, b.nome, boxName));
+        if (m) {
+          baseMatch = m;
+          break;
+        }
       }
     }
+    result.baseId = baseMatch ? baseMatch.id : undefined;
 
-    // Match contract - skip if it's a boolean string (checkbox)
+    // Match contract
     const contrattoId = extracted.contrattoId;
-    if (contrattoId && contrattoId !== "true" && contrattoId !== "false") {
-      const contractMatch = contracts.find(
-        (c) =>
-          c.codice.toLowerCase() === contrattoId.toLowerCase() ||
-          c.nome.toLowerCase().includes(contrattoId.toLowerCase()) ||
-          contrattoId.toLowerCase().includes(c.codice.toLowerCase()),
-      );
-      if (contractMatch) {
-        result.contrattoId = contractMatch.id;
+    let contractMatch = contrattoId
+      ? contracts.find((c) => entityMatchFn(c.codice, c.nome, contrattoId))
+      : undefined;
+    // Fallback: checked checkbox whose name matches a contract code/name
+    if (!contractMatch) {
+      for (const boxName of checkedBoxNames) {
+        const m = contracts.find((c) =>
+          entityMatchFn(c.codice, c.nome, boxName),
+        );
+        if (m) {
+          contractMatch = m;
+          break;
+        }
       }
     }
+    result.contrattoId = contractMatch ? contractMatch.id : undefined;
+
+    // Italian → English grade name aliases for fuzzy matching
+    const GRADE_IT_ALIASES: Record<string, string[]> = {
+      commander: ["comandante"],
+      "first officer": ["primo ufficiale", "1° ufficiale", "1o ufficiale"],
+      "second officer": ["secondo ufficiale", "2° ufficiale", "2o ufficiale"],
+      cadet: ["cadetto"],
+      "cabin manager": ["cabin manager", "responsabile cabina", "purser"],
+      "senior cabin crew": [
+        "senior cabin crew",
+        "senior purser",
+        "purser senior",
+      ],
+      "flight attendant": [
+        "assistente di volo",
+        "hostess",
+        "steward",
+        "cabin crew",
+      ],
+    };
+
+    const gradeMatchFn = (
+      g: { id: string; codice: string; nome: string },
+      value: string,
+    ): boolean => {
+      const v = value.toLowerCase().trim();
+      if (!v || v === "true" || v === "false") return false;
+      if (
+        g.codice.toLowerCase() === v ||
+        g.nome.toLowerCase().includes(v) ||
+        v.includes(g.codice.toLowerCase()) ||
+        v.includes(g.nome.toLowerCase())
+      )
+        return true;
+      // Try Italian aliases
+      const aliases =
+        GRADE_IT_ALIASES[g.nome.toLowerCase()] ||
+        GRADE_IT_ALIASES[g.codice.toLowerCase()] ||
+        [];
+      return aliases.some((alias) => v.includes(alias) || alias.includes(v));
+    };
 
     // Match grade
     const gradeId = extracted.gradeId;
-    if (gradeId) {
-      const gradeMatch = grades.find(
-        (g) =>
-          g.codice.toLowerCase() === gradeId.toLowerCase() ||
-          g.nome.toLowerCase().includes(gradeId.toLowerCase()) ||
-          gradeId.toLowerCase().includes(g.codice.toLowerCase()),
-      );
-      if (gradeMatch) {
-        result.gradeId = gradeMatch.id;
+    let gradeMatch = gradeId
+      ? grades.find((g) => gradeMatchFn(g, gradeId))
+      : undefined;
+
+    // Fallback: scan checked checkboxes (grade-as-checkbox PDFs)
+    if (!gradeMatch) {
+      for (const boxName of checkedBoxNames) {
+        const m = grades.find((g) => gradeMatchFn(g, boxName));
+        if (m) {
+          gradeMatch = m;
+          break;
+        }
       }
+    }
+
+    if (gradeMatch) {
+      result.gradeId = gradeMatch.id;
+    } else {
+      // Don't leave raw text in gradeId — it would confuse the picker
+      result.gradeId = undefined;
     }
 
     return result;

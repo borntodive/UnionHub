@@ -220,6 +220,23 @@ export const MemberCreateScreen: React.FC = () => {
     }
   }, [sharedPdfUri, extractedData]);
 
+  // SuperAdmin: when ruolo is selected after a shared PDF arrived without a role,
+  // trigger extraction now that we have the role.
+  React.useEffect(() => {
+    if (
+      sharedPdfUri &&
+      formData.ruolo &&
+      extractionStatus === "idle" &&
+      !extractedData
+    ) {
+      setExtractionStatus("extracting");
+      extractPdfMutation.mutate({
+        fileUri: sharedPdfUri,
+        role: formData.ruolo,
+      });
+    }
+  }, [formData.ruolo]);
+
   // Helper to parse DD/MM/YYYY string to Date
   const parseDate = (dateStr: string | undefined): Date | null => {
     if (!dateStr) return null;
