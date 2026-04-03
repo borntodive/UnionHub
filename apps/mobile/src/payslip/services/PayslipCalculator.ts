@@ -12,6 +12,7 @@ import {
   IRPEF,
   AdditionalItem,
   UserContext,
+  DebugContractRates,
 } from "../types";
 import {
   getUnionFee,
@@ -165,6 +166,8 @@ export class PayslipCalculator {
 
     const netPayment = totaleCompetenze - totaleTrattenute;
 
+    const debugRates = this.buildDebugRates();
+
     return {
       payslipItems,
       sectorPay,
@@ -176,6 +179,7 @@ export class PayslipCalculator {
       netPayment,
       totaleCompetenze,
       totaleTrattenute,
+      debugRates,
     };
   }
 
@@ -197,9 +201,12 @@ export class PayslipCalculator {
       ? createPayslipItem(basicAmount, 100)
       : createPayslipItem(0, 100);
 
-    // FFP (reduced by part-time and New Captain, but NOT allowances)
-    const ffpAmount = this.calculateFFP(ptPct, cuPct);
-    const ffp = createPayslipItem(ffpAmount, 50);
+    // FFP components - calculate separately for display
+    const ffpResult = this.calculateFFPComponents(ptPct, cuPct);
+    const ffp = createPayslipItem(ffpResult.base, 50);
+    const ffpAllowance = createPayslipItem(ffpResult.allowance, 50);
+    const ffpTraining = createPayslipItem(ffpResult.trainingMain, 50);
+    const ffpTrainingLtc = createPayslipItem(ffpResult.trainingLtc, 50);
 
     // Diaria
     const flyDiariaData = calculateDiariaWithTaxFree(
@@ -223,7 +230,7 @@ export class PayslipCalculator {
       this.input.noFlyDiaria,
     );
 
-    // AL (reduced by New Captain)
+    // AL (reduced by New Captain) — 50% imponibile come indennità di volo (art. 51 c.6 TUIR)
     const al = createPayslipItem(
       this.input.al * cd.al * cuPct,
       50,
@@ -353,6 +360,9 @@ export class PayslipCalculator {
       basic,
       basic13th,
       ffp,
+      ffpAllowance,
+      ffpTraining,
+      ffpTrainingLtc,
       flyDiaria,
       noFlyDiaria,
       ccTraining,
@@ -376,38 +386,53 @@ export class PayslipCalculator {
     };
   }
 
-  private calculateFFP(partTimePct: number = 1, cuPct: number = 1): number {
+  private calculateFFPComponents(
+    partTimePct: number = 1,
+    cuPct: number = 1,
+  ): {
+    base: number;
+    allowance: number;
+    trainingMain: number;
+    trainingLtc: number;
+  } {
     const cd = this.contractData!;
-    // FFP is reduced by part-time and New Captain, but allowances are NOT
-    let ffp = cd.ffp * partTimePct * cuPct + cd.allowance;
 
-    // Training allowance (NOT reduced by part-time or New Captain)
+    // Base FFP (reduced by part-time and New Captain)
+    const base = cd.ffp * partTimePct * cuPct;
+
+    // Monthly allowance (NOT reduced)
+    let allowance = cd.allowance || 0;
+
+    // Rank-specific training allowance (NOT reduced by part-time or New Captain)
+    let trainingMain = 0;
+
+    // Training allowance for the rank
     if (cd.training?.allowance) {
-      ffp += cd.training.allowance;
+      trainingMain += cd.training.allowance;
     }
 
-    // Instructor allowance (NOT reduced by part-time or New Captain)
+    // Instructor allowance (SFI/TRI/TRE)
     if (this.isInstructor() && cd.training) {
-      const training = cd.training;
-      if (this.settings.btc && training.btc) {
-        ffp += training.btc.allowance;
-      } else if (training.nonBtc) {
-        ffp += training.nonBtc.allowance;
+      const trainingConfig = cd.training;
+      if (this.settings.btc && trainingConfig.btc) {
+        trainingMain += trainingConfig.btc.allowance;
+      } else if (trainingConfig.nonBtc) {
+        trainingMain += trainingConfig.nonBtc.allowance;
       }
     }
 
-    // LTC additional allowance for TRI acting as LTC or TRE (always LTC)
-    // TRE is always considered LTC, TRI only when triAndLtc flag is set
+    // LTC additional allowance for TRI acting as LTC, or TRE (always has LTC component).
+    // This is kept separate so it can be displayed as a distinct row in the results.
+    let trainingLtc = 0;
     const isLtc = this.settings.rank === "tre" || this.settings.triAndLtc;
     if (isLtc) {
       const ltcData = this.userFlags.ltcContractData ?? null;
       if (ltcData?.training?.allowance) {
-        // Add LTC training allowance (€14000/12 = €1166.67/month)
-        ffp += ltcData.training.allowance;
+        trainingLtc += ltcData.training.allowance;
       }
     }
 
-    return ffp;
+    return { base, allowance, trainingMain, trainingLtc };
   }
 
   private calculateSimPay(): number {
@@ -496,6 +521,9 @@ export class PayslipCalculator {
       payslip.basic,
       payslip.basic13th,
       payslip.ffp,
+      payslip.ffpAllowance, // IV — voce 1041, 50% imponibile art.51 TUIR
+      payslip.ffpTraining, // TRI/LTC/SFI/TRE training — 50% imponibile
+      payslip.ffpTrainingLtc, // LTC component su TRE/triAndLtc — 50% imponibile
       payslip.flyDiaria,
       payslip.noFlyDiaria,
       payslip.ccTraining,
@@ -543,8 +571,10 @@ export class PayslipCalculator {
     return { taxArea, taxFreeArea, grossPay: taxArea + taxFreeArea };
   }
 
+  // taxArea = area imponibile IRPEF (tutti gli item al loro % tassabile).
+  // La base INPS è max(taxArea, minimaleGiornaliero × GG_INPS).
   private calculateINPS(taxArea: number): INPS {
-    const minDailyAmount = MIN_IMPONIBILE_INPS[this.year] || 56.87;
+    const minDailyAmount = MIN_IMPONIBILE_INPS[this.year] ?? 58.13;
     const minImponibile = minDailyAmount * this.input.inpsDays;
 
     const imponibile = Math.max(taxArea, minImponibile);
@@ -566,6 +596,8 @@ export class PayslipCalculator {
     return {
       imponibile,
       imponibileArrotondato,
+      taxArea,
+      minimoImponibile: minImponibile,
       contribuzione,
       contribuzioneTotale,
       pensionAcc: imponibile * INPS_RATES.pensionFactor,
@@ -681,6 +713,9 @@ export class PayslipCalculator {
     const retribuzioneUtileTFR =
       payslip.basic.total +
       payslip.ffp.total +
+      payslip.ffpAllowance.total +
+      payslip.ffpTraining.total +
+      payslip.ffpTrainingLtc.total +
       payslip.basic13th.total +
       payslip.noFlyDiaria.total +
       payslip.rsa.total +
@@ -724,6 +759,43 @@ export class PayslipCalculator {
       aziendale,
       fondAer,
     };
+  }
+
+  private buildDebugRates(): DebugContractRates | undefined {
+    const rank = this.settings.rank;
+    if (!["ltc", "tri", "tre", "sfi"].includes(rank)) return undefined;
+
+    const cd = this.contractData!;
+    const trainingAllowance = cd.training?.allowance ?? 0;
+
+    let instructorAllowance = 0;
+    if (this.isInstructor() && cd.training) {
+      if (this.settings.btc && cd.training.btc) {
+        instructorAllowance = cd.training.btc.allowance ?? 0;
+      } else if (cd.training.nonBtc) {
+        instructorAllowance = cd.training.nonBtc.allowance ?? 0;
+      }
+    }
+
+    const result: DebugContractRates = {
+      rank,
+      mainContract: {
+        ffp: cd.ffp ?? 0,
+        basic: cd.basic ?? 0,
+        trainingAllowance,
+        instructorAllowance,
+      },
+    };
+
+    const ltcData = this.userFlags.ltcContractData ?? null;
+    if (ltcData) {
+      result.ltcContract = {
+        ffp: ltcData.ffp ?? 0,
+        trainingAllowance: ltcData.training?.allowance ?? 0,
+      };
+    }
+
+    return result;
   }
 
   private isInstructor(): boolean {

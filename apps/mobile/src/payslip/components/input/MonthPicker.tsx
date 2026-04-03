@@ -1,8 +1,9 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { colors, spacing, typography, borderRadius } from "../../../theme";
-import { getMonthName, getYear } from "../../utils/formatters";
+import { getYear } from "../../utils/formatters";
 
 interface MonthPickerProps {
   value: string;
@@ -13,9 +14,11 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({
   value,
   onChange,
 }) => {
+  const { t } = useTranslation();
   const date = new Date(value);
   const year = date.getFullYear();
   const month = date.getMonth();
+  const months = t("payslip.months", { returnObjects: true }) as string[];
 
   const handlePrevMonth = () => {
     const newDate = new Date(date);
@@ -31,13 +34,12 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Reference Period</Text>
       <View style={styles.pickerContainer}>
         <TouchableOpacity onPress={handlePrevMonth} style={styles.button}>
           <ChevronLeft size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={styles.monthText}>
-          {getMonthName(value)} {year}
+          {months[month]} {year}
         </Text>
         <TouchableOpacity onPress={handleNextMonth} style={styles.button}>
           <ChevronRight size={24} color={colors.primary} />

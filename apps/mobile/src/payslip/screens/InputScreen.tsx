@@ -85,6 +85,9 @@ export const InputScreen: React.FC = () => {
       >
         <ScrollView style={styles.content}>
           <View style={styles.card}>
+            <Text style={styles.sectionTitle}>
+              {t("payslip.referencePeriod")}
+            </Text>
             <MonthPicker
               value={input.date}
               onChange={(date) => setInput({ date })}

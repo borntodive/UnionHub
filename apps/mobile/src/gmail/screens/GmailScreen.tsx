@@ -106,7 +106,9 @@ export const GmailScreen: React.FC = () => {
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
   const ruoloParam = isAdmin ? (user?.ruolo ?? "pilot") : undefined;
 
-  const { isLoading, isRefetching, refetch } = useQuery({
+  const [refreshing, setRefreshing] = useState(false);
+
+  const { isLoading, refetch } = useQuery({
     queryKey: ["gmail-inbox", pageToken, ruoloParam],
     queryFn: async () => {
       const res = await gmailApi.listEmails(pageToken, ruoloParam);
@@ -121,9 +123,14 @@ export const GmailScreen: React.FC = () => {
     staleTime: 60_000,
   });
 
-  const handleRefresh = useCallback(() => {
-    setPageToken(undefined);
-    queryClient.invalidateQueries({ queryKey: ["gmail-inbox"] });
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      setPageToken(undefined);
+      await queryClient.invalidateQueries({ queryKey: ["gmail-inbox"] });
+    } finally {
+      setRefreshing(false);
+    }
   }, [queryClient]);
 
   const handleLoadMore = useCallback(() => {
@@ -175,7 +182,7 @@ export const GmailScreen: React.FC = () => {
             )}
             refreshControl={
               <RefreshControl
-                refreshing={isRefetching}
+                refreshing={refreshing}
                 onRefresh={handleRefresh}
                 colors={[colors.primary]}
                 tintColor={colors.primary}

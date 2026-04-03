@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -272,11 +272,12 @@ export const RagDocumentDetailScreen: React.FC = () => {
   const { documentId } = route.params;
   const queryClient = useQueryClient();
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const {
     data: doc,
     isLoading,
     refetch: refetchDoc,
-    isRefetching,
   } = useQuery({
     queryKey: RAG_QUERY_KEYS.document(documentId),
     queryFn: () => ragApi.getDocument(documentId),
@@ -287,6 +288,16 @@ export const RagDocumentDetailScreen: React.FC = () => {
     latestJob?.status === "RUNNING" || latestJob?.status === "RETRYING";
 
   const { jobData, refetchJob } = useJobPolling(latestJob?.id, isJobActive);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetchDoc();
+      if (latestJob?.id) refetchJob();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchDoc, refetchJob, latestJob?.id]);
 
   // Merge polled job data into the displayed job
   const displayJob = jobData ?? latestJob;
@@ -462,13 +473,7 @@ export const RagDocumentDetailScreen: React.FC = () => {
       <ScrollView
         style={{ backgroundColor: colors.background }}
         refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={() => {
-              refetchDoc();
-              if (latestJob?.id) refetchJob();
-            }}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
       >
         {/* Document info */}

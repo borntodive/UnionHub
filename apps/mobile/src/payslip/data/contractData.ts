@@ -21,10 +21,15 @@ export const RYR_CONFIG = {
 export const MAX_TAX_FREE_DIARIA = 46.48;
 export const MAX_CONTRIBUTO_VOLONTARIO_PENSIONE = 5164.56;
 
-// Minimo imponibile INPS per giorno
+// Minimale contributivo giornaliero INPS (minimale retributivo lavoratori dipendenti).
+// Base: max(PAGA BASE + IND.VOLO, minimaleGiornaliero × giorni INPS).
+// Il valore di 312,32/gg sulla busta TRI era la retribuzione effettiva, non il minimale.
+// 2026: 58,13 €/gg (confermato dall'utente)
+// 2024–2025: stime — da verificare con circolari INPS
 export const MIN_IMPONIBILE_INPS: Record<number, number> = {
-  2024: 56.87,
-  2025: 56.87,
+  2024: 56.87, // stima — da verificare con circolare INPS 2024
+  2025: 57.52, // stima — da verificare con circolare INPS 2025
+  2026: 58.13, // confermato
 };
 
 // INPS Rates

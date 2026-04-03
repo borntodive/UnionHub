@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -69,14 +69,21 @@ export const ProfileScreen: React.FC = () => {
   const user = useAuthStore((state) => state.user);
   const insets = useSafeAreaInsets();
 
-  const {
-    data: userData,
-    isLoading,
-    refetch,
-  } = useQuery({
+  const [refreshing, setRefreshing] = useState(false);
+
+  const { data: userData, refetch } = useQuery({
     queryKey: ["me"],
     queryFn: usersApi.getMe,
   });
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
 
   const handleChangePassword = () => {
     navigation.navigate("ChangePassword");
@@ -95,7 +102,7 @@ export const ProfileScreen: React.FC = () => {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
       >
         {/* Header Card */}
