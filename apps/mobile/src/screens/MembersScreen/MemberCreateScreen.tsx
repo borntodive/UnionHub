@@ -199,13 +199,23 @@ export const MemberCreateScreen: React.FC = () => {
           [{ text: "OK" }],
         );
       } else {
-        // No extracted data, just set the PDF for upload
-        setExtractionStatus("idle");
-        Alert.alert(
-          "PDF Imported",
-          "PDF received. Please fill in the member details manually.",
-          [{ text: "OK" }],
-        );
+        // No pre-extracted data: auto-extract using admin's ruolo
+        const extractionRole = formData.ruolo || currentUser?.ruolo;
+        if (extractionRole) {
+          setExtractionStatus("extracting");
+          extractPdfMutation.mutate({
+            fileUri: sharedPdfUri,
+            role: extractionRole,
+          });
+        } else {
+          // SuperAdmin without a ruolo selected yet — fall back to manual
+          setExtractionStatus("idle");
+          Alert.alert(
+            "PDF Imported",
+            "Select the crew role (Pilot / Cabin Crew) to extract data automatically.",
+            [{ text: "OK" }],
+          );
+        }
       }
     }
   }, [sharedPdfUri, extractedData]);
