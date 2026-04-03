@@ -26,7 +26,7 @@ import { BasesService } from "../bases/bases.service";
 import { GradesService } from "../grades/grades.service";
 import { PublicRegisterDto } from "./dto/public-register.dto";
 import { FileStorageService } from "./services/file-storage.service";
-import { parseDMYOptional, toTitleCase } from "../common/utils/date.utils";
+import { parseDMYOptional, toTitleCase, normalizePhone } from "../common/utils/date.utils";
 import { WhatsappStatus } from "../common/enums/whatsapp-status.enum";
 
 interface FindAllOptions {
@@ -285,6 +285,7 @@ export class UsersService {
       nome: toTitleCase(createUserDto.nome) ?? createUserDto.nome,
       cognome: toTitleCase(createUserDto.cognome) ?? createUserDto.cognome,
       email: createUserDto.email.toLowerCase(),
+      telefono: normalizePhone(createUserDto.telefono) ?? createUserDto.telefono,
       dataIscrizione,
       dateOfEntry,
       dateOfCaptaincy,
@@ -340,6 +341,7 @@ export class UsersService {
       nome: toTitleCase(createUserDto.nome) ?? createUserDto.nome,
       cognome: toTitleCase(createUserDto.cognome) ?? createUserDto.cognome,
       email: createUserDto.email.toLowerCase(),
+      telefono: normalizePhone(createUserDto.telefono) ?? createUserDto.telefono,
       dataIscrizione,
       dateOfEntry,
       dateOfCaptaincy,
@@ -443,6 +445,9 @@ export class UsersService {
     }
     if (updateUserDto.cognome) {
       updateUserDto.cognome = toTitleCase(updateUserDto.cognome) ?? updateUserDto.cognome;
+    }
+    if (updateUserDto.telefono) {
+      updateUserDto.telefono = normalizePhone(updateUserDto.telefono) ?? updateUserDto.telefono;
     }
 
     // Convert date fields from DD/MM/YYYY to YYYY-MM-DD for PostgreSQL
@@ -1122,7 +1127,7 @@ export class UsersService {
             .toLowerCase()
             .replace(/\b\w/g, (c) => c.toUpperCase()),
           email: email.toLowerCase(),
-          telefono: phone || null,
+          telefono: normalizePhone(phone) || null,
           ruolo,
           baseId: base?.id || null,
           contrattoId: contract?.id || null,
@@ -1410,11 +1415,11 @@ export class UsersService {
 
     // 4. Create user
     const user = this.usersRepository.create({
-      nome: dto.nome,
-      cognome: dto.cognome,
-      email: dto.email,
-      crewcode: dto.crewcode,
-      telefono: dto.telefono,
+      nome: toTitleCase(dto.nome) ?? dto.nome,
+      cognome: toTitleCase(dto.cognome) ?? dto.cognome,
+      email: dto.email.toLowerCase(),
+      crewcode: dto.crewcode.toUpperCase(),
+      telefono: normalizePhone(dto.telefono) ?? dto.telefono,
       ruolo: dto.ruolo,
       gradeId: dto.gradeId,
       baseId: dto.baseId,

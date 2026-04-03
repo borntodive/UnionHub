@@ -34,6 +34,16 @@ export function parseDMYOptional(
 }
 
 /**
+ * Normalizes a phone number: strips spaces, converts 00-prefix to +.
+ * Returns the input unchanged if falsy.
+ */
+export function normalizePhone(s: string | undefined | null): string | undefined | null {
+  if (!s) return s;
+  const t = s.trim().replace(/\s+/g, "");
+  return t.startsWith("00") ? "+" + t.slice(2) : t;
+}
+
+/**
  * Converts a string to Title Case (each word capitalized).
  * e.g. "mario rossi" → "Mario Rossi", "D'ORIANO" → "D'Oriano"
  * Returns the input unchanged if falsy.
