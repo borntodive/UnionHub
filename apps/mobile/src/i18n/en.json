@@ -671,6 +671,8 @@
     "reverseDayShort": "day",
     "reverseNoSbhWarning": "No SBH hours in Input tab — enter hours to see effective rate",
     "reverseNoDiariaWarning": "No diaria days in Input tab — enter days to see effective rate",
+    "reverseFerieTitle": "Annual Leave",
+    "reverseNoAlWarning": "No leave days in Input tab — enter days to see effective rate",
     "reverseSimTitle": "Sim Pay",
     "reverseSimDaysAtRate": "Days at contract rate",
     "reverseNoSimWarning": "No sim days in Input tab — enter days to see effective rate"

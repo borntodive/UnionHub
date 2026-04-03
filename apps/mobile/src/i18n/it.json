@@ -671,6 +671,8 @@
     "reverseDayShort": "giorno",
     "reverseNoSbhWarning": "Nessuna ora SBH nel tab Input — inserisci le ore per vedere il tasso effettivo",
     "reverseNoDiariaWarning": "Nessun giorno diaria nel tab Input — inserisci i giorni per vedere il tasso effettivo",
+    "reverseFerieTitle": "Ferie Annuali",
+    "reverseNoAlWarning": "Nessun giorno ferie nel tab Input — inserisci i giorni per vedere il tasso effettivo",
     "reverseSimTitle": "Sim Pay",
     "reverseSimDaysAtRate": "Giorni al tasso contrattuale",
     "reverseNoSimWarning": "Nessun giorno sim nel tab Input — inserisci i giorni per vedere il tasso effettivo"

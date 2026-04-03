@@ -58,6 +58,17 @@ const AmountInput: React.FC<AmountInputProps> = ({
   </View>
 );
 
+interface ApplyButtonProps {
+  label: string;
+  onPress: () => void;
+}
+
+const ApplyButton: React.FC<ApplyButtonProps> = ({ label, onPress }) => (
+  <TouchableOpacity style={styles.applyButton} onPress={onPress}>
+    <Text style={styles.applyButtonText}>{label}</Text>
+  </TouchableOpacity>
+);
+
 interface ResultRowProps {
   label: string;
   value: string;
@@ -79,7 +90,7 @@ const ResultRow: React.FC<ResultRowProps> = ({ label, value, sub }) => (
 export const ReverseScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
-  const { settings, overrideActive, overrideSettings, input } =
+  const { settings, overrideActive, overrideSettings, input, setInput } =
     usePayslipStore();
 
   const s = overrideActive
@@ -88,6 +99,7 @@ export const ReverseScreen: React.FC = () => {
 
   const [sectorPayText, setSectorPayText] = useState("");
   const [diariaText, setDiariaText] = useState("");
+  const [ferieText, setFerieText] = useState("");
   const [simPayText, setSimPayText] = useState("");
 
   const handleMenuPress = () => {
@@ -127,7 +139,19 @@ export const ReverseScreen: React.FC = () => {
       }
     }
 
-    return { sbh, diaria, simDiaria };
+    let al = rawContract.al;
+    if (s.legacy) {
+      const lc = s.legacyCustom ?? { ffp: 0, sbh: 0, al: 0 };
+      const ld = s.legacyDeltas ?? { ffp: 0, sbh: 0, al: 0 };
+      if (s.legacyDirect) {
+        if (lc.al > 0) al = lc.al;
+      } else {
+        al = rawContract.al + ld.al;
+      }
+    }
+    const cuPct = s.cu ? 0.9 : 1;
+
+    return { sbh, diaria, al: al * cuPct, simDiaria };
   }, [
     rawContract,
     s.legacy,
@@ -164,6 +188,17 @@ export const ReverseScreen: React.FC = () => {
     diariaRate > 0 && diariaAmount > 0 ? diariaAmount / diariaRate : null;
   const effectiveDiariaRate =
     hasDiariaDays && diariaAmount > 0 ? diariaAmount / totalDiariaDays : null;
+
+  // Ferie calculations
+  const ferieAmount = parseFloat(ferieText) || 0;
+  const alRate = rates?.al ?? 0;
+  const inputAlDays = input.al;
+  const hasAlDays = inputAlDays > 0;
+
+  const alDaysAtContractRate =
+    alRate > 0 && ferieAmount > 0 ? ferieAmount / alRate : null;
+  const effectiveAlRate =
+    hasAlDays && ferieAmount > 0 ? ferieAmount / inputAlDays : null;
 
   // Sim pay calculations (instructor ranks only)
   const isInstructor = ["sfi", "tri", "tre"].includes(s.rank);
@@ -240,6 +275,12 @@ export const ReverseScreen: React.FC = () => {
                         sub={`${t("payslip.contractPerHour")} @ ${formatCurrency(sbhRate)}`}
                         value={formatSbh(hoursAtContractRate)}
                       />
+                      <ApplyButton
+                        label={`→ SBH: ${formatSbh(hoursAtContractRate)}`}
+                        onPress={() =>
+                          setInput({ sbh: formatSbh(hoursAtContractRate!) })
+                        }
+                      />
                     </>
                   )}
 
@@ -290,6 +331,24 @@ export const ReverseScreen: React.FC = () => {
                         sub={`${t("payslip.contractPerDay")} @ ${formatCurrency(diariaRate)}`}
                         value={formatNumber(daysAtContractRate, 2)}
                       />
+                      <View style={styles.applyRow}>
+                        <ApplyButton
+                          label={`→ Fly: ${Math.round(daysAtContractRate)}`}
+                          onPress={() =>
+                            setInput({
+                              flyDiaria: Math.round(daysAtContractRate!),
+                            })
+                          }
+                        />
+                        <ApplyButton
+                          label={`→ No-Fly: ${Math.round(daysAtContractRate)}`}
+                          onPress={() =>
+                            setInput({
+                              noFlyDiaria: Math.round(daysAtContractRate!),
+                            })
+                          }
+                        />
+                      </View>
                     </>
                   )}
 
@@ -306,6 +365,59 @@ export const ReverseScreen: React.FC = () => {
                       <AlertTriangle size={14} color={colors.warning} />
                       <Text style={styles.warningText}>
                         {t("payslip.reverseNoDiariaWarning")}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* Ferie section */}
+          <View style={styles.section}>
+            <View style={styles.sectionTitleRow}>
+              <ArrowLeftRight size={16} color={colors.primary} />
+              <Text style={styles.sectionTitle}>
+                {t("payslip.reverseFerieTitle")}
+              </Text>
+            </View>
+            <View style={styles.card}>
+              <AmountInput
+                label={t("payslip.reverseEnterAmount")}
+                value={ferieText}
+                onChange={setFerieText}
+              />
+
+              {ferieAmount > 0 && rates && (
+                <View style={styles.results}>
+                  {alDaysAtContractRate !== null && (
+                    <>
+                      <View style={styles.divider} />
+                      <ResultRow
+                        label={t("payslip.reverseDaysAtRate")}
+                        sub={`${t("payslip.contractPerDay")} @ ${formatCurrency(alRate)}`}
+                        value={formatNumber(alDaysAtContractRate, 2)}
+                      />
+                      <ApplyButton
+                        label={`→ Ferie: ${Math.round(alDaysAtContractRate)}`}
+                        onPress={() =>
+                          setInput({ al: Math.round(alDaysAtContractRate!) })
+                        }
+                      />
+                    </>
+                  )}
+                  <View style={styles.divider} />
+                  {hasAlDays ? (
+                    <ResultRow
+                      label={t("payslip.reverseEffectiveRate")}
+                      sub={`${inputAlDays} ${t("payslip.reverseFromInput")}`}
+                      value={`${formatCurrency(effectiveAlRate!)}/${t("payslip.reverseDayShort")}`}
+                    />
+                  ) : (
+                    <View style={styles.warning}>
+                      <AlertTriangle size={14} color={colors.warning} />
+                      <Text style={styles.warningText}>
+                        {t("payslip.reverseNoAlWarning")}
                       </Text>
                     </View>
                   )}
@@ -340,6 +452,14 @@ export const ReverseScreen: React.FC = () => {
                           label={t("payslip.reverseSimDaysAtRate")}
                           sub={`${s.btc ? "BTC" : "non-BTC"} sim tiers`}
                           value={formatNumber(simDaysAtContractRate, 2)}
+                        />
+                        <ApplyButton
+                          label={`→ Sim Days: ${Math.round(simDaysAtContractRate)}`}
+                          onPress={() =>
+                            setInput({
+                              simDays: Math.round(simDaysAtContractRate!),
+                            })
+                          }
                         />
                       </>
                     )}
@@ -483,6 +603,26 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: typography.sizes.xs,
     color: colors.warning,
+  },
+  applyRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  applyButton: {
+    flex: 1,
+    backgroundColor: colors.primary + "18",
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.primary + "40",
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    alignItems: "center",
+  },
+  applyButtonText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+    color: colors.primary,
   },
   bottomSpace: { height: spacing.xl },
 });
