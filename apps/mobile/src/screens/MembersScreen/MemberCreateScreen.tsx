@@ -45,6 +45,7 @@ import {
   X,
   Eye,
   Calendar,
+  AlertTriangle,
 } from "lucide-react-native";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
@@ -185,7 +186,7 @@ export const MemberCreateScreen: React.FC = () => {
           nome: toTitleCase(extractedData.nome) || prev.nome,
           cognome: toTitleCase(extractedData.cognome) || prev.cognome,
           email: extractedData.email?.toLowerCase() || prev.email,
-          telefono: extractedData.telefono || prev.telefono,
+          telefono: normalizePhone(extractedData.telefono) || prev.telefono,
           baseId: extractedData.baseId || prev.baseId,
           contrattoId: extractedData.contrattoId || prev.contrattoId,
           gradeId: extractedData.gradeId || prev.gradeId,
@@ -256,6 +257,12 @@ export const MemberCreateScreen: React.FC = () => {
           .replace(/(?:^|[\s\-'])(\p{L})/gu, (_, c) => c.toUpperCase())
       : s;
 
+  const normalizePhone = (s?: string) => {
+    if (!s) return s;
+    const t = s.trim();
+    return t.startsWith("00") ? "+" + t.slice(2) : t;
+  };
+
   // Helper to format Date to DD/MM/YYYY
   const formatDate = (date: Date): string => {
     const day = date.getDate().toString().padStart(2, "0");
@@ -277,7 +284,7 @@ export const MemberCreateScreen: React.FC = () => {
         nome: toTitleCase(data.nome) || prev.nome,
         cognome: toTitleCase(data.cognome) || prev.cognome,
         email: data.email?.toLowerCase() || prev.email,
-        telefono: data.telefono || prev.telefono,
+        telefono: normalizePhone(data.telefono) || prev.telefono,
         baseId: data.baseId || prev.baseId,
         contrattoId: data.contrattoId || prev.contrattoId,
         gradeId: data.gradeId || prev.gradeId,
@@ -389,6 +396,13 @@ export const MemberCreateScreen: React.FC = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       Alert.alert("Error", "Please enter a valid email address");
+      return false;
+    }
+    if (formData.telefono && !formData.telefono.trim().startsWith("+")) {
+      Alert.alert(
+        "Phone prefix required",
+        "Please include the country prefix (e.g. +39 for Italy).",
+      );
       return false;
     }
     return true;
@@ -791,11 +805,23 @@ export const MemberCreateScreen: React.FC = () => {
                     label="Phone"
                     value={formData.telefono || ""}
                     onChangeText={(text) =>
-                      setFormData({ ...formData, telefono: text })
+                      setFormData({
+                        ...formData,
+                        telefono: normalizePhone(text) ?? text,
+                      })
                     }
                     icon={<Phone size={20} color={colors.primary} />}
                     keyboardType="phone-pad"
                   />
+                  {!!formData.telefono &&
+                    !formData.telefono.trim().startsWith("+") && (
+                      <View style={styles.phoneWarning}>
+                        <AlertTriangle size={14} color={colors.warning} />
+                        <Text style={styles.phoneWarningText}>
+                          Add country prefix (e.g. +39)
+                        </Text>
+                      </View>
+                    )}
                 </Card>
 
                 {/* Professional Info Section */}
@@ -1362,6 +1388,16 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.xs,
     fontStyle: "italic",
+  },
+  phoneWarning: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  phoneWarningText: {
+    fontSize: typography.sizes.sm,
+    color: colors.warning,
   },
   datePickerButton: {
     flexDirection: "row",
