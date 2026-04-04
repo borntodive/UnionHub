@@ -10,6 +10,7 @@ import {
   Switch,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Menu, AlertTriangle, X } from "lucide-react-native";
@@ -19,9 +20,11 @@ import { useTranslation } from "react-i18next";
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { useAuthStore } from "../../store/authStore";
 import { usePayslipStore } from "../store/usePayslipStore";
-import { UserRole } from "../../types";
+import { User, UserRole } from "../../types";
 import { PayslipSettings } from "../types";
 import { usePayslipSettingsSync } from "../hooks/usePayslipSettingsSync";
+import { usersApi } from "../../api/users";
+import { payslipSettingsApi } from "../../api/payslipSettings";
 
 // ── Shared sub-components (inline) ──────────────────────────────────────────
 
@@ -111,6 +114,87 @@ export const SettingsScreen: React.FC = () => {
   const [legacyAlText, setLegacyAlText] = useState(
     olc.al > 0 ? olc.al.toFixed(2) : "",
   );
+
+  // Member search states
+  const [memberSearchQuery, setMemberSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<User[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<User | null>(null);
+
+  // Search members function
+  const searchMembers = async (query: string) => {
+    setIsSearching(true);
+    try {
+      const res = await usersApi.getUsersPaginated(1, 10, { search: query });
+      setSearchResults(res.data || []);
+    } catch (error) {
+      console.error("Failed to search members:", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Load member settings into override
+  const loadMemberSettings = async (member: User) => {
+    try {
+      const settings = await payslipSettingsApi.getByUserId(member.id);
+      if (settings) {
+        // Apply member's settings to override
+        setOverrideSettings({
+          ...overrideSettings,
+          role: settings.role,
+          rank: settings.rank,
+          base: settings.base,
+          parttime: settings.parttime,
+          parttimePercentage: settings.parttimePercentage,
+          coniugeCarico: settings.coniugeCarico,
+          cu: settings.cu,
+          triAndLtc: settings.triAndLtc,
+          btc: settings.btc,
+          voluntaryPensionContribution: settings.voluntaryPensionContribution,
+          fondAer: settings.fondAer,
+          addComunali: settings.addComunali,
+          accontoAddComunali: settings.accontoAddComunali,
+          addRegionali: settings.addRegionali,
+          legacy: settings.legacy,
+          legacyCustom: settings.legacyCustom,
+        });
+        // Note: RSA and ITUD are not stored in PayslipSettings
+        // They come from user profile, so we keep current override values
+        // Update local text states
+        setComunaliText(settings.addComunali?.toString() || "0");
+        setAccontoText(settings.accontoAddComunali?.toString() || "0");
+        setRegionaliText(settings.addRegionali?.toString() || "0");
+        if (settings.legacyCustom) {
+          setLegacyFfpText(
+            settings.legacyCustom.ffp > 0
+              ? settings.legacyCustom.ffp.toFixed(2)
+              : "",
+          );
+          setLegacySbhText(
+            settings.legacyCustom.sbh > 0
+              ? settings.legacyCustom.sbh.toFixed(4)
+              : "",
+          );
+          setLegacyAlText(
+            settings.legacyCustom.al > 0
+              ? settings.legacyCustom.al.toFixed(2)
+              : "",
+          );
+        }
+        setSelectedMember(member);
+        setSearchResults([]);
+        setMemberSearchQuery("");
+      } else {
+        Alert.alert("Info", "L'iscritto non ha impostazioni salvate");
+      }
+    } catch (error) {
+      Alert.alert(
+        "Errore",
+        "Impossibile caricare le impostazioni dell'iscritto",
+      );
+    }
+  };
 
   const handleReset = () => {
     Alert.alert(
@@ -208,6 +292,68 @@ export const SettingsScreen: React.FC = () => {
           {/* Override settings — shown only when active */}
           {overrideActive && (
             <>
+              {/* Load from Member Section */}
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>
+                  Carica impostazioni da iscritto
+                </Text>
+
+                {/* Search Input */}
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={[styles.numInput, { flex: 1 }]}
+                    value={memberSearchQuery}
+                    onChangeText={(text) => {
+                      setMemberSearchQuery(text);
+                      if (text.length >= 2) {
+                        searchMembers(text);
+                      } else if (text.length === 0) {
+                        setSearchResults([]);
+                      }
+                    }}
+                    placeholder="Cerca per crewcode o nome..."
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                  {isSearching && (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  )}
+                </View>
+
+                {/* Search Results */}
+                {searchResults.length > 0 && (
+                  <View style={styles.searchResults}>
+                    {searchResults.map((member) => (
+                      <TouchableOpacity
+                        key={member.id}
+                        style={styles.searchResultItem}
+                        onPress={() => loadMemberSettings(member)}
+                      >
+                        <Text style={styles.searchResultText}>
+                          {member.crewcode} - {member.nome} {member.cognome}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+
+                {/* Selected Member */}
+                {selectedMember && (
+                  <View style={styles.selectedMemberBanner}>
+                    <Text style={styles.selectedMemberText}>
+                      Impostazioni caricate da: {selectedMember.crewcode}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedMember(null);
+                        setMemberSearchQuery("");
+                      }}
+                    >
+                      <Text style={styles.clearSelection}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+
               {/* Profile */}
               <View style={styles.card}>
                 <Text style={styles.sectionTitle}>
@@ -789,5 +935,42 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontStyle: "italic",
     marginTop: spacing.xs,
+  },
+  // Member search styles
+  searchResults: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginTop: spacing.sm,
+    maxHeight: 200,
+  },
+  searchResultItem: {
+    padding: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  searchResultText: {
+    fontSize: typography.sizes.base,
+    color: colors.text,
+  },
+  selectedMemberBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: colors.primary + "20",
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginTop: spacing.md,
+  },
+  selectedMemberText: {
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
+    fontWeight: "600",
+  },
+  clearSelection: {
+    fontSize: typography.sizes.base,
+    color: colors.error,
+    padding: spacing.xs,
   },
 });

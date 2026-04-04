@@ -46,6 +46,7 @@ export class ClaContractHistory {
     woff: number;
     allowance: number;
     diaria: number;
+    noFlyDiaria: number;
     rsa: number;
     trainingConfig?: any;
     effectiveYear: number;
