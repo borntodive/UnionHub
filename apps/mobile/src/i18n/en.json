@@ -39,7 +39,6 @@
     "actions": "Actions",
     "notFound": "Not found",
     "code": "Code",
-    "loading": "Loading...",
     "goBack": "Go back",
     "show": "Show",
     "hide": "Hide",
@@ -59,9 +58,7 @@
     "size": "Size",
     "type": "Type",
     "date": "Date",
-    "time": "Time",
-    "yes": "Yes",
-    "no": "No"
+    "time": "Time"
   },
   "auth": {
     "login": "Sign In",
@@ -91,10 +88,7 @@
     "joinUsPrompt": "Not a member yet?",
     "joinUsLink": "Join us",
     "quickLogin": "Quick Login",
-    "email": "Email",
-    "currentPassword": "Current Password",
-    "newPassword": "New Password",
-    "confirmPassword": "Confirm Password"
+    "email": "Email"
   },
   "documents": {
     "title": "Communications",
@@ -258,7 +252,8 @@
     "gmail": "Union Mailbox",
     "gmailSetup": "Gmail Setup",
     "ragAssistant": "Manual Assistant",
-    "ragAdmin": "RAG Management"
+    "ragAdmin": "RAG Management",
+    "backups": "Backups"
   },
   "rag": {
     "title": "Manual Assistant",
@@ -460,13 +455,10 @@
     "selectGrade": "Select grade",
     "selectBase": "Select base",
     "selectContract": "Select contract",
-    "notes": "Notes",
     "isUSO": "Union Support Officer",
     "personalData": "Personal Data",
     "professionalData": "Professional Data",
     "status": "Status",
-    "active": "Active",
-    "inactive": "Inactive",
     "created": "Created",
     "updated": "Updated",
     "deleted": "Deleted",
@@ -943,5 +935,34 @@
     "invalidEmail": "Invalid email address",
     "invalidPhone": "Invalid phone number",
     "passwordMismatch": "Passwords do not match"
+  },
+  "backups": {
+    "title": "Manage Backups",
+    "empty": "No backups found",
+    "emptySubtext": "Tap + to create a manual backup",
+    "files": "files",
+    "success": "Success",
+    "create": "Create Backup",
+    "createTitle": "Create Backup",
+    "createConfirm": "Create a new manual backup now?",
+    "created": "Backup completed",
+    "createError": "Failed to create backup",
+    "deleteTitle": "Delete Backup",
+    "deleteConfirm": "Are you sure you want to permanently delete",
+    "deleted": "Backup deleted successfully",
+    "deleteError": "Failed to delete backup",
+    "restoreTitle": "Restore Backup",
+    "restoreConfirm": "This will REPLACE the current database with this backup. The app may be unavailable for a few seconds.",
+    "restoreDoubleConfirm": "This action CANNOT be undone. All current data will be replaced. Proceed?",
+    "restoreConfirmButton": "Restore",
+    "restored": "Database restored successfully",
+    "restoreError": "Failed to restore backup",
+    "restoring": "Restoring database...",
+    "deleting": "Deleting backup...",
+    "sectionAutomatic": "Automatic",
+    "sectionManual": "Manual",
+    "sectionEmpty": "No backups",
+    "used": "used",
+    "backupSpaceLabel": "Backups on Drive"
   }
 }

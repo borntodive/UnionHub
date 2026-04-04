@@ -26,7 +26,11 @@ import { BasesService } from "../bases/bases.service";
 import { GradesService } from "../grades/grades.service";
 import { PublicRegisterDto } from "./dto/public-register.dto";
 import { FileStorageService } from "./services/file-storage.service";
-import { parseDMYOptional, toTitleCase, normalizePhone } from "../common/utils/date.utils";
+import {
+  parseDMYOptional,
+  toTitleCase,
+  normalizePhone,
+} from "../common/utils/date.utils";
 import { WhatsappStatus } from "../common/enums/whatsapp-status.enum";
 
 interface FindAllOptions {
@@ -285,7 +289,8 @@ export class UsersService {
       nome: toTitleCase(createUserDto.nome) ?? createUserDto.nome,
       cognome: toTitleCase(createUserDto.cognome) ?? createUserDto.cognome,
       email: createUserDto.email.toLowerCase(),
-      telefono: normalizePhone(createUserDto.telefono) ?? createUserDto.telefono,
+      telefono:
+        normalizePhone(createUserDto.telefono) ?? createUserDto.telefono,
       dataIscrizione,
       dateOfEntry,
       dateOfCaptaincy,
@@ -341,7 +346,8 @@ export class UsersService {
       nome: toTitleCase(createUserDto.nome) ?? createUserDto.nome,
       cognome: toTitleCase(createUserDto.cognome) ?? createUserDto.cognome,
       email: createUserDto.email.toLowerCase(),
-      telefono: normalizePhone(createUserDto.telefono) ?? createUserDto.telefono,
+      telefono:
+        normalizePhone(createUserDto.telefono) ?? createUserDto.telefono,
       dataIscrizione,
       dateOfEntry,
       dateOfCaptaincy,
@@ -441,13 +447,16 @@ export class UsersService {
       updateUserDto.crewcode = updateUserDto.crewcode.toUpperCase();
     }
     if (updateUserDto.nome) {
-      updateUserDto.nome = toTitleCase(updateUserDto.nome) ?? updateUserDto.nome;
+      updateUserDto.nome =
+        toTitleCase(updateUserDto.nome) ?? updateUserDto.nome;
     }
     if (updateUserDto.cognome) {
-      updateUserDto.cognome = toTitleCase(updateUserDto.cognome) ?? updateUserDto.cognome;
+      updateUserDto.cognome =
+        toTitleCase(updateUserDto.cognome) ?? updateUserDto.cognome;
     }
     if (updateUserDto.telefono) {
-      updateUserDto.telefono = normalizePhone(updateUserDto.telefono) ?? updateUserDto.telefono;
+      updateUserDto.telefono =
+        normalizePhone(updateUserDto.telefono) ?? updateUserDto.telefono;
     }
 
     // Convert date fields from DD/MM/YYYY to YYYY-MM-DD for PostgreSQL

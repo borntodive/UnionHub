@@ -36,6 +36,7 @@ import {
   UserCheck,
   Search,
   BookOpen,
+  HardDrive,
 } from "lucide-react-native";
 import { usersApi } from "../api/users";
 
@@ -437,6 +438,14 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                     label={t("navigation.ragAdmin")}
                     onPress={() => {
                       props.navigation.navigate("RagAdmin");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                  <MenuItem
+                    icon={<HardDrive size={22} color={colors.primary} />}
+                    label={t("navigation.backups")}
+                    onPress={() => {
+                      props.navigation.navigate("Backups");
                       props.navigation.closeDrawer();
                     }}
                   />

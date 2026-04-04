@@ -91,7 +91,7 @@ DB_DATABASE="${DB_DATABASE:-unionhub}"
 UPLOAD_BASE_DIR="${UPLOAD_BASE_DIR:-$ROOT_DIR/uploads}"
 
 TIMESTAMP="$(date +%Y%m%d_%H%M)"
-DATE_LABEL="$(date +%Y-%m-%d)"
+DATE_LABEL="$(date +%Y-%m-%d_%H%M)"
 TMP_DIR="/tmp/unionhub-backup-${TIMESTAMP}"
 
 echo "[backup] ===== UnionConnect Backup — $(date '+%Y-%m-%d %H:%M:%S') ====="
@@ -131,7 +131,9 @@ fi
 echo "[backup] BACKUP_SERVICE_ACCOUNT_PATH=${BACKUP_SERVICE_ACCOUNT_PATH:-<not set>}"
 echo "[backup] BACKUP_DRIVE_FOLDER_ID=${BACKUP_DRIVE_FOLDER_ID:-<not set>}"
 echo "[backup] Uploading to Google Drive..."
-node "$SCRIPT_DIR/backup-drive.js" "$TMP_DIR" "$DATE_LABEL"
+BACKUP_TYPE="${BACKUP_TYPE:-Automatic}"
+echo "[backup] Backup type: $BACKUP_TYPE"
+node "$SCRIPT_DIR/backup-drive.js" "$TMP_DIR" "$DATE_LABEL" "$BACKUP_TYPE"
 UPLOAD_EXIT=$?
 
 # ---------------------------------------------------------------------------
