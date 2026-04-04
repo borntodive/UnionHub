@@ -9,6 +9,13 @@ export const payslipSettingsApi = {
     return res.data;
   },
 
+  getByUserId: async (userId: string): Promise<PayslipSettings | null> => {
+    const res = await apiClient.get<PayslipSettings | null>(
+      `/users/${userId}/payslip-settings`,
+    );
+    return res.data;
+  },
+
   put: async (settings: PayslipSettings): Promise<PayslipSettings> => {
     const res = await apiClient.put<PayslipSettings>(
       "/users/me/payslip-settings",

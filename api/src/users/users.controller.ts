@@ -131,6 +131,14 @@ export class UsersController {
     return this.usersService.updatePayslipSettings(req.user.userId, settings);
   }
 
+  @Get(":id/payslip-settings")
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  async getUserPayslipSettings(
+    @Param("id") userId: string,
+  ): Promise<Record<string, unknown> | null> {
+    return this.usersService.getPayslipSettings(userId);
+  }
+
   @Get("me")
   async getMe(@Request() req: RequestWithUser): Promise<Partial<User>> {
     const user = await this.usersService.findById(req.user.userId);
