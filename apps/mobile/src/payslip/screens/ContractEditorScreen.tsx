@@ -99,6 +99,9 @@ export default function ContractEditorScreen() {
   const [diaria, setDiaria] = useState(
     existingContract?.diaria?.toString() || "",
   );
+  const [noFlyDiaria, setNoFlyDiaria] = useState(
+    existingContract?.noFlyDiaria?.toString() || "",
+  );
   const [rsa, setRsa] = useState(existingContract?.rsa?.toString() || "51.92");
   const [itud, setItud] = useState(existingContract?.itud?.toString() || "120");
   const [isActive, setIsActive] = useState(existingContract?.isActive ?? true);
@@ -188,6 +191,7 @@ export default function ContractEditorScreen() {
           : "",
       );
       setDiaria(existingContract.diaria?.toString() || "");
+      setNoFlyDiaria(existingContract.noFlyDiaria?.toString() || "");
       setRsa(existingContract.rsa?.toString() || "51.92");
       setItud(existingContract.itud?.toString() || "120");
       setIsActive(existingContract.isActive ?? true);
@@ -250,6 +254,7 @@ export default function ContractEditorScreen() {
         woff: parseFloat(woff) || 0,
         allowance: parseFloat(allowance) / 12,
         diaria: parseFloat(diaria),
+        noFlyDiaria: parseFloat(noFlyDiaria) || parseFloat(diaria) || 0,
         rsa: parseFloat(rsa) || 51.92,
         itud: parseFloat(itud) || 120,
         effectiveYear: parseInt(year),
@@ -377,6 +382,7 @@ export default function ContractEditorScreen() {
                 woff: parseFloat(woff) || 0,
                 allowance: parseFloat(allowance) / 12,
                 diaria: parseFloat(diaria),
+                noFlyDiaria: parseFloat(noFlyDiaria) || parseFloat(diaria) || 0,
                 rsa: parseFloat(rsa) || 51.92,
                 itud: parseFloat(itud) || 120,
                 effectiveYear: currentYear,
@@ -585,14 +591,14 @@ export default function ContractEditorScreen() {
             <Text style={styles.sectionTitle}>Salary Components (Annual)</Text>
             {renderInput("Basic Salary (annual)", basic, setBasic, "15000")}
             {renderInput(
-              "FFP - Fixed Flight Pay (annual)",
+              "GMFA - Guaranteed Minimum Flight Allowance (annual)",
               ffp,
               setFfp,
               "82044",
             )}
             {renderInput("Allowance (annual)", allowance, setAllowance, "8000")}
             {renderInput(
-              "Scheduled Block Hours Rate (SBH)",
+              "Hourly Flight Allowance Rate (HFA/SBH)",
               sbh,
               setSbh,
               "18.21",
@@ -605,7 +611,13 @@ export default function ContractEditorScreen() {
             {renderInput("Out of Base Daily (OOB)", oob, setOob, "155.00")}
             {role === "pil" &&
               renderInput("Working Day Off (WOFF)", woff, setWoff, "450.00")}
-            {renderInput("Per Diem Rate (Diaria)", diaria, setDiaria, "46.48")}
+            {renderInput("Diaria Rate", diaria, setDiaria, "46.48")}
+            {renderInput(
+              "Home Base Duty Rate",
+              noFlyDiaria,
+              setNoFlyDiaria,
+              "46.48",
+            )}
             {renderInput("RSA Amount (monthly)", rsa, setRsa, "51.92")}
             {renderInput("ITUD Daily Rate", itud, setItud, "120")}
           </View>
@@ -836,8 +848,8 @@ export default function ContractEditorScreen() {
 
                     {(
                       [
-                        ["FFP (€/mese)", "ffp"],
-                        ["SBH (€/ora)", "sbh"],
+                        ["GMFA (€/mese)", "ffp"],
+                        ["HFA/SBH (€/ora)", "sbh"],
                         ["AL (€/giorno)", "al"],
                         ["Basic", "basic"],
                         ["Diaria", "diaria"],
@@ -851,8 +863,8 @@ export default function ContractEditorScreen() {
                       if (fi % 2 === 0) {
                         const nextPair = (
                           [
-                            ["FFP (€/mese)", "ffp"],
-                            ["SBH (€/ora)", "sbh"],
+                            ["GMFA (€/mese)", "ffp"],
+                            ["HFA/SBH (€/ora)", "sbh"],
                             ["AL (€/giorno)", "al"],
                             ["Basic", "basic"],
                             ["Diaria", "diaria"],

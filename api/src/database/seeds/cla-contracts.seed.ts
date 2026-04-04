@@ -16,6 +16,7 @@ const INITIAL_CONTRACTS = [
     woff: 900,
     allowance: 8000 / 12,
     diaria: 8831 / 190,
+    noFlyDiaria: 8831 / 190,
     rsa: 51.92,
     trainingConfig: null,
     effectiveYear: 2026,
@@ -37,6 +38,7 @@ const INITIAL_CONTRACTS = [
     woff: 450,
     allowance: 7500 / 12,
     diaria: 8831 / 190,
+    noFlyDiaria: 8831 / 190,
     rsa: 51.92,
     trainingConfig: null,
     effectiveYear: 2026,
@@ -55,6 +57,7 @@ const INITIAL_CONTRACTS = [
     woff: 450,
     allowance: 7500 / 12,
     diaria: 8831 / 190,
+    noFlyDiaria: 8831 / 190,
     rsa: 51.92,
     trainingConfig: {
       nonBtc: {
@@ -85,6 +88,7 @@ const INITIAL_CONTRACTS = [
     woff: 900,
     allowance: 8000 / 12,
     diaria: 8831 / 190,
+    noFlyDiaria: 8831 / 190,
     rsa: 51.92,
     trainingConfig: {
       nonBtc: {
@@ -117,6 +121,7 @@ const INITIAL_CONTRACTS = [
     woff: 900,
     allowance: 8000 / 12,
     diaria: 8831 / 190,
+    noFlyDiaria: 8831 / 190,
     rsa: 51.92,
     trainingConfig: {
       nonBtc: {
@@ -149,6 +154,7 @@ const INITIAL_CONTRACTS = [
     woff: 900,
     allowance: 8000 / 12,
     diaria: 8831 / 190,
+    noFlyDiaria: 8831 / 190,
     rsa: 51.92,
     trainingConfig: {
       allowance: 14000 / 12,
@@ -177,6 +183,7 @@ const INITIAL_CONTRACTS = [
     woff: 900,
     allowance: 8000 / 12,
     diaria: 8831 / 190,
+    noFlyDiaria: 8831 / 190,
     rsa: 51.92,
     trainingConfig: {
       allowance: 5000 / 12,
@@ -197,6 +204,7 @@ const INITIAL_CONTRACTS = [
     woff: 450,
     allowance: 7500 / 12,
     diaria: 8831 / 190,
+    noFlyDiaria: 8831 / 190,
     rsa: 51.92,
     trainingConfig: null,
     effectiveYear: 2026,
@@ -215,6 +223,7 @@ const INITIAL_CONTRACTS = [
     woff: 138,
     allowance: 7500 / 12,
     diaria: 8831 / 190,
+    noFlyDiaria: 8831 / 190,
     rsa: 51.92,
     trainingConfig: null,
     effectiveYear: 2026,
@@ -233,6 +242,7 @@ const INITIAL_CONTRACTS = [
     woff: 0,
     allowance: (730 + 2500) / 12,
     diaria: 72.29,
+    noFlyDiaria: 72.29,
     rsa: 51.92,
     trainingConfig: {
       allowance: 2905 / 12,
@@ -275,6 +285,7 @@ const INITIAL_CONTRACTS = [
     woff: 0,
     allowance: 60.84 + 208.34,
     diaria: 40,
+    noFlyDiaria: 40,
     rsa: 52.92,
     trainingConfig: null,
     effectiveYear: 2026,
@@ -293,6 +304,7 @@ const INITIAL_CONTRACTS = [
     woff: 0,
     allowance: 60.84,
     diaria: 40,
+    noFlyDiaria: 40,
     rsa: 52.92,
     trainingConfig: null,
     effectiveYear: 2026,
@@ -311,6 +323,7 @@ const INITIAL_CONTRACTS = [
     woff: 0,
     allowance: 60.84,
     diaria: 40,
+    noFlyDiaria: 40,
     rsa: 52.92,
     trainingConfig: null,
     effectiveYear: 2026,

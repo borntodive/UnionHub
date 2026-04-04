@@ -400,9 +400,15 @@ export const ContractScreen: React.FC = () => {
           )}
           <View style={styles.divider} />
           <Row
-            label={t("payslip.perDiem")}
+            label={t("payslip.perDiem") + " (Flying)"}
             sub={t("payslip.contractPerDay")}
             value={formatCurrency(cd.diaria)}
+          />
+          <View style={styles.divider} />
+          <Row
+            label={t("payslip.perDiem") + " (No-Fly)"}
+            sub={t("payslip.contractPerDay")}
+            value={formatCurrency(cd.noFlyDiaria)}
           />
         </Section>
 

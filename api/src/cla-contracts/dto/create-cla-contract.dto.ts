@@ -112,6 +112,10 @@ export class CreateClaContractDto {
   @Min(0)
   diaria: number;
 
+  @IsNumber()
+  @Min(0)
+  noFlyDiaria: number;
+
   @IsOptional()
   @IsNumber()
   @Min(0)

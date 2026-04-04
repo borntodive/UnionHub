@@ -224,8 +224,9 @@ export class PayslipCalculator {
       isSectorPay: false,
     };
 
+    // No-fly diaria (uses separate contract field)
     const noFlyDiaria = createPayslipItem(
-      this.input.noFlyDiaria * cd.diaria,
+      this.input.noFlyDiaria * cd.noFlyDiaria,
       100,
       this.input.noFlyDiaria,
     );
@@ -274,7 +275,7 @@ export class PayslipCalculator {
     // Sim Pay (reduced by New Captain)
     const simPay = createPayslipItem(
       this.calculateSimPay() * cuPct,
-      50,
+      100,
       this.input.simDays,
     );
 

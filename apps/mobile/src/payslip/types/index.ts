@@ -32,10 +32,10 @@ export interface AdditionalItem {
 export interface Payslip {
   basic: PayslipItem;
   basic13th: PayslipItem;
-  ffp: PayslipItem; // Fixed Flight Pay (base only)
-  ffpAllowance: PayslipItem; // Fixed Flight Pay - Allowance
-  ffpTraining: PayslipItem; // Fixed Flight Pay - rank-specific training (LTC/TRI/TRE/SFI)
-  ffpTrainingLtc: PayslipItem; // Fixed Flight Pay - LTC component added on top of TRE/triAndLtc
+  ffp: PayslipItem; // Guaranteed Minimum Flight Allowance (base only)
+  ffpAllowance: PayslipItem; // Flight Additional Indemnity
+  ffpTraining: PayslipItem; // Flight Role Allowance - rank-specific training (LTC/TRI/TRE/SFI)
+  ffpTrainingLtc: PayslipItem; // Flight Role Allowance - LTC component added on top of TRE/triAndLtc
   flyDiaria: PayslipItem; // Flying per diem
   noFlyDiaria: PayslipItem; // Non-flying per diem
   ccTraining: PayslipItem; // Cabin crew training
@@ -188,8 +188,8 @@ export interface AdditionalDeductionInput {
 // ============================================
 
 export interface LegacyCustom {
-  ffp: number; // FFP monthly base (before part-time/CU reductions)
-  sbh: number; // SBH per-hour rate
+  ffp: number; // GMFA monthly base (before part-time/CU reductions)
+  sbh: number; // HFA/SBH per-hour rate
   al: number; // Annual leave per-day rate
 }
 
@@ -269,13 +269,14 @@ export interface UserContext {
 
 export interface RankContract {
   basic: number; // Monthly base
-  ffp: number; // Monthly FFP
+  ffp: number; // Monthly GMFA (Guaranteed Minimum Flight Allowance)
   sbh: number; // Per hour rate
   al: number; // Per day rate
   oob: number; // Per night rate
   woff: number; // Per day rate
   allowance: number; // Monthly allowance
-  diaria: number; // Per day rate
+  diaria: number; // Flying per day rate
+  noFlyDiaria: number; // No-fly per day rate
   training: TrainingConfig | null;
   rsa: number; // Monthly
   itud: number; // Daily rate for injury days

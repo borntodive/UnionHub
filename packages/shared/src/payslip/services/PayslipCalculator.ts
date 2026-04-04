@@ -302,7 +302,7 @@ export class PayslipCalculator {
     // Sim Pay (reduced by New Captain)
     const simPay = createPayslipItem(
       this.calculateSimPay() * cuPct,
-      50,
+      100,
       this.input.simDays,
     );
 
