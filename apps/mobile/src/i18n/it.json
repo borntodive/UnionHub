@@ -39,7 +39,6 @@
     "actions": "Azioni",
     "notFound": "Non trovato",
     "code": "Codice",
-    "loading": "Caricamento...",
     "goBack": "Torna indietro",
     "show": "Mostra",
     "hide": "Nascondi",
@@ -59,9 +58,7 @@
     "size": "Dimensione",
     "type": "Tipo",
     "date": "Data",
-    "time": "Ora",
-    "yes": "Sì",
-    "no": "No"
+    "time": "Ora"
   },
   "auth": {
     "login": "Accedi",
@@ -91,10 +88,7 @@
     "joinUsPrompt": "Non sei ancora iscritto?",
     "joinUsLink": "Unisciti a noi",
     "quickLogin": "Quick Login",
-    "email": "Email",
-    "currentPassword": "Password Attuale",
-    "newPassword": "Nuova Password",
-    "confirmPassword": "Conferma Password"
+    "email": "Email"
   },
   "documents": {
     "title": "Comunicati",
@@ -258,7 +252,8 @@
     "gmail": "Casella Sindacale",
     "gmailSetup": "Configurazione Gmail",
     "ragAssistant": "Assistente Manuali",
-    "ragAdmin": "Gestione RAG"
+    "ragAdmin": "Gestione RAG",
+    "backups": "Backup"
   },
   "rag": {
     "title": "Assistente Manuali",
@@ -460,13 +455,10 @@
     "selectGrade": "Seleziona qualifica",
     "selectBase": "Seleziona base",
     "selectContract": "Seleziona contratto",
-    "notes": "Note",
     "isUSO": "Collaboratore Sindacale",
     "personalData": "Dati Personali",
     "professionalData": "Dati Professionali",
     "status": "Stato",
-    "active": "Attivo",
-    "inactive": "Inattivo",
     "created": "Creato",
     "updated": "Aggiornato",
     "deleted": "Eliminato",
@@ -943,5 +935,34 @@
     "invalidEmail": "Indirizzo email non valido",
     "invalidPhone": "Numero di telefono non valido",
     "passwordMismatch": "Le password non coincidono"
+  },
+  "backups": {
+    "title": "Gestione Backup",
+    "empty": "Nessun backup trovato",
+    "emptySubtext": "Premi + per creare un backup manuale",
+    "files": "file",
+    "success": "Successo",
+    "create": "Crea Backup",
+    "createTitle": "Crea Backup",
+    "createConfirm": "Avviare un nuovo backup manuale adesso?",
+    "created": "Backup completato",
+    "createError": "Impossibile creare il backup",
+    "deleteTitle": "Elimina Backup",
+    "deleteConfirm": "Sei sicuro di voler eliminare definitivamente",
+    "deleted": "Backup eliminato con successo",
+    "deleteError": "Impossibile eliminare il backup",
+    "restoreTitle": "Ripristina Backup",
+    "restoreConfirm": "Questo SOSTITUIRÀ il database attuale con questo backup. L'app potrebbe non essere disponibile per alcuni secondi.",
+    "restoreDoubleConfirm": "Questa azione NON può essere annullata. Tutti i dati attuali verranno sostituiti. Procedere?",
+    "restoreConfirmButton": "Ripristina",
+    "restored": "Database ripristinato con successo",
+    "restoreError": "Impossibile ripristinare il backup",
+    "restoring": "Ripristino database in corso...",
+    "deleting": "Eliminazione backup in corso...",
+    "sectionAutomatic": "Automatici",
+    "sectionManual": "Manuali",
+    "sectionEmpty": "Nessun backup",
+    "used": "utilizzati",
+    "backupSpaceLabel": "Backup su Drive"
   }
 }

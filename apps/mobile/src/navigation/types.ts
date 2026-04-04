@@ -53,6 +53,8 @@ export type RootStackParamList = {
   RagAsk: undefined;
   RagAdmin: undefined;
   RagDocumentDetail: { documentId: string };
+  // Backups
+  Backups: undefined;
 };
 
 declare global {
