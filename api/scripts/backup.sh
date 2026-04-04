@@ -35,7 +35,7 @@ if command -v pm2 &>/dev/null; then
         const procs = JSON.parse(process.argv[1]);
         const proc = procs.find(p => p.name === process.argv[2]);
         if (!proc) { process.exit(1); }
-        const env = proc.pm2_env || {};
+        const env = proc.pm2_env?.env || proc.pm2_env || {};
         process.argv[3].split(' ').forEach(k => {
           if (k && env[k] !== undefined && env[k] !== '') {
             // Escape single quotes in the value
