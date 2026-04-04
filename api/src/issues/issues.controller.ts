@@ -8,11 +8,19 @@ import {
   Param,
   Req,
   UseGuards,
+  UseInterceptors,
+  UploadedFiles,
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
   Res,
+  BadRequestException,
 } from "@nestjs/common";
+import { FilesInterceptor } from "@nestjs/platform-express";
+import { diskStorage } from "multer";
+import * as path from "path";
+import * as fs from "fs";
+import { v4 as uuidv4 } from "uuid";
 import { Response } from "express";
 import { IssuesService } from "./issues.service";
 import { CreateIssueDto } from "./dto/create-issue.dto";
@@ -21,6 +29,39 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../common/decorators/roles.decorator";
 import { UserRole } from "../common/enums/user-role.enum";
+
+const ALLOWED_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "application/pdf",
+];
+
+const uploadsDir =
+  process.env.UPLOAD_BASE_DIR || path.join(process.cwd(), "uploads");
+
+const multerOptions = {
+  storage: diskStorage({
+    destination: (req: any, _file: any, cb: any) => {
+      const issueDir = path.join(uploadsDir, "issues", req.params.id);
+      fs.mkdirSync(issueDir, { recursive: true });
+      cb(null, issueDir);
+    },
+    filename: (_req: any, file: any, cb: any) => {
+      const sanitized = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+      cb(null, `${Date.now()}_${uuidv4()}_${sanitized}`);
+    },
+  }),
+  fileFilter: (_req: any, file: any, cb: any) => {
+    if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new BadRequestException("File type not allowed"), false);
+    }
+  },
+  limits: { fileSize: 10 * 1024 * 1024 },
+};
 
 @Controller("issues")
 @UseGuards(JwtAuthGuard)
@@ -63,10 +104,8 @@ export class IssuesController {
   }
 
   @Get(":id")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  findOne(@Param("id", ParseUUIDPipe) id: string) {
-    return this.service.findById(id);
+  findOne(@Param("id", ParseUUIDPipe) id: string, @Req() req: any) {
+    return this.service.findById(id, req.user);
   }
 
   @Patch(":id")
@@ -85,6 +124,39 @@ export class IssuesController {
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   reopen(@Param("id", ParseUUIDPipe) id: string, @Req() req: any) {
     return this.service.reopen(id, req.user);
+  }
+
+  @Post(":id/attachments")
+  @UseInterceptors(FilesInterceptor("files", 5, multerOptions))
+  async uploadAttachments(
+    @Param("id", ParseUUIDPipe) id: string,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Req() req: any,
+  ) {
+    if (!files || files.length === 0) {
+      throw new BadRequestException("No files provided");
+    }
+    return this.service.addAttachments(
+      id,
+      req.user.userId,
+      req.user.role,
+      files,
+    );
+  }
+
+  @Delete(":id/attachments/:attachmentId")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteAttachment(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Param("attachmentId", ParseUUIDPipe) attachmentId: string,
+    @Req() req: any,
+  ) {
+    await this.service.deleteAttachment(
+      id,
+      attachmentId,
+      req.user.userId,
+      req.user.role,
+    );
   }
 
   @Delete(":id")

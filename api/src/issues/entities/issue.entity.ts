@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
   Index,
 } from "typeorm";
@@ -13,6 +14,7 @@ import { IssueCategory } from "../../issue-categories/entities/issue-category.en
 import { IssueUrgency } from "../../issue-urgencies/entities/issue-urgency.entity";
 import { Ruolo } from "../../common/enums/ruolo.enum";
 import { IssueStatus } from "../../common/enums/issue-status.enum";
+import { IssueAttachment } from "./issue-attachment.entity";
 
 @Entity("issues")
 @Index(["ruolo"])
@@ -72,6 +74,9 @@ export class Issue {
   @ManyToOne(() => User, { eager: false, nullable: true, onDelete: "SET NULL" })
   @JoinColumn({ name: "solvedById" })
   solvedBy: Pick<User, "id" | "crewcode" | "nome" | "cognome"> | null;
+
+  @OneToMany(() => IssueAttachment, (a) => a.issue, { eager: false })
+  attachments: IssueAttachment[];
 
   @CreateDateColumn({ type: "timestamptz" })
   createdAt: Date;

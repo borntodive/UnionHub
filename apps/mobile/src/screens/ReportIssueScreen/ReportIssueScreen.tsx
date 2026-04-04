@@ -18,8 +18,17 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { DrawerNavigationProp } from "@react-navigation/drawer";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Menu, Send, WifiOff } from "lucide-react-native";
+import {
+  Menu,
+  Send,
+  WifiOff,
+  Paperclip,
+  X,
+  FileText,
+  Image as ImageIcon,
+} from "lucide-react-native";
 import { useTranslation } from "react-i18next";
+import * as DocumentPicker from "expo-document-picker";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { useAuthStore } from "../../store/authStore";
@@ -28,6 +37,13 @@ import { issuesApi } from "../../api/issues";
 import { issueCategoriesApi } from "../../api/issue-categories";
 import { issueUrgenciesApi } from "../../api/issue-urgencies";
 import { IssueCategory, IssueUrgency } from "../../types";
+import { Select } from "../../components/Select";
+
+const formatBytes = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 export const ReportIssueScreen: React.FC = () => {
   const navigation = useNavigation<DrawerNavigationProp<any>>();
@@ -49,6 +65,10 @@ export const ReportIssueScreen: React.FC = () => {
   const [selectedUrgencyId, setSelectedUrgencyId] = useState<string | null>(
     null,
   );
+  const [pickedFiles, setPickedFiles] = useState<
+    DocumentPicker.DocumentPickerAsset[]
+  >([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   const localName = (item: IssueCategory | IssueUrgency) =>
     i18n.language === "it" ? item.nameIt : item.nameEn;
@@ -65,7 +85,6 @@ export const ReportIssueScreen: React.FC = () => {
     enabled: isOnline,
   });
 
-  // When online and data is fresh, update the offline cache
   React.useEffect(() => {
     if (fetchedCategories)
       useOfflineStore.getState().setCategories(fetchedCategories);
@@ -76,18 +95,36 @@ export const ReportIssueScreen: React.FC = () => {
       useOfflineStore.getState().setUrgencies(fetchedUrgencies);
   }, [fetchedUrgencies]);
 
-  // Use fetched data when online, cached data when offline
   const categories: IssueCategory[] = fetchedCategories ?? cachedCategories;
   const urgencies: IssueUrgency[] = fetchedUrgencies ?? cachedUrgencies;
 
-  // No cached data available offline
   const hasNoOfflineData =
     !isOnline && categories.length === 0 && urgencies.length === 0;
 
   const mutation = useMutation({
     mutationFn: issuesApi.createIssue,
-    onSuccess: () => {
+    onSuccess: async (issue) => {
       queryClient.invalidateQueries({ queryKey: ["myIssues"] });
+
+      if (pickedFiles.length > 0) {
+        setIsUploading(true);
+        try {
+          await issuesApi.uploadAttachments(
+            issue.id,
+            pickedFiles.map((f) => ({
+              uri: f.uri,
+              name: f.name ?? "file",
+              mimeType: f.mimeType ?? "application/octet-stream",
+            })),
+          );
+          queryClient.invalidateQueries({ queryKey: ["myIssues"] });
+        } catch {
+          // Non-blocking: issue was saved, attachments failed
+        } finally {
+          setIsUploading(false);
+        }
+      }
+
       Alert.alert(t("common.success"), t("issues.reportSuccess"), [
         {
           text: t("common.ok"),
@@ -123,22 +160,69 @@ export const ReportIssueScreen: React.FC = () => {
     return true;
   };
 
+  const handlePickFiles = async () => {
+    if (pickedFiles.length >= 5) {
+      Alert.alert(t("common.error"), t("issues.maxAttachments"));
+      return;
+    }
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ["image/*", "application/pdf"],
+      multiple: true,
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled) return;
+    const remaining = 5 - pickedFiles.length;
+    const toAdd = result.assets.slice(0, remaining);
+    setPickedFiles((prev) => [...prev, ...toAdd]);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setPickedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = () => {
     if (!validateForm()) return;
 
     if (!isOnline) {
-      addPendingIssue({
-        title: title.trim(),
-        description: description.trim(),
-        categoryId: selectedCategoryId!,
-        urgencyId: selectedUrgencyId!,
-      });
-      Alert.alert(t("common.success"), t("issues.savedOffline"), [
-        {
-          text: t("common.ok"),
-          onPress: () => navigation.navigate("MyIssues"),
-        },
-      ]);
+      if (pickedFiles.length > 0) {
+        Alert.alert(
+          t("common.warning"),
+          t("issues.attachmentsOfflineWarning"),
+          [
+            { text: t("common.cancel"), style: "cancel" },
+            {
+              text: t("common.ok"),
+              onPress: () => {
+                addPendingIssue({
+                  title: title.trim(),
+                  description: description.trim(),
+                  categoryId: selectedCategoryId!,
+                  urgencyId: selectedUrgencyId!,
+                });
+                Alert.alert(t("common.success"), t("issues.savedOffline"), [
+                  {
+                    text: t("common.ok"),
+                    onPress: () => navigation.navigate("MyIssues"),
+                  },
+                ]);
+              },
+            },
+          ],
+        );
+      } else {
+        addPendingIssue({
+          title: title.trim(),
+          description: description.trim(),
+          categoryId: selectedCategoryId!,
+          urgencyId: selectedUrgencyId!,
+        });
+        Alert.alert(t("common.success"), t("issues.savedOffline"), [
+          {
+            text: t("common.ok"),
+            onPress: () => navigation.navigate("MyIssues"),
+          },
+        ]);
+      }
       return;
     }
 
@@ -151,6 +235,7 @@ export const ReportIssueScreen: React.FC = () => {
   };
 
   const insets = useSafeAreaInsets();
+  const isBusy = mutation.isPending || isUploading;
 
   return (
     <View style={styles.wrapper}>
@@ -224,64 +309,72 @@ export const ReportIssueScreen: React.FC = () => {
                 textAlignVertical="top"
               />
 
-              <Text style={styles.label}>{t("issues.category")}</Text>
-              <View style={styles.optionsList}>
-                {categories.map((cat) => (
-                  <TouchableOpacity
-                    key={cat.id}
-                    style={[
-                      styles.optionItem,
-                      selectedCategoryId === cat.id &&
-                        styles.optionItemSelected,
-                    ]}
-                    onPress={() => setSelectedCategoryId(cat.id)}
-                  >
-                    <Text
-                      style={[
-                        styles.optionText,
-                        selectedCategoryId === cat.id &&
-                          styles.optionTextSelected,
-                      ]}
-                    >
-                      {localName(cat)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <Select
+                label={t("issues.category")}
+                value={selectedCategoryId ?? undefined}
+                onValueChange={(v) => setSelectedCategoryId(v ?? null)}
+                options={categories.map((cat) => ({
+                  label: localName(cat),
+                  value: cat.id,
+                }))}
+                placeholder={t("issues.categoryPlaceholder")}
+              />
 
-              <Text style={styles.label}>{t("issues.urgency")}</Text>
-              <View style={styles.optionsList}>
-                {urgencies.map((urg) => (
+              <Select
+                label={t("issues.urgency")}
+                value={selectedUrgencyId ?? undefined}
+                onValueChange={(v) => setSelectedUrgencyId(v ?? null)}
+                options={urgencies.map((urg) => ({
+                  label: `${urg.level} - ${localName(urg)}`,
+                  value: urg.id,
+                }))}
+                placeholder={t("issues.urgencyPlaceholder")}
+              />
+
+              {/* Attachments */}
+              <Text style={styles.label}>
+                {t("issues.attachmentsOptional")}
+              </Text>
+              {pickedFiles.map((file, index) => (
+                <View key={index} style={styles.fileRow}>
+                  {file.mimeType?.startsWith("image/") ? (
+                    <ImageIcon size={18} color={colors.primary} />
+                  ) : (
+                    <FileText size={18} color={colors.primary} />
+                  )}
+                  <Text style={styles.fileName} numberOfLines={1}>
+                    {file.name ?? "file"}
+                  </Text>
+                  <Text style={styles.fileSize}>
+                    {file.size ? formatBytes(file.size) : ""}
+                  </Text>
                   <TouchableOpacity
-                    key={urg.id}
-                    style={[
-                      styles.optionItem,
-                      selectedUrgencyId === urg.id && styles.optionItemSelected,
-                    ]}
-                    onPress={() => setSelectedUrgencyId(urg.id)}
+                    onPress={() => handleRemoveFile(index)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Text
-                      style={[
-                        styles.optionText,
-                        selectedUrgencyId === urg.id &&
-                          styles.optionTextSelected,
-                      ]}
-                    >
-                      {`${urg.level} - ${localName(urg)}`}
-                    </Text>
+                    <X size={16} color={colors.textSecondary} />
                   </TouchableOpacity>
-                ))}
-              </View>
+                </View>
+              ))}
+              {pickedFiles.length < 5 && (
+                <TouchableOpacity
+                  style={styles.addFileButton}
+                  onPress={handlePickFiles}
+                >
+                  <Paperclip size={16} color={colors.primary} />
+                  <Text style={styles.addFileText}>{t("issues.addFile")}</Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={[
                   styles.submitButton,
-                  mutation.isPending && styles.submitButtonDisabled,
+                  isBusy && styles.submitButtonDisabled,
                 ]}
                 onPress={handleSubmit}
-                disabled={mutation.isPending}
+                disabled={isBusy}
               >
-                {mutation.isPending ? (
+                {isBusy ? (
                   <ActivityIndicator color={colors.textInverse} />
                 ) : (
                   <>
@@ -384,22 +477,42 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   textArea: { minHeight: 120, paddingTop: spacing.sm },
-  optionsList: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
-  optionItem: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
+  fileRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.xs,
   },
-  optionItemSelected: {
-    backgroundColor: colors.primary,
+  fileName: {
+    flex: 1,
+    fontSize: typography.sizes.sm,
+    color: colors.text,
+  },
+  fileSize: {
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
+  },
+  addFileButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    borderWidth: 1,
     borderColor: colors.primary,
+    borderStyle: "dashed",
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginTop: spacing.xs,
   },
-  optionText: { fontSize: typography.sizes.sm, color: colors.text },
-  optionTextSelected: {
-    color: colors.textInverse,
+  addFileText: {
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
     fontWeight: typography.weights.medium,
   },
   submitButton: {
