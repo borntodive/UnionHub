@@ -111,6 +111,16 @@ export interface IssueUrgency {
   updatedAt: string;
 }
 
+export interface IssueAttachment {
+  id: string;
+  issueId: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  url: string;
+  createdAt: string;
+}
+
 export interface Issue {
   id: string;
   title: string;
@@ -127,6 +137,7 @@ export interface Issue {
   solvedAt?: string | null;
   solvedById?: string | null;
   solvedBy?: Pick<User, "id" | "crewcode" | "nome" | "cognome"> | null;
+  attachments?: IssueAttachment[];
   createdAt: string;
   updatedAt: string;
 }

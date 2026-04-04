@@ -6,7 +6,11 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import * as puppeteer from "puppeteer-core";
+import * as fs from "fs";
+import * as path from "path";
+import { v4 as uuidv4 } from "uuid";
 import { Issue } from "./entities/issue.entity";
+import { IssueAttachment } from "./entities/issue-attachment.entity";
 import { CreateIssueDto } from "./dto/create-issue.dto";
 import { UpdateIssueDto } from "./dto/update-issue.dto";
 import { IssueStatus } from "../common/enums/issue-status.enum";
@@ -17,12 +21,21 @@ import { NotificationsService } from "../notifications/notifications.service";
 
 @Injectable()
 export class IssuesService {
+  private readonly uploadsDir: string;
+  private readonly appBaseUrl: string;
+
   constructor(
     @InjectRepository(Issue)
     private readonly repo: Repository<Issue>,
+    @InjectRepository(IssueAttachment)
+    private readonly attachmentRepo: Repository<IssueAttachment>,
     private readonly ollamaService: OllamaService,
     private readonly notificationsService: NotificationsService,
-  ) {}
+  ) {
+    this.uploadsDir =
+      process.env.UPLOAD_BASE_DIR || path.join(process.cwd(), "uploads");
+    this.appBaseUrl = process.env.APP_BASE_URL ?? "http://localhost:3000";
+  }
 
   async create(
     dto: CreateIssueDto,
@@ -56,6 +69,7 @@ export class IssuesService {
       .leftJoinAndSelect("issue.category", "category")
       .leftJoinAndSelect("issue.urgency", "urgency")
       .leftJoinAndSelect("issue.solvedBy", "solvedBy")
+      .leftJoinAndSelect("issue.attachments", "attachments")
       .orderBy("issue.createdAt", "DESC");
 
     if (requestingUser.role === UserRole.ADMIN && requestingUser.ruolo) {
@@ -68,18 +82,100 @@ export class IssuesService {
   async findMyIssues(userId: string): Promise<Issue[]> {
     return this.repo.find({
       where: { userId },
-      relations: ["category", "urgency"],
+      relations: ["category", "urgency", "attachments"],
       order: { createdAt: "DESC" },
     });
   }
 
-  async findById(id: string): Promise<Issue> {
+  async findById(
+    id: string,
+    requestingUser?: { userId: string; role: UserRole; ruolo?: Ruolo },
+  ): Promise<Issue> {
     const issue = await this.repo.findOne({
       where: { id },
-      relations: ["user", "category", "urgency", "solvedBy"],
+      relations: ["user", "category", "urgency", "solvedBy", "attachments"],
     });
     if (!issue) throw new NotFoundException("Issue not found");
+
+    if (requestingUser) {
+      const isAdmin =
+        requestingUser.role === UserRole.ADMIN ||
+        requestingUser.role === UserRole.SUPERADMIN;
+      const isOwner = issue.userId === requestingUser.userId;
+      if (!isAdmin && !isOwner) {
+        throw new ForbiddenException("Cannot access this issue");
+      }
+    }
+
     return issue;
+  }
+
+  async addAttachments(
+    issueId: string,
+    requesterId: string,
+    requesterRole: UserRole,
+    files: Express.Multer.File[],
+  ): Promise<IssueAttachment[]> {
+    const issue = await this.repo.findOne({ where: { id: issueId } });
+    if (!issue) throw new NotFoundException("Issue not found");
+
+    const isOwner = issue.userId === requesterId;
+    const isAdmin =
+      requesterRole === UserRole.ADMIN || requesterRole === UserRole.SUPERADMIN;
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException("Cannot add attachments to this issue");
+    }
+
+    const attachments = files.map((file) => {
+      const url = `${this.appBaseUrl}/uploads/issues/${issueId}/${file.filename}`;
+      return this.attachmentRepo.create({
+        issueId,
+        filename: file.filename,
+        originalName: file.originalname,
+        mimeType: file.mimetype,
+        size: file.size,
+        url,
+      });
+    });
+
+    return this.attachmentRepo.save(attachments);
+  }
+
+  async deleteAttachment(
+    issueId: string,
+    attachmentId: string,
+    requesterId: string,
+    requesterRole: UserRole,
+  ): Promise<void> {
+    const attachment = await this.attachmentRepo.findOne({
+      where: { id: attachmentId },
+      relations: ["issue"],
+    });
+    if (!attachment) throw new NotFoundException("Attachment not found");
+    if (attachment.issueId !== issueId) {
+      throw new NotFoundException("Attachment not found");
+    }
+
+    const isOwner = attachment.issue.userId === requesterId;
+    const isAdmin =
+      requesterRole === UserRole.ADMIN || requesterRole === UserRole.SUPERADMIN;
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException("Cannot delete this attachment");
+    }
+
+    const filePath = path.join(
+      this.uploadsDir,
+      "issues",
+      issueId,
+      attachment.filename,
+    );
+    try {
+      fs.unlinkSync(filePath);
+    } catch {
+      // File might already be gone — continue to remove DB record
+    }
+
+    await this.attachmentRepo.remove(attachment);
   }
 
   async update(

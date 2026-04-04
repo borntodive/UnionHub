@@ -1,7 +1,7 @@
 import axios from "axios";
 import apiClient from "./client";
 import { useAuthStore } from "../store/authStore";
-import { Issue, IssueStatus } from "../types";
+import { Issue, IssueAttachment, IssueStatus } from "../types";
 
 const localClient = axios.create({
   baseURL: "http://localhost:3000/api/v1",
@@ -75,5 +75,32 @@ export const issuesApi = {
       responseType: "text",
     });
     return response.data;
+  },
+
+  uploadAttachments: async (
+    issueId: string,
+    files: { uri: string; name: string; mimeType: string }[],
+  ): Promise<IssueAttachment[]> => {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append("files", {
+        uri: file.uri,
+        name: file.name,
+        type: file.mimeType,
+      } as any);
+    });
+    const response = await apiClient.post<IssueAttachment[]>(
+      `/issues/${issueId}/attachments`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    return response.data;
+  },
+
+  deleteAttachment: async (
+    issueId: string,
+    attachmentId: string,
+  ): Promise<void> => {
+    await apiClient.delete(`/issues/${issueId}/attachments/${attachmentId}`);
   },
 };

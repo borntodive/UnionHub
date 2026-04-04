@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Modal,
+  Image,
 } from "react-native";
 import {
   SafeAreaView,
@@ -14,13 +16,120 @@ import {
 } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react-native";
+import {
+  ArrowLeft,
+  FileText,
+  Image as ImageIcon,
+  X,
+} from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { issuesApi } from "../../api/issues";
-import { IssueStatus } from "../../types";
+import { IssueStatus, IssueAttachment } from "../../types";
 import { RootStackParamList } from "../../navigation/types";
+
+const formatBytes = (bytes: number): string => {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const AttachmentsCard: React.FC<{
+  attachments: IssueAttachment[];
+  onOpenPdf: (url: string, name: string) => void;
+}> = ({ attachments, onOpenPdf }) => {
+  const { t } = useTranslation();
+  const [previewUri, setPreviewUri] = useState<string | null>(null);
+
+  if (attachments.length === 0) return null;
+
+  return (
+    <>
+      <View style={attStyles.card}>
+        <Text style={attStyles.sectionHeader}>{t("issues.attachments")}</Text>
+        {attachments.map((att) => {
+          const isImage = att.mimeType.startsWith("image/");
+          return (
+            <TouchableOpacity
+              key={att.id}
+              style={attStyles.row}
+              onPress={() =>
+                isImage
+                  ? setPreviewUri(att.url)
+                  : onOpenPdf(att.url, att.originalName)
+              }
+              activeOpacity={0.7}
+            >
+              {isImage ? (
+                <ImageIcon size={18} color={colors.primary} />
+              ) : (
+                <FileText size={18} color={colors.primary} />
+              )}
+              <Text style={attStyles.name} numberOfLines={1}>
+                {att.originalName}
+              </Text>
+              <Text style={attStyles.size}>{formatBytes(att.size)}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <Modal visible={!!previewUri} transparent animationType="fade">
+        <View style={attStyles.modalOverlay}>
+          <TouchableOpacity
+            style={attStyles.modalClose}
+            onPress={() => setPreviewUri(null)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <X size={24} color="#fff" />
+          </TouchableOpacity>
+          {previewUri && (
+            <Image
+              source={{ uri: previewUri }}
+              style={attStyles.previewImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
+    </>
+  );
+};
+
+const attStyles = StyleSheet.create({
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  sectionHeader: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  name: { flex: 1, fontSize: typography.sizes.sm, color: colors.text },
+  size: { fontSize: typography.sizes.xs, color: colors.textSecondary },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.92)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalClose: { position: "absolute", top: 56, right: 20 },
+  previewImage: { width: "100%", height: "80%" },
+});
 
 type RouteType = RouteProp<RootStackParamList, "MyIssueDetail">;
 
@@ -38,7 +147,7 @@ const getStatusColor = (status: IssueStatus) => {
 };
 
 export const MyIssueDetailScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const route = useRoute<RouteType>();
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -189,6 +298,13 @@ export const MyIssueDetailScreen: React.FC = () => {
                 </View>
               ) : null}
             </View>
+
+            <AttachmentsCard
+              attachments={issue.attachments ?? []}
+              onOpenPdf={(url, name) =>
+                navigation.navigate("PdfViewer", { url, title: name })
+              }
+            />
 
             {issue.status === IssueStatus.SOLVED && (
               <TouchableOpacity
