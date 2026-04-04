@@ -94,6 +94,7 @@ function convertToCalculatorFormat(contract: ClaContract): any {
     woff: Number(contract.woff),
     allowance: Number(contract.allowance),
     diaria: Number(contract.diaria),
+    noFlyDiaria: Number(contract.noFlyDiaria),
     rsa: Number(contract.rsa),
     itud: Number(contract.itud),
     training: contract.trainingConfig,

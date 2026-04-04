@@ -18,6 +18,7 @@ const CONTRACTS_2025 = [
     woff: 900,
     allowance: Math.round((8000 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
+    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
     itud: 120,
     trainingConfig: null,
@@ -39,6 +40,7 @@ const CONTRACTS_2025 = [
     woff: 450,
     allowance: Math.round((7500 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
+    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
     itud: 120,
     trainingConfig: null,
@@ -60,6 +62,7 @@ const CONTRACTS_2025 = [
     woff: 450,
     allowance: Math.round((7500 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
+    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
     itud: 120,
     trainingConfig: null,
@@ -81,6 +84,7 @@ const CONTRACTS_2025 = [
     woff: 138,
     allowance: Math.round((7500 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
+    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
     itud: 120,
     trainingConfig: null,
@@ -103,6 +107,7 @@ const CONTRACTS_2025 = [
     woff: 900,
     allowance: Math.round((8000 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
+    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
     itud: 120,
     trainingConfig: {
@@ -130,6 +135,7 @@ const CONTRACTS_2025 = [
     woff: 900,
     allowance: Math.round((8000 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
+    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
     itud: 120,
     trainingConfig: {
@@ -157,6 +163,7 @@ const CONTRACTS_2025 = [
     woff: 900,
     allowance: Math.round((8000 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
+    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
     itud: 120,
     trainingConfig: {
@@ -188,6 +195,7 @@ const CONTRACTS_2025 = [
     woff: 900,
     allowance: Math.round((8000 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
+    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
     itud: 120,
     trainingConfig: {
@@ -211,6 +219,7 @@ const CONTRACTS_2025 = [
     woff: 450,
     allowance: Math.round((7500 / 12) * 100) / 100,
     diaria: Math.round((8831 / 190) * 10000) / 10000,
+    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
     rsa: 51.92,
     itud: 120,
     trainingConfig: {

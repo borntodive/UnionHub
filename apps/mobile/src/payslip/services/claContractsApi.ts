@@ -28,6 +28,7 @@ export interface ClaContract {
   woff: number;
   allowance: number;
   diaria: number;
+  noFlyDiaria: number;
   rsa: number;
   itud: number;
   seniorityBrackets?: SeniorityBracket[] | null;
@@ -126,6 +127,7 @@ export interface CreateClaContractData {
   woff?: number;
   allowance: number;
   diaria: number;
+  noFlyDiaria: number;
   rsa?: number;
   itud?: number;
   seniorityBrackets?: SeniorityBracket[];

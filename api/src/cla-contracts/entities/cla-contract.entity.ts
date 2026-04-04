@@ -58,6 +58,10 @@ export class ClaContract {
   @Column({ type: "decimal", precision: 10, scale: 4, default: 0 })
   diaria: number;
 
+  // No-fly per diem rate
+  @Column({ type: "decimal", precision: 10, scale: 4, default: 0 })
+  noFlyDiaria: number;
+
   // RSA (monthly)
   @Column({ type: "decimal", precision: 10, scale: 2, default: 51.92 })
   rsa: number;
