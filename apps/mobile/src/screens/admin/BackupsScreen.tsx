@@ -34,7 +34,8 @@ import { backupsApi, BackupFolder, DriveSpace } from "../../api/backups";
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024 * 1024)
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
@@ -42,7 +43,20 @@ function formatFolderName(name: string): string {
   const match = name.match(/^(\d{4})-(\d{2})-(\d{2})_(\d{2})(\d{2})$/);
   if (!match) return name;
   const [, year, month, day, hh, mm] = match;
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   return `${day} ${months[parseInt(month, 10) - 1]} ${year}, ${hh}:${mm}`;
 }
 
@@ -74,10 +88,7 @@ const DriveSpaceBar: React.FC<DriveSpaceBarProps> = ({ driveSpace }) => {
         <View style={spaceStyles.track}>
           <View style={[spaceStyles.barUsed, { width: `${usedPct * 100}%` }]} />
           <View
-            style={[
-              spaceStyles.barBackup,
-              { width: `${backupPct * 100}%` },
-            ]}
+            style={[spaceStyles.barBackup, { width: `${backupPct * 100}%` }]}
           />
         </View>
       )}
@@ -104,10 +115,16 @@ export const BackupsScreen: React.FC = () => {
     mutationFn: backupsApi.create,
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["backups"] });
-      Alert.alert(t("backups.success"), `${t("backups.created")}: ${res.folder}`);
+      Alert.alert(
+        t("backups.success"),
+        `${t("backups.created")}: ${res.folder}`,
+      );
     },
     onError: (error: any) => {
-      Alert.alert(t("common.error"), error.response?.data?.message || t("backups.createError"));
+      Alert.alert(
+        t("common.error"),
+        error.response?.data?.message || t("backups.createError"),
+      );
     },
   });
 
@@ -118,7 +135,10 @@ export const BackupsScreen: React.FC = () => {
       Alert.alert(t("backups.success"), t("backups.deleted"));
     },
     onError: (error: any) => {
-      Alert.alert(t("common.error"), error.response?.data?.message || t("backups.deleteError"));
+      Alert.alert(
+        t("common.error"),
+        error.response?.data?.message || t("backups.deleteError"),
+      );
     },
   });
 
@@ -128,7 +148,10 @@ export const BackupsScreen: React.FC = () => {
       Alert.alert(t("backups.success"), t("backups.restored"));
     },
     onError: (error: any) => {
-      Alert.alert(t("common.error"), error.response?.data?.message || t("backups.restoreError"));
+      Alert.alert(
+        t("common.error"),
+        error.response?.data?.message || t("backups.restoreError"),
+      );
     },
   });
 
@@ -151,7 +174,11 @@ export const BackupsScreen: React.FC = () => {
       `${t("backups.deleteConfirm")} "${formatFolderName(item.name)}"?`,
       [
         { text: t("common.cancel"), style: "cancel" },
-        { text: t("common.delete"), style: "destructive", onPress: () => deleteMutation.mutate(item.id) },
+        {
+          text: t("common.delete"),
+          style: "destructive",
+          onPress: () => deleteMutation.mutate(item.id),
+        },
       ],
     );
   };
@@ -163,21 +190,27 @@ export const BackupsScreen: React.FC = () => {
         text: t("backups.restoreConfirmButton"),
         style: "destructive",
         onPress: () => {
-          Alert.alert(t("backups.restoreTitle"), t("backups.restoreDoubleConfirm"), [
-            { text: t("common.cancel"), style: "cancel" },
-            {
-              text: t("backups.restoreConfirmButton"),
-              style: "destructive",
-              onPress: () => restoreMutation.mutate(item.id),
-            },
-          ]);
+          Alert.alert(
+            t("backups.restoreTitle"),
+            t("backups.restoreDoubleConfirm"),
+            [
+              { text: t("common.cancel"), style: "cancel" },
+              {
+                text: t("backups.restoreConfirmButton"),
+                style: "destructive",
+                onPress: () => restoreMutation.mutate(item.id),
+              },
+            ],
+          );
         },
       },
     ]);
   };
 
   const isAnyMutating =
-    createMutation.isPending || deleteMutation.isPending || restoreMutation.isPending;
+    createMutation.isPending ||
+    deleteMutation.isPending ||
+    restoreMutation.isPending;
 
   const sections = [
     {
@@ -203,7 +236,8 @@ export const BackupsScreen: React.FC = () => {
           <View style={styles.itemMeta}>
             <FileArchive size={12} color={colors.textTertiary} />
             <Text style={styles.itemSubtext}>
-              {formatBytes(item.totalSize)} · {item.files.length} {t("backups.files")}
+              {formatBytes(item.totalSize)} · {item.files.length}{" "}
+              {t("backups.files")}
             </Text>
           </View>
         </View>
@@ -229,7 +263,11 @@ export const BackupsScreen: React.FC = () => {
     </Card>
   );
 
-  const renderSectionHeader = ({ section }: { section: (typeof sections)[0] }) => (
+  const renderSectionHeader = ({
+    section,
+  }: {
+    section: (typeof sections)[0];
+  }) => (
     <View style={styles.sectionHeader}>
       {section.icon}
       <Text style={styles.sectionTitle}>{section.title}</Text>
@@ -242,7 +280,10 @@ export const BackupsScreen: React.FC = () => {
   return (
     <View style={styles.wrapper}>
       <View style={[styles.statusBarHack, { height: insets.top }]} />
-      <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
+      <SafeAreaView
+        style={styles.container}
+        edges={["bottom", "left", "right"]}
+      >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
@@ -272,7 +313,9 @@ export const BackupsScreen: React.FC = () => {
           <View style={styles.loadingBanner}>
             <ActivityIndicator size="small" color={colors.primary} />
             <Text style={styles.loadingBannerText}>
-              {restoreMutation.isPending ? t("backups.restoring") : t("backups.deleting")}
+              {restoreMutation.isPending
+                ? t("backups.restoring")
+                : t("backups.deleting")}
             </Text>
           </View>
         )}
@@ -294,7 +337,10 @@ export const BackupsScreen: React.FC = () => {
             }
             contentContainerStyle={styles.listContent}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+              />
             }
             stickySectionHeadersEnabled={false}
           />

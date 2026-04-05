@@ -558,6 +558,10 @@ export class UsersService {
     });
   }
 
+  async updateLanguage(userId: string, language: string): Promise<void> {
+    await this.usersRepository.update(userId, { language });
+  }
+
   async countByRole(ruolo: Ruolo): Promise<number> {
     return this.usersRepository.count({
       where: { ruolo, isActive: true },

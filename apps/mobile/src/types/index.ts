@@ -78,6 +78,7 @@ export interface AuthResponse {
 export interface LoginCredentials {
   crewcode: string;
   password: string;
+  language?: "en" | "it";
 }
 
 export interface ChangePasswordData {

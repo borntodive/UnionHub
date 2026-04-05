@@ -1,6 +1,7 @@
 import Constants from "expo-constants";
 import { createApiClient } from "@unionhub/shared/api";
 import { useAuthStore } from "../store/authStore";
+import { usePayslipStore } from "../payslip/store/usePayslipStore";
 
 export const API_BASE_URL: string =
   (Constants.expoConfig?.extra?.apiUrl as string | undefined) ||
@@ -15,7 +16,11 @@ const apiClient = createApiClient({
   onTokensRefreshed: (accessToken, refreshToken) => {
     useAuthStore.getState().setAuth({ accessToken, refreshToken });
   },
-  onLogout: () => useAuthStore.getState().logout(),
+  onLogout: () => {
+    // Reset payslip settings before logout to prevent next user inheriting them
+    usePayslipStore.getState().resetSettings();
+    useAuthStore.getState().logout();
+  },
 });
 
 export default apiClient;

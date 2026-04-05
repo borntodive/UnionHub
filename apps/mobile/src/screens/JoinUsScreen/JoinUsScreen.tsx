@@ -22,6 +22,7 @@ import { useTranslation } from "react-i18next";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { Input } from "../../components/Input";
+import { PhoneInput } from "../../components/PhoneInput";
 import { Button } from "../../components/Button";
 import { Select } from "../../components/Select";
 import { RootStackParamList } from "../../navigation/types";
@@ -336,6 +337,10 @@ export const JoinUsScreen: React.FC = () => {
         Alert.alert(getT("alertMissingFields"), getT("alertMissingWork"));
         return;
       }
+      if (!telefono.trim().startsWith("+")) {
+        Alert.alert(getT("alertMissingFields"), getT("alertPhonePrefix"));
+        return;
+      }
     }
     if (step === 3) {
       if (!luogo) {
@@ -544,48 +549,6 @@ export const JoinUsScreen: React.FC = () => {
             {/* ── STEP 1: Dati personali ── */}
             {step === 1 && (
               <View>
-                {/* Language selector */}
-                <View style={styles.langRow}>
-                  <TouchableOpacity
-                    style={[
-                      styles.langBtn,
-                      language === "it" && styles.langBtnActive,
-                    ]}
-                    onPress={() => {
-                      setLanguage("it");
-                      i18n.changeLanguage("it");
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.langBtnText,
-                        language === "it" && styles.langBtnTextActive,
-                      ]}
-                    >
-                      🇮🇹 Italiano
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.langBtn,
-                      language === "en" && styles.langBtnActive,
-                    ]}
-                    onPress={() => {
-                      setLanguage("en");
-                      i18n.changeLanguage("en");
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.langBtnText,
-                        language === "en" && styles.langBtnTextActive,
-                      ]}
-                    >
-                      🇬🇧 English
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
                 <Text style={styles.stepTitle}>{getT("step1Title")}</Text>
 
                 <Input
@@ -741,11 +704,10 @@ export const JoinUsScreen: React.FC = () => {
                   autoCapitalize="none"
                   containerStyle={styles.input}
                 />
-                <Input
+                <PhoneInput
                   label={getT("phone")}
                   value={telefono}
                   onChangeText={setTelefono}
-                  keyboardType="phone-pad"
                   containerStyle={styles.input}
                 />
 
@@ -1287,33 +1249,6 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     color: colors.primary,
     fontWeight: typography.weights.medium,
-  },
-  langRow: {
-    flexDirection: "row",
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-  },
-  langBtn: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: "center",
-  },
-  langBtnActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary + "12",
-  },
-  langBtnText: {
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
-    color: colors.textSecondary,
-  },
-  langBtnTextActive: {
-    color: colors.primary,
-    fontWeight: typography.weights.bold,
   },
   previewButtonViewed: {
     borderColor: colors.success,

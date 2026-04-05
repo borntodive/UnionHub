@@ -152,7 +152,6 @@ export const SettingsScreen: React.FC = () => {
           triAndLtc: settings.triAndLtc,
           btc: settings.btc,
           voluntaryPensionContribution: settings.voluntaryPensionContribution,
-          fondAer: settings.fondAer,
           addComunali: settings.addComunali,
           accontoAddComunali: settings.accontoAddComunali,
           addRegionali: settings.addRegionali,
@@ -221,7 +220,6 @@ export const SettingsScreen: React.FC = () => {
               addRegionali: 0,
               legacy: false,
               legacyCustom: { ffp: 0, sbh: 0, al: 0 },
-              fondAer: true,
             });
             setLegacyFfpText("");
             setLegacySbhText("");
@@ -502,22 +500,6 @@ export const SettingsScreen: React.FC = () => {
                 <Text style={styles.hint}>
                   {t("settings.payslipPensionHint")}
                 </Text>
-
-                <View style={{ marginTop: spacing.md }}>
-                  <CheckboxRow
-                    label={t("settings.payslipFondAerAdditional")}
-                    value={overrideSettings.fondAer}
-                    onToggle={() => set({ fondAer: !overrideSettings.fondAer })}
-                  />
-                  <Text
-                    style={[
-                      styles.hint,
-                      { marginTop: -spacing.sm, marginLeft: 32 },
-                    ]}
-                  >
-                    {t("settings.payslipFondAerAdditionalHint")}
-                  </Text>
-                </View>
               </View>
 
               {/* Part-Time */}

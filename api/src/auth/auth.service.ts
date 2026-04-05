@@ -53,6 +53,12 @@ export class AuthService {
       throw new UnauthorizedException("Account is deactivated");
     }
 
+    // Update user's language preference if provided
+    if (loginDto.language) {
+      await this.usersService.updateLanguage(user.id, loginDto.language);
+      user.language = loginDto.language;
+    }
+
     const tokens = await this.generateTokens(user, ipAddress, userAgent);
 
     return {

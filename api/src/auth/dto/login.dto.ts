@@ -1,4 +1,11 @@
-import { IsString, MinLength, MaxLength, IsNotEmpty } from "class-validator";
+import {
+  IsString,
+  MinLength,
+  MaxLength,
+  IsNotEmpty,
+  IsOptional,
+  IsIn,
+} from "class-validator";
 
 export class LoginDto {
   @IsString()
@@ -12,4 +19,9 @@ export class LoginDto {
   @MinLength(8)
   @MaxLength(100)
   password: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(["en", "it"])
+  language?: "en" | "it";
 }

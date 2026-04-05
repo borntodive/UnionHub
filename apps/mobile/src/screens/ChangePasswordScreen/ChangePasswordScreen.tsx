@@ -17,9 +17,10 @@ import { Lock, Shield, AlertTriangle } from "lucide-react-native";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { Button } from "../../components/Button";
-import { Input } from "../../components/Input";
+import { PasswordInput } from "../../components/PasswordInput";
 import { authApi } from "../../api/auth";
 import { useAuthStore } from "../../store/authStore";
+import { usePayslipStore } from "../../payslip/store/usePayslipStore";
 
 export const ChangePasswordScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -46,6 +47,8 @@ export const ChangePasswordScreen: React.FC = () => {
               text: t("common.ok"),
               onPress: async () => {
                 if (wasMandatoryChange) {
+                  // Reset payslip settings before logout
+                  usePayslipStore.getState().resetSettings();
                   await logout();
                 }
               },
@@ -143,32 +146,29 @@ export const ChangePasswordScreen: React.FC = () => {
 
             {/* Form */}
             <View style={styles.formContainer}>
-              <Input
+              <PasswordInput
                 label={t("auth.currentPassword")}
                 placeholder={t("auth.enterPassword")}
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
-                secureTextEntry
                 leftIcon={<Lock size={20} color={colors.textTertiary} />}
                 containerStyle={styles.inputContainer}
               />
 
-              <Input
+              <PasswordInput
                 label={t("auth.newPassword")}
                 placeholder={t("auth.enterPassword")}
                 value={newPassword}
                 onChangeText={setNewPassword}
-                secureTextEntry
                 leftIcon={<Lock size={20} color={colors.textTertiary} />}
                 containerStyle={styles.inputContainer}
               />
 
-              <Input
+              <PasswordInput
                 label={t("auth.confirmPassword")}
                 placeholder={t("auth.enterPassword")}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
-                secureTextEntry
                 leftIcon={<Lock size={20} color={colors.textTertiary} />}
                 containerStyle={styles.inputContainer}
                 error={
