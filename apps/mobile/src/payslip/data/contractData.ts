@@ -3,7 +3,6 @@
 
 export const RYR_CONFIG = {
   maxContributoAziendaleTfr: 2,
-  fondAerRate: 0.01, // 1% — FondAer mandatory employee contribution (aviation CCNL)
   cuReduction: 0.9,
   unpayedLeaveDays: {
     pil: 17,

@@ -25,7 +25,6 @@ import {
   ArrowLeft,
   Save,
   Mail,
-  Phone,
   MapPin,
   Briefcase,
   Award,
@@ -35,7 +34,6 @@ import {
   FileText,
   MessageCircle,
   Calendar,
-  AlertTriangle,
 } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
@@ -43,6 +41,7 @@ import { colors, spacing, typography, borderRadius } from "../../theme";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { Select } from "../../components/Select";
+import { PhoneInput } from "../../components/PhoneInput";
 import { usersApi } from "../../api/users";
 import { useAuthStore } from "../../store/authStore";
 import { RootStackParamList } from "../../navigation/types";
@@ -243,12 +242,6 @@ export const MemberEditScreen: React.FC = () => {
     },
   });
 
-  const normalizePhone = (s?: string) => {
-    if (!s) return s;
-    const t = s.trim().replace(/\s+/g, "");
-    return t.startsWith("00") ? "+" + t.slice(2) : t;
-  };
-
   const handleSave = () => {
     if (
       !formData.nome.trim() ||
@@ -426,27 +419,13 @@ export const MemberEditScreen: React.FC = () => {
                 required
               />
 
-              <InputField
+              <PhoneInput
                 label="Phone"
                 value={formData.telefono}
                 onChangeText={(text) =>
-                  setFormData({
-                    ...formData,
-                    telefono: normalizePhone(text) ?? text,
-                  })
+                  setFormData({ ...formData, telefono: text })
                 }
-                icon={<Phone size={20} color={colors.primary} />}
-                keyboardType="phone-pad"
               />
-              {!!formData.telefono &&
-                !formData.telefono.trim().startsWith("+") && (
-                  <View style={styles.phoneWarning}>
-                    <AlertTriangle size={14} color={colors.warning} />
-                    <Text style={styles.phoneWarningText}>
-                      Add country prefix (e.g. +39)
-                    </Text>
-                  </View>
-                )}
             </Card>
 
             {/* Professional Info Section */}
@@ -1220,15 +1199,5 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.medium,
     color: colors.primary,
-  },
-  phoneWarning: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-    marginTop: spacing.xs,
-  },
-  phoneWarningText: {
-    fontSize: typography.sizes.sm,
-    color: colors.warning,
   },
 });

@@ -38,11 +38,13 @@ import {
   BookOpen,
   HardDrive,
 } from "lucide-react-native";
+import { Image } from "react-native";
 import { usersApi } from "../api/users";
 
 import { colors, spacing, typography, borderRadius } from "../theme";
 import { useAuthStore } from "../store/authStore";
 import { useOfflineStore } from "../store/offlineStore";
+import { usePayslipStore } from "../payslip/store/usePayslipStore";
 import { authApi } from "../api/auth";
 import * as Updates from "expo-updates";
 import { HomeScreen } from "../screens/HomeScreen/HomeScreen";
@@ -102,6 +104,8 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
     } catch (e) {
       // Ignore logout errors
     } finally {
+      // Reset payslip settings before logout to prevent next user inheriting them
+      usePayslipStore.getState().resetSettings();
       await logout();
     }
   };
@@ -132,10 +136,11 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
         {/* Header with User Info */}
         <View style={styles.drawerHeader}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {user?.nome?.[0]}
-              {user?.cognome?.[0]}
-            </Text>
+            <Image
+              source={require("../../assets/icon.png")}
+              style={styles.avatarImage}
+              contentFit="cover"
+            />
           </View>
           <Text style={styles.userName}>
             {user?.nome} {user?.cognome}
@@ -769,11 +774,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: spacing.md,
+    overflow: "hidden",
   },
-  avatarText: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.primary,
+  avatarImage: {
+    width: 60,
+    height: 60,
   },
   userName: {
     fontSize: typography.sizes.md,

@@ -30,6 +30,7 @@ import {
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
+import { PhoneInput } from "../../components/PhoneInput";
 import { Select } from "../../components/Select";
 import { usersApi } from "../../api/users";
 import { basesApi } from "../../api/bases";
@@ -163,6 +164,10 @@ export const CompleteProfileScreen: React.FC = () => {
     }
     if (missing.telefono && !telefono) {
       Alert.alert(t("common.error"), t("members.phoneRequired"));
+      return;
+    }
+    if (missing.telefono && telefono && !telefono.trim().startsWith("+")) {
+      Alert.alert(t("common.error"), t("errors.phonePrefixWarning"));
       return;
     }
     if (missing.base && !baseId) {
@@ -300,28 +305,17 @@ export const CompleteProfileScreen: React.FC = () => {
                 )}
 
                 {missing.telefono && (
-                  <>
-                    <Text
-                      style={[
-                        styles.fieldLabel,
-                        missing.email && styles.fieldLabelSpaced,
-                      ]}
-                    >
-                      {t("members.phone")}
-                      <Text style={styles.required}> *</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={telefono}
-                      onChangeText={setTelefono}
-                      keyboardType="phone-pad"
-                      placeholder="+39 333 1234567"
-                      placeholderTextColor={colors.textTertiary}
-                      onFocus={() =>
-                        scrollRef.current?.scrollToEnd({ animated: true })
-                      }
-                    />
-                  </>
+                  <PhoneInput
+                    label={`${t("members.phone")} *`}
+                    value={telefono}
+                    onChangeText={setTelefono}
+                    containerStyle={
+                      missing.email ? styles.fieldLabelSpaced : undefined
+                    }
+                    onFocus={() =>
+                      scrollRef.current?.scrollToEnd({ animated: true })
+                    }
+                  />
                 )}
               </Card>
             )}

@@ -96,9 +96,9 @@ export interface IRPEF {
   };
   fondoPensione: {
     totale: number;
-    volontaria: number;
-    aziendale: number;
-    fondAer: number; // FondAer mandatory aviation-sector contribution (1% of RUT)
+    volontaria: number; // First 2% of voluntary contribution
+    volontariaAggiuntiva: number; // Additional voluntary contribution (over 2%)
+    aziendale: number; // Company contribution (2% if voluntary >= 2%)
   };
   addizionaliComunali: number;
   accontoAddizionaliComunali: number;
@@ -214,8 +214,7 @@ export interface PayslipSettings {
   triAndLtc: boolean; // TRI acting as LTC
   btc: boolean; // BTC-based contract
   cu: boolean; // New captain
-  voluntaryPensionContribution: number;
-  fondAer: boolean; // FondAer mandatory contribution (CCNL Aviazione)
+  voluntaryPensionContribution: number; // Voluntary pension contribution %
 }
 
 // ============================================
@@ -224,7 +223,6 @@ export interface PayslipSettings {
 
 export interface CompanyConfig {
   maxContributoAziendaleTfr: number;
-  fondAerRate: number; // FondAer mandatory employee pension rate (aviation CCNL)
   cuReduction: number;
   unpayedLeaveDays: {
     pil: number;

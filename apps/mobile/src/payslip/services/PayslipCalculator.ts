@@ -158,7 +158,7 @@ export class PayslipCalculator {
       areaINPS.contribuzioneTotale +
       areaIRPEF.lordo +
       areaIRPEF.fondoPensione.volontaria +
-      areaIRPEF.fondoPensione.fondAer +
+      areaIRPEF.fondoPensione.volontariaAggiuntiva +
       areaIRPEF.addizionaliRegionali +
       areaIRPEF.addizionaliComunali +
       areaIRPEF.accontoAddizionaliComunali +
@@ -615,7 +615,7 @@ export class PayslipCalculator {
     inps: INPS,
     additionalPayments: AdditionalItem[],
     unionFee: number,
-    fondoPensione: { volontaria: number; fondAer: number },
+    fondoPensione: { volontaria: number; volontariaAggiuntiva: number },
   ): IRPEF {
     const inpsContribution = inps.contribuzioneTotale;
 
@@ -628,7 +628,8 @@ export class PayslipCalculator {
     // Pension fund (art. 8 d.lgs. 252/2005) is deducted by the employer in payslip.
     // Union fee (art. 10 TUIR) is an "onere deducibile" claimed by the employee in the
     // annual tax return — the withholding agent does NOT deduct it here.
-    const pensionEmployee = fondoPensione.volontaria + fondoPensione.fondAer;
+    const pensionEmployee =
+      fondoPensione.volontaria + fondoPensione.volontariaAggiuntiva;
     const imponibile =
       taxArea - inpsContribution + slrPayments - pensionEmployee;
 
@@ -697,7 +698,12 @@ export class PayslipCalculator {
       aliquotaMedia,
       trattamentoIntegrativo,
       taglioCuneoFiscale: taglioCuneo,
-      fondoPensione: { totale: 0, volontaria: 0, aziendale: 0, fondAer: 0 }, // Will be set later
+      fondoPensione: {
+        totale: 0,
+        volontaria: 0,
+        volontariaAggiuntiva: 0,
+        aziendale: 0,
+      }, // Will be set later
       addizionaliComunali: this.settings.addComunali,
       accontoAddizionaliComunali: this.settings.accontoAddComunali,
       addizionaliRegionali: this.settings.addRegionali,
@@ -735,30 +741,29 @@ export class PayslipCalculator {
   private calculateFondoPensione(retribuzioneUtileTFR: number): {
     totale: number;
     volontaria: number;
+    volontariaAggiuntiva: number;
     aziendale: number;
-    fondAer: number;
   } {
-    const volontaria =
-      (retribuzioneUtileTFR * this.settings.voluntaryPensionContribution) / 100;
+    const totalVoluntaryPerc = this.settings.voluntaryPensionContribution;
+
+    // Split voluntary: first 2% is base, anything over 2% is additional
+    const baseVoluntaryPerc = Math.min(totalVoluntaryPerc, 2);
+    const additionalVoluntaryPerc = totalVoluntaryPerc - baseVoluntaryPerc;
+
+    const volontaria = (retribuzioneUtileTFR * baseVoluntaryPerc) / 100;
+    const volontariaAggiuntiva =
+      (retribuzioneUtileTFR * additionalVoluntaryPerc) / 100;
 
     // Company contribution: 2% if voluntary >= 2%, otherwise 0
     const maxAziendale = RYR_CONFIG.maxContributoAziendaleTfr; // 2%
-    const percAziendale =
-      this.settings.voluntaryPensionContribution >= maxAziendale
-        ? maxAziendale
-        : 0;
+    const percAziendale = totalVoluntaryPerc >= maxAziendale ? maxAziendale : 0;
     const aziendale = (retribuzioneUtileTFR * percAziendale) / 100;
 
-    // FondAer: mandatory aviation-sector employee contribution (CCNL Aviazione)
-    const fondAer = this.settings.fondAer
-      ? retribuzioneUtileTFR * RYR_CONFIG.fondAerRate
-      : 0;
-
     return {
-      totale: volontaria + aziendale + fondAer,
+      totale: volontaria + volontariaAggiuntiva + aziendale,
       volontaria,
+      volontariaAggiuntiva,
       aziendale,
-      fondAer,
     };
   }
 

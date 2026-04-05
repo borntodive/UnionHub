@@ -937,21 +937,13 @@ export const ResultScreen: React.FC = () => {
             <Text style={styles.value}>{formatCurrency(areaIRPEF.tfr)}</Text>
           </View>
           {(areaIRPEF.fondoPensione.volontaria > 0 ||
-            areaIRPEF.fondoPensione.aziendale > 0 ||
-            areaIRPEF.fondoPensione.fondAer > 0) && (
+            areaIRPEF.fondoPensione.volontariaAggiuntiva > 0 ||
+            areaIRPEF.fondoPensione.aziendale > 0) && (
             <>
               <View style={styles.divider} />
               <Text style={styles.subsectionTitle}>
                 {t("payslip.pensionFund")}
               </Text>
-              {areaIRPEF.fondoPensione.fondAer > 0 && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>{t("payslip.fondAer")}</Text>
-                  <Text style={styles.value}>
-                    {formatCurrency(areaIRPEF.fondoPensione.fondAer)}
-                  </Text>
-                </View>
-              )}
               {areaIRPEF.fondoPensione.volontaria > 0 && (
                 <View style={styles.row}>
                   <Text style={styles.label}>
@@ -959,6 +951,18 @@ export const ResultScreen: React.FC = () => {
                   </Text>
                   <Text style={styles.value}>
                     {formatCurrency(areaIRPEF.fondoPensione.volontaria)}
+                  </Text>
+                </View>
+              )}
+              {areaIRPEF.fondoPensione.volontariaAggiuntiva > 0 && (
+                <View style={styles.row}>
+                  <Text style={styles.label}>
+                    {t("payslip.voluntaryContributionAdditional")}
+                  </Text>
+                  <Text style={styles.value}>
+                    {formatCurrency(
+                      areaIRPEF.fondoPensione.volontariaAggiuntiva,
+                    )}
                   </Text>
                 </View>
               )}
