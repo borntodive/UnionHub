@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useMutation } from "@tanstack/react-query";
@@ -16,18 +17,19 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/types";
 import { useTranslation } from "react-i18next";
-import { setLanguage } from "../../i18n";
+import { setLanguage, getLanguage } from "../../i18n";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
+import { PasswordInput } from "../../components/PasswordInput";
 import { authApi } from "../../api/auth";
 import { useAuthStore } from "../../store/authStore";
 import { useBiometricAuth } from "../../hooks/useBiometricAuth";
 import { syncPayslipSettings } from "../../payslip/hooks/usePayslipSettingsSync";
 
 const QUICK_USERS = [
-  { label: "SuperAdmin", crewcode: "SUPERADMIN", password: "password" },
+  { label: "SuperAdmin", crewcode: "COVEAN", password: "password" },
   { label: "Admin Piloti", crewcode: "ADMINPILOT", password: "password" },
   { label: "Admin CC", crewcode: "ADMINCC", password: "password" },
   { label: "SO0001", crewcode: "SO0001", password: "password" },
@@ -54,6 +56,7 @@ export const LoginScreen: React.FC = () => {
 
   const [crewcode, setCrewcode] = useState("");
   const [password, setPassword] = useState("");
+  const [currentLang, setCurrentLang] = useState(getLanguage());
 
   const {
     isAvailable,
@@ -169,8 +172,12 @@ export const LoginScreen: React.FC = () => {
       return;
     }
 
-    loginMutation.mutate({ crewcode: crewcode.trim(), password });
-  }, [crewcode, password, loginMutation, t]);
+    loginMutation.mutate({
+      crewcode: crewcode.trim(),
+      password,
+      language: currentLang,
+    });
+  }, [crewcode, password, currentLang, loginMutation, t]);
 
   const handleBiometricLogin = async () => {
     if (!isAvailable) {
@@ -191,6 +198,7 @@ export const LoginScreen: React.FC = () => {
         const response = await authApi.login({
           crewcode: biometricCredentials.crewcode,
           password: biometricCredentials.password,
+          language: currentLang,
         });
         setAuth(response);
         // Set language from user preference
@@ -204,122 +212,172 @@ export const LoginScreen: React.FC = () => {
     }
   };
 
+  const handleLanguageChange = async (lang: "it" | "en") => {
+    await setLanguage(lang);
+    setCurrentLang(lang);
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardView}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <View style={styles.innerContainer}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardView}
         >
-          {/* Logo Section */}
-          <View style={styles.logoContainer}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoText}>UNION</Text>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Logo Section */}
+            <View style={styles.logoContainer}>
+              <View style={styles.logoCircle}>
+                <Image
+                  source={require("../../../assets/icon.png")}
+                  style={styles.logoImage}
+                />
+              </View>
+              <Text style={styles.appName}>{t("common.appName")}</Text>
+              <Text style={styles.appTagline}>{t("auth.tagline")}</Text>
             </View>
-            <Text style={styles.appName}>{t("common.appName")}</Text>
-            <Text style={styles.appTagline}>{t("auth.tagline")}</Text>
-          </View>
 
-          {/* Form Section */}
-          <View style={styles.formContainer}>
-            <Text style={styles.formTitle}>{t("auth.login")}</Text>
+            {/* Form Section */}
+            <View style={styles.formContainer}>
+              <Text style={styles.formTitle}>{t("auth.login")}</Text>
 
-            <Input
-              label={t("auth.crewcode")}
-              placeholder={t("auth.enterCrewcode")}
-              value={crewcode}
-              onChangeText={setCrewcode}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              leftIcon={<User size={20} color={colors.textTertiary} />}
-              containerStyle={styles.inputContainer}
-            />
+              <Input
+                label={t("auth.crewcode")}
+                placeholder={t("auth.enterCrewcode")}
+                value={crewcode}
+                onChangeText={setCrewcode}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                leftIcon={<User size={20} color={colors.textTertiary} />}
+                containerStyle={styles.inputContainer}
+              />
 
-            <Input
-              label={t("auth.password")}
-              placeholder={t("auth.enterPassword")}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              leftIcon={<Lock size={20} color={colors.textTertiary} />}
-              containerStyle={styles.inputContainer}
-            />
+              <PasswordInput
+                label={t("auth.password")}
+                placeholder={t("auth.enterPassword")}
+                value={password}
+                onChangeText={setPassword}
+                leftIcon={<Lock size={20} color={colors.textTertiary} />}
+                containerStyle={styles.inputContainer}
+              />
 
-            <Button
-              title={t("auth.login")}
-              onPress={handleLogin}
-              loading={loginMutation.isPending}
-              disabled={!crewcode.trim() || !password.trim()}
-              size="lg"
-              style={styles.loginButton}
-            />
+              <Button
+                title={t("auth.login")}
+                onPress={handleLogin}
+                loading={loginMutation.isPending}
+                disabled={!crewcode.trim() || !password.trim()}
+                size="lg"
+                style={styles.loginButton}
+              />
 
-            {/* Biometric Login Button */}
-            {isAvailable && biometricCredentials && (
+              {/* Biometric Login Button */}
+              {isAvailable && biometricCredentials && (
+                <TouchableOpacity
+                  style={styles.biometricButton}
+                  onPress={handleBiometricLogin}
+                  activeOpacity={0.8}
+                >
+                  <Fingerprint size={24} color={colors.primary} />
+                  <Text style={styles.biometricText}>
+                    {t("auth.biometricLogin", { method: getBiometricLabel() })}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              <Text style={styles.hint}>{t("auth.loginHint")}</Text>
+
               <TouchableOpacity
-                style={styles.biometricButton}
-                onPress={handleBiometricLogin}
-                activeOpacity={0.8}
+                onPress={() => navigation.navigate("JoinUs")}
+                style={styles.joinUsLink}
               >
-                <Fingerprint size={24} color={colors.primary} />
-                <Text style={styles.biometricText}>
-                  {t("auth.biometricLogin", { method: getBiometricLabel() })}
+                <Text style={styles.joinUsText}>
+                  {t("auth.joinUsPrompt")}{" "}
+                  <Text style={styles.joinUsTextBold}>
+                    {t("auth.joinUsLink")}
+                  </Text>
                 </Text>
               </TouchableOpacity>
-            )}
 
-            <Text style={styles.hint}>{t("auth.loginHint")}</Text>
-
-            <TouchableOpacity
-              onPress={() => navigation.navigate("JoinUs")}
-              style={styles.joinUsLink}
-            >
-              <Text style={styles.joinUsText}>
-                {t("auth.joinUsPrompt")}{" "}
-                <Text style={styles.joinUsTextBold}>
-                  {t("auth.joinUsLink")}
-                </Text>
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>© 2025 UnionHub</Text>
-          </View>
-
-          {/* Quick Login */}
-          <View style={styles.quickLoginContainer}>
-            <Text style={styles.quickLoginTitle}>{t("auth.quickLogin")}</Text>
-            <View style={styles.quickLoginGrid}>
-              {QUICK_USERS.map((u) => (
+              {/* Language Selector */}
+              <View style={styles.langRow}>
                 <TouchableOpacity
-                  key={u.crewcode}
-                  style={styles.quickLoginButton}
-                  onPress={() =>
-                    loginMutation.mutate({
-                      crewcode: u.crewcode,
-                      password: u.password,
-                    })
-                  }
-                  disabled={loginMutation.isPending}
+                  style={[
+                    styles.langBtn,
+                    currentLang === "it" && styles.langBtnActive,
+                  ]}
+                  onPress={() => handleLanguageChange("it")}
                 >
-                  <Text style={styles.quickLoginButtonText}>{u.label}</Text>
+                  <Text
+                    style={[
+                      styles.langBtnText,
+                      currentLang === "it" && styles.langBtnTextActive,
+                    ]}
+                  >
+                    🇮🇹 Italiano
+                  </Text>
                 </TouchableOpacity>
-              ))}
+                <TouchableOpacity
+                  style={[
+                    styles.langBtn,
+                    currentLang === "en" && styles.langBtnActive,
+                  ]}
+                  onPress={() => handleLanguageChange("en")}
+                >
+                  <Text
+                    style={[
+                      styles.langBtnText,
+                      currentLang === "en" && styles.langBtnTextActive,
+                    ]}
+                  >
+                    🇬🇧 English
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+
+            {/* Footer */}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>© 2025 UnionHub</Text>
+            </View>
+
+            {/* Quick Login */}
+            <View style={styles.quickLoginContainer}>
+              <Text style={styles.quickLoginTitle}>{t("auth.quickLogin")}</Text>
+              <View style={styles.quickLoginGrid}>
+                {QUICK_USERS.map((u) => (
+                  <TouchableOpacity
+                    key={u.crewcode}
+                    style={styles.quickLoginButton}
+                    onPress={() =>
+                      loginMutation.mutate({
+                        crewcode: u.crewcode,
+                        password: u.password,
+                        language: currentLang,
+                      })
+                    }
+                    disabled={loginMutation.isPending}
+                  >
+                    <Text style={styles.quickLoginButtonText}>{u.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: colors.primary,
+  },
+  innerContainer: {
     flex: 1,
     backgroundColor: colors.background,
   },
@@ -345,10 +403,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacing.md,
   },
-  logoText: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: colors.textInverse,
+  logoImage: {
+    width: 60,
+    height: 60,
   },
   appName: {
     fontSize: typography.sizes.xl,
@@ -422,6 +479,32 @@ const styles = StyleSheet.create({
   joinUsTextBold: {
     fontWeight: typography.weights.bold,
     color: colors.primary,
+  },
+  langRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+  },
+  langBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  langBtnActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + "20",
+  },
+  langBtnText: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+  },
+  langBtnTextActive: {
+    color: colors.primary,
+    fontWeight: typography.weights.medium,
   },
   footer: {
     marginTop: spacing.lg,

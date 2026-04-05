@@ -29,6 +29,7 @@ import { IssueCategory } from "../../issue-categories/entities/issue-category.en
 import { IssueUrgency } from "../../issue-urgencies/entities/issue-urgency.entity";
 import { UserRole } from "../../common/enums/user-role.enum";
 import { Ruolo } from "../../common/enums/ruolo.enum";
+import { WhatsappStatus } from "../../common/enums/whatsapp-status.enum";
 import * as bcrypt from "bcrypt";
 import { seedClaContracts2025 } from "./cla-contracts-2025.seed";
 import { seedClaContracts2026 } from "./cla-contracts-2026.seed";
@@ -176,13 +177,19 @@ async function runSeedProd() {
     // ── SuperAdmin ────────────────────────────────────────────────────────
     console.log("[PROD SEED] Seeding SuperAdmin...");
     const usersRepository = dataSource.getRepository(User);
-    const adminCrewcode = process.env.DEFAULT_ADMIN_CREWCODE || "SUPERADMIN";
+    const adminCrewcode = process.env.DEFAULT_ADMIN_CREWCODE || "COVEAN";
 
     const existingAdmin = await usersRepository.findOne({
       where: { crewcode: adminCrewcode },
     });
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash(adminPassword, 10);
+      const ciaBase = await basesRepository.findOne({
+        where: { codice: "CIA" },
+      });
+      const foGrade = await gradesRepository.findOne({
+        where: { codice: "FO" },
+      });
       await usersRepository.save(
         usersRepository.create({
           crewcode: adminCrewcode,
@@ -190,10 +197,16 @@ async function runSeedProd() {
           role: UserRole.SUPERADMIN,
           mustChangePassword: true, // MUST change on first login
           isActive: true,
-          nome: "Super",
-          cognome: "Admin",
-          email: "admin@unionhub.app",
-          ruolo: null,
+          nome: "Andrea",
+          cognome: "Covelli",
+          email: "andrea.covelli@gmail.com",
+          telefono: "+393334765324",
+          ruolo: Ruolo.PILOT,
+          base: ciaBase ?? null,
+          grade: foGrade ?? null,
+          dataIscrizione: new Date("2020-04-12"),
+          note: "",
+          whatsappStatus: WhatsappStatus.YES,
         }),
       );
       console.log(`  Created SuperAdmin: ${adminCrewcode}`);

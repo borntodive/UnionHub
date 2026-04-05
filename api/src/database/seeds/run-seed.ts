@@ -12,6 +12,7 @@ import { IssueCategory } from "../../issue-categories/entities/issue-category.en
 import { IssueUrgency } from "../../issue-urgencies/entities/issue-urgency.entity";
 import { UserRole } from "../../common/enums/user-role.enum";
 import { Ruolo } from "../../common/enums/ruolo.enum";
+import { WhatsappStatus } from "../../common/enums/whatsapp-status.enum";
 import * as bcrypt from "bcrypt";
 import { seedClaContracts2025 } from "./cla-contracts-2025.seed";
 import { seedClaContracts2026 } from "./cla-contracts-2026.seed";
@@ -349,29 +350,37 @@ async function runSeed() {
     // ── SuperAdmin ────────────────────────────────────────────────────────
     console.log("Seeding SuperAdmin...");
     const existingAdmin = await usersRepository.findOne({
-      where: { crewcode: "SUPERADMIN" },
+      where: { crewcode: "COVEAN" },
     });
     if (!existingAdmin) {
+      const ciaBase = allBases.find((b) => b.codice === "CIA") ?? null;
+      const foGrade = gradeByCode.get("FO") ?? null;
       const admin = usersRepository.create({
-        crewcode: "SUPERADMIN",
+        crewcode: "COVEAN",
         password: hashedPassword,
         role: UserRole.SUPERADMIN,
         mustChangePassword: false,
         isActive: true,
-        nome: "Super",
-        cognome: "Admin",
-        email: "admin@unionhub.app",
-        ruolo: null,
+        nome: "Andrea",
+        cognome: "Covelli",
+        email: "andrea.covelli@gmail.com",
+        telefono: "+393334765324",
+        ruolo: Ruolo.PILOT,
+        base: ciaBase,
+        grade: foGrade,
+        dataIscrizione: new Date("2020-04-12"),
+        note: "",
+        whatsappStatus: WhatsappStatus.YES,
       });
       await usersRepository.save(admin);
-      console.log("  Created SuperAdmin: SUPERADMIN / password");
+      console.log("  Created SuperAdmin: COVEAN / password");
     } else {
       console.log("  SuperAdmin already exists");
     }
 
     // ── CLA Contracts ─────────────────────────────────────────────────────
     const superAdmin = await usersRepository.findOne({
-      where: { crewcode: "SUPERADMIN" },
+      where: { crewcode: "COVEAN" },
     });
     if (superAdmin) {
       await seedClaContracts2025(dataSource, superAdmin.id);
@@ -575,7 +584,7 @@ async function runSeed() {
 
     console.log("\nSeed completed successfully!");
     console.log("\n--- LOGIN CREDENTIALS ---");
-    console.log("SuperAdmin:       SUPERADMIN / password");
+    console.log("SuperAdmin:       COVEAN / password");
     console.log("Admin Piloti:     ADMINPILOT / password");
     console.log("Admin Cabin Crew: ADMINCC    / password");
     console.log(
