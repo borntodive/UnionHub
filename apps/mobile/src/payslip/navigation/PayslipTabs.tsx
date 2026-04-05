@@ -1,6 +1,7 @@
-import React from "react";
-import { View, StyleSheet, StatusBar } from "react-native";
+import React, { useEffect } from "react";
+import { View, StyleSheet, StatusBar, Alert } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { useNavigation } from "@react-navigation/native";
 import {
   Calculator,
   FileText,
@@ -36,9 +37,28 @@ export const PayslipTabs: React.FC = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const overrideActive = usePayslipStore((state) => state.overrideActive);
+  const settingsVisited = usePayslipStore((state) => state.settingsVisited);
+  const navigation = useNavigation();
   const isAdmin =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
+
+  useEffect(() => {
+    if (!settingsVisited) {
+      Alert.alert(
+        t("payslip.settingsAlertTitle"),
+        t("payslip.settingsAlertMessage"),
+        [
+          {
+            text: t("payslip.settingsAlertGoToSettings"),
+            onPress: () => navigation.navigate("Settings" as never),
+          },
+          { text: t("common.cancel"), style: "cancel" },
+        ],
+      );
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />

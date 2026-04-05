@@ -259,13 +259,6 @@ const PayslipForm: React.FC<PayslipFormProps> = ({
           <Text style={styles.inputSuffix}>%</Text>
         </View>
         <Text style={styles.hint}>{t("settings.payslipPensionHint")}</Text>
-        <View style={{ marginTop: spacing.lg }} />
-        <CheckboxRow
-          label={t("settings.payslipFondAer")}
-          value={s.fondAer}
-          onToggle={() => set({ fondAer: !s.fondAer })}
-        />
-        <Text style={styles.hint}>{t("settings.payslipFondAerHint")}</Text>
       </View>
 
       {/* Part-Time */}
@@ -1003,7 +996,10 @@ export const SettingsScreen: React.FC = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === "payslip" && styles.tabActive]}
-          onPress={() => setActiveTab("payslip")}
+          onPress={() => {
+            setActiveTab("payslip");
+            usePayslipStore.getState().markSettingsVisited();
+          }}
         >
           <Text
             style={[

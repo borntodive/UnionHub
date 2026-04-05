@@ -28,12 +28,17 @@ interface PayslipState {
   overrideItud: boolean;
   /** Local settings have been modified but not yet pushed to the server */
   settingsPendingSync: boolean;
+  /** True once the user has visited the Payslip settings tab */
+  settingsVisited: boolean;
 
   setInput: (input: Partial<PayslipInput>) => void;
   setSettings: (settings: Partial<PayslipSettings>) => void;
   /** Apply settings fetched from server (does NOT mark as pending) */
   applyServerSettings: (settings: PayslipSettings) => void;
+  /** Reset settings to defaults (used on logout) */
+  resetSettings: () => void;
   markSettingsSynced: () => void;
+  markSettingsVisited: () => void;
   setOverrideActive: (active: boolean) => void;
   setOverrideSettings: (settings: Partial<PayslipSettings>) => void;
   setOverrideRsa: (v: boolean) => void;
@@ -128,7 +133,6 @@ const defaultSettings: PayslipSettings = {
   btc: false,
   cu: false,
   voluntaryPensionContribution: 0,
-  fondAer: true,
 };
 
 export const usePayslipStore = create<PayslipState>()(
@@ -145,6 +149,7 @@ export const usePayslipStore = create<PayslipState>()(
       overrideRsa: false,
       overrideItud: false,
       settingsPendingSync: false,
+      settingsVisited: false,
 
       setInput: (input) => {
         set((state) => ({ input: { ...state.input, ...input } }));
@@ -169,8 +174,24 @@ export const usePayslipStore = create<PayslipState>()(
         set({ settings, settingsPendingSync: false });
       },
 
+      resetSettings: () => {
+        set({
+          settings: { ...defaultSettings },
+          overrideSettings: { ...defaultSettings },
+          overrideActive: false,
+          overrideRsa: false,
+          overrideItud: false,
+          settingsPendingSync: false,
+          settingsVisited: false,
+        });
+      },
+
       markSettingsSynced: () => {
         set({ settingsPendingSync: false });
+      },
+
+      markSettingsVisited: () => {
+        set({ settingsVisited: true });
       },
 
       setOverrideActive: (active) => set({ overrideActive: active }),
@@ -372,6 +393,7 @@ export const usePayslipStore = create<PayslipState>()(
         settings: state.settings,
         history: state.history,
         settingsPendingSync: state.settingsPendingSync,
+        settingsVisited: state.settingsVisited,
       }),
     },
   ),

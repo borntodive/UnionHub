@@ -79,7 +79,9 @@ export const AppNavigator: React.FC = () => {
   const mustChangePassword = user?.mustChangePassword ?? false;
   const isCaptainGrade = CAPTAIN_GRADES.includes(user?.grade?.codice || "");
   // Profile completion required for users with a professional role (not superadmin)
+  const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
   const needsProfileCompletion =
+    !isSuperAdmin &&
     !!user?.ruolo &&
     (!user?.nome ||
       !user?.cognome ||
