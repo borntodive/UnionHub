@@ -64,7 +64,7 @@ const multerOptions = {
 };
 
 @Controller("issues")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class IssuesController {
   constructor(private readonly service: IssuesService) {}
 
@@ -79,21 +79,18 @@ export class IssuesController {
   }
 
   @Get()
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   findAll(@Req() req: any) {
     return this.service.findAll(req.user);
   }
 
   @Post("summary")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async getSummary(@Req() req: any) {
     return this.service.generateSummary(req.user);
   }
 
   @Get("export")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async exportCsv(@Req() req: any, @Res() res: Response) {
     const csv = await this.service.exportCsv(req.user);
@@ -109,7 +106,6 @@ export class IssuesController {
   }
 
   @Patch(":id")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   update(
     @Param("id", ParseUUIDPipe) id: string,
@@ -120,7 +116,6 @@ export class IssuesController {
   }
 
   @Patch(":id/reopen")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   reopen(@Param("id", ParseUUIDPipe) id: string, @Req() req: any) {
     return this.service.reopen(id, req.user);
@@ -160,7 +155,6 @@ export class IssuesController {
   }
 
   @Delete(":id")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.SUPERADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param("id", ParseUUIDPipe) id: string) {

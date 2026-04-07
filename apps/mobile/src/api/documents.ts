@@ -1,20 +1,4 @@
-import axios from "axios";
 import apiClient from "./client";
-import { useAuthStore } from "../store/authStore";
-
-const localClient = axios.create({
-  baseURL: "http://localhost:3000/api/v1",
-  timeout: 120000,
-});
-localClient.interceptors.request.use((config) => {
-  const { accessToken } = useAuthStore.getState();
-  if (accessToken && config.headers) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
-  }
-  return config;
-});
-
-const ollamaClient = __DEV__ ? localClient : apiClient;
 
 export type DocumentStatus =
   | "draft"
@@ -95,7 +79,7 @@ export const documentsApi = {
     id: string,
     data: ReviewDocumentRequest,
   ): Promise<Document> => {
-    const response = await ollamaClient.post(`/documents/${id}/review`, data);
+    const response = await apiClient.post(`/documents/${id}/review`, data);
     return response.data;
   },
 
@@ -103,7 +87,7 @@ export const documentsApi = {
     id: string,
     data: ApproveDocumentRequest,
   ): Promise<Document> => {
-    const response = await ollamaClient.post(`/documents/${id}/approve`, data);
+    const response = await apiClient.post(`/documents/${id}/approve`, data);
     return response.data;
   },
 
@@ -123,7 +107,7 @@ export const documentsApi = {
   },
 
   regenerateTranslations: async (id: string): Promise<Document> => {
-    const response = await ollamaClient.post(
+    const response = await apiClient.post(
       `/documents/${id}/regenerate-translations`,
     );
     return response.data;

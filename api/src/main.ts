@@ -38,8 +38,8 @@ async function bootstrap() {
   );
 
   // Increase JSON payload limit
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  app.use(express.json({ limit: "10mb" }));
+  app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
   // Global exception filter — prevents raw stack traces from leaking to clients
   app.useGlobalFilters(new AllExceptionsFilter());
@@ -113,12 +113,28 @@ async function bootstrap() {
   // Global prefix
   app.setGlobalPrefix("api/v1");
 
-  // Serve static files from persistent uploads directory.
-  // UPLOAD_BASE_DIR must point to a path outside the deploy folder on the server
-  // (e.g. /var/www/unionhub-uploads) so files survive Cleavr deployments.
+  // Serve uploaded files only to authenticated users (JWT required)
   const uploadsDir =
     process.env.UPLOAD_BASE_DIR || path.join(process.cwd(), "uploads");
-  app.use("/uploads", express.static(uploadsDir));
+  const jwtSecret = configService.get<string>("JWT_SECRET");
+
+  app.use(
+    "/uploads",
+    (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const authHeader = req.headers.authorization;
+      if (!authHeader?.startsWith("Bearer ")) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      try {
+        const jwt = require("jsonwebtoken");
+        jwt.verify(authHeader.substring(7), jwtSecret);
+        next();
+      } catch {
+        return res.status(401).json({ message: "Invalid or expired token" });
+      }
+    },
+    express.static(uploadsDir),
+  );
 
   const port = configService.get<number>("PORT", 3000);
 

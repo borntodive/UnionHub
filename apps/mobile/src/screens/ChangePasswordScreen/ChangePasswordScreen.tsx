@@ -58,10 +58,20 @@ export const ChangePasswordScreen: React.FC = () => {
       }, 100);
     },
     onError: (error: any) => {
-      const message =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        t("errors.generic");
+      let message: string;
+      if (__DEV__) {
+        message =
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          t("errors.generic");
+      } else {
+        const status = error.response?.data?.statusCode;
+        if (status === 400) {
+          message = t("errors.generic");
+        } else {
+          message = t("errors.generic");
+        }
+      }
       Alert.alert(
         t("common.error"),
         Array.isArray(message) ? message.join("\n") : message,

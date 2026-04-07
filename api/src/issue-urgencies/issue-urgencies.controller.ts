@@ -20,7 +20,7 @@ import { Roles } from "../common/decorators/roles.decorator";
 import { UserRole } from "../common/enums/user-role.enum";
 
 @Controller("issue-urgencies")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class IssueUrgenciesController {
   constructor(private readonly service: IssueUrgenciesService) {}
 

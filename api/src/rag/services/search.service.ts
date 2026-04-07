@@ -76,7 +76,9 @@ export class SearchService {
       sql += ` WHERE c."documentId" = ANY($${params.length}::uuid[])`;
     }
 
-    sql += ` ORDER BY e.embedding <=> $1::vector LIMIT ${topK}`;
+    const safeTopK = Math.min(Math.max(Math.floor(topK), 1), 100);
+    params.push(safeTopK);
+    sql += ` ORDER BY e.embedding <=> $1::vector LIMIT $${params.length}`;
 
     const rows: ScoredChunk[] = await this.dataSource.query(sql, params);
     return rows;

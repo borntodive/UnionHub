@@ -91,4 +91,13 @@ export class Document {
     default: "pilot",
   })
   ruolo: DocumentRuolo;
-}
+
+  serializeAuthor(): { id: string; nome: string; cognome: string; crewcode: string } | null {
+    if (!this.author) return null;
+    return {
+      id: this.author.id,
+      nome: this.author.nome,
+      cognome: this.author.cognome,
+      crewcode: this.author.crewcode,
+    };
+  } }

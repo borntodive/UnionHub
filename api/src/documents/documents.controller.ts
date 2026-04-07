@@ -178,15 +178,17 @@ export class DocumentsController {
       );
       const buffer = Buffer.from(base64, "base64");
 
+      const sanitizedTitle = (document.title || "document")
+        .replace(/[\r\n"]/g, "_");
+
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="${document.title}.pdf"`,
+        `attachment; filename="${sanitizedTitle}.pdf"`,
       );
       res.send(buffer);
     } else {
-      // It's a URL, redirect to it
-      res.redirect(document.finalPdfUrl);
+      throw new NotFoundException("Invalid PDF URL");
     }
   }
 }
