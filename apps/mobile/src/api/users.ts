@@ -46,6 +46,12 @@ export interface UpdateUserData {
   note?: string;
   itud?: boolean;
   rsa?: boolean;
+  rls?: boolean;
+  isUSO?: boolean;
+  whatsappStatus?: "yes" | "no" | "declined" | null;
+  isActive?: boolean;
+  role?: UserRole;
+  ruolo?: Ruolo;
   dataIscrizione?: string;
   dateOfEntry?: string;
   dateOfCaptaincy?: string;

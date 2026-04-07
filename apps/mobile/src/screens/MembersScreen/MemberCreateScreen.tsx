@@ -14,6 +14,7 @@ import {
   Linking,
   Modal,
   Image,
+  InteractionManager,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
@@ -158,6 +159,8 @@ export const MemberCreateScreen: React.FC = () => {
   const [activePicker, setActivePicker] = useState<
     "dataIscrizione" | "dateOfEntry" | "dateOfCaptaincy" | null
   >(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const savedUserRef = useRef<any>(null);
 
   const rolesSelected = !isSuperAdmin || (!!formData.role && !!formData.ruolo);
 
@@ -321,10 +324,21 @@ export const MemberCreateScreen: React.FC = () => {
     },
     onSuccess: (newUser) => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      navigation.navigate("MemberOnboarding", {
-        memberId: newUser.id,
-        memberName: `${newUser.nome} ${newUser.cognome}`,
-        hasRegistrationForm: !!selectedPdf?.uri,
+      // Close any open DateTimePicker and remove Modal from React tree
+      setActivePicker(null);
+      savedUserRef.current = newUser;
+      setIsSaved(true);
+      // Wait for React to paint (removing Modal), then wait for native
+      // animations to finish before navigating away — prevents SIGSEGV
+      requestAnimationFrame(() => {
+        InteractionManager.runAfterInteractions(() => {
+          const user = savedUserRef.current;
+          navigation.navigate("MemberOnboarding", {
+            memberId: user.id,
+            memberName: `${user.nome} ${user.cognome}`,
+            hasRegistrationForm: !!selectedPdf?.uri,
+          });
+        });
       });
     },
     onError: (error: any) => {
@@ -704,9 +718,9 @@ export const MemberCreateScreen: React.FC = () => {
                   </Card>
                 )}
 
-                {/* Date Picker Action Sheet Modal */}
+                {/* Date Picker Action Sheet Modal — hidden after save to prevent SIGSEGV */}
                 <Modal
-                  visible={activePicker !== null}
+                  visible={!isSaved && activePicker !== null}
                   transparent={true}
                   animationType="slide"
                   onRequestClose={() => setActivePicker(null)}
