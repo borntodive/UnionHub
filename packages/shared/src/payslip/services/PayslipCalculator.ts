@@ -684,6 +684,7 @@ export class PayslipCalculator {
       payslip.basic13th.total +
       payslip.noFlyDiaria.total +
       payslip.rsa.total +
+      (this.settings.btc ? payslip.simPay.total : 0) +
       payslip.additionalPayments.reduce((sum, ap) => sum + ap.total, 0) -
       payslip.ul.basicQuota.total -
       payslip.ul.ffpQuota.total;
