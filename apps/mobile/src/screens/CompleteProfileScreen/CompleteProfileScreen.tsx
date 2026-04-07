@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  InteractionManager,
 } from "react-native";
 import {
   SafeAreaView,
@@ -102,6 +103,12 @@ export const CompleteProfileScreen: React.FC = () => {
   const [activePicker, setActivePicker] = useState<
     "dateOfEntry" | "dateOfCaptaincy" | null
   >(null);
+  // When true, all Modal-containing components are removed from the tree so no
+  // native modal is animating when the navigation stack swaps. This prevents the
+  // TurboModule void-invocation crash that happens when a Modal (Select or
+  // DateTimePicker) is mid-dismiss while the screen is being unmounted.
+  const [isSaved, setIsSaved] = useState(false);
+  const savedUserRef = useRef<any>(null);
 
   // Load reference data only if needed
   const { data: bases, isLoading: loadingBases } = useQuery({
@@ -139,7 +146,21 @@ export const CompleteProfileScreen: React.FC = () => {
       return usersApi.updateMe(payload);
     },
     onSuccess: (updatedUser) => {
-      setUser(updatedUser);
+      // Step 1: close the date picker modal immediately.
+      setActivePicker(null);
+      // Step 2: stash the user and set isSaved=true. This removes ALL
+      // Modal-containing components (Select × 3, DateTimePicker) from the
+      // React tree in the next render, so no native modal is animating.
+      savedUserRef.current = updatedUser;
+      setIsSaved(true);
+      // Step 3: wait for React to paint the spinner-only render (removing all
+      // Modals from the tree), then wait for all native animations/interactions
+      // to finish before triggering the navigation stack swap.
+      requestAnimationFrame(() => {
+        InteractionManager.runAfterInteractions(() => {
+          setUser(savedUserRef.current);
+        });
+      });
     },
     onError: (error: any) => {
       Alert.alert(
@@ -207,6 +228,17 @@ export const CompleteProfileScreen: React.FC = () => {
   const gradeOptions = (grades || [])
     .filter((g) => !user?.ruolo || g.ruolo === user.ruolo)
     .map((g) => ({ label: g.nome, value: g.id }));
+
+  // Once saved, render only a plain spinner — no Modals in the tree.
+  // This guarantees that when the 400ms timer fires and setUser() triggers the
+  // navigation stack swap, no native modal is mid-animation.
+  if (isSaved) {
+    return (
+      <View style={[styles.wrapper, styles.savedContainer]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.wrapper}>
@@ -558,6 +590,10 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  savedContainer: {
+    justifyContent: "center",
+    alignItems: "center",
   },
   statusBarHack: {
     backgroundColor: colors.primary,
