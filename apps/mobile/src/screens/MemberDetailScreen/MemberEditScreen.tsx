@@ -13,6 +13,7 @@ import {
   Switch,
   Modal,
   Platform,
+  InteractionManager,
 } from "react-native";
 import {
   SafeAreaView,
@@ -122,6 +123,7 @@ export const MemberEditScreen: React.FC = () => {
   const [activePicker, setActivePicker] = useState<
     "dataIscrizione" | "dateOfEntry" | "dateOfCaptaincy" | null
   >(null);
+  const [isSaved, setIsSaved] = useState(false);
 
   // Helper to parse DD/MM/YYYY string to Date
   const parseDate = (dateStr: string | undefined): Date | null => {
@@ -232,7 +234,16 @@ export const MemberEditScreen: React.FC = () => {
       }
 
       Alert.alert("Success", "Member updated successfully");
-      navigation.goBack();
+      // Close any open DateTimePicker and remove Modal from React tree
+      setActivePicker(null);
+      setIsSaved(true);
+      // Wait for React to paint (removing Modal), then wait for native
+      // animations to finish before navigating away — prevents SIGSEGV
+      requestAnimationFrame(() => {
+        InteractionManager.runAfterInteractions(() => {
+          navigation.goBack();
+        });
+      });
     },
     onError: (error: any) => {
       Alert.alert(
@@ -586,9 +597,9 @@ export const MemberEditScreen: React.FC = () => {
               </Card>
             )}
 
-            {/* Date Picker Action Sheet Modal */}
+            {/* Date Picker Action Sheet Modal — hidden after save to prevent SIGSEGV */}
             <Modal
-              visible={activePicker !== null}
+              visible={!isSaved && activePicker !== null}
               transparent={true}
               animationType="slide"
               onRequestClose={() => setActivePicker(null)}
