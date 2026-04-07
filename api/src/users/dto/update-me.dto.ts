@@ -39,7 +39,21 @@ export class UpdateMeDto {
 
   @IsOptional()
   @IsUUID()
+  contrattoId?: string;
+
+  @IsOptional()
+  @IsUUID()
   gradeId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  dateOfEntry?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  dateOfCaptaincy?: string;
 
   @IsOptional()
   @IsEnum(WhatsappStatus)
