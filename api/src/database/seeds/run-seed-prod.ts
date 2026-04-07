@@ -177,7 +177,7 @@ async function runSeedProd() {
     // ── SuperAdmin ────────────────────────────────────────────────────────
     console.log("[PROD SEED] Seeding SuperAdmin...");
     const usersRepository = dataSource.getRepository(User);
-    const adminCrewcode = process.env.DEFAULT_ADMIN_CREWCODE || "COVEAN";
+    const adminCrewcode = "COVEAN";
 
     const existingAdmin = await usersRepository.findOne({
       where: { crewcode: adminCrewcode },

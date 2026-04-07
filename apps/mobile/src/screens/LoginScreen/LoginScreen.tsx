@@ -339,28 +339,30 @@ export const LoginScreen: React.FC = () => {
               <Text style={styles.footerText}>© 2025 UnionHub</Text>
             </View>
 
-            {/* Quick Login */}
-            <View style={styles.quickLoginContainer}>
-              <Text style={styles.quickLoginTitle}>{t("auth.quickLogin")}</Text>
-              <View style={styles.quickLoginGrid}>
-                {QUICK_USERS.map((u) => (
-                  <TouchableOpacity
-                    key={u.crewcode}
-                    style={styles.quickLoginButton}
-                    onPress={() =>
-                      loginMutation.mutate({
-                        crewcode: u.crewcode,
-                        password: u.password,
-                        language: currentLang,
-                      })
-                    }
-                    disabled={loginMutation.isPending}
-                  >
-                    <Text style={styles.quickLoginButtonText}>{u.label}</Text>
-                  </TouchableOpacity>
-                ))}
+            {/* Quick Login — development only */}
+            {__DEV__ && (
+              <View style={styles.quickLoginContainer}>
+                <Text style={styles.quickLoginTitle}>{t("auth.quickLogin")}</Text>
+                <View style={styles.quickLoginGrid}>
+                  {QUICK_USERS.map((u) => (
+                    <TouchableOpacity
+                      key={u.crewcode}
+                      style={styles.quickLoginButton}
+                      onPress={() =>
+                        loginMutation.mutate({
+                          crewcode: u.crewcode,
+                          password: u.password,
+                          language: currentLang,
+                        })
+                      }
+                      disabled={loginMutation.isPending}
+                    >
+                      <Text style={styles.quickLoginButtonText}>{u.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-            </View>
+            )}
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
