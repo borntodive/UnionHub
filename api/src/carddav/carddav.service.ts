@@ -39,11 +39,19 @@ export class CarddavService {
 
   // ─── Profile token (JWT-authenticated, from mobile app) ──────────────────
 
+  private static readonly MAX_PROFILE_TOKENS = 1000;
+
   generateProfileToken(crewcode: string): string {
-    // Purge expired tokens
     const now = Date.now();
     for (const [token, data] of this.profileTokens) {
       if (data.expiresAt < now) this.profileTokens.delete(token);
+    }
+
+    if (this.profileTokens.size >= CarddavService.MAX_PROFILE_TOKENS) {
+      const oldest = [...this.profileTokens.entries()].sort(
+        (a, b) => a[1].expiresAt - b[1].expiresAt,
+      )[0];
+      if (oldest) this.profileTokens.delete(oldest[0]);
     }
 
     const token = randomBytes(32).toString("hex");

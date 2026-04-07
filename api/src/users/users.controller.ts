@@ -39,6 +39,7 @@ import { Roles } from "../common/decorators/roles.decorator";
 import { UserRole } from "../common/enums/user-role.enum";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { UpdateMeDto } from "./dto/update-me.dto";
 import { User } from "./entities/user.entity";
 import { Ruolo } from "../common/enums/ruolo.enum";
 
@@ -52,7 +53,7 @@ interface RequestWithUser extends Request {
 }
 
 @Controller("users")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
   private readonly logger = new Logger(UsersController.name);
 
@@ -84,7 +85,7 @@ export class UsersController {
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
 
-    return this.usersService.findAll(
+    const result = await this.usersService.findAll(
       {
         role,
         ruolo,
@@ -99,10 +100,14 @@ export class UsersController {
       },
       requestingUser,
     );
+
+    return {
+      ...result,
+      data: result.data.map((u) => u.serialize(requestingUser.role)),
+    };
   }
 
   @Get("pending-count")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async getPendingCount(
     @Request() req: RequestWithUser,
@@ -148,12 +153,12 @@ export class UsersController {
   @Patch("me")
   async updateMe(
     @Request() req: RequestWithUser,
-    @Body() updateUserDto: UpdateUserDto,
+    @Body() updateMeDto: UpdateMeDto,
   ): Promise<Partial<User>> {
     const requestingUser = await this.usersService.findById(req.user.userId);
     const user = await this.usersService.update(
       req.user.userId,
-      updateUserDto,
+      updateMeDto,
       requestingUser,
     );
     return user.serialize(user.role);
@@ -167,10 +172,12 @@ export class UsersController {
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
 
-    return this.usersService.getRecentUsers(
+    const users = await this.usersService.getRecentUsers(
       limit ? parseInt(limit, 10) : 5,
       requestingUser,
     );
+
+    return users.map((u) => u.serialize(requestingUser.role));
   }
 
   @Get("count-by-role")
@@ -206,23 +213,26 @@ export class UsersController {
   }
 
   @Post("debug/test-welcome-email")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.SUPERADMIN)
   @HttpCode(HttpStatus.OK)
   async testWelcomeEmail() {
+    if (process.env.NODE_ENV === "production") {
+      throw new ForbiddenException("Debug endpoints are disabled in production");
+    }
     return this.usersService.sendTestWelcomeEmail();
   }
 
   @Post("debug/test-registration-form-email")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.SUPERADMIN)
   @HttpCode(HttpStatus.OK)
   async testRegistrationFormEmail() {
+    if (process.env.NODE_ENV === "production") {
+      throw new ForbiddenException("Debug endpoints are disabled in production");
+    }
     return this.usersService.sendTestRegistrationFormEmail();
   }
 
   @Post(":id/resend-welcome-email")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @HttpCode(HttpStatus.OK)
   async resendWelcomeEmail(
@@ -236,7 +246,6 @@ export class UsersController {
   }
 
   @Post(":id/resend-secretary-email")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @HttpCode(HttpStatus.OK)
   async resendSecretaryEmail(
@@ -281,7 +290,6 @@ export class UsersController {
   }
 
   @Post(":id/approve")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @HttpCode(HttpStatus.OK)
   async approveRegistration(
@@ -294,7 +302,6 @@ export class UsersController {
   }
 
   @Post(":id/reject")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @HttpCode(HttpStatus.OK)
   async rejectRegistration(
@@ -376,17 +383,10 @@ export class UsersController {
         this.gradesService.findAll(),
       ]);
 
-      // Debug: log raw extracted fields for grade diagnostics
-      console.log(
-        "[PDF extract] rawFields:",
-        JSON.stringify(extracted.rawFields),
-      );
-      console.log(
-        "[PDF extract] extracted baseId:",
-        extracted.baseId,
-        "gradeId:",
-        extracted.gradeId,
-      );
+      if (process.env.NODE_ENV !== "production") {
+        this.logger.debug("[PDF extract] rawFields: " + JSON.stringify(extracted.rawFields));
+        this.logger.debug(`[PDF extract] extracted baseId: ${extracted.baseId}, gradeId: ${extracted.gradeId}`);
+      }
 
       // Match extracted text values to entity IDs
       const matched = this.pdfExtractionService.matchToEntities(
@@ -395,7 +395,9 @@ export class UsersController {
         contracts.map((c) => ({ id: c.id, codice: c.codice, nome: c.nome })),
         grades.map((g) => ({ id: g.id, codice: g.codice, nome: g.nome })),
       );
-      console.log("[PDF extract] matched gradeId:", matched.gradeId);
+      if (process.env.NODE_ENV !== "production") {
+        this.logger.debug("[PDF extract] matched gradeId: " + matched.gradeId);
+      }
 
       // Set default contract if not found (MAY-PI or MAY-CC)
       if (!matched.contrattoId) {
@@ -411,7 +413,7 @@ export class UsersController {
 
       return matched;
     } catch (error) {
-      console.error("PDF extraction error:", error);
+      this.logger.error("PDF extraction error:", error instanceof Error ? error.message : String(error));
       return {
         crewcode: "",
         nome: "",
@@ -635,7 +637,7 @@ export class UsersController {
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
 
-    return this.usersService.findAllDeactivated(
+    const result = await this.usersService.findAllDeactivated(
       {
         search,
         page: page ? parseInt(page, 10) : 1,
@@ -643,6 +645,11 @@ export class UsersController {
       },
       requestingUser,
     );
+
+    return {
+      ...result,
+      data: result.data.map((u) => u.serialize(requestingUser.role)),
+    };
   }
 
   @Post("deactivated/:id/reactivate")

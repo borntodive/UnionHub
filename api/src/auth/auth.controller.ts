@@ -127,6 +127,7 @@ export class AuthController {
   }
 
   @Post("logout")
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async logout(
     @Body() refreshTokenDto: RefreshTokenDto,
@@ -183,11 +184,13 @@ export class AuthController {
   }
 
   /** Public — used by the self-registration wizard to populate dropdowns */
+  @Throttle({ default: { ttl: 60000, limit: 20 } })
   @Get("register/bases")
   async getPublicBases() {
     return this.basesService.findAll();
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 20 } })
   @Get("register/grades")
   async getPublicGrades() {
     return this.gradesService.findAll();

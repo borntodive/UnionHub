@@ -14,12 +14,12 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   biometricEnabled: boolean;
-  biometricCredentials: { crewcode: string; password: string } | null;
+  biometricCredentials: { crewcode: string; refreshToken: string } | null;
   setAuth: (data: Partial<AuthResponse>) => void;
   logout: () => void;
   setUser: (user: User) => void;
   setLoading: (loading: boolean) => void;
-  enableBiometric: (crewcode: string, password: string) => Promise<void>;
+  enableBiometric: (crewcode: string, refreshToken: string) => Promise<void>;
   disableBiometric: () => Promise<void>;
   loadBiometricCredentials: () => Promise<void>;
 }
@@ -78,14 +78,14 @@ export function createAuthStore(
         setUser: (user) => set({ user }),
         setLoading: (isLoading) => set({ isLoading }),
 
-        enableBiometric: async (crewcode: string, password: string) => {
+        enableBiometric: async (crewcode: string, refreshToken: string) => {
           await secureStorage.setItemAsync(
             BIOMETRIC_CREDENTIALS_KEY,
-            JSON.stringify({ crewcode, password }),
+            JSON.stringify({ crewcode, refreshToken }),
           );
           set({
             biometricEnabled: true,
-            biometricCredentials: { crewcode, password },
+            biometricCredentials: { crewcode, refreshToken },
           });
         },
 
@@ -102,7 +102,7 @@ export function createAuthStore(
             if (raw) {
               const credentials = JSON.parse(raw) as {
                 crewcode: string;
-                password: string;
+                refreshToken: string;
               };
               set({ biometricCredentials: credentials });
             } else {
@@ -117,7 +117,6 @@ export function createAuthStore(
         name: "auth-storage",
         storage: createJSONStorage(() => storage),
         partialize: (state) => ({
-          user: state.user,
           isAuthenticated: state.isAuthenticated,
           biometricEnabled: state.biometricEnabled,
         }),

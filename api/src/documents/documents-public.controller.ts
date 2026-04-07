@@ -6,16 +6,14 @@ import {
   Response,
   NotFoundException,
 } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { DocumentsService } from "./documents.service";
 
-/**
- * Public Documents Controller
- * Accessibile senza autenticazione
- */
 @Controller("documents/public")
 export class DocumentsPublicController {
   constructor(private readonly documentsService: DocumentsService) {}
 
+  @Throttle({ default: { ttl: 60000, limit: 30 } })
   @Get("published")
   async findPublished() {
     return this.documentsService.findPublished();
@@ -45,15 +43,17 @@ export class DocumentsPublicController {
       );
       const buffer = Buffer.from(base64, "base64");
 
+      const sanitizedTitle = (document.title || "document")
+        .replace(/[\r\n"]/g, "_");
+
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
-        `inline; filename="${document.title}.pdf"`,
+        `inline; filename="${sanitizedTitle}.pdf"`,
       );
       res.send(buffer);
     } else {
-      // It's a URL, redirect to it
-      res.redirect(document.finalPdfUrl);
+      throw new NotFoundException("Invalid PDF URL");
     }
   }
 }

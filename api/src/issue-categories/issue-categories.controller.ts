@@ -22,7 +22,7 @@ import { UserRole } from "../common/enums/user-role.enum";
 import { Ruolo } from "../common/enums/ruolo.enum";
 
 @Controller("issue-categories")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class IssueCategoriesController {
   constructor(private readonly service: IssueCategoriesService) {}
 

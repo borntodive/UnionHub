@@ -45,10 +45,8 @@ export const PdfViewerScreen: React.FC = () => {
 
         if (url) {
           if (url.startsWith("http://") || url.startsWith("https://")) {
-            // Plain HTTP URL — load directly in WebView without caching
             if (!cancelled) {
-              cachedUriRef.current = null;
-              setFileUri(url);
+              setError(t("pdfViewer.error"));
             }
             return;
           }
@@ -169,8 +167,11 @@ export const PdfViewerScreen: React.FC = () => {
           <WebView
             source={{ uri: fileUri }}
             style={styles.webView}
-            originWhitelist={["file://*", "http://*", "https://*"]}
-            allowFileAccess
+            originWhitelist={["file://"]}
+            allowFileAccess={false}
+            onShouldStartLoadWithRequest={(request) => {
+              return request.url.startsWith("file://");
+            }}
           />
         ) : (
           // Android: WebView doesn't render local PDFs — wrap in HTML embed
@@ -184,7 +185,11 @@ export const PdfViewerScreen: React.FC = () => {
               </body></html>`,
             }}
             style={styles.webView}
-            allowFileAccess
+            originWhitelist={["file://"]}
+            allowFileAccess={false}
+            onShouldStartLoadWithRequest={(request) => {
+              return request.url.startsWith("file://");
+            }}
           />
         )}
       </SafeAreaView>

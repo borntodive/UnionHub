@@ -5,7 +5,7 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { Document, DocumentStatus } from "./entities/document.entity";
+import { Document } from "./entities/document.entity";
 import {
   CreateDocumentDto,
   ReviewDocumentDto,
@@ -21,6 +21,11 @@ interface UserInfo {
   crewcode: string;
 }
 
+function sanitizeAuthor(author: any) {
+  if (!author) return null;
+  return { id: author.id, nome: author.nome, cognome: author.cognome, crewcode: author.crewcode };
+}
+
 @Injectable()
 export class DocumentsService {
   constructor(
@@ -31,24 +36,23 @@ export class DocumentsService {
     private notificationsService: NotificationsService,
   ) {}
 
-  // Get all documents
-  async findAll(): Promise<Document[]> {
-    return this.documentRepository.find({
+  async findAll(): Promise<any[]> {
+    const docs = await this.documentRepository.find({
       relations: ["author"],
       order: { createdAt: "DESC" },
     });
+    return docs.map((d: any) => ({ ...d, author: sanitizeAuthor(d.author) }));
   }
 
-  // Get verified documents (for admin verification)
-  async findVerified(): Promise<Document[]> {
-    return this.documentRepository.find({
+  async findVerified(): Promise<any[]> {
+    const docs = await this.documentRepository.find({
       where: { status: "verified" },
       relations: ["author"],
       order: { updatedAt: "DESC" },
     });
+    return docs.map((d: any) => ({ ...d, author: sanitizeAuthor(d.author) }));
   }
 
-  // Get published documents (public access)
   async findPublished(): Promise<Document[]> {
     return this.documentRepository.find({
       where: { status: "published" },
@@ -72,8 +76,7 @@ export class DocumentsService {
     });
   }
 
-  // Get document by ID
-  async findById(id: string): Promise<Document> {
+  private async findByIdRaw(id: string): Promise<Document> {
     const document = await this.documentRepository.findOne({
       where: { id },
       relations: ["author"],
@@ -86,7 +89,11 @@ export class DocumentsService {
     return document;
   }
 
-  // Create new document (draft)
+  async findById(id: string): Promise<any> {
+    const document = await this.findByIdRaw(id);
+    return { ...document, author: sanitizeAuthor((document as any).author) };
+  }
+
   async create(dto: CreateDocumentDto, user: UserInfo): Promise<Document> {
     const document = this.documentRepository.create({
       title: dto.title,
@@ -100,11 +107,9 @@ export class DocumentsService {
     return this.documentRepository.save(document);
   }
 
-  // AI Review - rewrite as union communication using Ollama
   async review(id: string, dto: ReviewDocumentDto): Promise<Document> {
-    const document = await this.findById(id);
+    const document = await this.findByIdRaw(id);
 
-    // Check if Ollama is available
     const isOllamaReady = await this.ollamaService.healthCheck();
     if (!isOllamaReady) {
       throw new BadRequestException(
@@ -112,7 +117,6 @@ export class DocumentsService {
       );
     }
 
-    // Use Ollama to rewrite as union communication
     const aiReviewed = await this.ollamaService.rewriteAsUnionCommunication(
       dto.content,
     );
@@ -123,14 +127,13 @@ export class DocumentsService {
     return this.documentRepository.save(document);
   }
 
-  // Approve and generate translations (AI optional)
   async approve(
     id: string,
     dto: ApproveDocumentDto,
     user: UserInfo,
   ): Promise<Document> {
     try {
-      const document = await this.findById(id);
+      const document = await this.findByIdRaw(id);
 
       const finalContent =
         dto.reviewedContent ||
@@ -140,7 +143,6 @@ export class DocumentsService {
         throw new Error("No content to approve");
       }
 
-      // Try to use Ollama for translation, but don't fail if it's not available
       let englishTranslation: string | null = null;
       try {
         const isOllamaReady = await this.ollamaService.healthCheck();
@@ -148,9 +150,8 @@ export class DocumentsService {
           englishTranslation =
             await this.ollamaService.translateToEnglish(finalContent);
         }
-      } catch (error) {
-        // Log but don't fail - translation is optional
-        console.log("Ollama translation skipped:", error.message);
+      } catch (error: any) {
+        console.warn("Ollama translation skipped: " + error.message);
       }
 
       document.aiReviewedContent = finalContent;
@@ -159,12 +160,10 @@ export class DocumentsService {
 
       return await this.documentRepository.save(document);
     } catch (error) {
-      console.error("Approve failed:", error);
       throw error;
     }
   }
 
-  // Translate title if not already translated
   private async translateTitleIfNeeded(document: Document): Promise<void> {
     if (!document.englishTitle && document.title) {
       try {
@@ -186,25 +185,21 @@ Traduzione del titolo (solo il titolo tradotto, nient'altro):`;
             systemPrompt,
           );
         }
-      } catch (error) {
-        console.log("Title translation failed:", error.message);
+      } catch {
         // Don't fail if translation doesn't work
       }
     }
   }
 
-  // Verify document - admin verification before publishing
   async verify(id: string, user: UserInfo): Promise<Document> {
-    const document = await this.findById(id);
+    const document = await this.findByIdRaw(id);
 
     if (document.status !== "approved") {
       throw new Error("Document must be approved before verification");
     }
 
-    // Translate title if needed
     await this.translateTitleIfNeeded(document);
 
-    // Generate PDF for verification
     try {
       const pdfBuffer = await this.pdfService.generateDocumentPdf(document);
       const base64Pdf = pdfBuffer.toString("base64");
@@ -214,28 +209,22 @@ Traduzione del titolo (solo il titolo tradotto, nient'altro):`;
 
       return this.documentRepository.save(document);
     } catch (error) {
-      console.error("PDF generation failed:", error);
       throw new Error("Failed to generate PDF: " + error.message);
     }
   }
 
-  // Final publish - make document publicly available
   async publish(id: string, user: UserInfo): Promise<Document> {
-    const document = await this.findById(id);
+    const document = await this.findByIdRaw(id);
 
     if (document.status !== "verified") {
       throw new Error("Document must be verified before publishing");
     }
 
-    // Translate title if needed
     await this.translateTitleIfNeeded(document);
 
-    // Generate PDF
     try {
       const pdfBuffer = await this.pdfService.generateDocumentPdf(document);
 
-      // Store PDF (in a real app, you'd upload to S3 or similar)
-      // For now, we'll store base64 in the URL field (not ideal but works for demo)
       const base64Pdf = pdfBuffer.toString("base64");
 
       document.status = "published";
@@ -244,9 +233,8 @@ Traduzione del titolo (solo il titolo tradotto, nient'altro):`;
 
       const savedDocument = await this.documentRepository.save(document);
 
-      // Send push notification to all users
       await this.notificationsService.broadcastNotification(
-        "📢 Nuovo Comunicato Sindacale",
+        "📢 Nuovo Comunicato Sindakale",
         `"${document.title}" è stato pubblicato. Tocca per leggere.`,
         {
           documentId: document.id,
@@ -256,14 +244,12 @@ Traduzione del titolo (solo il titolo tradotto, nient'altro):`;
 
       return savedDocument;
     } catch (error) {
-      console.error("PDF generation failed:", error);
       throw new Error("Failed to generate PDF: " + error.message);
     }
   }
 
-  // Regenerate PDF for published document (dev only)
   async regeneratePdf(id: string, user: UserInfo): Promise<Document> {
-    const document = await this.findById(id);
+    const document = await this.findByIdRaw(id);
 
     if (document.status !== "published" && document.status !== "verified") {
       throw new Error(
@@ -271,7 +257,6 @@ Traduzione del titolo (solo il titolo tradotto, nient'altro):`;
       );
     }
 
-    // Translate title if needed (in case it was empty before)
     await this.translateTitleIfNeeded(document);
 
     try {
@@ -282,67 +267,56 @@ Traduzione del titolo (solo il titolo tradotto, nient'altro):`;
 
       return this.documentRepository.save(document);
     } catch (error) {
-      console.error("PDF regeneration failed:", error);
       throw new Error("Failed to regenerate PDF: " + error.message);
     }
   }
 
-  // Regenerate translations (dev only)
   async regenerateTranslations(id: string, user: UserInfo): Promise<Document> {
-    const document = await this.findById(id);
+    const document = await this.findByIdRaw(id);
 
-    // Clear existing translations
     document.englishTitle = null;
     document.englishTranslation = null;
 
-    // Regenerate translations
     try {
       const isOllamaReady = await this.ollamaService.healthCheck();
       if (!isOllamaReady) {
         throw new Error("Ollama service is not available");
       }
 
-      // Translate content
       const finalContent =
         document.aiReviewedContent || document.originalContent;
       document.englishTranslation =
         await this.ollamaService.translateToEnglish(finalContent);
 
-      // Translate title
       await this.translateTitleIfNeeded(document);
 
       return this.documentRepository.save(document);
     } catch (error) {
-      console.error("Translation regeneration failed:", error);
       throw new Error("Failed to regenerate translations: " + error.message);
     }
   }
 
-  // Update English translation only (without changing status)
   async updateTranslation(
     id: string,
     dto: UpdateTranslationDto,
   ): Promise<Document> {
-    const document = await this.findById(id);
+    const document = await this.findByIdRaw(id);
     document.englishTranslation = dto.englishTranslation;
     return this.documentRepository.save(document);
   }
 
-  // Reject document — sends it back to draft with an optional reason
   async reject(id: string, rejectionReason?: string): Promise<Document> {
-    const document = await this.findById(id);
+    const document = await this.findByIdRaw(id);
     document.status = "rejected";
     document.rejectionReason = rejectionReason || null;
     return this.documentRepository.save(document);
   }
 
-  // Delete document
   async delete(id: string): Promise<void> {
-    const document = await this.findById(id);
+    const document = await this.findByIdRaw(id);
     await this.documentRepository.remove(document);
   }
 
-  // Check Ollama health
   async checkOllamaHealth(): Promise<{
     available: boolean;
     model: string;

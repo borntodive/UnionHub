@@ -3,6 +3,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
   ConflictException,
+  Logger,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { google } from "googleapis";
@@ -25,6 +26,7 @@ const SUBFOLDER_MANUAL = "Manual";
 
 @Injectable()
 export class BackupsService {
+  private readonly logger = new Logger(BackupsService.name);
   private isBackupRunning = false;
 
   constructor(private readonly configService: ConfigService) {}
@@ -217,10 +219,9 @@ export class BackupsService {
       proc.on("close", (code) => {
         this.isBackupRunning = false;
         if (code !== 0) {
+          this.logger.error(`Backup script exited with code ${code}: ${stderr}`);
           reject(
-            new InternalServerErrorException(
-              `Backup script exited with code ${code}: ${stderr}`,
-            ),
+            new InternalServerErrorException("Backup failed. Please check server logs."),
           );
           return;
         }

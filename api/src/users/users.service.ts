@@ -9,6 +9,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, Brackets, In } from "typeorm";
 import * as bcrypt from "bcrypt";
 import { parse } from "csv-parse/sync";
+// TODO: Replace xlsx with exceljs — xlsx@0.18.5 has known CVEs (CVE-2024-22363)
 import * as xlsx from "xlsx";
 import { User, StatusLogEntry } from "./entities/user.entity";
 import {
@@ -32,6 +33,10 @@ import {
   normalizePhone,
 } from "../common/utils/date.utils";
 import { WhatsappStatus } from "../common/enums/whatsapp-status.enum";
+
+function escapeLikeWildcard(input: string): string {
+  return input.replace(/[%_\\]/g, "\\$&");
+}
 
 interface FindAllOptions {
   role?: UserRole;
@@ -166,12 +171,13 @@ export class UsersService {
 
     // Search by nome, cognome, crewcode, or email
     if (search) {
+      const safeSearch = escapeLikeWildcard(search);
       queryBuilder.andWhere(
         new Brackets((qb) => {
-          qb.where("user.nome ILIKE :search", { search: `%${search}%` })
-            .orWhere("user.cognome ILIKE :search", { search: `%${search}%` })
-            .orWhere("user.crewcode ILIKE :search", { search: `%${search}%` })
-            .orWhere("user.email ILIKE :search", { search: `%${search}%` });
+          qb.where("user.nome ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` })
+            .orWhere("user.cognome ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` })
+            .orWhere("user.crewcode ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` })
+            .orWhere("user.email ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` });
         }),
       );
     }
@@ -638,14 +644,14 @@ export class UsersService {
       .skip((page - 1) * perPage)
       .take(perPage);
 
-    // Search by nome, cognome, crewcode, or email
     if (search) {
+      const safeSearch = escapeLikeWildcard(search);
       queryBuilder.andWhere(
         new Brackets((qb) => {
-          qb.where("user.nome ILIKE :search", { search: `%${search}%` })
-            .orWhere("user.cognome ILIKE :search", { search: `%${search}%` })
-            .orWhere("user.crewcode ILIKE :search", { search: `%${search}%` })
-            .orWhere("user.email ILIKE :search", { search: `%${search}%` });
+          qb.where("user.nome ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` })
+            .orWhere("user.cognome ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` })
+            .orWhere("user.crewcode ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` })
+            .orWhere("user.email ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` });
         }),
       );
     }
@@ -731,6 +737,11 @@ export class UsersService {
 
     // Delete all status history entries first (due to foreign key constraint)
     await this.statusHistoryRepository.delete({ userId: id });
+
+    // Delete registration form file if exists
+    if (user.registrationFormUrl) {
+      await this.fileStorageService.deleteFile(user.registrationFormUrl);
+    }
 
     // Permanently delete the user
     await this.usersRepository.delete(id);

@@ -1,19 +1,5 @@
-import axios from "axios";
 import apiClient from "./client";
-import { useAuthStore } from "../store/authStore";
 import { Issue, IssueAttachment, IssueStatus } from "../types";
-
-const localClient = axios.create({
-  baseURL: "http://localhost:3000/api/v1",
-  timeout: 120000,
-});
-localClient.interceptors.request.use((config) => {
-  const { accessToken } = useAuthStore.getState();
-  if (accessToken && config.headers) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
-  }
-  return config;
-});
 
 export interface CreateIssueData {
   title: string;
@@ -58,8 +44,7 @@ export const issuesApi = {
   },
 
   getSummary: async (): Promise<{ summary: string; pdfBase64: string }> => {
-    const client = __DEV__ ? localClient : apiClient;
-    const response = await client.post<{ summary: string; pdfBase64: string }>(
+    const response = await apiClient.post<{ summary: string; pdfBase64: string }>(
       "/issues/summary",
     );
     return response.data;

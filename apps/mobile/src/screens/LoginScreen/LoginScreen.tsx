@@ -28,6 +28,16 @@ import { useAuthStore } from "../../store/authStore";
 import { useBiometricAuth } from "../../hooks/useBiometricAuth";
 import { syncPayslipSettings } from "../../payslip/hooks/usePayslipSettingsSync";
 
+function safeErrorMessage(error: any, fallback: string): string {
+  if (__DEV__) {
+    return error.response?.data?.message || error.message || fallback;
+  }
+  const status = error.response?.data?.statusCode;
+  if (status === 401) return fallback;
+  if (status === 400) return fallback;
+  return t("errors.generic");
+}
+
 const QUICK_USERS = [
   { label: "SuperAdmin", crewcode: "COVEAN", password: "password" },
   { label: "Admin Piloti", crewcode: "ADMINPILOT", password: "password" },
@@ -84,14 +94,11 @@ export const LoginScreen: React.FC = () => {
           t("auth.biometricLogin", { method: getBiometricLabel() }),
         );
         if (success) {
-          // Login using stored credentials
           try {
-            const response = await authApi.login({
-              crewcode: biometricCredentials.crewcode,
-              password: biometricCredentials.password,
-            });
+            const response = await authApi.refreshToken(
+              biometricCredentials.refreshToken,
+            );
             setAuth(response);
-            // Set language from user preference
             if (response.user?.language) {
               await setLanguage(response.user.language);
             }
@@ -108,12 +115,6 @@ export const LoginScreen: React.FC = () => {
     tryBiometricLogin();
   }, [biometricEnabled, isAvailable, biometricCredentials]);
 
-  // Store credentials temporarily for biometric enable
-  const [lastLoginCredentials, setLastLoginCredentials] = useState<{
-    crewcode: string;
-    password: string;
-  } | null>(null);
-
   const loginMutation = useMutation({
     mutationFn: authApi.login,
     onSuccess: async (data, variables) => {
@@ -123,11 +124,6 @@ export const LoginScreen: React.FC = () => {
         await setLanguage(data.user.language);
       }
       syncPayslipSettings();
-      // Store credentials used for this login
-      setLastLoginCredentials({
-        crewcode: variables.crewcode,
-        password: variables.password,
-      });
 
       // Ask to enable biometric after successful login (if available and not already enabled)
       if (isAvailable && !biometricEnabled) {
@@ -144,9 +140,7 @@ export const LoginScreen: React.FC = () => {
                     t("auth.biometricLogin", { method: getBiometricLabel() }),
                   );
                   if (success) {
-                    const credsToSave = variables.crewcode || crewcode;
-                    const passToSave = variables.password || password;
-                    enableBiometric(credsToSave, passToSave);
+                    enableBiometric(variables.crewcode, data.refreshToken);
                     Alert.alert(
                       t("common.success"),
                       t("auth.biometricLogin", { method: getBiometricLabel() }),
@@ -160,9 +154,13 @@ export const LoginScreen: React.FC = () => {
       }
     },
     onError: (error: any) => {
-      const message =
-        error.response?.data?.message || t("auth.invalidCredentials");
-      Alert.alert(t("common.error"), message);
+      console.log("[LoginError]", JSON.stringify(error?.response?.data), error?.message);
+      const status = error?.response?.status;
+      const msg =
+        status === 401 || status === 400
+          ? t("auth.invalidCredentials")
+          : t("errors.generic");
+      Alert.alert(t("common.error"), msg);
     },
   });
 
@@ -195,11 +193,9 @@ export const LoginScreen: React.FC = () => {
     );
     if (success) {
       try {
-        const response = await authApi.login({
-          crewcode: biometricCredentials.crewcode,
-          password: biometricCredentials.password,
-          language: currentLang,
-        });
+        const response = await authApi.refreshToken(
+          biometricCredentials.refreshToken,
+        );
         setAuth(response);
         // Set language from user preference
         if (response.user?.language) {
