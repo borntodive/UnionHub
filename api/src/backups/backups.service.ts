@@ -219,9 +219,13 @@ export class BackupsService {
       proc.on("close", (code) => {
         this.isBackupRunning = false;
         if (code !== 0) {
-          this.logger.error(`Backup script exited with code ${code}: ${stderr}`);
+          this.logger.error(
+            `Backup script exited with code ${code}: ${stderr}`,
+          );
           reject(
-            new InternalServerErrorException("Backup failed. Please check server logs."),
+            new InternalServerErrorException(
+              "Backup failed. Please check server logs.",
+            ),
           );
           return;
         }

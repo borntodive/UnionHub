@@ -44,9 +44,10 @@ export const issuesApi = {
   },
 
   getSummary: async (): Promise<{ summary: string; pdfBase64: string }> => {
-    const response = await apiClient.post<{ summary: string; pdfBase64: string }>(
-      "/issues/summary",
-    );
+    const response = await apiClient.post<{
+      summary: string;
+      pdfBase64: string;
+    }>("/issues/summary");
     return response.data;
   },
 

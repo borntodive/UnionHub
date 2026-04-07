@@ -217,7 +217,9 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   async testWelcomeEmail() {
     if (process.env.NODE_ENV === "production") {
-      throw new ForbiddenException("Debug endpoints are disabled in production");
+      throw new ForbiddenException(
+        "Debug endpoints are disabled in production",
+      );
     }
     return this.usersService.sendTestWelcomeEmail();
   }
@@ -227,7 +229,9 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   async testRegistrationFormEmail() {
     if (process.env.NODE_ENV === "production") {
-      throw new ForbiddenException("Debug endpoints are disabled in production");
+      throw new ForbiddenException(
+        "Debug endpoints are disabled in production",
+      );
     }
     return this.usersService.sendTestRegistrationFormEmail();
   }
@@ -384,8 +388,12 @@ export class UsersController {
       ]);
 
       if (process.env.NODE_ENV !== "production") {
-        this.logger.debug("[PDF extract] rawFields: " + JSON.stringify(extracted.rawFields));
-        this.logger.debug(`[PDF extract] extracted baseId: ${extracted.baseId}, gradeId: ${extracted.gradeId}`);
+        this.logger.debug(
+          "[PDF extract] rawFields: " + JSON.stringify(extracted.rawFields),
+        );
+        this.logger.debug(
+          `[PDF extract] extracted baseId: ${extracted.baseId}, gradeId: ${extracted.gradeId}`,
+        );
       }
 
       // Match extracted text values to entity IDs
@@ -413,7 +421,10 @@ export class UsersController {
 
       return matched;
     } catch (error) {
-      this.logger.error("PDF extraction error:", error instanceof Error ? error.message : String(error));
+      this.logger.error(
+        "PDF extraction error:",
+        error instanceof Error ? error.message : String(error),
+      );
       return {
         crewcode: "",
         nome: "",

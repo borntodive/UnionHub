@@ -57,6 +57,7 @@
     "react-native": "0.83.2",
     "react-native-async-storage": "^0.0.1",
     "react-native-blob-util": "^0.24.7",
+    "dotenv": "^16.4.5",
     "react-native-dotenv": "^3.4.11",
     "react-native-gesture-handler": "~2.30.0",
     "react-native-pdf": "^7.0.3",
@@ -76,7 +77,6 @@
     "@babel/core": "^7.25.0",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.2.10",
-    "dotenv": "^16.4.5",
     "jest": "^30.3.0",
     "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"

@@ -174,10 +174,18 @@ export class UsersService {
       const safeSearch = escapeLikeWildcard(search);
       queryBuilder.andWhere(
         new Brackets((qb) => {
-          qb.where("user.nome ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` })
-            .orWhere("user.cognome ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` })
-            .orWhere("user.crewcode ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` })
-            .orWhere("user.email ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` });
+          qb.where("user.nome ILIKE :search ESCAPE '\\'", {
+            search: `%${safeSearch}%`,
+          })
+            .orWhere("user.cognome ILIKE :search ESCAPE '\\'", {
+              search: `%${safeSearch}%`,
+            })
+            .orWhere("user.crewcode ILIKE :search ESCAPE '\\'", {
+              search: `%${safeSearch}%`,
+            })
+            .orWhere("user.email ILIKE :search ESCAPE '\\'", {
+              search: `%${safeSearch}%`,
+            });
         }),
       );
     }
@@ -648,10 +656,18 @@ export class UsersService {
       const safeSearch = escapeLikeWildcard(search);
       queryBuilder.andWhere(
         new Brackets((qb) => {
-          qb.where("user.nome ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` })
-            .orWhere("user.cognome ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` })
-            .orWhere("user.crewcode ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` })
-            .orWhere("user.email ILIKE :search ESCAPE '\\'", { search: `%${safeSearch}%` });
+          qb.where("user.nome ILIKE :search ESCAPE '\\'", {
+            search: `%${safeSearch}%`,
+          })
+            .orWhere("user.cognome ILIKE :search ESCAPE '\\'", {
+              search: `%${safeSearch}%`,
+            })
+            .orWhere("user.crewcode ILIKE :search ESCAPE '\\'", {
+              search: `%${safeSearch}%`,
+            })
+            .orWhere("user.email ILIKE :search ESCAPE '\\'", {
+              search: `%${safeSearch}%`,
+            });
         }),
       );
     }

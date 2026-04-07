@@ -178,8 +178,10 @@ export class DocumentsController {
       );
       const buffer = Buffer.from(base64, "base64");
 
-      const sanitizedTitle = (document.title || "document")
-        .replace(/[\r\n"]/g, "_");
+      const sanitizedTitle = (document.title || "document").replace(
+        /[\r\n"]/g,
+        "_",
+      );
 
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(

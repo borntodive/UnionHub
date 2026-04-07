@@ -23,7 +23,12 @@ interface UserInfo {
 
 function sanitizeAuthor(author: any) {
   if (!author) return null;
-  return { id: author.id, nome: author.nome, cognome: author.cognome, crewcode: author.crewcode };
+  return {
+    id: author.id,
+    nome: author.nome,
+    cognome: author.cognome,
+    crewcode: author.crewcode,
+  };
 }
 
 @Injectable()
