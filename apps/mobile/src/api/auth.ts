@@ -66,9 +66,7 @@ export const authApi = {
     await apiClient.post("/auth/change-password", data);
   },
 
-  refreshToken: async (
-    refreshToken: string,
-  ): Promise<AuthResponse> => {
+  refreshToken: async (refreshToken: string): Promise<AuthResponse> => {
     const response = await apiClient.post("/auth/refresh", { refreshToken });
     return response.data;
   },

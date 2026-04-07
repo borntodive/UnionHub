@@ -154,7 +154,11 @@ export const LoginScreen: React.FC = () => {
       }
     },
     onError: (error: any) => {
-      console.log("[LoginError]", JSON.stringify(error?.response?.data), error?.message);
+      console.log(
+        "[LoginError]",
+        JSON.stringify(error?.response?.data),
+        error?.message,
+      );
       const status = error?.response?.status;
       const msg =
         status === 401 || status === 400
@@ -342,7 +346,9 @@ export const LoginScreen: React.FC = () => {
             {/* Quick Login — development only */}
             {__DEV__ && (
               <View style={styles.quickLoginContainer}>
-                <Text style={styles.quickLoginTitle}>{t("auth.quickLogin")}</Text>
+                <Text style={styles.quickLoginTitle}>
+                  {t("auth.quickLogin")}
+                </Text>
                 <View style={styles.quickLoginGrid}>
                   {QUICK_USERS.map((u) => (
                     <TouchableOpacity

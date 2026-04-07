@@ -120,7 +120,11 @@ async function bootstrap() {
 
   app.use(
     "/uploads",
-    (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
       const authHeader = req.headers.authorization;
       if (!authHeader?.startsWith("Bearer ")) {
         return res.status(401).json({ message: "Authentication required" });

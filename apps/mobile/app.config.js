@@ -17,8 +17,8 @@ module.exports = {
     slug: "unionhub",
     owner: "acovelli",
     newArchEnabled: true,
-    version: "1.0.3",
-    runtimeVersion: "1.0.3",
+    version: "1.0.4",
+    runtimeVersion: "1.0.4",
     updates: {
       url: "https://u.expo.dev/505f6694-7b00-484d-94cd-fcebdb0ee8e9",
       enabled: true,

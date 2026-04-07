@@ -124,7 +124,9 @@ export class AuthService {
 
     if (!tokenEntity || !tokenEntity.isValid()) {
       if (tokenEntity && tokenEntity.isRevoked) {
-        this.logger.warn(`Refresh token replay detected for user ${tokenEntity.userId}. Revoking all sessions.`);
+        this.logger.warn(
+          `Refresh token replay detected for user ${tokenEntity.userId}. Revoking all sessions.`,
+        );
         await this.refreshTokenRepository.update(
           { userId: tokenEntity.userId, isRevoked: false },
           { isRevoked: true },
