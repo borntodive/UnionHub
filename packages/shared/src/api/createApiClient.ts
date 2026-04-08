@@ -27,6 +27,22 @@ export function createApiClient({
     },
   });
 
+  // Refresh token queue — prevents concurrent refresh calls that trigger
+  // replay detection on the backend (which revokes ALL user sessions)
+  let isRefreshing = false;
+  let failedQueue: Array<{
+    resolve: (token: string) => void;
+    reject: (error: unknown) => void;
+  }> = [];
+
+  function processQueue(error: unknown, token: string | null) {
+    failedQueue.forEach(({ resolve, reject }) => {
+      if (error) reject(error);
+      else resolve(token!);
+    });
+    failedQueue = [];
+  }
+
   // Request interceptor — attach access token
   client.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
@@ -58,11 +74,28 @@ export function createApiClient({
       ) {
         originalRequest._retry = true;
 
+        // If a refresh is already in progress, queue this request
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({
+              resolve: (newToken: string) => {
+                if (originalRequest.headers) {
+                  originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                }
+                resolve(client(originalRequest));
+              },
+              reject,
+            });
+          });
+        }
+
         const refreshToken = getRefreshToken();
         if (!refreshToken) {
           onLogout();
           return Promise.reject(error);
         }
+
+        isRefreshing = true;
 
         try {
           const response = await axios.post(`${baseURL}/auth/refresh`, {
@@ -72,17 +105,21 @@ export function createApiClient({
             response.data;
 
           onTokensRefreshed(newAccess, newRefresh);
+          processQueue(null, newAccess);
 
           if (originalRequest.headers) {
             originalRequest.headers.Authorization = `Bearer ${newAccess}`;
           }
           return client(originalRequest);
         } catch (refreshError: unknown) {
+          processQueue(refreshError, null);
           const isNetworkError = !(refreshError as AxiosError).response;
           if (!isNetworkError) {
             onLogout();
           }
           return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
         }
       }
 
