@@ -161,8 +161,10 @@ export const usePayslipStore = create<PayslipState>()(
 
         // Push immediately if online — fire and forget
         if (useOfflineStore.getState().isOnline) {
+          // Remove runtime-only fields before sending to server
+          const { legacyDirect, ...serverSettings } = merged;
           payslipSettingsApi
-            .put(merged)
+            .put(serverSettings as PayslipSettings)
             .then(() => usePayslipStore.getState().markSettingsSynced())
             .catch(() => {
               // stay pending — will retry on next mount/reconnect
@@ -200,9 +202,18 @@ export const usePayslipStore = create<PayslipState>()(
       setOverrideItud: (v) => set({ overrideItud: v }),
 
       setOverrideSettings: (settings) => {
-        set((state) => ({
-          overrideSettings: { ...state.overrideSettings, ...settings },
-        }));
+        set((state) => {
+          const merged: PayslipSettings = {
+            ...state.overrideSettings,
+            ...settings,
+            // Ensure legacy fields are never undefined
+            legacyCustom: settings.legacyCustom ??
+              state.overrideSettings.legacyCustom ?? { ffp: 0, sbh: 0, al: 0 },
+            legacyDeltas: settings.legacyDeltas ??
+              state.overrideSettings.legacyDeltas ?? { ffp: 0, sbh: 0, al: 0 },
+          };
+          return { overrideSettings: merged };
+        });
       },
 
       calculate: async (userContext = {}) => {
