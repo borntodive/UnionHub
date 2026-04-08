@@ -452,6 +452,9 @@ export class UsersService {
 
     // Track status change if isActive is being updated
     const oldIsActive = user.isActive;
+    const oldGradeId = user.gradeId;
+    const oldBaseId = user.baseId;
+    const oldContractId = user.contrattoId;
 
     // Apply updates
     if (updateUserDto.email) {
@@ -488,6 +491,26 @@ export class UsersService {
     }
 
     Object.assign(user, updateUserDto);
+
+    // Reset relations when their IDs change to ensure TypeORM refetches them
+    if (
+      updateUserDto.gradeId !== undefined &&
+      updateUserDto.gradeId !== oldGradeId
+    ) {
+      user.grade = null;
+    }
+    if (
+      updateUserDto.baseId !== undefined &&
+      updateUserDto.baseId !== oldBaseId
+    ) {
+      user.base = null;
+    }
+    if (
+      updateUserDto.contrattoId !== undefined &&
+      updateUserDto.contrattoId !== oldContractId
+    ) {
+      user.contratto = null;
+    }
 
     // Add to status log if isActive changed
     if (
