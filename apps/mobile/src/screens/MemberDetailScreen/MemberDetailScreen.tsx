@@ -11,6 +11,7 @@ import {
   Linking,
   AppState,
   AppStateStatus,
+  RefreshControl,
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import {
@@ -92,6 +93,7 @@ export const MemberDetailScreen: React.FC = () => {
     AppState.currentState,
   );
   const [screenKey, setScreenKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   const {
     data: member,
@@ -196,6 +198,19 @@ export const MemberDetailScreen: React.FC = () => {
     navigation.navigate("MemberEdit", { memberId });
   };
 
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const result = await refetch();
+      // If viewing own profile, also update authStore
+      if (isOwnProfile && result.data) {
+        useAuthStore.getState().setUser(result.data);
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch, isOwnProfile]);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -278,6 +293,13 @@ export const MemberDetailScreen: React.FC = () => {
           style={styles.content}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ minHeight: "100%" }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
+            />
+          }
         >
           {/* Profile Card */}
           <Card style={styles.profileCard}>

@@ -26,15 +26,19 @@ import { useTranslation } from "react-i18next";
 
 import { Switch } from "react-native";
 import { colors, spacing, typography, borderRadius } from "../../theme";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../store/authStore";
-import { UserRole } from "../../types";
+import { UserRole, Ruolo } from "../../types";
 import apiClient from "../../api/client";
 import { usersApi } from "../../api/users";
+import { gradesApi } from "../../api/grades";
 import { setLanguage, getLanguage } from "../../i18n";
 import { usePayslipStore } from "../../payslip/store/usePayslipStore";
 import { useOfflineStore } from "../../store/offlineStore";
 import { PayslipSettings, LegacyCustom } from "../../payslip/types";
 import { useContractData } from "../../payslip/hooks/useContractData";
+import { Select } from "../../components/Select";
+import { getUnionFee } from "../../payslip/data/contractData";
 
 const LANGUAGES = [
   { code: "en", label: "English" },
@@ -62,6 +66,11 @@ interface PayslipFormProps {
   isSuperAdmin: boolean;
   /** When true, role and rank are always editable (override mode) */
   forceEditable?: boolean;
+  /** Grade picker props — when provided, replaces static rank row for regular users */
+  gradeOptions?: { label: string; value: string }[];
+  currentGradeId?: string;
+  onGradeChange?: (gradeId: string) => void;
+  isChangingGrade?: boolean;
 }
 
 const PayslipForm: React.FC<PayslipFormProps> = ({
@@ -70,6 +79,10 @@ const PayslipForm: React.FC<PayslipFormProps> = ({
   isAdmin,
   isSuperAdmin,
   forceEditable = false,
+  gradeOptions,
+  currentGradeId,
+  onGradeChange,
+  isChangingGrade,
 }) => {
   const { t } = useTranslation();
   const isPilot = s.role === "pil";
@@ -204,6 +217,23 @@ const PayslipForm: React.FC<PayslipFormProps> = ({
                 </TouchableOpacity>
               ))}
             </View>
+          </View>
+        ) : onGradeChange && gradeOptions && gradeOptions.length > 0 ? (
+          <View style={styles.selectorContainer}>
+            <Select
+              label={t("settings.payslipRank")}
+              value={currentGradeId}
+              onValueChange={(val) => val && onGradeChange(val)}
+              options={gradeOptions}
+              placeholder={t("settings.selectGrade")}
+            />
+            {isChangingGrade && (
+              <ActivityIndicator
+                size="small"
+                color={colors.primary}
+                style={{ marginTop: spacing.xs }}
+              />
+            )}
           </View>
         ) : (
           <View style={styles.infoRow}>
@@ -526,6 +556,7 @@ const CheckboxRow: React.FC<CheckboxRowProps> = ({
 
 export const SettingsScreen: React.FC = () => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { biometricEnabled, disableBiometric, user } = useAuthStore();
   const { settings, setSettings } = usePayslipStore();
   const { notificationPrefs, setNotificationPrefs } = useOfflineStore();
@@ -545,6 +576,72 @@ export const SettingsScreen: React.FC = () => {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const currentLanguage = getLanguage();
   const [carddavLoading, setCarddavLoading] = useState(false);
+
+  // ─── Grade picker for payslip tab ──────────────────────────────────────────
+  const { data: grades } = useQuery({
+    queryKey: ["grades"],
+    queryFn: gradesApi.getGrades,
+    enabled: !!user?.ruolo,
+  });
+
+  const filteredGrades = (grades ?? []).filter((g) => g.ruolo === user?.ruolo);
+
+  const gradeOptions = filteredGrades.map((g) => ({
+    label: g.nome,
+    value: g.id,
+  }));
+
+  const [isChangingGrade, setIsChangingGrade] = useState(false);
+
+  const handleGradeChange = async (gradeId: string) => {
+    if (gradeId === user?.grade?.id) return;
+    const selectedGrade = filteredGrades.find((g) => g.id === gradeId);
+    if (!selectedGrade || !user) return;
+
+    // Show confirmation alert
+    Alert.alert(
+      t("settings.confirmGradeUpdate"),
+      t("settings.confirmGradeUpdateMessage", {
+        newGrade: selectedGrade.nome,
+      }),
+      [
+        {
+          text: t("common.cancel"),
+          style: "cancel",
+          onPress: () => {
+            // Do nothing - Select will revert to original value
+          },
+        },
+        {
+          text: t("common.confirm"),
+          onPress: async () => {
+            setIsChangingGrade(true);
+            try {
+              const updatedUser = await usersApi.updateMe({ gradeId });
+              useAuthStore.getState().setUser(updatedUser);
+              queryClient.setQueryData(["me"], updatedUser);
+              queryClient.invalidateQueries({ queryKey: ["me"] });
+
+              const newRank = selectedGrade.codice.toLowerCase();
+              const role =
+                updatedUser.ruolo === Ruolo.CABIN_CREW ? "cc" : "pil";
+              const union = getUnionFee(newRank, role);
+              setSettings({ rank: newRank, union });
+
+              Alert.alert(t("common.success"), t("settings.gradeUpdated"));
+            } catch (error: any) {
+              Alert.alert(
+                t("common.error"),
+                error?.response?.data?.message || "Failed to update grade",
+              );
+            } finally {
+              setIsChangingGrade(false);
+            }
+          },
+        },
+      ],
+    );
+  };
 
   const CARDDAV_SERVER_URL = "https://api.unionhub.app/carddav";
 
@@ -963,6 +1060,13 @@ export const SettingsScreen: React.FC = () => {
           set={setSettings}
           isAdmin={false}
           isSuperAdmin={false}
+          gradeOptions={gradeOptions}
+          currentGradeId={
+            filteredGrades.find((g) => g.codice.toLowerCase() === settings.rank)
+              ?.id
+          }
+          onGradeChange={handleGradeChange}
+          isChangingGrade={isChangingGrade}
         />
 
         {/* Info */}

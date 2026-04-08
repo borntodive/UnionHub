@@ -79,7 +79,10 @@ export const ProfileScreen: React.FC = () => {
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await refetch();
+      const result = await refetch();
+      if (result.data) {
+        useAuthStore.getState().setUser(result.data);
+      }
     } finally {
       setRefreshing(false);
     }
@@ -95,7 +98,7 @@ export const ProfileScreen: React.FC = () => {
     }
   };
 
-  const currentUser = userData || user;
+  const currentUser = user || userData;
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
