@@ -417,7 +417,7 @@ const PayslipForm: React.FC<PayslipFormProps> = ({
             {/* FFP */}
             <Text style={styles.fieldLabel}>{t("payslip.legacyFfp")}</Text>
             {(() => {
-              const cd = getContractRef();
+              const cd = contractRef;
               return cd ? (
                 <Text style={styles.hint}>
                   {t("payslip.legacyContractRef", {
@@ -452,7 +452,7 @@ const PayslipForm: React.FC<PayslipFormProps> = ({
               {t("payslip.legacySbh")}
             </Text>
             {(() => {
-              const cd = getContractRef();
+              const cd = contractRef;
               return cd ? (
                 <Text style={styles.hint}>
                   {t("payslip.legacyContractRef", {
@@ -487,7 +487,7 @@ const PayslipForm: React.FC<PayslipFormProps> = ({
               {t("payslip.legacyAl")}
             </Text>
             {(() => {
-              const cd = getContractRef();
+              const cd = contractRef;
               return cd ? (
                 <Text style={styles.hint}>
                   {t("payslip.legacyContractRef", {

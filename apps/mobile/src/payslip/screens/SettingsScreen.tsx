@@ -156,7 +156,8 @@ export const SettingsScreen: React.FC = () => {
           accontoAddComunali: settings.accontoAddComunali,
           addRegionali: settings.addRegionali,
           legacy: settings.legacy,
-          legacyCustom: settings.legacyCustom,
+          legacyCustom: settings.legacyCustom ?? { ffp: 0, sbh: 0, al: 0 },
+          legacyDeltas: settings.legacyDeltas ?? { ffp: 0, sbh: 0, al: 0 },
         });
         // Note: RSA and ITUD are not stored in PayslipSettings
         // They come from user profile, so we keep current override values

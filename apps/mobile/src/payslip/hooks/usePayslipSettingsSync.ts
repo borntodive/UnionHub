@@ -37,7 +37,9 @@ export async function syncPayslipSettings(): Promise<void> {
 
   try {
     if (settingsPendingSync) {
-      await payslipSettingsApi.put(settings);
+      // Remove runtime-only fields before sending to server
+      const { legacyDirect, ...serverSettings } = settings;
+      await payslipSettingsApi.put(serverSettings as PayslipSettings);
       markSettingsSynced();
     } else {
       const serverSettings = await payslipSettingsApi.get();
@@ -52,7 +54,8 @@ export async function syncPayslipSettings(): Promise<void> {
           const union = getUnionFee(currentRank, role);
           const corrected = { ...fetched, role, rank: currentRank, union };
           applyServerSettings(corrected);
-          await payslipSettingsApi.put(corrected);
+          const { legacyDirect, ...serverCorrected } = corrected;
+          await payslipSettingsApi.put(serverCorrected as PayslipSettings);
         } else {
           applyServerSettings(fetched);
         }
@@ -60,7 +63,8 @@ export async function syncPayslipSettings(): Promise<void> {
         // First login — initialize from user profile and save to server
         const initialSettings = buildSettingsFromUser(settings);
         applyServerSettings(initialSettings);
-        await payslipSettingsApi.put(initialSettings);
+        const { legacyDirect, ...serverInitial } = initialSettings;
+        await payslipSettingsApi.put(serverInitial as PayslipSettings);
       }
     }
   } catch {
