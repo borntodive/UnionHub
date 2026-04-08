@@ -11,6 +11,7 @@ import {
   ReviewDocumentDto,
   ApproveDocumentDto,
   UpdateTranslationDto,
+  UploadDocumentDto,
 } from "./dto/create-document.dto";
 import { OllamaService } from "../ollama/ollama.service";
 import { PdfService } from "./pdf.service";
@@ -110,6 +111,41 @@ export class DocumentsService {
     });
 
     return this.documentRepository.save(document);
+  }
+
+  async uploadAndPublish(
+    dto: UploadDocumentDto,
+    file: Express.Multer.File,
+    user: UserInfo,
+  ): Promise<any> {
+    const base64Pdf = file.buffer.toString("base64");
+
+    const document = this.documentRepository.create({
+      title: dto.title,
+      originalContent: "[Uploaded PDF]",
+      status: "published" as const,
+      publishedAt: new Date(),
+      finalPdfUrl: `data:application/pdf;base64,${base64Pdf}`,
+      union: dto.union || "fit-cisl",
+      ruolo: dto.ruolo || "pilot",
+      createdBy: user.userId,
+    });
+
+    const savedDocument = await this.documentRepository.save(document);
+
+    await this.notificationsService.broadcastNotification(
+      "\u{1F4E2} Nuovo Comunicato Sindakale",
+      `"${document.title}" è stato pubblicato. Tocca per leggere.`,
+      {
+        documentId: savedDocument.id,
+        type: "new_document",
+      },
+    );
+
+    return {
+      ...savedDocument,
+      author: sanitizeAuthor((savedDocument as any).author),
+    };
   }
 
   async review(id: string, dto: ReviewDocumentDto): Promise<Document> {

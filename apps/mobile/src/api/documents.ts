@@ -147,4 +147,27 @@ export const documentsApi = {
   deleteDocument: async (id: string): Promise<void> => {
     await apiClient.delete(`/documents/${id}`);
   },
+
+  uploadDocument: async (data: {
+    fileUri: string;
+    fileName: string;
+    title: string;
+    union?: UnionType;
+    ruolo?: DocumentRuolo;
+  }): Promise<Document> => {
+    const formData = new FormData();
+    formData.append("file", {
+      uri: data.fileUri,
+      name: data.fileName,
+      type: "application/pdf",
+    } as any);
+    formData.append("title", data.title);
+    if (data.union) formData.append("union", data.union);
+    if (data.ruolo) formData.append("ruolo", data.ruolo);
+
+    const response = await apiClient.post("/documents/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
 };

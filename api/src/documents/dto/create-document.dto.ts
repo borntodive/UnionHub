@@ -50,3 +50,18 @@ export class RejectDocumentDto {
   @IsOptional()
   rejectionReason?: string;
 }
+
+export class UploadDocumentDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  title: string;
+
+  @IsEnum(["fit-cisl", "joint"])
+  @IsOptional()
+  union?: "fit-cisl" | "joint";
+
+  @IsEnum(["pilot", "cabin_crew"])
+  @IsOptional()
+  ruolo?: "pilot" | "cabin_crew";
+}

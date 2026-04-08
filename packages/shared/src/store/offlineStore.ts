@@ -64,7 +64,7 @@ export function createOfflineStore(storage: StorageAdapter) {
   return create<OfflineState>()(
     persist(
       (set) => ({
-        isOnline: false,
+        isOnline: true,
         categories: [],
         urgencies: [],
         pendingIssues: [],

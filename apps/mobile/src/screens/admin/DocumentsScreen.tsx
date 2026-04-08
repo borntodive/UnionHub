@@ -26,7 +26,9 @@ import {
   CheckCircle,
   Sparkles,
   Cpu,
+  Upload,
 } from "lucide-react-native";
+import * as DocumentPicker from "expo-document-picker";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import {
@@ -49,6 +51,7 @@ const STATUS_COLORS: Record<DocumentStatus, string> = {
   approved: "#22c55e",
   verified: "#8b5cf6",
   published: colors.primary,
+  rejected: colors.error,
 };
 
 export const DocumentsScreen: React.FC = () => {
@@ -126,6 +129,66 @@ export const DocumentsScreen: React.FC = () => {
       );
     },
   });
+
+  const uploadMutation = useMutation({
+    mutationFn: (data: {
+      fileUri: string;
+      fileName: string;
+      title: string;
+      union?: "fit-cisl" | "joint";
+      ruolo?: "pilot" | "cabin_crew";
+    }) => documentsApi.uploadDocument(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      Alert.alert(t("common.success"), t("documents.uploadSuccess"));
+    },
+    onError: (error: any) => {
+      Alert.alert(
+        t("common.error"),
+        error.response?.data?.message || t("errors.generic"),
+      );
+    },
+  });
+
+  const handleUpload = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ["application/pdf"],
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets?.length) return;
+
+    const file = result.assets[0];
+
+    Alert.prompt(
+      t("documents.uploadTitle"),
+      t("documents.uploadTitlePlaceholder"),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("documents.publish"),
+          onPress: (title?: string) => {
+            if (!title?.trim()) {
+              Alert.alert(t("common.error"), t("documents.enterTitle"));
+              return;
+            }
+            uploadMutation.mutate({
+              fileUri: file.uri,
+              fileName: file.name,
+              title: title.trim(),
+              ruolo: isSuperAdmin
+                ? ruoloFilter === "all"
+                  ? "pilot"
+                  : ruoloFilter
+                : user?.ruolo === "cabin_crew"
+                  ? "cabin_crew"
+                  : "pilot",
+            });
+          },
+        },
+      ],
+      "plain-text",
+    );
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -365,13 +428,22 @@ export const DocumentsScreen: React.FC = () => {
           <Text style={styles.headerTitle}>
             {t("documents.publicDocuments")}
           </Text>
-          <TouchableOpacity
-            onPress={handleAdd}
-            style={styles.addButton}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Plus size={24} color={colors.textInverse} />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              onPress={handleUpload}
+              style={styles.addButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Upload size={24} color={colors.textInverse} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleAdd}
+              style={styles.addButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Plus size={24} color={colors.textInverse} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Ruolo Filter - Only for SuperAdmin */}
@@ -508,6 +580,11 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     flex: 1,
     textAlign: "center",
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
   },
   addButton: {
     width: 40,

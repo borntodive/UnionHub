@@ -164,7 +164,11 @@
     "rejectTitle": "Reject Document",
     "rejectMessage": "Are you sure you want to reject this document? It will be sent back to draft.",
     "documentRejected": "Document rejected successfully",
-    "rejectionReason": "Rejection Reason"
+    "rejectionReason": "Rejection Reason",
+    "uploadDocument": "Upload PDF",
+    "uploadSuccess": "Document uploaded and published successfully",
+    "uploadTitle": "Upload Communication",
+    "uploadTitlePlaceholder": "Enter communication title..."
   },
   "settings": {
     "title": "Settings",

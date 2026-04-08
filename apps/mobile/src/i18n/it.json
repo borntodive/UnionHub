@@ -164,7 +164,11 @@
     "rejectTitle": "Rifiuta Documento",
     "rejectMessage": "Sei sicuro di voler rifiutare questo documento? Verrà rimandato in bozza.",
     "documentRejected": "Documento rifiutato con successo",
-    "rejectionReason": "Motivo del Rifiuto"
+    "rejectionReason": "Motivo del Rifiuto",
+    "uploadDocument": "Carica PDF",
+    "uploadSuccess": "Comunicato caricato e pubblicato con successo",
+    "uploadTitle": "Carica Comunicato",
+    "uploadTitlePlaceholder": "Inserisci il titolo del comunicato..."
   },
   "settings": {
     "title": "Impostazioni",
