@@ -10,11 +10,16 @@ import {
   Request,
   Response,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
   NotFoundException,
+  BadRequestException,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { memoryStorage } from "multer";
 import { DocumentsService } from "./documents.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
@@ -26,6 +31,7 @@ import {
   ApproveDocumentDto,
   UpdateTranslationDto,
   RejectDocumentDto,
+  UploadDocumentDto,
 } from "./dto/create-document.dto";
 
 interface RequestWithUser extends Request {
@@ -63,6 +69,34 @@ export class DocumentsController {
     @Request() req: RequestWithUser,
   ) {
     return this.documentsService.create(dto, {
+      userId: req.user.userId,
+      crewcode: req.user.crewcode,
+    });
+  }
+
+  @Post("upload")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: memoryStorage(),
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+      fileFilter: (_req, file, cb) => {
+        if (file.mimetype === "application/pdf") {
+          cb(null, true);
+        } else {
+          cb(new BadRequestException("Only PDF files are allowed"), false);
+        }
+      },
+    }),
+  )
+  async upload(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dto: UploadDocumentDto,
+    @Request() req: RequestWithUser,
+  ) {
+    if (!file) {
+      throw new BadRequestException("PDF file is required");
+    }
+    return this.documentsService.uploadAndPublish(dto, file, {
       userId: req.user.userId,
       crewcode: req.user.crewcode,
     });
