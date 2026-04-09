@@ -14,7 +14,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { DrawerNavigationProp } from "@react-navigation/drawer";
 import { useQuery } from "@tanstack/react-query";
-import { Menu, AlertTriangle, Clock } from "lucide-react-native";
+import { Menu, AlertTriangle, Clock, Plus } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
@@ -133,7 +133,13 @@ export const MyIssuesScreen: React.FC = () => {
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t("issues.myIssues")}</Text>
-          <View style={{ width: 40 }} />
+          <TouchableOpacity
+            onPress={() => navigation.navigate("ReportIssue")}
+            style={styles.backButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Plus size={24} color={colors.textInverse} />
+          </TouchableOpacity>
         </View>
 
         <FlatList
