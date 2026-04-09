@@ -49,6 +49,7 @@ export interface User {
   grade?: Grade;
   isActive: boolean;
   mustChangePassword: boolean;
+  employmentConfirmed?: boolean;
   note?: string;
   itud?: boolean;
   rsa?: boolean;

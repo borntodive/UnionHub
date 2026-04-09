@@ -84,4 +84,8 @@ export class UpdateMeDto {
   @IsOptional()
   @IsBoolean()
   isUSO?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  employmentConfirmed?: boolean;
 }

@@ -44,8 +44,18 @@ export function createApiClient({
   }
 
   // Request interceptor — attach access token
+  // Skip authentication for public routes
+  const publicRoutes = ["/documents/public", "/auth/login", "/auth/register"];
   client.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
+      // Skip Authorization header for public routes
+      const isPublicRoute = publicRoutes.some((route) =>
+        config.url?.includes(route),
+      );
+      if (isPublicRoute) {
+        return config;
+      }
+
       const token = getAccessToken();
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
