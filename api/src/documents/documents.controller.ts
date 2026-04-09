@@ -48,22 +48,26 @@ interface RequestWithUser extends Request {
  * ADMIN and SUPERADMIN access
  */
 @Controller("documents")
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async findAll() {
     return this.documentsService.findAll();
   }
 
   @Get(":id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async findOne(@Param("id", ParseUUIDPipe) id: string) {
     return this.documentsService.findById(id);
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async create(
     @Body() dto: CreateDocumentDto,
     @Request() req: RequestWithUser,
@@ -75,6 +79,8 @@ export class DocumentsController {
   }
 
   @Post("upload")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @UseInterceptors(
     FileInterceptor("file", {
       storage: memoryStorage(),
@@ -103,6 +109,8 @@ export class DocumentsController {
   }
 
   @Post(":id/review")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async review(
     @Param("id", ParseUUIDPipe) id: string,
     @Body() dto: ReviewDocumentDto,
@@ -111,6 +119,8 @@ export class DocumentsController {
   }
 
   @Post(":id/approve")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async approve(
     @Param("id", ParseUUIDPipe) id: string,
     @Body() dto: ApproveDocumentDto,
@@ -123,6 +133,8 @@ export class DocumentsController {
   }
 
   @Post(":id/verify")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async verify(
     @Param("id", ParseUUIDPipe) id: string,
     @Request() req: RequestWithUser,
@@ -134,6 +146,8 @@ export class DocumentsController {
   }
 
   @Post(":id/publish")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async publish(
     @Param("id", ParseUUIDPipe) id: string,
     @Request() req: RequestWithUser,
@@ -145,6 +159,8 @@ export class DocumentsController {
   }
 
   @Patch(":id/translation")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async updateTranslation(
     @Param("id", ParseUUIDPipe) id: string,
     @Body() dto: UpdateTranslationDto,
@@ -153,6 +169,8 @@ export class DocumentsController {
   }
 
   @Patch(":id/reject")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async reject(
     @Param("id", ParseUUIDPipe) id: string,
     @Body() dto: RejectDocumentDto,
@@ -162,11 +180,15 @@ export class DocumentsController {
 
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async delete(@Param("id", ParseUUIDPipe) id: string) {
     await this.documentsService.delete(id);
   }
 
   @Post(":id/regenerate")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async regeneratePdf(
     @Param("id", ParseUUIDPipe) id: string,
     @Request() req: RequestWithUser,
@@ -178,6 +200,8 @@ export class DocumentsController {
   }
 
   @Post(":id/regenerate-translations")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async regenerateTranslations(
     @Param("id", ParseUUIDPipe) id: string,
     @Request() req: RequestWithUser,
@@ -189,11 +213,15 @@ export class DocumentsController {
   }
 
   @Get("health/ollama")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async checkOllamaHealth() {
     return this.documentsService.checkOllamaHealth();
   }
 
   @Get(":id/download")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async downloadPdf(
     @Param("id", ParseUUIDPipe) id: string,
     @Response() res: any,

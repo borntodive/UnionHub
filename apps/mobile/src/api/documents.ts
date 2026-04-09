@@ -114,14 +114,20 @@ export const documentsApi = {
   },
 
   getPdfBase64: async (id: string): Promise<string | null> => {
-    const response = await apiClient.get(`/documents/${id}`);
-    const document = response.data as Document;
+    // Use the public download endpoint that doesn't require admin role
+    const response = await apiClient.get(`/documents/public/${id}/download`, {
+      responseType: "arraybuffer",
+    });
 
-    // Extract base64 from data URL
-    if (document.finalPdfUrl?.startsWith("data:application/pdf;base64,")) {
-      return document.finalPdfUrl.replace("data:application/pdf;base64,", "");
+    // Convert array buffer to base64 (React Native compatible)
+    const arrayBuffer = response.data as ArrayBuffer;
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = "";
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
     }
-    return null;
+    return btoa(binary);
   },
 
   updateTranslation: async (

@@ -83,6 +83,9 @@ export const AppNavigator: React.FC = () => {
   const isCaptainGrade = CAPTAIN_GRADES.includes(user?.grade?.codice || "");
   // Profile completion required for users with a professional role (not superadmin)
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
+  // Employment confirmation: users with ruolo must confirm base/contratto/grade on first login
+  const needsEmploymentConfirmation =
+    !isSuperAdmin && !!user?.ruolo && !user?.employmentConfirmed;
   const needsProfileCompletion =
     !isSuperAdmin &&
     !!user?.ruolo &&
@@ -104,6 +107,7 @@ export const AppNavigator: React.FC = () => {
   const getActiveStack = () => {
     if (!isAuthenticated) return "auth";
     if (mustChangePassword) return "changePassword";
+    if (needsEmploymentConfirmation) return "completeProfile";
     if (needsProfileCompletion) return "completeProfile";
     return "app";
   };

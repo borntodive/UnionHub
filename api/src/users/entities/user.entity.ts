@@ -51,6 +51,9 @@ export class User {
   @Column({ type: "boolean", default: true })
   mustChangePassword: boolean;
 
+  @Column({ type: "boolean", default: false })
+  employmentConfirmed: boolean;
+
   @Column({ type: "boolean", default: true })
   isActive: boolean;
 
@@ -192,6 +195,7 @@ export class User {
       grade: this.grade,
       isActive: this.isActive,
       mustChangePassword: this.mustChangePassword,
+      employmentConfirmed: this.employmentConfirmed,
       registrationStatus: this.registrationStatus,
       registrationFormUrl: this.registrationFormUrl,
       language: this.language,

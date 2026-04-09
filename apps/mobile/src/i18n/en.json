@@ -766,6 +766,10 @@
     "selectContract": "Select contract",
     "selectGrade": "Select grade"
   },
+  "confirmEmployment": {
+    "pilot": "Pilot",
+    "cabinCrew": "Cabin Crew"
+  },
   "joinUs": {
     "screenTitle": "Join Us",
     "step1Title": "Step 1 — Personal Data",

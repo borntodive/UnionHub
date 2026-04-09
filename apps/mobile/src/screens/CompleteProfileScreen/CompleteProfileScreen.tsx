@@ -26,6 +26,7 @@ import {
   MapPin,
   Briefcase,
   Award,
+  UserCircle,
 } from "lucide-react-native";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
@@ -85,7 +86,8 @@ export const CompleteProfileScreen: React.FC = () => {
 
   const needsPersonal = missing.nome || missing.cognome;
   const needsContact = missing.email || missing.telefono;
-  const needsProfessional = missing.base || missing.contratto || missing.grade;
+  // Professional section is ALWAYS shown for users with a ruolo (for employment confirmation)
+  const showProfessionalSection = !!user?.ruolo;
   const needsDates = missing.dateOfEntry || missing.dateOfCaptaincy;
 
   // Form state — pre-filled from existing user data
@@ -110,37 +112,41 @@ export const CompleteProfileScreen: React.FC = () => {
   const [isSaved, setIsSaved] = useState(false);
   const savedUserRef = useRef<any>(null);
 
-  // Load reference data only if needed
+  // Load reference data - always load for users with ruolo (for employment confirmation)
   const { data: bases, isLoading: loadingBases } = useQuery({
     queryKey: ["bases"],
     queryFn: basesApi.getBases,
-    enabled: needsProfessional,
+    enabled: showProfessionalSection,
   });
 
   const { data: contracts, isLoading: loadingContracts } = useQuery({
     queryKey: ["contracts"],
     queryFn: contractsApi.getContracts,
-    enabled: needsProfessional,
+    enabled: showProfessionalSection,
   });
 
   const { data: grades, isLoading: loadingGrades } = useQuery({
     queryKey: ["grades"],
     queryFn: gradesApi.getGrades,
-    enabled: needsProfessional,
+    enabled: showProfessionalSection,
   });
 
   const isLoadingRefs = loadingBases || loadingContracts || loadingGrades;
 
   const mutation = useMutation({
     mutationFn: () => {
-      const payload: Parameters<typeof usersApi.updateMe>[0] = {};
+      const payload: Parameters<typeof usersApi.updateMe>[0] = {
+        // ALWAYS include base, contratto, grade, and employmentConfirmed for confirmation
+        baseId: baseId || user?.base?.id,
+        contrattoId: contrattoId || user?.contratto?.id,
+        gradeId: gradeId || user?.grade?.id,
+        employmentConfirmed: true,
+      };
+      // Other fields only if missing
       if (missing.nome) payload.nome = nome;
       if (missing.cognome) payload.cognome = cognome;
       if (missing.email) payload.email = email;
       if (missing.telefono) payload.telefono = telefono;
-      if (missing.base) payload.baseId = baseId;
-      if (missing.contratto) payload.contrattoId = contrattoId;
-      if (missing.grade) payload.gradeId = gradeId;
       if (missing.dateOfEntry) payload.dateOfEntry = dateOfEntry;
       if (missing.dateOfCaptaincy) payload.dateOfCaptaincy = dateOfCaptaincy;
       return usersApi.updateMe(payload);
@@ -191,15 +197,16 @@ export const CompleteProfileScreen: React.FC = () => {
       Alert.alert(t("common.error"), t("errors.phonePrefixWarning"));
       return;
     }
-    if (missing.base && !baseId) {
+    // Base, contratto, grade are always required for users with ruolo
+    if (user?.ruolo && !baseId) {
       Alert.alert(t("common.error"), t("members.baseRequired"));
       return;
     }
-    if (missing.contratto && !contrattoId) {
+    if (user?.ruolo && !contrattoId) {
       Alert.alert(t("common.error"), t("members.contractRequired"));
       return;
     }
-    if (missing.grade && !gradeId) {
+    if (user?.ruolo && !gradeId) {
       Alert.alert(t("common.error"), t("members.gradeRequired"));
       return;
     }
@@ -353,7 +360,7 @@ export const CompleteProfileScreen: React.FC = () => {
             )}
 
             {/* ── Professional info ─────────────────────────────── */}
-            {needsProfessional && (
+            {showProfessionalSection && (
               <Card style={styles.card}>
                 <Text style={styles.sectionTitle}>
                   {t("members.unionInfo")}
@@ -367,91 +374,93 @@ export const CompleteProfileScreen: React.FC = () => {
                   />
                 ) : (
                   <>
-                    {missing.base && (
-                      <>
-                        <Text style={styles.fieldLabel}>
-                          {t("members.base")}
-                          <Text style={styles.required}> *</Text>
+                    {/* Ruolo - Read Only Display */}
+                    <View style={styles.roleDisplay}>
+                      <Text style={styles.roleLabel}>{t("members.role")}</Text>
+                      <View style={styles.roleBadge}>
+                        <Text style={styles.roleBadgeText}>
+                          {user?.ruolo === "pilot"
+                            ? t("confirmEmployment.pilot")
+                            : t("confirmEmployment.cabinCrew")}
                         </Text>
-                        <View style={styles.selectWrapper}>
-                          <MapPin
-                            size={18}
-                            color={colors.primary}
-                            style={styles.selectIcon}
-                          />
-                          <View style={styles.selectInner}>
-                            <Select
-                              label=""
-                              value={baseId || undefined}
-                              onValueChange={(v) => setBaseId(v || "")}
-                              options={baseOptions}
-                              placeholder={t("members.base")}
-                            />
-                          </View>
-                        </View>
-                      </>
-                    )}
+                      </View>
+                    </View>
 
-                    {missing.contratto && (
-                      <>
-                        <Text
-                          style={[
-                            styles.fieldLabel,
-                            missing.base && styles.fieldLabelSpaced,
-                          ]}
-                        >
-                          {t("members.contract")}
-                          <Text style={styles.required}> *</Text>
-                        </Text>
-                        <View style={styles.selectWrapper}>
-                          <Briefcase
-                            size={18}
-                            color={colors.primary}
-                            style={styles.selectIcon}
+                    {/* Base - Always shown */}
+                    <>
+                      <Text style={styles.fieldLabel}>
+                        {t("members.base")}
+                        <Text style={styles.required}> *</Text>
+                      </Text>
+                      <View style={styles.selectWrapper}>
+                        <MapPin
+                          size={18}
+                          color={colors.primary}
+                          style={styles.selectIcon}
+                        />
+                        <View style={styles.selectInner}>
+                          <Select
+                            label=""
+                            value={baseId || undefined}
+                            onValueChange={(v) => setBaseId(v || "")}
+                            options={baseOptions}
+                            placeholder={t("members.base")}
                           />
-                          <View style={styles.selectInner}>
-                            <Select
-                              label=""
-                              value={contrattoId || undefined}
-                              onValueChange={(v) => setContrattoId(v || "")}
-                              options={contractOptions}
-                              placeholder={t("members.contract")}
-                            />
-                          </View>
                         </View>
-                      </>
-                    )}
+                      </View>
+                    </>
 
-                    {missing.grade && (
-                      <>
-                        <Text
-                          style={[
-                            styles.fieldLabel,
-                            (missing.base || missing.contratto) &&
-                              styles.fieldLabelSpaced,
-                          ]}
-                        >
-                          {t("members.grade")}
-                          <Text style={styles.required}> *</Text>
-                        </Text>
-                        <View style={styles.selectWrapper}>
-                          <Award
-                            size={18}
-                            color={colors.primary}
-                            style={styles.selectIcon}
+                    {/* Contratto - Always shown */}
+                    <>
+                      <Text
+                        style={[styles.fieldLabel, styles.fieldLabelSpaced]}
+                      >
+                        {t("members.contract")}
+                        <Text style={styles.required}> *</Text>
+                      </Text>
+                      <View style={styles.selectWrapper}>
+                        <Briefcase
+                          size={18}
+                          color={colors.primary}
+                          style={styles.selectIcon}
+                        />
+                        <View style={styles.selectInner}>
+                          <Select
+                            label=""
+                            value={contrattoId || undefined}
+                            onValueChange={(v) => setContrattoId(v || "")}
+                            options={contractOptions}
+                            placeholder={t("members.contract")}
                           />
-                          <View style={styles.selectInner}>
-                            <Select
-                              label=""
-                              value={gradeId || undefined}
-                              onValueChange={(v) => setGradeId(v || "")}
-                              options={gradeOptions}
-                              placeholder={t("members.grade")}
-                            />
-                          </View>
                         </View>
-                      </>
-                    )}
+                      </View>
+                    </>
+
+                    {/* Grade - Always shown (must be confirmed) */}
+                    <>
+                      <Text
+                        style={[styles.fieldLabel, styles.fieldLabelSpaced]}
+                      >
+                        {t("members.grade")}
+                        <Text style={styles.required}> *</Text>
+                      </Text>
+                      <View style={styles.selectWrapper}>
+                        <Award
+                          size={18}
+                          color={colors.primary}
+                          style={styles.selectIcon}
+                        />
+                        <View style={styles.selectInner}>
+                          <Select
+                            label=""
+                            value={gradeId || undefined}
+                            onValueChange={(v) => setGradeId(v || "")}
+                            options={gradeOptions}
+                            placeholder={t("members.grade")}
+                          />
+                        </View>
+                      </View>
+                    </>
                   </>
                 )}
               </Card>
@@ -650,6 +659,30 @@ const styles = StyleSheet.create({
   },
   required: {
     color: colors.error,
+  },
+  roleDisplay: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  roleLabel: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+    color: colors.textSecondary,
+  },
+  roleBadge: {
+    backgroundColor: colors.primary + "20",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+  },
+  roleBadgeText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+    color: colors.primary,
+    textTransform: "uppercase",
   },
   textInput: {
     borderWidth: 1,
