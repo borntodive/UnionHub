@@ -196,7 +196,11 @@ export class AuthService {
     await this.usersService.updatePassword(userId, hashedPassword);
     await this.usersService.updateMustChangePassword(userId, false);
 
-    await this.logoutAllDevices(userId);
+    // Only logout all devices for voluntary password changes
+    // For mandatory first-login changes, user should stay logged in
+    if (!isForced) {
+      await this.logoutAllDevices(userId);
+    }
   }
 
   async getProfile(userId: string): Promise<Partial<User>> {
