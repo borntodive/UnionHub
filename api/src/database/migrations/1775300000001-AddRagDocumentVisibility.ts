@@ -1,6 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class AddRagDocumentVisibility1745136000000 implements MigrationInterface {
+export class AddRagDocumentVisibility1775300000001 implements MigrationInterface {
+  name = "AddRagDocumentVisibility1775300000001";
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Add visibility column with default PUBLIC for existing docs
     await queryRunner.query(`
