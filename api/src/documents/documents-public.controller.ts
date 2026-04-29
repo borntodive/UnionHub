@@ -9,6 +9,34 @@ import {
 import { Throttle } from "@nestjs/throttler";
 import { DocumentsService } from "./documents.service";
 
+/**
+ * Sanitize document title for use as filename
+ * Removes invalid characters and limits length
+ */
+function sanitizeFilename(title: string): string {
+  if (!title) return "document";
+
+  // Remove invalid characters for filenames: / \ : * ? " < > |
+  let sanitized = title.replace(/[\/\\:*?"<>|]/g, "");
+
+  // Replace newlines and multiple spaces with single underscore
+  sanitized = sanitized.replace(/[\r\n]+/g, "_").replace(/\s+/g, "_");
+
+  // Remove consecutive underscores
+  sanitized = sanitized.replace(/_+/g, "_");
+
+  // Remove leading/trailing underscores and dots
+  sanitized = sanitized.replace(/^[_\.]+|[_\.]+$/g, "");
+
+  // Limit length (255 chars max for most filesystems, leave room for .pdf)
+  const maxLength = 200;
+  if (sanitized.length > maxLength) {
+    sanitized = sanitized.substring(0, maxLength);
+  }
+
+  return sanitized || "document";
+}
+
 @Controller("documents/public")
 export class DocumentsPublicController {
   constructor(private readonly documentsService: DocumentsService) {}
@@ -26,7 +54,7 @@ export class DocumentsPublicController {
   ) {
     const document = await this.documentsService.findById(id);
 
-    // Solo i documenti pubblicati possono essere scaricati pubblicamente
+    // Only published documents can be downloaded publicly
     if (document.status !== "published") {
       throw new NotFoundException("Document not found");
     }
@@ -43,15 +71,12 @@ export class DocumentsPublicController {
       );
       const buffer = Buffer.from(base64, "base64");
 
-      const sanitizedTitle = (document.title || "document").replace(
-        /[\r\n"]/g,
-        "_",
-      );
+      const filename = sanitizeFilename(document.title);
 
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
-        `inline; filename="${sanitizedTitle}.pdf"`,
+        `inline; filename="${filename}.pdf"`,
       );
       res.send(buffer);
     } else {

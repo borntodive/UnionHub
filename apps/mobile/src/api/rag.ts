@@ -2,12 +2,19 @@ import apiClient from "./client";
 
 export const RAG_QUERY_KEYS = {
   documents: ["rag", "documents"] as const,
+  publicDocuments: ["rag", "documents", "public"] as const,
   health: ["rag", "health"] as const,
   document: (id: string) => ["rag", "document", id] as const,
   job: (jobId: string) => ["rag", "job", jobId] as const,
 };
 
 export type RetrievalMode = "lexical" | "semantic" | "hybrid";
+
+export type DocumentVisibility =
+  | "public"
+  | "pilot_only"
+  | "cabin_only"
+  | "admin_only";
 
 export interface Citation {
   chunkId: string;
@@ -36,9 +43,9 @@ export interface AskRequest {
 
 export interface RagHealthStatus {
   redis: boolean;
-  pythonService: boolean;
+  embeddings: boolean;
   pgvector: boolean;
-  ollama: boolean;
+  ai: boolean;
   overall: boolean;
 }
 
@@ -55,6 +62,7 @@ export interface RagDocument {
   sourceFileName: string;
   sha256: string;
   isActive: boolean;
+  visibility: DocumentVisibility;
   createdAt: string;
   ingestionJobs?: IngestionJob[];
 }
@@ -98,6 +106,14 @@ export interface UploadDocumentDto {
 
 export const ragApi = {
   // ── User endpoints ──────────────────────────────────────────────────────────
+
+  // Get documents visible to the current user (all authenticated users)
+  getPublicDocuments: async (): Promise<RagDocument[]> => {
+    const response = await apiClient.get<RagDocument[]>(
+      "/rag/documents/public",
+    );
+    return response.data;
+  },
 
   ask: async (req: AskRequest): Promise<AskResponse> => {
     const response = await apiClient.post<AskResponse>("/rag/ask", req, {
@@ -181,6 +197,17 @@ export const ragApi = {
       success: boolean;
       message: string;
     }>(`/rag/documents/${id}`);
+    return response.data;
+  },
+
+  updateDocumentVisibility: async (
+    id: string,
+    visibility: DocumentVisibility,
+  ): Promise<RagDocument> => {
+    const response = await apiClient.patch<RagDocument>(
+      `/rag/documents/${id}`,
+      { visibility },
+    );
     return response.data;
   },
 };

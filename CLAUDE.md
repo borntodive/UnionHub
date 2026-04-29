@@ -120,6 +120,52 @@ npm run lint               # ESLint check
 - `isHtml(text)` detects HTML input via `text.trim().startsWith("<")`
 - `rewriteAsUnionCommunication()` and `translateToEnglish()` both preserve HTML tag structure when input is HTML
 - `generateEmbedding(text)` — calls `POST /api/embeddings` with `OLLAMA_EMBED_MODEL` (nomic-embed-text, 768 dims)
+- `chat(message, system?, history?)` — conversational AI using `OLLAMA_CHAT_MODEL` (or `OLLAMA_MODEL` as fallback)
+
+**OpenRouter Configuration**:
+
+The OllamaService supports OpenRouter as a cloud provider using OpenAI-compatible API. Configure in `api/.env`:
+
+```env
+OLLAMA_URL=https://openrouter.ai/api/v1
+OLLAMA_API_KEY=your_openrouter_key_here
+OLLAMA_CLOUD=true
+
+# Translation model (recommended)
+OLLAMA_MODEL=google/gemma-3-27b-it:free
+
+# Chat model (speed + context focused, optional)
+OLLAMA_CHAT_MODEL=meta-llama/llama-3.1-8b-instruct:free
+```
+
+**Model Recommendations:**
+
+| Purpose          | Model                                   | Why                                  |
+| ---------------- | --------------------------------------- | ------------------------------------ |
+| **Translations** | `google/gemma-3-27b-it:free`            | 27B, multilingual, HTML preservation |
+| **Chat**         | `meta-llama/llama-3.1-8b-instruct:free` | Fast, 128K context, conversational   |
+
+**Alternative Free Models:**
+
+| Model                                       | Quality | Best For                |
+| ------------------------------------------- | ------- | ----------------------- |
+| `meta-llama/llama-3.1-8b-instruct:free`     | ⭐⭐⭐  | Faster, simpler texts   |
+| `microsoft/phi-3.5-mini-128k-instruct:free` | ⭐⭐    | Very fast, simple texts |
+| `qwen/qwen-2.5-7b-instruct:free`            | ⭐⭐⭐  | Multilingual, smaller   |
+
+**Paid Models (Higher Quality):**
+
+| Model                               | Cost    | Best For                            |
+| ----------------------------------- | ------- | ----------------------------------- |
+| `qwen/qwen-2.5-7b-instruct`         | $0.03/M | High volume, budget-conscious       |
+| `meta-llama/llama-3.1-70b-instruct` | $0.59/M | Maximum quality, critical documents |
+
+**Key Points:**
+
+- Cloud detection uses `OLLAMA_CLOUD=true` (healthcheck uses `generate()` for cloud, `/api/tags` for local)
+- Cloud models get 2-minute timeout vs 1-minute for local
+- `OLLAMA_CHAT_MODEL` is optional — defaults to `OLLAMA_MODEL` if not set
+- Translation uses `OLLAMA_MODEL`, chat uses `OLLAMA_CHAT_MODEL`
 
 **NotificationsService** (`api/src/notifications/notifications.service.ts`):
 

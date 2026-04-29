@@ -100,7 +100,7 @@ export class BackupsService {
       pageSize: 200,
     });
 
-    const folders = (res.data.files || []).filter((f) =>
+    const folders = (res.data.files || []).filter((f: any) =>
       /^\d{4}-\d{2}-\d{2}_\d{4}$/.test(f.name || ""),
     );
 
@@ -112,11 +112,13 @@ export class BackupsService {
         spaces: "drive",
       });
 
-      const files: BackupFileDto[] = (filesRes.data.files || []).map((f) => ({
-        id: f.id!,
-        name: f.name!,
-        size: parseInt(f.size || "0", 10),
-      }));
+      const files: BackupFileDto[] = (filesRes.data.files || []).map(
+        (f: any) => ({
+          id: f.id!,
+          name: f.name!,
+          size: parseInt(f.size || "0", 10),
+        }),
+      );
 
       result.push({
         id: folder.id!,
@@ -281,7 +283,7 @@ export class BackupsService {
     const driveFiles = filesRes.data.files || [];
 
     const dbFile = driveFiles.find(
-      (f) => f.name?.startsWith("db_") && f.name.endsWith(".sql.gz"),
+      (f: any) => f.name?.startsWith("db_") && f.name.endsWith(".sql.gz"),
     );
     if (!dbFile) {
       throw new NotFoundException(
@@ -290,7 +292,7 @@ export class BackupsService {
     }
 
     const uploadsFile = driveFiles.find(
-      (f) => f.name?.startsWith("uploads_") && f.name.endsWith(".tar.gz"),
+      (f: any) => f.name?.startsWith("uploads_") && f.name.endsWith(".tar.gz"),
     );
 
     const ts = Date.now();

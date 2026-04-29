@@ -55,6 +55,7 @@ import { CtcScreen } from "../screens/CtcScreen";
 import { GmailScreen } from "../gmail/screens/GmailScreen";
 import { RagAskScreen } from "../screens/RagAskScreen/RagAskScreen";
 import { RagAdminScreen } from "../screens/RagAdminScreen/RagAdminScreen";
+import { RagPublicDocumentsScreen } from "../screens/RagPublicDocumentsScreen/RagPublicDocumentsScreen";
 import AdminContractsScreen from "../payslip/screens/AdminContractsScreen";
 import ContractEditorScreen from "../payslip/screens/ContractEditorScreen";
 import { SettingsScreen } from "../screens/SettingsScreen/SettingsScreen";
@@ -68,6 +69,22 @@ import { PublicDocumentsScreen } from "../screens/PublicDocumentsScreen";
 import { ReportIssueScreen } from "../screens/ReportIssueScreen/ReportIssueScreen";
 import { MyIssuesScreen } from "../screens/MyIssuesScreen/MyIssuesScreen";
 import { NotificationsScreen } from "../screens/NotificationsScreen/NotificationsScreen";
+import { StatisticsScreen } from "../screens/admin/StatisticsScreen";
+import { BulkImportScreen } from "../screens/admin/BulkImportScreen";
+import { DeactivatedMembersScreen } from "../screens/admin/DeactivatedMembersScreen";
+import { BasesScreen } from "../screens/admin/BasesScreen";
+import { GradesScreen } from "../screens/admin/GradesScreen";
+import { IssueCategoriesScreen } from "../screens/admin/IssueCategoriesScreen";
+import { IssueUrgenciesScreen } from "../screens/admin/IssueUrgenciesScreen";
+import { BackupsScreen } from "../screens/admin/BackupsScreen";
+import { GmailSetupScreen } from "../gmail/screens/GmailSetupScreen";
+import { MemberDetailScreen } from "../screens/MemberDetailScreen/MemberDetailScreen";
+import { MemberEditScreen } from "../screens/MemberDetailScreen/MemberEditScreen";
+import { MemberCreateScreen } from "../screens/MembersScreen/MemberCreateScreen";
+import { BaseFormScreen } from "../screens/admin/BaseFormScreen";
+import { GradeFormScreen } from "../screens/admin/GradeFormScreen";
+import { IssueCategoryFormScreen } from "../screens/admin/IssueCategoryFormScreen";
+import { IssueUrgencyFormScreen } from "../screens/admin/IssueUrgencyFormScreen";
 import { UserRole } from "../types";
 const Drawer = createDrawerNavigator();
 
@@ -237,15 +254,25 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             />
           )}
 
-          {isOnline && (
-            <MenuItem
-              icon={<Search size={22} color={colors.primary} />}
-              label={t("navigation.ragAssistant")}
-              onPress={() => {
-                props.navigation.navigate("RagAsk");
-                props.navigation.closeDrawer();
-              }}
-            />
+          {isOnline && isAdmin && (
+            <>
+              <MenuItem
+                icon={<Search size={22} color={colors.primary} />}
+                label={t("navigation.ragAssistant")}
+                onPress={() => {
+                  props.navigation.navigate("RagAsk");
+                  props.navigation.closeDrawer();
+                }}
+              />
+              <MenuItem
+                icon={<BookOpen size={22} color={colors.primary} />}
+                label={t("rag.publicDocuments.title")}
+                onPress={() => {
+                  props.navigation.navigate("RagPublicDocuments");
+                  props.navigation.closeDrawer();
+                }}
+              />
+            </>
           )}
 
           {/* Issues — available offline */}
@@ -611,6 +638,24 @@ export const DrawerNavigator: React.FC = () => {
         }}
       />
       <Drawer.Screen
+        name="MemberDetail"
+        component={MemberDetailScreen}
+        options={{
+          title: t("navigation.profile"),
+          drawerItemStyle: { display: "none" },
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
+        name="MemberEdit"
+        component={MemberEditScreen}
+        options={{
+          title: t("navigation.editMember"),
+          drawerItemStyle: { display: "none" },
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
         name="PayslipCalculator"
         component={PayslipTabs}
         options={{
@@ -695,6 +740,33 @@ export const DrawerNavigator: React.FC = () => {
               headerShown: false,
             }}
           />
+          <Drawer.Screen
+            name="Statistics"
+            component={StatisticsScreen}
+            options={{
+              title: t("navigation.statistics"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="BulkImport"
+            component={BulkImportScreen}
+            options={{
+              title: t("navigation.bulkImport"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="MemberCreate"
+            component={MemberCreateScreen}
+            options={{
+              title: t("navigation.createMember"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
         </>
       )}
       {isSuperAdmin && (
@@ -713,6 +785,105 @@ export const DrawerNavigator: React.FC = () => {
             component={ContractEditorScreen}
             options={{
               title: t("navigation.contracts"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="DeactivatedMembers"
+            component={DeactivatedMembersScreen}
+            options={{
+              title: t("navigation.deactivatedMembers"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="Bases"
+            component={BasesScreen}
+            options={{
+              title: t("navigation.bases"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="BaseForm"
+            component={BaseFormScreen}
+            options={{
+              title: t("navigation.bases"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="Grades"
+            component={GradesScreen}
+            options={{
+              title: t("navigation.grades"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="GradeForm"
+            component={GradeFormScreen}
+            options={{
+              title: t("navigation.grades"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="IssueCategories"
+            component={IssueCategoriesScreen}
+            options={{
+              title: t("navigation.issueCategories"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="IssueCategoryForm"
+            component={IssueCategoryFormScreen}
+            options={{
+              title: t("navigation.issueCategories"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="IssueUrgencies"
+            component={IssueUrgenciesScreen}
+            options={{
+              title: t("navigation.issueUrgencies"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="IssueUrgencyForm"
+            component={IssueUrgencyFormScreen}
+            options={{
+              title: t("navigation.issueUrgencies"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="GmailSetup"
+            component={GmailSetupScreen}
+            options={{
+              title: t("navigation.gmailSetup"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="Backups"
+            component={BackupsScreen}
+            options={{
+              title: t("navigation.backups"),
               drawerItemStyle: { display: "none" },
               headerShown: false,
             }}
@@ -737,6 +908,15 @@ export const DrawerNavigator: React.FC = () => {
           title: t("navigation.ragAssistant"),
           drawerItemStyle: { display: "none" },
           headerShown: false,
+        }}
+      />
+      <Drawer.Screen
+        name="RagPublicDocuments"
+        component={RagPublicDocumentsScreen}
+        options={{
+          title: t("rag.publicDocuments.title"),
+          drawerLabel: t("rag.publicDocuments.title"),
+          headerShown: true,
         }}
       />
       <Drawer.Screen

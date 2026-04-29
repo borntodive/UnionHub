@@ -2,18 +2,17 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Document } from "./entities/document.entity";
 import {
   CreateDocumentDto,
-  ReviewDocumentDto,
-  ApproveDocumentDto,
   UpdateTranslationDto,
   UploadDocumentDto,
 } from "./dto/create-document.dto";
-import { OllamaService } from "../ollama/ollama.service";
+import { AiService } from "../ai/ai.service";
 import { PdfService } from "./pdf.service";
 import { NotificationsService } from "../notifications/notifications.service";
 
@@ -34,10 +33,12 @@ function sanitizeAuthor(author: any) {
 
 @Injectable()
 export class DocumentsService {
+  private readonly logger = new Logger(DocumentsService.name);
+
   constructor(
     @InjectRepository(Document)
     private documentRepository: Repository<Document>,
-    private ollamaService: OllamaService,
+    private aiService: AiService,
     private pdfService: PdfService,
     private notificationsService: NotificationsService,
   ) {}
@@ -46,15 +47,6 @@ export class DocumentsService {
     const docs = await this.documentRepository.find({
       relations: ["author"],
       order: { createdAt: "DESC" },
-    });
-    return docs.map((d: any) => ({ ...d, author: sanitizeAuthor(d.author) }));
-  }
-
-  async findVerified(): Promise<any[]> {
-    const docs = await this.documentRepository.find({
-      where: { status: "verified" },
-      relations: ["author"],
-      order: { updatedAt: "DESC" },
     });
     return docs.map((d: any) => ({ ...d, author: sanitizeAuthor(d.author) }));
   }
@@ -70,6 +62,7 @@ export class DocumentsService {
         englishTitle: true,
         status: true,
         union: true,
+        ruolo: true,
         publishedAt: true,
         createdAt: true,
         author: {
@@ -113,7 +106,7 @@ export class DocumentsService {
     return this.documentRepository.save(document);
   }
 
-  async uploadAndPublish(
+  async upload(
     dto: UploadDocumentDto,
     file: Express.Multer.File,
     user: UserInfo,
@@ -122,9 +115,8 @@ export class DocumentsService {
 
     const document = this.documentRepository.create({
       title: dto.title,
-      originalContent: "[Uploaded PDF]",
-      status: "published" as const,
-      publishedAt: new Date(),
+      originalContent: "[Uploaded PDF - no text content]",
+      status: "draft",
       finalPdfUrl: `data:application/pdf;base64,${base64Pdf}`,
       union: dto.union || "fit-cisl",
       ruolo: dto.ruolo || "pilot",
@@ -133,8 +125,104 @@ export class DocumentsService {
 
     const savedDocument = await this.documentRepository.save(document);
 
+    return {
+      ...savedDocument,
+      author: sanitizeAuthor((savedDocument as any).author),
+    };
+  }
+
+  async update(
+    id: string,
+    dto: { title?: string; content?: string },
+  ): Promise<Document> {
+    const document = await this.findByIdRaw(id);
+
+    if (dto.title !== undefined) {
+      document.title = dto.title;
+    }
+    if (dto.content !== undefined) {
+      document.originalContent = dto.content;
+    }
+
+    return this.documentRepository.save(document);
+  }
+
+  /**
+   * Process document: AI rewrite + translate + generate PDF
+   * All in one operation
+   */
+  async process(id: string, user: UserInfo): Promise<Document> {
+    this.logger.log(`[PROCESS] Starting process for document: ${id}`);
+    const document = await this.findByIdRaw(id);
+
+    const isAiReady = await this.aiService.healthCheck();
+    if (!isAiReady) {
+      throw new BadRequestException(
+        "AI service is not available. Please check OpenRouter configuration.",
+      );
+    }
+
+    const finalContent = document.originalContent;
+
+    try {
+      // Step 1: AI rewrite as union communication
+      this.logger.log("[PROCESS] Step 1: AI rewrite");
+      document.aiReviewedContent =
+        await this.aiService.rewriteAsUnionCommunication(finalContent);
+
+      // Step 2: AI translate to English
+      this.logger.log("[PROCESS] Step 2: AI translate");
+      const contentToTranslate =
+        document.aiReviewedContent || document.originalContent;
+      document.englishTranslation =
+        await this.aiService.translateToEnglish(contentToTranslate);
+
+      // Step 3: Translate title
+      this.logger.log("[PROCESS] Step 3: Translate title");
+      await this.translateTitleIfNeeded(document);
+
+      // Step 4: Generate PDF
+      this.logger.log("[PROCESS] Step 4: Generate PDF");
+      const pdfBuffer = await this.pdfService.generateDocumentPdf(document);
+      const base64Pdf = pdfBuffer.toString("base64");
+      document.finalPdfUrl = `data:application/pdf;base64,${base64Pdf}`;
+
+      this.logger.log(`[PROCESS] Completed for document: ${id}`);
+      return this.documentRepository.save(document);
+    } catch (error: any) {
+      this.logger.error(`[PROCESS] Error: ${error.message}`);
+      throw new BadRequestException(`Process failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Publish document (draft → published)
+   * Sends push notification
+   */
+  async publish(id: string, user: UserInfo): Promise<Document> {
+    this.logger.log(`[PUBLISH] Publishing document: ${id}`);
+    const document = await this.findByIdRaw(id);
+
+    if (document.status === "published") {
+      return document; // Already published
+    }
+
+    // Ensure PDF exists, regenerate if needed
+    if (!document.finalPdfUrl) {
+      this.logger.log("[PUBLISH] No PDF found, generating...");
+      const pdfBuffer = await this.pdfService.generateDocumentPdf(document);
+      const base64Pdf = pdfBuffer.toString("base64");
+      document.finalPdfUrl = `data:application/pdf;base64,${base64Pdf}`;
+    }
+
+    document.status = "published";
+    document.publishedAt = new Date();
+
+    const savedDocument = await this.documentRepository.save(document);
+
+    // Send push notification
     await this.notificationsService.broadcastNotification(
-      "\u{1F4E2} Nuovo Comunicato Sindakale",
+      "\u{1F4E2} Nuovo Comunicato Sindacale",
       `"${document.title}" è stato pubblicato. Tocca per leggere.`,
       {
         documentId: savedDocument.id,
@@ -142,233 +230,179 @@ export class DocumentsService {
       },
     );
 
-    return {
-      ...savedDocument,
-      author: sanitizeAuthor((savedDocument as any).author),
-    };
+    this.logger.log(`[PUBLISH] Document published: ${id}`);
+    return savedDocument;
   }
 
-  async review(id: string, dto: ReviewDocumentDto): Promise<Document> {
-    const document = await this.findByIdRaw(id);
-
-    const isOllamaReady = await this.ollamaService.healthCheck();
-    if (!isOllamaReady) {
-      throw new BadRequestException(
-        "Ollama service is not available. Please ensure Ollama is running.",
-      );
-    }
-
-    const aiReviewed = await this.ollamaService.rewriteAsUnionCommunication(
-      dto.content,
-    );
-
-    document.aiReviewedContent = aiReviewed;
-    document.status = "reviewing";
-
-    return this.documentRepository.save(document);
-  }
-
-  async approve(
-    id: string,
-    dto: ApproveDocumentDto,
-    user: UserInfo,
-  ): Promise<Document> {
-    try {
-      const document = await this.findByIdRaw(id);
-
-      const finalContent =
-        dto.reviewedContent ||
-        document.aiReviewedContent ||
-        document.originalContent;
-      if (!finalContent) {
-        throw new Error("No content to approve");
-      }
-
-      let englishTranslation: string | null = null;
-      try {
-        const isOllamaReady = await this.ollamaService.healthCheck();
-        if (isOllamaReady) {
-          englishTranslation =
-            await this.ollamaService.translateToEnglish(finalContent);
-        }
-      } catch (error: any) {
-        console.warn("Ollama translation skipped: " + error.message);
-      }
-
-      document.aiReviewedContent = finalContent;
-      document.englishTranslation = englishTranslation;
-      document.status = "approved";
-
-      return await this.documentRepository.save(document);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  private async translateTitleIfNeeded(document: Document): Promise<void> {
-    if (!document.englishTitle && document.title) {
-      try {
-        const isOllamaReady = await this.ollamaService.healthCheck();
-        if (isOllamaReady) {
-          const systemPrompt = `Sei un traduttore professionale. Traduci il titolo dal italiano all'inglese mantenendo il tono formale e professionale. Usa il contesto del comunicato per una traduzione più accurata. Rispondi SOLO con la traduzione, senza note o spiegazioni.`;
-          const content =
-            document.aiReviewedContent || document.originalContent;
-          const prompt = `Traduci questo titolo in inglese usando il contesto del comunicato:
-
-TITOLO: "${document.title}"
-
-CONTESTO (primi 500 caratteri del comunicato):
-"${content.substring(0, 500)}..."
-
-Traduzione del titolo (solo il titolo tradotto, nient'altro):`;
-          document.englishTitle = await this.ollamaService.generate(
-            prompt,
-            systemPrompt,
-          );
-        }
-      } catch {
-        // Don't fail if translation doesn't work
-      }
-    }
-  }
-
-  async verify(id: string, user: UserInfo): Promise<Document> {
-    const document = await this.findByIdRaw(id);
-
-    if (document.status !== "approved") {
-      throw new Error("Document must be approved before verification");
-    }
-
-    await this.translateTitleIfNeeded(document);
-
-    try {
-      const pdfBuffer = await this.pdfService.generateDocumentPdf(document);
-      const base64Pdf = pdfBuffer.toString("base64");
-
-      document.status = "verified";
-      document.finalPdfUrl = `data:application/pdf;base64,${base64Pdf}`;
-
-      return this.documentRepository.save(document);
-    } catch (error) {
-      throw new Error("Failed to generate PDF: " + error.message);
-    }
-  }
-
-  async publish(id: string, user: UserInfo): Promise<Document> {
-    const document = await this.findByIdRaw(id);
-
-    if (document.status !== "verified") {
-      throw new Error("Document must be verified before publishing");
-    }
-
-    await this.translateTitleIfNeeded(document);
-
-    try {
-      const pdfBuffer = await this.pdfService.generateDocumentPdf(document);
-
-      const base64Pdf = pdfBuffer.toString("base64");
-
-      document.status = "published";
-      document.publishedAt = new Date();
-      document.finalPdfUrl = `data:application/pdf;base64,${base64Pdf}`;
-
-      const savedDocument = await this.documentRepository.save(document);
-
-      await this.notificationsService.broadcastNotification(
-        "📢 Nuovo Comunicato Sindakale",
-        `"${document.title}" è stato pubblicato. Tocca per leggere.`,
-        {
-          documentId: document.id,
-          type: "new_document",
-        },
-      );
-
-      return savedDocument;
-    } catch (error) {
-      throw new Error("Failed to generate PDF: " + error.message);
-    }
-  }
-
-  async regeneratePdf(id: string, user: UserInfo): Promise<Document> {
-    const document = await this.findByIdRaw(id);
-
-    if (document.status !== "published" && document.status !== "verified") {
-      throw new Error(
-        "Document must be published or verified to regenerate PDF",
-      );
-    }
-
-    await this.translateTitleIfNeeded(document);
-
-    try {
-      const pdfBuffer = await this.pdfService.generateDocumentPdf(document);
-      const base64Pdf = pdfBuffer.toString("base64");
-
-      document.finalPdfUrl = `data:application/pdf;base64,${base64Pdf}`;
-
-      return this.documentRepository.save(document);
-    } catch (error) {
-      throw new Error("Failed to regenerate PDF: " + error.message);
-    }
-  }
-
-  async regenerateTranslations(id: string, user: UserInfo): Promise<Document> {
-    const document = await this.findByIdRaw(id);
-
-    document.englishTitle = null;
-    document.englishTranslation = null;
-
-    try {
-      const isOllamaReady = await this.ollamaService.healthCheck();
-      if (!isOllamaReady) {
-        throw new Error("Ollama service is not available");
-      }
-
-      const finalContent =
-        document.aiReviewedContent || document.originalContent;
-      document.englishTranslation =
-        await this.ollamaService.translateToEnglish(finalContent);
-
-      await this.translateTitleIfNeeded(document);
-
-      return this.documentRepository.save(document);
-    } catch (error) {
-      throw new Error("Failed to regenerate translations: " + error.message);
-    }
-  }
-
+  /**
+   * Update translation manually
+   */
   async updateTranslation(
     id: string,
     dto: UpdateTranslationDto,
   ): Promise<Document> {
     const document = await this.findByIdRaw(id);
     document.englishTranslation = dto.englishTranslation;
+    if (dto.englishTitle) {
+      document.englishTitle = dto.englishTitle;
+    }
     return this.documentRepository.save(document);
   }
 
-  async reject(id: string, rejectionReason?: string): Promise<Document> {
+  /**
+   * Regenerate PDF only
+   */
+  async regeneratePdf(id: string): Promise<Document> {
+    this.logger.log(`[REGEN PDF] Regenerating PDF for document: ${id}`);
     const document = await this.findByIdRaw(id);
-    document.status = "rejected";
-    document.rejectionReason = rejectionReason || null;
-    return this.documentRepository.save(document);
+
+    // Ensure we have content to generate PDF from
+    const contentToUse = document.aiReviewedContent || document.originalContent;
+
+    if (!contentToUse) {
+      throw new BadRequestException("No content available to generate PDF");
+    }
+
+    try {
+      const pdfBuffer = await this.pdfService.generateDocumentPdf(document);
+      const base64Pdf = pdfBuffer.toString("base64");
+      document.finalPdfUrl = `data:application/pdf;base64,${base64Pdf}`;
+
+      this.logger.log(`[REGEN PDF] PDF regenerated for document: ${id}`);
+      return this.documentRepository.save(document);
+    } catch (error: any) {
+      this.logger.error(`[REGEN PDF] Error: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to regenerate PDF: ${error.message}`,
+      );
+    }
+  }
+
+  /**
+   * Regenerate AI content only (rewrite + translate)
+   */
+  async regenerateAi(id: string): Promise<Document> {
+    this.logger.log(`[REGEN AI] Regenerating AI for document: ${id}`);
+    const document = await this.findByIdRaw(id);
+
+    const isAiReady = await this.aiService.healthCheck();
+    if (!isAiReady) {
+      throw new BadRequestException(
+        "AI service is not available. Please check OpenRouter configuration.",
+      );
+    }
+
+    try {
+      // Rewrite
+      document.aiReviewedContent =
+        await this.aiService.rewriteAsUnionCommunication(
+          document.originalContent,
+        );
+
+      // Translate
+      const contentToTranslate =
+        document.aiReviewedContent || document.originalContent;
+      document.englishTranslation =
+        await this.aiService.translateToEnglish(contentToTranslate);
+
+      // Translate title
+      document.englishTitle = null; // Reset to force re-translation
+      await this.translateTitleIfNeeded(document);
+
+      this.logger.log(`[REGEN AI] AI regenerated for document: ${id}`);
+      return this.documentRepository.save(document);
+    } catch (error: any) {
+      this.logger.error(`[REGEN AI] Error: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to regenerate AI: ${error.message}`,
+      );
+    }
+  }
+
+  /**
+   * Translate only - no rewrite, no PDF generation
+   * Translates content to English and translates title
+   */
+  async translate(id: string): Promise<Document> {
+    this.logger.log(`[TRANSLATE] Translating document: ${id}`);
+    const document = await this.findByIdRaw(id);
+
+    const isAiReady = await this.aiService.healthCheck();
+    if (!isAiReady) {
+      throw new BadRequestException(
+        "AI service is not available. Please check OpenRouter configuration.",
+      );
+    }
+
+    try {
+      // Get content to translate (prefer AI reviewed, fallback to original)
+      const contentToTranslate =
+        document.aiReviewedContent || document.originalContent;
+
+      // Translate content
+      document.englishTranslation =
+        await this.aiService.translateToEnglish(contentToTranslate);
+
+      // Translate title if needed
+      await this.translateTitleIfNeeded(document);
+
+      this.logger.log(`[TRANSLATE] Document translated: ${id}`);
+      return this.documentRepository.save(document);
+    } catch (error: any) {
+      this.logger.error(`[TRANSLATE] Error: ${error.message}`);
+      throw new BadRequestException(`Failed to translate: ${error.message}`);
+    }
   }
 
   async delete(id: string): Promise<void> {
     const document = await this.findByIdRaw(id);
+
     await this.documentRepository.remove(document);
+    this.logger.log(`[DELETE] Document deleted: ${id}`);
   }
 
-  async checkOllamaHealth(): Promise<{
+  async checkAiHealth(): Promise<{
     available: boolean;
     model: string;
     isCloud: boolean;
   }> {
-    const isHealthy = await this.ollamaService.healthCheck();
-    const config = this.ollamaService.getConfig();
+    const isHealthy = await this.aiService.healthCheck();
+    const config = this.aiService.getConfig();
     return {
       available: isHealthy,
       model: config.model,
       isCloud: config.isCloud,
     };
+  }
+
+  /**
+   * Translate title if not already translated
+   */
+  private async translateTitleIfNeeded(document: Document): Promise<void> {
+    if (!document.englishTitle && document.title) {
+      try {
+        const systemPrompt = `You are a professional translator. Translate the title from Italian to English maintaining a formal and professional tone. Use the context of the communication for a more accurate translation. Respond ONLY with the translation, no notes or explanations.`;
+        const content = document.aiReviewedContent || document.originalContent;
+        const prompt = `Translate this title to English using the context of the communication:
+
+TITLE: "${document.title}"
+
+CONTEXT (first 500 characters of the communication):
+"${content.substring(0, 500)}..."
+
+Translated title (only the translated title, nothing else):`;
+
+        document.englishTitle = await this.aiService.generate(
+          prompt,
+          systemPrompt,
+        );
+        this.logger.log(
+          `[TITLE] Title translated: "${document.title}" → "${document.englishTitle}"`,
+        );
+      } catch (error) {
+        this.logger.warn(`[TITLE] Translation failed: ${error.message}`);
+        // Don't fail if title translation doesn't work
+      }
+    }
   }
 }

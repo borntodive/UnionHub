@@ -6,6 +6,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
+import { DocumentVisibility } from "../../common/enums/document-visibility.enum";
 import { DocumentVersion } from "./document-version.entity";
 import { Chunk } from "./chunk.entity";
 import { IngestionJob } from "./ingestion-job.entity";
@@ -13,6 +14,7 @@ import { IngestionJob } from "./ingestion-job.entity";
 @Entity("rag_documents")
 @Index(["code"], { unique: true })
 @Index(["isActive"])
+@Index(["visibility"])
 export class RagDocument {
   @PrimaryGeneratedColumn("uuid")
   id: string;
@@ -46,6 +48,13 @@ export class RagDocument {
 
   @Column({ type: "boolean", default: true })
   isActive: boolean;
+
+  @Column({
+    type: "enum",
+    enum: DocumentVisibility,
+    default: DocumentVisibility.PUBLIC,
+  })
+  visibility: DocumentVisibility;
 
   @CreateDateColumn({ type: "timestamptz" })
   createdAt: Date;

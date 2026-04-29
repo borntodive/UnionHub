@@ -10,9 +10,13 @@ import { ChunkEmbedding } from "../entities/chunk-embedding.entity";
 import { RagDocument } from "../entities/rag-document.entity";
 import { IngestionStatus } from "../enums/ingestion-status.enum";
 import { ChunkType } from "../enums/chunk-type.enum";
-import { PythonRagClientService } from "../services/python-rag-client.service";
+import { LangChainChunkerService } from "../services/langchain-chunker.service";
+import { LangChainEmbeddingsService } from "../services/langchain-embeddings.service";
+import { TableExtractorService } from "../services/vision/table-extractor.service";
+import { VisionTableExtractorService } from "../services/vision/vision-table-extractor.service";
 import { RAG_INGESTION_QUEUE } from "../constants";
 import { NotificationsService } from "../../notifications/notifications.service";
+const pdf = require("pdf-parse");
 
 interface IngestionJobPayload {
   jobId: string;
@@ -24,7 +28,10 @@ export class IngestionProcessor extends WorkerHost {
   private readonly logger = new Logger(IngestionProcessor.name);
 
   constructor(
-    private readonly pythonClient: PythonRagClientService,
+    private readonly chunkerService: LangChainChunkerService,
+    private readonly embeddingsService: LangChainEmbeddingsService,
+    private readonly tableExtractor: TableExtractorService,
+    private readonly visionTableExtractor: VisionTableExtractorService,
     @InjectRepository(IngestionJob)
     private readonly ingestionJobRepo: Repository<IngestionJob>,
     @InjectRepository(IngestionStep)
@@ -71,63 +78,156 @@ export class IngestionProcessor extends WorkerHost {
     ingestionJob.startedAt = new Date();
     await this.ingestionJobRepo.save(ingestionJob);
 
-    // Step 1: Parse PDF
+    // Step 1: Parse PDF using pdf-parse
     const parseStep = await this.createStep(jobId, "parse");
-    let parseResult;
+    let pdfText: string;
+    let pageCount: number;
     try {
-      parseResult = await this.pythonClient.parsePdf(
-        document.filePath,
-        documentId,
-      );
+      const fs = require("fs");
+      const dataBuffer = fs.readFileSync(document.filePath);
+      const data = (await pdf(dataBuffer)) as {
+        text: string;
+        numpages: number;
+      };
+      pdfText = data.text;
+      pageCount = data.numpages;
+
       await this.completeStep(parseStep, {
-        page_count: parseResult.page_count,
-        section_count: parseResult.sections.length,
-        table_count: parseResult.tables.length,
+        page_count: pageCount,
+        text_length: pdfText.length,
       });
     } catch (err: any) {
       await this.failJob(ingestionJob, parseStep, err.message, document);
       return;
     }
 
-    // Step 2: Build chunks
-    const chunkStep = await this.createStep(jobId, "chunk");
-    let chunkResult;
+    // Step 1.5: Extract tables using vision-based extractor (with heuristic fallback)
+    const tableStep = await this.createStep(jobId, "extract_tables");
+    let extractedTables: Awaited<
+      ReturnType<VisionTableExtractorService["extractTablesFromPdf"]>
+    > = [];
+    let extractionMethod = "vision";
+
     try {
-      chunkResult = await this.pythonClient.buildChunks(
-        documentId,
-        parseResult.sections,
-        parseResult.tables,
+      // Try vision-based extraction first (more accurate for complex tables)
+      this.logger.log("Attempting vision-based table extraction...");
+      extractedTables = await this.visionTableExtractor.extractTablesFromPdf(
+        document.filePath,
+        {
+          maxPages: Math.min(pageCount, 100), // Limit for performance
+          skipHeuristic: false,
+        },
+      );
+    } catch (visionErr: any) {
+      this.logger.warn(
+        `Vision-based table extraction failed: ${visionErr.message}, falling back to heuristic extraction`,
+      );
+
+      try {
+        // Fallback to heuristic extraction
+        extractionMethod = "heuristic";
+        extractedTables = await this.tableExtractor.extractTablesFromPdf(
+          document.filePath,
+          Math.min(pageCount, 100),
+        );
+      } catch (heuristicErr: any) {
+        this.logger.warn(
+          `Heuristic table extraction also failed: ${heuristicErr.message}`,
+        );
+      }
+    }
+
+    if (extractedTables.length > 0) {
+      await this.completeStep(tableStep, {
+        table_count: extractedTables.length,
+        method: extractionMethod,
+      });
+      this.logger.log(
+        `Extracted ${extractedTables.length} tables using ${extractionMethod} method`,
+      );
+    } else {
+      await this.failStep(tableStep, "No tables detected");
+    }
+
+    // Step 2: Build chunks using LangChain + extracted tables
+    const chunkStep = await this.createStep(jobId, "chunk");
+    let chunkEntities: Chunk[];
+    try {
+      // Use LangChain chunker to split text
+      const chunkItems = await this.chunkerService.splitSection(
+        pdfText,
+        null, // sectionCode - not available in simplified parsing
+        document.title,
+        null, // pageStart - not tracked in simplified parsing
+        null, // pageEnd
       );
 
       // Delete existing chunks for this document (re-ingestion scenario)
       await this.chunkRepo.delete({ documentId });
 
-      const chunkEntities = chunkResult.chunks.map((c) =>
-        this.chunkRepo.create({
-          documentId,
-          sectionCode: c.section_code,
-          sectionTitle: c.section_title,
-          pageStart: c.page_start,
-          pageEnd: c.page_end,
-          chunkType: (c.chunk_type as ChunkType) ?? ChunkType.TEXT,
-          chunkIndex: c.chunk_index,
-          textContent: c.text_content,
-          tableJson: c.table_json ?? null,
-          metadata: {},
-          tokenCount: c.token_count,
-        }),
+      chunkEntities = [];
+
+      // Create text chunks
+      let chunkIndex = 0;
+      for (const c of chunkItems) {
+        chunkEntities.push(
+          this.chunkRepo.create({
+            documentId,
+            sectionCode: c.sectionCode,
+            sectionTitle: c.sectionTitle || document.title,
+            pageStart: c.pageStart,
+            pageEnd: c.pageEnd,
+            chunkType: ChunkType.TEXT,
+            chunkIndex: chunkIndex++,
+            textContent: c.textContent,
+            tableJson: null,
+            metadata: {},
+            tokenCount: c.tokenCount,
+          }),
+        );
+      }
+
+      // Create table chunks from extracted tables
+      for (const table of extractedTables) {
+        const tableText = this.formatTableAsText(table);
+
+        chunkEntities.push(
+          this.chunkRepo.create({
+            documentId,
+            sectionCode: null,
+            sectionTitle: `Tabella (pagina ${table.pageIndex + 1})`,
+            pageStart: table.pageIndex + 1,
+            pageEnd: table.pageIndex + 1,
+            chunkType: ChunkType.TABLE,
+            chunkIndex: chunkIndex++,
+            textContent: tableText,
+            tableJson: {
+              headers: table.headers,
+              rows: table.rows,
+              confidence: table.confidence,
+            },
+            metadata: { isTable: true, pageIndex: table.pageIndex },
+            tokenCount: Math.ceil(tableText.length / 4),
+          }),
+        );
+      }
+
+      this.logger.log(
+        `Created ${chunkEntities.length} chunks (${chunkItems.length} text + ${extractedTables.length} tables)`,
       );
 
       await this.chunkRepo.save(chunkEntities, { chunk: 100 });
       await this.completeStep(chunkStep, {
         chunk_count: chunkEntities.length,
+        text_chunks: chunkItems.length,
+        table_chunks: extractedTables.length,
       });
     } catch (err: any) {
       await this.failJob(ingestionJob, chunkStep, err.message, document);
       return;
     }
 
-    // Step 3: Embed chunks
+    // Step 3: Embed chunks using LangChain + OpenRouter
     const embedStep = await this.createStep(jobId, "embed");
     try {
       const savedChunks = await this.chunkRepo.find({
@@ -135,10 +235,9 @@ export class IngestionProcessor extends WorkerHost {
         order: { chunkIndex: "ASC" },
       });
 
-      const batchSize =
-        parseInt(process.env.PYTHON_RAG_EMBED_BATCH_SIZE ?? "32", 10) || 32;
-
+      const batchSize = 32; // Fixed batch size for OpenRouter
       const embeddingEntities: ChunkEmbedding[] = [];
+      const modelName = "text-embedding-3-small";
 
       embedStep.progressTotal = savedChunks.length;
       embedStep.progressCurrent = 0;
@@ -146,15 +245,26 @@ export class IngestionProcessor extends WorkerHost {
 
       for (let i = 0; i < savedChunks.length; i += batchSize) {
         const batch = savedChunks.slice(i, i + batchSize);
-        const texts = batch.map((c) => c.textContent);
-        const vectors = await this.pythonClient.embedBatch(texts);
 
-        for (let j = 0; j < batch.length; j++) {
+        // Filter out chunks with empty/invalid text
+        const validChunks = batch.filter(
+          (c) => c.textContent && c.textContent.trim().length > 0,
+        );
+
+        if (validChunks.length === 0) {
+          this.logger.warn(`Batch ${i} has no valid texts, skipping`);
+          continue;
+        }
+
+        const texts = validChunks.map((c) => c.textContent);
+        const vectors = await this.embeddingsService.embedBatch(texts);
+
+        for (let j = 0; j < validChunks.length; j++) {
           embeddingEntities.push(
             this.embeddingRepo.create({
-              chunkId: batch[j].id,
+              chunkId: validChunks[j].id,
               embedding: vectors[j],
-              model: "bge-m3",
+              model: modelName,
             }),
           );
         }
@@ -174,7 +284,7 @@ export class IngestionProcessor extends WorkerHost {
 
       await this.completeStep(embedStep, {
         embedding_count: embeddingEntities.length,
-        model: "bge-m3",
+        model: modelName,
       });
     } catch (err: any) {
       await this.failJob(ingestionJob, embedStep, err.message, document);
@@ -300,5 +410,26 @@ export class IngestionProcessor extends WorkerHost {
         );
       }
     }
+  }
+
+  /**
+   * Format a table as readable text for embedding and display.
+   */
+  private formatTableAsText(table: {
+    headers: string[];
+    rows: string[][];
+  }): string {
+    const lines: string[] = [];
+
+    // Add headers
+    lines.push(`| ${table.headers.join(" | ")} |`);
+    lines.push(`| ${table.headers.map(() => "---").join(" | ")} |`);
+
+    // Add rows
+    for (const row of table.rows) {
+      lines.push(`| ${row.join(" | ")} |`);
+    }
+
+    return lines.join("\n");
   }
 }

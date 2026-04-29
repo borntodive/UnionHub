@@ -10,6 +10,8 @@ import {
   MaxLength,
   Min,
 } from "class-validator";
+import { UserRole } from "@common/enums/user-role.enum";
+import { Ruolo } from "@common/enums/ruolo.enum";
 
 export enum RetrievalMode {
   LEXICAL = "lexical",
@@ -43,4 +45,8 @@ export class AskQueryDto {
   @Min(1)
   @Max(20)
   maxContextChunks?: number;
+
+  // User context fields (populated from JWT, not sent by client)
+  userRole?: UserRole;
+  userRuolo?: Ruolo;
 }

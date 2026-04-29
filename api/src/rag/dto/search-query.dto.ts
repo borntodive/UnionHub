@@ -11,6 +11,8 @@ import {
   Min,
 } from "class-validator";
 import { RetrievalMode } from "./ask-query.dto";
+import { UserRole } from "@common/enums/user-role.enum";
+import { Ruolo } from "@common/enums/ruolo.enum";
 
 export class SearchQueryDto {
   @IsString()
@@ -32,4 +34,8 @@ export class SearchQueryDto {
   @Min(1)
   @Max(50)
   topK?: number;
+
+  // User context fields (populated from JWT, not sent by client)
+  userRole?: UserRole;
+  userRuolo?: Ruolo;
 }

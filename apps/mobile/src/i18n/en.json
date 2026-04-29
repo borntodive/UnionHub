@@ -321,6 +321,20 @@
         "success": "Document deleted successfully",
         "error": "Failed to delete document"
       }
+    },
+    "visibility": {
+      "public": "Public",
+      "pilotOnly": "Pilots Only",
+      "cabinOnly": "Cabin Crew Only",
+      "adminOnly": "Admin Only"
+    },
+    "publicDocuments": {
+      "title": "RAG Documents",
+      "subtitle": "Documents and manuals available for search",
+      "empty": "No documents available",
+      "emptySubtitle": "There are no visible documents yet.",
+      "step": "Step",
+      "processing": "Indexing..."
     }
   },
   "ftl": {

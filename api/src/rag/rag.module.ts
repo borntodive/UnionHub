@@ -2,7 +2,7 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { BullModule } from "@nestjs/bullmq";
 import { ConfigModule, ConfigService } from "@nestjs/config";
-import { OllamaModule } from "../ollama/ollama.module";
+import { AiModule } from "../ai/ai.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 
 // Entities
@@ -15,13 +15,17 @@ import { IngestionStep } from "./entities/ingestion-step.entity";
 import { QueryLog } from "./entities/query-log.entity";
 
 // Services
-import { PythonRagClientService } from "./services/python-rag-client.service";
 import { RagDocumentService } from "./services/rag-document.service";
 import { IngestionService } from "./services/ingestion.service";
 import { RAG_INGESTION_QUEUE } from "./constants";
 import { SearchService } from "./services/search.service";
 import { RagQueryService } from "./services/rag-query.service";
 import { RagHealthService } from "./services/rag-health.service";
+import { LangChainEmbeddingsService } from "./services/langchain-embeddings.service";
+import { LangChainChunkerService } from "./services/langchain-chunker.service";
+import { CohereRerankService } from "./services/cohere-rerank.service";
+import { TableExtractorService } from "./services/vision/table-extractor.service";
+import { VisionTableExtractorService } from "./services/vision/vision-table-extractor.service";
 
 // Processors
 import { IngestionProcessor } from "./processors/ingestion.processor";
@@ -55,7 +59,7 @@ import { RagHealthController } from "./controllers/rag-health.controller";
       inject: [ConfigService],
     }),
     BullModule.registerQueue({ name: RAG_INGESTION_QUEUE }),
-    OllamaModule,
+    AiModule,
     NotificationsModule,
   ],
   controllers: [
@@ -65,13 +69,17 @@ import { RagHealthController } from "./controllers/rag-health.controller";
     RagHealthController,
   ],
   providers: [
-    PythonRagClientService,
     RagDocumentService,
     IngestionService,
     IngestionProcessor,
     SearchService,
     RagQueryService,
     RagHealthService,
+    LangChainEmbeddingsService,
+    LangChainChunkerService,
+    CohereRerankService,
+    TableExtractorService,
+    VisionTableExtractorService,
   ],
 })
 export class RagModule {}

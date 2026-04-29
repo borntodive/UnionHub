@@ -9,7 +9,7 @@ import {
 import { Chunk } from "./chunk.entity";
 
 /**
- * The actual DB column type is vector(1024) — set by migration.
+ * The actual DB column type is vector(1536) — set by migration.
  * TypeORM does not know this type, so we use a text transformer that
  * serializes number[] ↔ "[0.1,0.2,...]".
  * All similarity queries use raw SQL via QueryBuilder.
@@ -31,11 +31,11 @@ export class ChunkEmbedding {
   chunk: Chunk;
 
   // Integration note: declared as text so TypeORM can bind values.
-  // The actual column is vector(1024) — managed by migration.
+  // The actual column is vector(1536) — managed by migration.
   @Column({ type: "text", transformer: vectorTransformer })
   embedding: number[];
 
-  @Column({ type: "varchar", length: 100, default: "bge-m3" })
+  @Column({ type: "varchar", length: 100, default: "text-embedding-3-small" })
   model: string;
 
   @CreateDateColumn({ type: "timestamptz" })

@@ -5,7 +5,9 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
+  Request,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -18,6 +20,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { UserRole } from "../../common/enums/user-role.enum";
 import { RagDocumentService } from "../services/rag-document.service";
 import { UploadDocumentDto } from "../dto/upload-document.dto";
+import { UpdateRagDocumentDto } from "../dto/update-rag-document.dto";
 
 const pdfUploadInterceptor = FileInterceptor("file", {
   storage: memoryStorage(),
@@ -65,5 +68,23 @@ export class RagDocumentController {
   async delete(@Param("id", ParseUUIDPipe) id: string) {
     await this.ragDocumentService.delete(id);
     return { success: true, message: "Document deleted successfully" };
+  }
+
+  // NEW: Public endpoint for all authenticated users
+  // This endpoint must be defined BEFORE the @Get(":id") route
+  // otherwise "public" will be treated as an ID
+  @Get("public")
+  @UseGuards(JwtAuthGuard)
+  async getPublicDocuments(@Request() req: Express.Request) {
+    const user = req.user as { role: UserRole; ruolo?: string };
+    return this.ragDocumentService.findVisibleTo(user.role, user.ruolo as any);
+  }
+
+  @Patch(":id")
+  async update(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: UpdateRagDocumentDto,
+  ) {
+    return this.ragDocumentService.updateVisibility(id, dto.visibility!);
   }
 }

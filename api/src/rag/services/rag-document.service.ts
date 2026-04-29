@@ -17,6 +17,10 @@ import { Chunk } from "../entities/chunk.entity";
 import { IngestionJob } from "../entities/ingestion-job.entity";
 import { UploadDocumentDto } from "../dto/upload-document.dto";
 import { RAG_INGESTION_QUEUE } from "../constants";
+import { DocumentVisibility } from "@common/enums/document-visibility.enum";
+import { UserRole } from "@common/enums/user-role.enum";
+import { Ruolo } from "@common/enums/ruolo.enum";
+import { In } from "typeorm";
 
 @Injectable()
 export class RagDocumentService {
@@ -166,5 +170,53 @@ export class RagDocumentService {
     // Delete document from database (cascade will handle related entities)
     await this.ragDocumentRepo.remove(doc);
     this.logger.log(`Deleted RAG document ${id}`);
+  }
+
+  async findVisibleTo(
+    userRole: UserRole,
+    userRuolo?: Ruolo,
+  ): Promise<RagDocument[]> {
+    // Admin and SuperAdmin see everything
+    if (userRole === UserRole.ADMIN || userRole === UserRole.SUPERADMIN) {
+      return this.ragDocumentRepo.find({
+        where: { isActive: true },
+        order: { createdAt: "DESC" },
+      });
+    }
+
+    // Regular users: visibility based on ruolo
+    const visibleVisibilities: DocumentVisibility[] = [
+      DocumentVisibility.PUBLIC,
+    ];
+    if (userRuolo === Ruolo.PILOT) {
+      visibleVisibilities.push(DocumentVisibility.PILOT_ONLY);
+    } else if (userRuolo === Ruolo.CABIN_CREW) {
+      visibleVisibilities.push(DocumentVisibility.CABIN_ONLY);
+    }
+
+    return this.ragDocumentRepo.find({
+      where: {
+        isActive: true,
+        visibility: In(visibleVisibilities),
+      },
+      order: { createdAt: "DESC" },
+    });
+  }
+
+  async updateVisibility(
+    id: string,
+    visibility: DocumentVisibility,
+  ): Promise<RagDocument> {
+    const doc = await this.findById(id);
+    doc.visibility = visibility;
+    return this.ragDocumentRepo.save(doc);
+  }
+
+  async getAccessibleDocumentIds(
+    userRole: UserRole,
+    userRuolo?: Ruolo,
+  ): Promise<string[]> {
+    const docs = await this.findVisibleTo(userRole, userRuolo);
+    return docs.map((d) => d.id);
   }
 }

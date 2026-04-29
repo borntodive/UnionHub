@@ -422,10 +422,13 @@ export class PayslipCalculator {
       }
     }
 
-    // LTC additional allowance for TRI acting as LTC, or TRE (always has LTC component).
+    // LTC additional allowance for TRI acting as LTC, TRE (always has LTC component), or LTCS.
     // This is kept separate so it can be displayed as a distinct row in the results.
     let trainingLtc = 0;
-    const isLtc = this.settings.rank === "tre" || this.settings.triAndLtc;
+    const isLtc =
+      this.settings.rank === "tre" ||
+      this.settings.rank === "ltcs" ||
+      this.settings.triAndLtc;
     if (isLtc) {
       const ltcData = this.userFlags.ltcContractData ?? null;
       if (ltcData?.training?.allowance) {

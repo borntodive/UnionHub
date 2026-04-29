@@ -24,6 +24,23 @@ import { RootStackParamList } from "../../navigation/types";
 
 type PdfViewerRouteProp = RouteProp<RootStackParamList, "PdfViewer">;
 
+/**
+ * Sanitize title for use as filename
+ */
+function sanitizeFilename(title: string): string {
+  if (!title) return "document";
+  // Remove invalid characters: / \ : * ? " < > |
+  let sanitized = title.replace(/[\/\\:*?"<>|]/g, "");
+  // Replace newlines and multiple spaces with single underscore
+  sanitized = sanitized.replace(/[\r\n\s]+/g, "_");
+  // Remove consecutive underscores
+  sanitized = sanitized.replace(/_+/g, "_");
+  // Remove leading/trailing underscores and dots
+  sanitized = sanitized.replace(/^[_\.]+|[_\.]+$/g, "");
+  // Limit length
+  return sanitized.substring(0, 100) || "document";
+}
+
 export const PdfViewerScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
@@ -65,10 +82,9 @@ export const PdfViewerScreen: React.FC = () => {
           return;
         }
 
-        const id = documentId || "reg";
-        const uri =
-          FileSystem.cacheDirectory +
-          `doc_${id}_${Date.now()}_${Math.random().toString(36).slice(2)}.pdf`;
+        // Use sanitized title as filename
+        const filename = sanitizeFilename(title || "document");
+        const uri = FileSystem.cacheDirectory + `${filename}_${Date.now()}.pdf`;
         // Delete any pre-existing file at this path before writing — on iOS,
         // writeAsStringAsync throws "is not writable" if the file already exists
         // and is not writable (can happen with StrictMode double-invocation).
