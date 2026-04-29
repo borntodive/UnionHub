@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, TextInput, StyleSheet } from "react-native";
 import { colors, spacing, typography, borderRadius } from "../../../theme";
 
@@ -7,7 +7,9 @@ interface NumberInputProps {
   value: number;
   onChange: (value: number) => void;
   suffix?: string;
+  prefix?: string;
   placeholder?: string;
+  decimals?: number;
 }
 
 export const NumberInput: React.FC<NumberInputProps> = ({
@@ -15,17 +17,45 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   value,
   onChange,
   suffix,
+  prefix,
   placeholder = "0",
+  decimals,
 }) => {
+  const [localText, setLocalText] = useState("");
+
+  const formatValue = (val: number): string => {
+    if (val === 0) return "";
+    if (decimals !== undefined) {
+      return val.toFixed(decimals);
+    }
+    return val.toString();
+  };
+
+  const handleTextChange = (text: string) => {
+    setLocalText(text);
+    const trimmed = text.trim();
+    if (trimmed === "") {
+      onChange(0);
+      return;
+    }
+    const parsed = parseFloat(trimmed);
+    if (!isNaN(parsed)) {
+      onChange(parsed);
+    }
+  };
+
+  const displayValue = localText || formatValue(value);
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.inputContainer}>
+        {prefix && <Text style={styles.prefix}>{prefix}</Text>}
         <TextInput
           style={styles.input}
-          value={value.toString()}
-          onChangeText={(text) => onChange(parseFloat(text) || 0)}
-          keyboardType="numeric"
+          value={displayValue}
+          onChangeText={handleTextChange}
+          keyboardType="decimal-pad"
           placeholder={placeholder}
           placeholderTextColor={colors.textSecondary}
         />
@@ -52,6 +82,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: spacing.md,
+  },
+  prefix: {
+    fontSize: typography.sizes.base,
+    color: colors.textSecondary,
+    marginRight: spacing.sm,
   },
   input: {
     flex: 1,
