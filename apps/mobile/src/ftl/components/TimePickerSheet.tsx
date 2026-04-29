@@ -91,9 +91,6 @@ const PickerColumn: React.FC<PickerColumnProps> = ({
 
   return (
     <View style={colStyles.wrapper}>
-      {/* Fixed selection band — sits behind the scrolling numbers */}
-      <View style={colStyles.selectionBand} pointerEvents="none" />
-
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
@@ -109,7 +106,10 @@ const PickerColumn: React.FC<PickerColumnProps> = ({
         {extended.map((item, index) => {
           const isCenter = index === centeredIndex;
           return (
-            <View key={index} style={colStyles.item}>
+            <View
+              key={index}
+              style={[colStyles.item, isCenter && colStyles.itemSelected]}
+            >
               <Text
                 style={[
                   colStyles.itemText,
@@ -135,21 +135,14 @@ const colStyles = StyleSheet.create({
   scroll: {
     flex: 1,
   },
-  selectionBand: {
-    position: "absolute",
-    top: PAD,
-    left: 0,
-    right: 0,
-    height: ITEM_HEIGHT,
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
-    zIndex: 0,
-  },
   item: {
     height: ITEM_HEIGHT,
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 1,
+  },
+  itemSelected: {
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.md,
   },
   itemText: {
     fontSize: typography.sizes.xl ?? 22,
