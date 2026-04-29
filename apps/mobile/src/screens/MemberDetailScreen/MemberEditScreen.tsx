@@ -213,23 +213,27 @@ export const MemberEditScreen: React.FC = () => {
 
   // Update mutation
   const updateMutation = useMutation({
-    mutationFn: (data: typeof formData) => usersApi.updateUser(memberId, data),
-    onSuccess: () => {
+    mutationFn: (data: typeof formData) =>
+      isOwnProfile
+        ? usersApi.updateMe(data)
+        : usersApi.updateUser(memberId, data),
+    onSuccess: (updatedUser) => {
       queryClient.invalidateQueries({ queryKey: ["user", memberId] });
       queryClient.invalidateQueries({ queryKey: ["users"] });
 
-      // If editing own profile and grade changed → sync rank in payslip settings
-      if (
-        isOwnProfile &&
-        formData.gradeId &&
-        formData.gradeId !== member?.grade?.id
-      ) {
-        const newGrade = grades?.find((g) => g.id === formData.gradeId);
-        if (newGrade) {
-          const rank = newGrade.codice.toLowerCase();
-          const role = currentUser?.ruolo === Ruolo.CABIN_CREW ? "cc" : "pil";
-          const union = getUnionFee(rank, role);
-          usePayslipStore.getState().setSettings({ rank, role, union });
+      // If editing own profile → update authStore with new data
+      if (isOwnProfile) {
+        useAuthStore.getState().setUser(updatedUser);
+
+        // If grade changed → sync rank in payslip settings
+        if (formData.gradeId && formData.gradeId !== member?.grade?.id) {
+          const newGrade = grades?.find((g) => g.id === formData.gradeId);
+          if (newGrade) {
+            const rank = newGrade.codice.toLowerCase();
+            const role = currentUser?.ruolo === Ruolo.CABIN_CREW ? "cc" : "pil";
+            const union = getUnionFee(rank, role);
+            usePayslipStore.getState().setSettings({ rank, role, union });
+          }
         }
       }
 

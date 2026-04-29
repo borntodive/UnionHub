@@ -267,7 +267,7 @@ export const InputScreen: React.FC = () => {
             <NumberInput
               label={t("payslip.impFiscProg")}
               value={input.pregressoIrpef}
-              onChangeValue={(v) => setInput({ pregressoIrpef: v })}
+              onChange={(v) => setInput({ pregressoIrpef: v })}
               prefix="€"
               decimals={2}
             />
