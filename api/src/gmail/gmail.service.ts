@@ -402,7 +402,7 @@ export class GmailService implements OnModuleInit {
       const nextPageToken = listRes.data.nextPageToken || undefined;
 
       const emails: EmailSummary[] = await Promise.all(
-        messages.map(async (msg) => {
+        messages.map(async (msg: any) => {
           const detail = await gmail.users.messages.get({
             userId: gmailUser,
             id: msg.id!,

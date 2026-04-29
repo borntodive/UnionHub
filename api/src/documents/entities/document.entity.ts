@@ -10,13 +10,7 @@ import {
 } from "typeorm";
 import { User } from "../../users/entities/user.entity";
 
-export type DocumentStatus =
-  | "draft"
-  | "reviewing"
-  | "approved"
-  | "verified"
-  | "published"
-  | "rejected";
+export type DocumentStatus = "draft" | "published";
 export type UnionType = "fit-cisl" | "joint";
 export type DocumentRuolo = "pilot" | "cabin_crew";
 
@@ -43,24 +37,14 @@ export class Document {
   englishTitle: string | null;
 
   @Column({ type: "text", nullable: true })
-  finalPdfUrl: string;
+  finalPdfUrl: string | null;
 
   @Column({
     type: "enum",
-    enum: [
-      "draft",
-      "reviewing",
-      "approved",
-      "verified",
-      "published",
-      "rejected",
-    ],
+    enum: ["draft", "published"],
     default: "draft",
   })
   status: DocumentStatus;
-
-  @Column({ type: "text", nullable: true })
-  rejectionReason: string | null;
 
   @Column({ type: "uuid" })
   createdBy: string;
@@ -76,7 +60,7 @@ export class Document {
   updatedAt: Date;
 
   @Column({ type: "timestamp", nullable: true })
-  publishedAt: Date;
+  publishedAt: Date | null;
 
   @Column({
     type: "enum",

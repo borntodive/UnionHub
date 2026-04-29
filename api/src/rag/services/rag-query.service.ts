@@ -1,9 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { OllamaService } from "../../ollama/ollama.service";
+import { AiService } from "../../ai/ai.service";
 import { SearchService, ScoredChunk } from "./search.service";
-import { PythonRagClientService } from "./python-rag-client.service";
+import { CohereRerankService } from "./cohere-rerank.service";
 import { RagDocumentService } from "./rag-document.service";
 import { QueryLog } from "../entities/query-log.entity";
 import { AskQueryDto, RetrievalMode } from "../dto/ask-query.dto";
@@ -49,9 +49,9 @@ export class RagQueryService {
   private readonly logger = new Logger(RagQueryService.name);
 
   constructor(
-    private readonly ollamaService: OllamaService,
+    private readonly aiService: AiService,
     private readonly searchService: SearchService,
-    private readonly pythonClient: PythonRagClientService,
+    private readonly rerankService: CohereRerankService,
     private readonly ragDocumentService: RagDocumentService,
     @InjectRepository(QueryLog)
     private readonly queryLogRepo: Repository<QueryLog>,
@@ -65,26 +65,28 @@ export class RagQueryService {
     // 1. Query rewriting for better retrieval
     let rewrittenQuestion = dto.question;
     try {
-      rewrittenQuestion = await this.ollamaService.generate(
+      rewrittenQuestion = await this.aiService.generate(
         `Rewrite the following question to maximize retrieval from an aviation operations manual. Be concise and use technical terminology. Return only the rewritten question.\n\nQuestion: ${dto.question}\n\nRewritten:`,
       );
     } catch (err: any) {
       this.logger.warn("Query rewrite failed, using original:", err.message);
     }
 
-    // 2. Retrieve chunks
+    // 2. Retrieve chunks with visibility filtering
     const retrieved = await this.searchService.search(
       rewrittenQuestion,
       dto.documentIds,
       topK,
       mode,
+      dto.userRole,
+      dto.userRuolo,
     );
 
     // 3. Rerank if there are candidates
     let ranked = retrieved;
     if (retrieved.length > 1) {
       try {
-        const rerankResults = await this.pythonClient.rerank(
+        const rerankResults = await this.rerankService.rerank(
           rewrittenQuestion,
           retrieved.map((c) => c.textContent),
           maxContext,
@@ -129,7 +131,7 @@ export class RagQueryService {
     // 5. Generate answer
     let answer = "Unable to generate an answer from the available context.";
     try {
-      answer = await this.ollamaService.generate(userPrompt, systemPrompt);
+      answer = await this.aiService.generate(userPrompt, systemPrompt);
     } catch (err: any) {
       this.logger.error("Answer generation failed:", err.message);
     }
@@ -186,6 +188,8 @@ export class RagQueryService {
       dto.documentIds,
       dto.topK ?? 10,
       mode,
+      dto.userRole,
+      dto.userRuolo,
     );
   }
 }

@@ -626,9 +626,9 @@ export const RagAdminScreen: React.FC = () => {
             ) : health ? (
               <View style={styles.healthGrid}>
                 <StatusDot ok={health.redis} label="Redis" />
-                <StatusDot ok={health.pythonService} label="Python" />
+                <StatusDot ok={health.embeddings} label="Embeddings" />
                 <StatusDot ok={health.pgvector} label="pgvector" />
-                <StatusDot ok={health.ollama} label="Ollama" />
+                <StatusDot ok={health.ai} label="AI" />
               </View>
             ) : (
               <Text style={styles.healthError}>

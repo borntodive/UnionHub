@@ -321,6 +321,20 @@
         "success": "Documento eliminato con successo",
         "error": "Errore durante l'eliminazione"
       }
+    },
+    "visibility": {
+      "public": "Pubblico",
+      "pilotOnly": "Solo Piloti",
+      "cabinOnly": "Solo Cabin Crew",
+      "adminOnly": "Solo Admin"
+    },
+    "publicDocuments": {
+      "title": "Documenti RAG",
+      "subtitle": "Documenti e manuali disponibili per la ricerca",
+      "empty": "Nessun documento disponibile",
+      "emptySubtitle": "Non ci sono ancora documenti visibili.",
+      "step": "Passo",
+      "processing": "Indicizzazione..."
     }
   },
   "ftl": {

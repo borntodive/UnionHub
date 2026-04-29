@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Put,
   Patch,
   Delete,
   Body,
@@ -27,12 +26,38 @@ import { Roles } from "../common/decorators/roles.decorator";
 import { UserRole } from "../common/enums/user-role.enum";
 import {
   CreateDocumentDto,
-  ReviewDocumentDto,
-  ApproveDocumentDto,
+  UpdateDocumentDto,
   UpdateTranslationDto,
-  RejectDocumentDto,
   UploadDocumentDto,
 } from "./dto/create-document.dto";
+
+/**
+ * Sanitize document title for use as filename
+ * Removes invalid characters and limits length
+ */
+function sanitizeFilename(title: string): string {
+  if (!title) return "document";
+
+  // Remove invalid characters for filenames: / \ : * ? " < > |
+  let sanitized = title.replace(/[\/\\:*?"<>|]/g, "");
+
+  // Replace newlines and multiple spaces with single underscore
+  sanitized = sanitized.replace(/[\r\n]+/g, "_").replace(/\s+/g, "_");
+
+  // Remove consecutive underscores
+  sanitized = sanitized.replace(/_+/g, "_");
+
+  // Remove leading/trailing underscores and dots
+  sanitized = sanitized.replace(/^[_\.]+|[_\.]+$/g, "");
+
+  // Limit length (255 chars max for most filesystems, leave room for .pdf)
+  const maxLength = 200;
+  if (sanitized.length > maxLength) {
+    sanitized = sanitized.substring(0, maxLength);
+  }
+
+  return sanitized || "document";
+}
 
 interface RequestWithUser extends Request {
   user: {
@@ -43,8 +68,9 @@ interface RequestWithUser extends Request {
 }
 
 /**
- * Documents Controller
+ * Documents Controller (Simplified)
  * Manage union communications with AI assistance
+ * Workflow: Create → Process (AI+PDF) → Publish
  * ADMIN and SUPERADMIN access
  */
 @Controller("documents")
@@ -102,44 +128,24 @@ export class DocumentsController {
     if (!file) {
       throw new BadRequestException("PDF file is required");
     }
-    return this.documentsService.uploadAndPublish(dto, file, {
+    return this.documentsService.upload(dto, file, {
       userId: req.user.userId,
       crewcode: req.user.crewcode,
     });
   }
 
-  @Post(":id/review")
+  /**
+   * Process document: AI rewrite + translate + generate PDF
+   * All in one operation
+   */
+  @Post(":id/process")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  async review(
-    @Param("id", ParseUUIDPipe) id: string,
-    @Body() dto: ReviewDocumentDto,
-  ) {
-    return this.documentsService.review(id, dto);
-  }
-
-  @Post(":id/approve")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  async approve(
-    @Param("id", ParseUUIDPipe) id: string,
-    @Body() dto: ApproveDocumentDto,
-    @Request() req: RequestWithUser,
-  ) {
-    return this.documentsService.approve(id, dto, {
-      userId: req.user.userId,
-      crewcode: req.user.crewcode,
-    });
-  }
-
-  @Post(":id/verify")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  async verify(
+  async process(
     @Param("id", ParseUUIDPipe) id: string,
     @Request() req: RequestWithUser,
   ) {
-    return this.documentsService.verify(id, {
+    return this.documentsService.process(id, {
       userId: req.user.userId,
       crewcode: req.user.crewcode,
     });
@@ -158,6 +164,16 @@ export class DocumentsController {
     });
   }
 
+  @Patch(":id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  async update(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: UpdateDocumentDto,
+  ) {
+    return this.documentsService.update(id, dto);
+  }
+
   @Patch(":id/translation")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
@@ -168,14 +184,25 @@ export class DocumentsController {
     return this.documentsService.updateTranslation(id, dto);
   }
 
-  @Patch(":id/reject")
+  @Post(":id/regenerate-pdf")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  async reject(
-    @Param("id", ParseUUIDPipe) id: string,
-    @Body() dto: RejectDocumentDto,
-  ) {
-    return this.documentsService.reject(id, dto.rejectionReason);
+  async regeneratePdf(@Param("id", ParseUUIDPipe) id: string) {
+    return this.documentsService.regeneratePdf(id);
+  }
+
+  @Post(":id/regenerate-ai")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  async regenerateAi(@Param("id", ParseUUIDPipe) id: string) {
+    return this.documentsService.regenerateAi(id);
+  }
+
+  @Post(":id/translate")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  async translate(@Param("id", ParseUUIDPipe) id: string) {
+    return this.documentsService.translate(id);
   }
 
   @Delete(":id")
@@ -186,37 +213,11 @@ export class DocumentsController {
     await this.documentsService.delete(id);
   }
 
-  @Post(":id/regenerate")
+  @Get("health/ai")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  async regeneratePdf(
-    @Param("id", ParseUUIDPipe) id: string,
-    @Request() req: RequestWithUser,
-  ) {
-    return this.documentsService.regeneratePdf(id, {
-      userId: req.user.userId,
-      crewcode: req.user.crewcode,
-    });
-  }
-
-  @Post(":id/regenerate-translations")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  async regenerateTranslations(
-    @Param("id", ParseUUIDPipe) id: string,
-    @Request() req: RequestWithUser,
-  ) {
-    return this.documentsService.regenerateTranslations(id, {
-      userId: req.user.userId,
-      crewcode: req.user.crewcode,
-    });
-  }
-
-  @Get("health/ollama")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  async checkOllamaHealth() {
-    return this.documentsService.checkOllamaHealth();
+  async checkAiHealth() {
+    return this.documentsService.checkAiHealth();
   }
 
   @Get(":id/download")
@@ -240,15 +241,12 @@ export class DocumentsController {
       );
       const buffer = Buffer.from(base64, "base64");
 
-      const sanitizedTitle = (document.title || "document").replace(
-        /[\r\n"]/g,
-        "_",
-      );
+      const filename = sanitizeFilename(document.title);
 
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="${sanitizedTitle}.pdf"`,
+        `attachment; filename="${filename}.pdf"`,
       );
       res.send(buffer);
     } else {

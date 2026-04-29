@@ -71,7 +71,7 @@ export const IRPEF_BRACKETS: Record<number, { limit: number; rate: number }[]> =
 export function getUnionFee(rank: string, role: string): number {
   const key =
     role === "pilot" || role === "pil"
-      ? ["cpt", "tre", "tri", "ltc", "lcc"].includes(rank)
+      ? ["cpt", "tre", "tri", "ltc", "ltcs", "lcc"].includes(rank)
         ? "cpt"
         : "fo"
       : "cc";

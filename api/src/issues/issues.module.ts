@@ -6,7 +6,7 @@ import { IssueCategory } from "../issue-categories/entities/issue-category.entit
 import { IssueUrgency } from "../issue-urgencies/entities/issue-urgency.entity";
 import { IssuesService } from "./issues.service";
 import { IssuesController } from "./issues.controller";
-import { OllamaModule } from "../ollama/ollama.module";
+import { AiModule } from "../ai/ai.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
@@ -17,7 +17,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
       IssueCategory,
       IssueUrgency,
     ]),
-    OllamaModule,
+    AiModule,
     NotificationsModule,
   ],
   controllers: [IssuesController],

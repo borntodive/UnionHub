@@ -27,6 +27,7 @@ import {
   Sparkles,
   Cpu,
   Upload,
+  Zap,
 } from "lucide-react-native";
 import * as DocumentPicker from "expo-document-picker";
 
@@ -36,7 +37,6 @@ import {
   Document,
   DocumentStatus,
   UnionType,
-  DocumentRuolo,
 } from "../../api/documents";
 import { RootStackParamList } from "../../navigation/types";
 import { useAuthStore } from "../../store/authStore";
@@ -47,11 +47,7 @@ type DocumentsScreenNavigationProp =
 
 const STATUS_COLORS: Record<DocumentStatus, string> = {
   draft: colors.textSecondary,
-  reviewing: "#f59e0b",
-  approved: "#22c55e",
-  verified: "#8b5cf6",
-  published: colors.primary,
-  rejected: colors.error,
+  published: colors.success,
 };
 
 export const DocumentsScreen: React.FC = () => {
@@ -82,9 +78,9 @@ export const DocumentsScreen: React.FC = () => {
     return doc.ruolo === ruoloFilter;
   });
 
-  const { data: ollamaHealth } = useQuery({
-    queryKey: ["ollamaHealth"],
-    queryFn: documentsApi.getOllamaHealth,
+  const { data: aiHealth } = useQuery({
+    queryKey: ["aiHealth"],
+    queryFn: documentsApi.getAiHealth,
     refetchInterval: 30000,
   });
 
@@ -92,21 +88,7 @@ export const DocumentsScreen: React.FC = () => {
     mutationFn: (id: string) => documentsApi.deleteDocument(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
-      Alert.alert(t("common.success"), t("documents.documentDeleted"));
-    },
-    onError: (error: any) => {
-      Alert.alert(
-        t("common.error"),
-        error.response?.data?.message || t("errors.generic"),
-      );
-    },
-  });
-
-  const verifyMutation = useMutation({
-    mutationFn: (id: string) => documentsApi.verifyDocument(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      Alert.alert(t("common.success"), t("documents.documentVerified"));
+      Alert.alert(t("common.success"), "Document deleted");
     },
     onError: (error: any) => {
       Alert.alert(
@@ -120,7 +102,7 @@ export const DocumentsScreen: React.FC = () => {
     mutationFn: (id: string) => documentsApi.publishDocument(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
-      Alert.alert(t("common.success"), t("documents.documentPublished"));
+      Alert.alert(t("common.success"), "Document published successfully!");
     },
     onError: (error: any) => {
       Alert.alert(
@@ -140,7 +122,7 @@ export const DocumentsScreen: React.FC = () => {
     }) => documentsApi.uploadDocument(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
-      Alert.alert(t("common.success"), t("documents.uploadSuccess"));
+      Alert.alert(t("common.success"), "PDF uploaded successfully!");
     },
     onError: (error: any) => {
       Alert.alert(
@@ -160,15 +142,15 @@ export const DocumentsScreen: React.FC = () => {
     const file = result.assets[0];
 
     Alert.prompt(
-      t("documents.uploadTitle"),
-      t("documents.uploadTitlePlaceholder"),
+      "Enter Document Title",
+      "What should this document be called?",
       [
         { text: t("common.cancel"), style: "cancel" },
         {
-          text: t("documents.publish"),
+          text: "Upload",
           onPress: (title?: string) => {
             if (!title?.trim()) {
-              Alert.alert(t("common.error"), t("documents.enterTitle"));
+              Alert.alert(t("common.error"), "Title is required");
               return;
             }
             uploadMutation.mutate({
@@ -197,22 +179,52 @@ export const DocumentsScreen: React.FC = () => {
   };
 
   const handleAdd = () => {
-    navigation.navigate("DocumentEditor", {});
+    navigation.navigate("DocumentEditor", {} as never);
   };
 
   const handleEdit = (document: Document) => {
-    navigation.navigate("DocumentEditor", { documentId: document.id });
+    navigation.navigate("DocumentEditor", { documentId: document.id } as never);
+  };
+
+  const handleViewPdf = (document: Document) => {
+    navigation.navigate("PdfViewer", {
+      documentId: document.id,
+      title: document.title,
+    } as never);
   };
 
   const handleDelete = (document: Document) => {
-    Alert.alert(t("documents.deleteDocument"), t("documents.deleteConfirm"), [
-      { text: t("common.cancel"), style: "cancel" },
-      {
-        text: t("common.delete"),
-        style: "destructive",
-        onPress: () => deleteMutation.mutate(document.id),
-      },
-    ]);
+    if (document.status === "published") {
+      Alert.alert(
+        "Cannot Delete",
+        "Published documents cannot be deleted. Please unpublish first.",
+      );
+      return;
+    }
+
+    Alert.alert(
+      "Delete Document",
+      "Are you sure you want to delete this document?",
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => deleteMutation.mutate(document.id),
+        },
+      ],
+    );
+  };
+
+  const handlePublish = (document: Document) => {
+    if (!document.finalPdfUrl && !document.aiReviewedContent) {
+      Alert.alert(
+        "Cannot Publish",
+        "Please process the document first to generate AI content and PDF.",
+      );
+      return;
+    }
+    publishMutation.mutate(document.id);
   };
 
   const renderStatusBadge = (status: DocumentStatus) => (
@@ -223,7 +235,7 @@ export const DocumentsScreen: React.FC = () => {
       ]}
     >
       <Text style={[styles.statusText, { color: STATUS_COLORS[status] }]}>
-        {t(`documents.${status}`)}
+        {status === "published" ? "Published" : "Draft"}
       </Text>
     </View>
   );
@@ -256,121 +268,103 @@ export const DocumentsScreen: React.FC = () => {
     );
   };
 
-  const renderRuoloBadge = (ruolo: "pilot" | "cabin_crew") => {
-    return (
-      <View
-        style={[
-          styles.ruoloBadge,
-          ruolo === "pilot" ? styles.ruoloBadgePilot : styles.ruoloBadgeCC,
-        ]}
-      >
-        <Text
-          style={[
-            styles.ruoloBadgeText,
-            ruolo === "pilot"
-              ? styles.ruoloBadgeTextPilot
-              : styles.ruoloBadgeTextCC,
-          ]}
-        >
-          {ruolo === "pilot" ? t("documents.pilots") : t("documents.cabinCrew")}
-        </Text>
-      </View>
-    );
-  };
+  const renderItem = ({ item }: { item: Document }) => {
+    const isDraft = item.status === "draft";
+    const isProcessed = !!item.aiReviewedContent && !!item.finalPdfUrl;
 
-  const renderItem = ({ item }: { item: Document }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => handleEdit(item)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.cardHeader}>
-        <View style={styles.iconContainer}>
-          <FileText size={24} color={colors.primary} />
-        </View>
-        <View style={styles.cardContent}>
-          <Text style={styles.cardTitle} numberOfLines={1}>
-            {item.title}
-          </Text>
-          <Text style={styles.cardMeta}>
-            By {item.author?.nome} {item.author?.cognome} •{" "}
-            {new Date(item.createdAt).toLocaleDateString()}
-          </Text>
-          <View style={styles.cardBadgeRow}>
-            {renderUnionBadge(item.union || "fit-cisl")}
-            {isSuperAdmin && renderRuoloBadge(item.ruolo || "pilot")}
-            {renderStatusBadge(item.status)}
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => handleEdit(item)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.cardHeader}>
+          <View style={styles.iconContainer}>
+            <FileText size={24} color={colors.primary} />
+          </View>
+          <View style={styles.cardContent}>
+            <Text style={styles.cardTitle} numberOfLines={1}>
+              {item.title}
+            </Text>
+            <Text style={styles.cardMeta}>
+              By {item.author?.nome} {item.author?.cognome} •{" "}
+              {new Date(item.createdAt).toLocaleDateString()}
+            </Text>
+            <View style={styles.cardBadgeRow}>
+              {renderUnionBadge(item.union || "fit-cisl")}
+              {renderStatusBadge(item.status)}
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.cardActions}>
-        <TouchableOpacity
-          onPress={() => handleEdit(item)}
-          style={styles.actionButton}
-        >
-          <Edit3 size={18} color={colors.primary} />
-          <Text style={styles.actionText}>{t("common.edit")}</Text>
-        </TouchableOpacity>
+        <View style={styles.cardActions}>
+          {isDraft && (
+            <>
+              <TouchableOpacity
+                onPress={() => handleEdit(item)}
+                style={styles.actionButton}
+              >
+                <Edit3 size={18} color={colors.primary} />
+                <Text style={styles.actionText}>{t("common.edit")}</Text>
+              </TouchableOpacity>
 
-        {item.status === "draft" && (
-          <TouchableOpacity
-            onPress={() => handleEdit(item)}
-            style={styles.actionButton}
-          >
-            <Sparkles size={18} color={colors.primary} />
-            <Text style={styles.actionText}>
-              {t("documents.requestAiReview")}
-            </Text>
-          </TouchableOpacity>
-        )}
+              {isProcessed ? (
+                <TouchableOpacity
+                  onPress={() => handlePublish(item)}
+                  style={[styles.actionButton, styles.publishActionButton]}
+                >
+                  <CheckCircle size={18} color={colors.success} />
+                  <Text style={[styles.actionText, { color: colors.success }]}>
+                    Publish
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={() => handleEdit(item)}
+                  style={styles.actionButton}
+                >
+                  <Sparkles size={18} color={colors.warning} />
+                  <Text style={[styles.actionText, { color: colors.warning }]}>
+                    Process
+                  </Text>
+                </TouchableOpacity>
+              )}
 
-        {item.status === "reviewing" && (
-          <TouchableOpacity
-            onPress={() => handleEdit(item)}
-            style={styles.actionButton}
-          >
-            <CheckCircle size={18} color={colors.success} />
-            <Text style={[styles.actionText, { color: colors.success }]}>
-              {t("documents.reviewAiResult")}
-            </Text>
-          </TouchableOpacity>
-        )}
+              <TouchableOpacity
+                onPress={() => handleDelete(item)}
+                style={styles.actionButton}
+              >
+                <Trash2 size={18} color={colors.error} />
+                <Text style={[styles.actionText, { color: colors.error }]}>
+                  {t("common.delete")}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
 
-        {item.status === "approved" && (
-          <TouchableOpacity
-            onPress={() => verifyMutation.mutate(item.id)}
-            style={styles.actionButton}
-          >
-            <CheckCircle size={18} color={colors.primary} />
-            <Text style={styles.actionText}>{t("documents.verify")}</Text>
-          </TouchableOpacity>
-        )}
+          {!isDraft && (
+            <>
+              <TouchableOpacity
+                onPress={() => handleViewPdf(item)}
+                style={styles.actionButton}
+              >
+                <Eye size={18} color={colors.primary} />
+                <Text style={styles.actionText}>View PDF</Text>
+              </TouchableOpacity>
 
-        {item.status === "verified" && (
-          <TouchableOpacity
-            onPress={() => publishMutation.mutate(item.id)}
-            style={[styles.actionButton, styles.publishButton]}
-          >
-            <Eye size={18} color={colors.textInverse} />
-            <Text style={[styles.actionText, styles.publishText]}>
-              {t("documents.publish")}
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        <TouchableOpacity
-          onPress={() => handleDelete(item)}
-          style={styles.actionButton}
-        >
-          <Trash2 size={18} color={colors.error} />
-          <Text style={[styles.actionText, { color: colors.error }]}>
-            {t("common.delete")}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
+              <TouchableOpacity
+                onPress={() => handleEdit(item)}
+                style={styles.actionButton}
+              >
+                <Edit3 size={18} color={colors.primary} />
+                <Text style={styles.actionText}>{t("common.edit")}</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -395,23 +389,23 @@ export const DocumentsScreen: React.FC = () => {
         style={styles.container}
         edges={["bottom", "left", "right"]}
       >
-        {/* Ollama Status Bar */}
-        {ollamaHealth && (
+        {/* AI Status Bar */}
+        {aiHealth && (
           <View
             style={[
-              styles.ollamaBar,
+              styles.aiBar,
               {
-                backgroundColor: ollamaHealth.available
-                  ? "#22c55e"
+                backgroundColor: aiHealth.available
+                  ? colors.success
                   : colors.error,
               },
             ]}
           >
             <Cpu size={16} color={colors.textInverse} />
-            <Text style={styles.ollamaText}>
-              Ollama {ollamaHealth.isCloud && "Cloud"}{" "}
-              {ollamaHealth.available ? "Online" : "Offline"}
-              {ollamaHealth.available && ` • ${ollamaHealth.model}`}
+            <Text style={styles.aiText}>
+              AI {aiHealth.isCloud && "Cloud"}{" "}
+              {aiHealth.available ? "Online" : "Offline"}
+              {aiHealth.available && ` • ${aiHealth.model}`}
             </Text>
           </View>
         )}
@@ -425,9 +419,7 @@ export const DocumentsScreen: React.FC = () => {
           >
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            {t("documents.publicDocuments")}
-          </Text>
+          <Text style={styles.headerTitle}>Documents</Text>
           <View style={styles.headerActions}>
             <TouchableOpacity
               onPress={handleUpload}
@@ -449,7 +441,7 @@ export const DocumentsScreen: React.FC = () => {
         {/* Ruolo Filter - Only for SuperAdmin */}
         {isSuperAdmin && (
           <View style={styles.filterContainer}>
-            <Text style={styles.filterLabel}>{t("documents.filterBy")}:</Text>
+            <Text style={styles.filterLabel}>Filter by:</Text>
             <View style={styles.filterButtons}>
               <TouchableOpacity
                 style={[
@@ -464,7 +456,7 @@ export const DocumentsScreen: React.FC = () => {
                     ruoloFilter === "all" && styles.filterButtonTextActive,
                   ]}
                 >
-                  {t("common.all")}
+                  All
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -480,7 +472,7 @@ export const DocumentsScreen: React.FC = () => {
                     ruoloFilter === "pilot" && styles.filterButtonTextActive,
                   ]}
                 >
-                  {t("documents.pilots")}
+                  Pilots
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -497,7 +489,7 @@ export const DocumentsScreen: React.FC = () => {
                       styles.filterButtonTextActive,
                   ]}
                 >
-                  {t("documents.cabinCrew")}
+                  Cabin Crew
                 </Text>
               </TouchableOpacity>
             </View>
@@ -516,16 +508,13 @@ export const DocumentsScreen: React.FC = () => {
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <FileText size={64} color={colors.border} />
-              <Text style={styles.emptyTitle}>
-                {t("documents.noDocuments")}
-              </Text>
+              <Text style={styles.emptyTitle}>No Documents</Text>
               <Text style={styles.emptyText}>
-                {t("documents.createDocument")}
+                Create your first document to get started
               </Text>
               <TouchableOpacity style={styles.emptyButton} onPress={handleAdd}>
-                <Text style={styles.emptyButtonText}>
-                  {t("documents.createDocument")}
-                </Text>
+                <Zap size={20} color={colors.textInverse} />
+                <Text style={styles.emptyButtonText}>Create Document</Text>
               </TouchableOpacity>
             </View>
           }
@@ -548,14 +537,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  ollamaBar: {
+  aiBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: spacing.xs,
     gap: spacing.sm,
   },
-  ollamaText: {
+  aiText: {
     color: colors.textInverse,
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.medium,
@@ -624,17 +613,51 @@ const styles = StyleSheet.create({
   cardContent: {
     flex: 1,
   },
-  cardTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
-  },
   cardTitle: {
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.semibold,
     color: colors.text,
     marginBottom: spacing.xs,
+  },
+  cardMeta: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  cardBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  statusBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+  },
+  statusText: {
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.semibold,
+  },
+  cardActions: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  actionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: spacing.lg,
+  },
+  actionText: {
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
+    marginLeft: spacing.xs,
+  },
+  publishActionButton: {
+    marginRight: spacing.lg,
   },
   unionBadge: {
     flexDirection: "row",
@@ -679,81 +702,6 @@ const styles = StyleSheet.create({
   unionBadgeTextJoint: {
     color: "#003399",
   },
-  cardMeta: {
-    fontSize: typography.sizes.sm,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-  },
-  cardBadgeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  statusBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-  },
-  statusText: {
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
-  },
-  cardActions: {
-    flexDirection: "row",
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  actionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: spacing.lg,
-  },
-  actionText: {
-    fontSize: typography.sizes.sm,
-    color: colors.primary,
-    marginLeft: spacing.xs,
-  },
-  publishButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.md,
-    marginRight: spacing.md,
-  },
-  publishText: {
-    color: colors.textInverse,
-    fontWeight: typography.weights.semibold,
-  },
-  ruoloBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-    gap: spacing.xs,
-    borderWidth: 1,
-  },
-  ruoloBadgePilot: {
-    backgroundColor: "#3b82f6" + "15",
-    borderColor: "#3b82f6" + "30",
-  },
-  ruoloBadgeCC: {
-    backgroundColor: "#ec4899" + "15",
-    borderColor: "#ec4899" + "30",
-  },
-  ruoloBadgeText: {
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
-  },
-  ruoloBadgeTextPilot: {
-    color: "#3b82f6",
-  },
-  ruoloBadgeTextCC: {
-    color: "#ec4899",
-  },
   emptyState: {
     flex: 1,
     justifyContent: "center",
@@ -775,10 +723,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   emptyButton: {
+    flexDirection: "row",
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
+    gap: spacing.sm,
+    alignItems: "center",
+  },
+  emptyButtonText: {
+    color: colors.textInverse,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
   },
   filterContainer: {
     backgroundColor: colors.surface,
@@ -814,11 +770,6 @@ const styles = StyleSheet.create({
   },
   filterButtonTextActive: {
     color: colors.textInverse,
-    fontWeight: typography.weights.semibold,
-  },
-  emptyButtonText: {
-    color: colors.textInverse,
-    fontSize: typography.sizes.md,
     fontWeight: typography.weights.semibold,
   },
 });

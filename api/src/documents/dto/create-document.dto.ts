@@ -14,7 +14,6 @@ export class CreateDocumentDto {
 
   @IsString()
   @IsNotEmpty()
-  @MaxLength(100000)
   content: string;
 
   @IsEnum(["fit-cisl", "joint"])
@@ -26,29 +25,25 @@ export class CreateDocumentDto {
   ruolo?: "pilot" | "cabin_crew";
 }
 
-export class ReviewDocumentDto {
-  @IsString()
-  @IsNotEmpty()
-  content: string;
-}
-
-export class ApproveDocumentDto {
-  @IsString()
-  @IsOptional()
-  reviewedContent?: string;
-}
-
 export class UpdateTranslationDto {
   @IsString()
   @IsNotEmpty()
-  @MaxLength(50000)
   englishTranslation: string;
-}
 
-export class RejectDocumentDto {
   @IsString()
   @IsOptional()
-  rejectionReason?: string;
+  englishTitle?: string;
+}
+
+export class UpdateDocumentDto {
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  title?: string;
+
+  @IsString()
+  @IsOptional()
+  content?: string;
 }
 
 export class UploadDocumentDto {

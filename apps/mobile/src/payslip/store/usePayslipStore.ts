@@ -241,9 +241,11 @@ export const usePayslipStore = create<PayslipState>()(
               }),
             };
 
-            // Also fetch LTC contract for TRE/triAndLtc training allowance
+            // Also fetch LTC contract for TRE/triAndLtc/LTCS training allowance
             const isLtcRank =
-              activeSettings.rank === "tre" || activeSettings.triAndLtc;
+              activeSettings.rank === "tre" ||
+              activeSettings.rank === "ltcs" ||
+              activeSettings.triAndLtc;
             if (isLtcRank) {
               try {
                 const ltcContract = await getLiveContractData(

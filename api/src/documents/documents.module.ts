@@ -5,13 +5,13 @@ import { DocumentsPublicController } from "./documents-public.controller";
 import { DocumentsService } from "./documents.service";
 import { PdfService } from "./pdf.service";
 import { Document } from "./entities/document.entity";
-import { OllamaModule } from "../ollama/ollama.module";
+import { AiModule } from "../ai/ai.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Document]),
-    OllamaModule,
+    AiModule,
     NotificationsModule,
   ],
   controllers: [DocumentsController, DocumentsPublicController],

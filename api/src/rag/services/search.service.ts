@@ -2,8 +2,11 @@ import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, Repository } from "typeorm";
 import { Chunk } from "../entities/chunk.entity";
-import { PythonRagClientService } from "./python-rag-client.service";
+import { LangChainEmbeddingsService } from "./langchain-embeddings.service";
+import { RagDocumentService } from "./rag-document.service";
 import { RetrievalMode } from "../dto/ask-query.dto";
+import { UserRole } from "@common/enums/user-role.enum";
+import { Ruolo } from "@common/enums/ruolo.enum";
 
 export interface ScoredChunk {
   chunkId: string;
@@ -26,7 +29,8 @@ export class SearchService {
     @InjectRepository(Chunk)
     private readonly chunkRepo: Repository<Chunk>,
     private readonly dataSource: DataSource,
-    private readonly pythonClient: PythonRagClientService,
+    private readonly embeddingsService: LangChainEmbeddingsService,
+    private readonly ragDocumentService: RagDocumentService,
   ) {}
 
   async search(
@@ -34,15 +38,38 @@ export class SearchService {
     documentIds: string[] | undefined,
     topK: number,
     mode: RetrievalMode = RetrievalMode.HYBRID,
+    userRole?: UserRole,
+    userRuolo?: Ruolo,
   ): Promise<ScoredChunk[]> {
+    // Filter document IDs based on user role and visibility
+    let effectiveDocumentIds = documentIds;
+    if (
+      userRole &&
+      userRole !== UserRole.ADMIN &&
+      userRole !== UserRole.SUPERADMIN
+    ) {
+      const accessibleIds =
+        await this.ragDocumentService.getAccessibleDocumentIds(
+          userRole,
+          userRuolo,
+        );
+      if (effectiveDocumentIds && effectiveDocumentIds.length > 0) {
+        effectiveDocumentIds = effectiveDocumentIds.filter((id) =>
+          accessibleIds.includes(id),
+        );
+      } else {
+        effectiveDocumentIds = accessibleIds;
+      }
+    }
+
     switch (mode) {
       case RetrievalMode.LEXICAL:
-        return this.lexicalSearch(question, documentIds, topK);
+        return this.lexicalSearch(question, effectiveDocumentIds, topK);
       case RetrievalMode.SEMANTIC:
-        return this.semanticSearch(question, documentIds, topK);
+        return this.semanticSearch(question, effectiveDocumentIds, topK);
       case RetrievalMode.HYBRID:
       default:
-        return this.hybridSearch(question, documentIds, topK);
+        return this.hybridSearch(question, effectiveDocumentIds, topK);
     }
   }
 
@@ -51,7 +78,7 @@ export class SearchService {
     documentIds: string[] | undefined,
     topK: number,
   ): Promise<ScoredChunk[]> {
-    const [queryVector] = await this.pythonClient.embedBatch([question]);
+    const [queryVector] = await this.embeddingsService.embedBatch([question]);
     const vectorLiteral = `[${queryVector.join(",")}]`;
 
     let sql = `

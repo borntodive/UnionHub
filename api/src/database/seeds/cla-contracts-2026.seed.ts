@@ -5,20 +5,19 @@ import { DataSource } from "typeorm";
 import { ClaContract } from "../../cla-contracts/entities/cla-contract.entity";
 
 const CONTRACTS_2026 = [
-  // ========== PILOTS - Line Crew ==========
   {
     company: "RYR",
     role: "pil",
     rank: "cpt",
-    basic: Math.round((15000 / 13) * 100) / 100,
-    ffp: Math.round((85044 / 12) * 100) / 100, // WITH correction: 82044 + 3000
-    sbh: Math.round((35870 / 850) * 10000) / 10000,
-    al: Math.round((4785 / 29) * 100) / 100,
+    basic: Math.round((21450 / 13) * 100) / 100,
+    ffp: Math.round((93800 / 12) * 100) / 100, // Pre-correction: 82044
+    sbh: Math.round((39993 / 850) * 100) / 100,
+    al: Math.round((5458 / 29) * 100) / 100,
     oob: 160,
     woff: 900,
     allowance: Math.round((8000 / 12) * 100) / 100,
-    diaria: Math.round((8831 / 190) * 10000) / 10000,
-    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
+    diaria: 46.48,
+    noFlyDiaria: 46.55,
     rsa: 51.92,
     itud: 120,
     trainingConfig: null,
@@ -30,17 +29,17 @@ const CONTRACTS_2026 = [
     company: "RYR",
     role: "pil",
     rank: "fo",
-    basic: Math.round((5000 / 13) * 100) / 100,
-    ffp: Math.round((41332 / 12) * 100) / 100, // WITH correction: 39732 + 1600
-    sbh: Math.round((15479 / 850) * 10000) / 10000,
+    basic: Math.round((10075 / 13) * 100) / 100,
+    ffp: Math.round((47803 / 12) * 100) / 100, // Pre-correction: 39732
+    sbh: Math.round((12833 / 850) * 100) / 100,
     al: Math.round((3828 / 29) * 100) / 100,
     oob: 155,
     woff: 450,
     allowance: Math.round((7500 / 12) * 100) / 100,
-    diaria: Math.round((8831 / 190) * 10000) / 10000,
-    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
+    diaria: 46.48,
+    noFlyDiaria: 46.55,
     rsa: 51.92,
-    itud: 120,
+    itud: 150,
     trainingConfig: null,
     effectiveYear: 2026,
     effectiveMonth: 4,
@@ -50,15 +49,15 @@ const CONTRACTS_2026 = [
     company: "RYR",
     role: "pil",
     rank: "jfo",
-    basic: Math.round((5000 / 13) * 100) / 100,
-    ffp: Math.round((35432 / 12) * 100) / 100, // No correction
-    sbh: Math.round((13566 / 850) * 10000) / 10000,
+    basic: Math.round((9000 / 13) * 100) / 100,
+    ffp: Math.round((43501 / 12) * 100) / 100, // No correction
+    sbh: Math.round((15997 / 850) * 10000) / 10000,
     al: Math.round((3828 / 29) * 100) / 100,
     oob: 155,
     woff: 450,
     allowance: Math.round((7500 / 12) * 100) / 100,
-    diaria: Math.round((8831 / 190) * 10000) / 10000,
-    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
+    diaria: 46.48,
+    noFlyDiaria: 46.55,
     rsa: 51.92,
     itud: 120,
     trainingConfig: null,
@@ -71,14 +70,14 @@ const CONTRACTS_2026 = [
     role: "pil",
     rank: "so",
     basic: Math.round((5000 / 13) * 100) / 100,
-    ffp: Math.round((14698 / 12) * 100) / 100, // No correction
+    ffp: Math.round((26720 / 12) * 100) / 100, // No correction
     sbh: Math.round((15640 / 850) * 10000) / 10000,
-    al: Math.round((225 / 29) * 100) / 100,
+    al: Math.round((2137 / 29) * 100) / 100,
     oob: 155,
-    woff: 138,
+    woff: 225,
     allowance: Math.round((7500 / 12) * 100) / 100,
-    diaria: Math.round((8831 / 190) * 10000) / 10000,
-    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
+    diaria: 46.48,
+    noFlyDiaria: 46.55,
     rsa: 51.92,
     itud: 120,
     trainingConfig: null,
@@ -86,27 +85,61 @@ const CONTRACTS_2026 = [
     effectiveMonth: 4,
     isActive: true,
   },
-  // ========== PILOTS - Instructors (NO BTC) ==========
   {
     company: "RYR",
     role: "pil",
     rank: "tre",
-    basic: Math.round((15000 / 13) * 100) / 100,
-    ffp: Math.round((85044 / 12) * 100) / 100, // WITH correction (same as CPT)
-    sbh: Math.round((35870 / 850) * 10000) / 10000,
-    al: Math.round((4785 / 29) * 100) / 100,
+    basic: Math.round((21450 / 13) * 100) / 100,
+    ffp: Math.round((93800 / 12) * 100) / 100, // Same as CPT pre-correction
+    sbh: Math.round((35852 / 762) * 100) / 100,
+    al: Math.round((5458 / 29) * 100) / 100,
     oob: 160,
     woff: 900,
     allowance: Math.round((8000 / 12) * 100) / 100,
-    diaria: Math.round((8831 / 190) * 10000) / 10000,
-    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
+    diaria: 46.48,
+    noFlyDiaria: 46.55,
     rsa: 51.92,
     itud: 120,
     trainingConfig: {
       nonBtc: {
-        allowance: Math.round((6500 / 12) * 100) / 100,
-        simDiaria: [{ min: 1, max: 999, pay: { ffp: 0, sectorPay: 267.38 } }],
-        bonus: { sectorEquivalent: 3 },
+        allowance: Math.round((7000 / 12) * 100) / 100,
+        simDiaria: [
+          {
+            min: 1,
+            max: 999,
+            pay: {
+              ffp: 0,
+              sectorPay: Math.round((11657 / 42) * 100) / 100,
+            },
+          },
+        ],
+        bonus: {
+          sectorEquivalent: 3,
+        },
+      },
+      btc: {
+        allowance: Math.round((7579 / 12) * 100) / 100,
+        simDiaria: [
+          {
+            min: 1,
+            max: 80,
+            pay: {
+              ffp: 0,
+              sectorPay: 129.95,
+            },
+          },
+          {
+            min: 81,
+            max: 999,
+            pay: {
+              ffp: 0,
+              sectorPay: 279.95,
+            },
+          },
+        ],
+        bonus: {
+          sectorEquivalent: 3,
+        },
       },
     },
     effectiveYear: 2026,
@@ -117,22 +150,32 @@ const CONTRACTS_2026 = [
     company: "RYR",
     role: "pil",
     rank: "tri",
-    basic: Math.round((15000 / 13) * 100) / 100,
-    ffp: Math.round((85044 / 12) * 100) / 100, // WITH correction (same as CPT)
-    sbh: Math.round((35870 / 850) * 10000) / 10000,
-    al: Math.round((4785 / 29) * 100) / 100,
+    ffp: Math.round((93800 / 12) * 100) / 100, // Same as CPT pre-correction
+    sbh: Math.round((35852 / 762) * 100) / 100,
+    al: Math.round((5458 / 29) * 100) / 100,
     oob: 160,
     woff: 900,
     allowance: Math.round((8000 / 12) * 100) / 100,
-    diaria: Math.round((8831 / 190) * 10000) / 10000,
-    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
+    diaria: 46.48,
+    noFlyDiaria: 46.55,
     rsa: 51.92,
     itud: 120,
     trainingConfig: {
       nonBtc: {
-        allowance: Math.round((6079 / 12) * 100) / 100,
-        simDiaria: [{ min: 1, max: 999, pay: { ffp: 0, sectorPay: 267.38 } }],
-        bonus: { sectorEquivalent: 3 },
+        allowance: Math.round((5500 / 12) * 100) / 100,
+        simDiaria: [
+          {
+            min: 1,
+            max: 999,
+            pay: {
+              ffp: 0,
+              sectorPay: Math.round((11657 / 42) * 100) / 100,
+            },
+          },
+        ],
+        bonus: {
+          sectorEquivalent: 3,
+        },
       },
     },
     effectiveYear: 2026,
@@ -143,26 +186,60 @@ const CONTRACTS_2026 = [
     company: "RYR",
     role: "pil",
     rank: "ltc",
-    basic: Math.round((15000 / 13) * 100) / 100,
-    ffp: Math.round((85044 / 12) * 100) / 100, // WITH correction (same as CPT)
-    sbh: Math.round((35870 / 850) * 10000) / 10000,
-    al: Math.round((4785 / 29) * 100) / 100,
+    ffp: Math.round((93800 / 12) * 100) / 100, // Same as CPT pre-correction
+    sbh: Math.round((35852 / 762) * 100) / 100,
+    al: Math.round((5458 / 29) * 100) / 100,
     oob: 160,
     woff: 900,
     allowance: Math.round((8000 / 12) * 100) / 100,
-    diaria: Math.round((8831 / 190) * 10000) / 10000,
-    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
+    diaria: 46.48,
+    noFlyDiaria: 46.55,
     rsa: 51.92,
     itud: 120,
     trainingConfig: {
-      allowance: Math.round((14000 / 12) * 100) / 100,
+      allowance: Math.round((16000 / 12) * 100) / 100,
       bonus: {
         pay: [
-          { min: 0, max: 21, pay: 0 },
-          { min: 22, max: 29, pay: 40 },
-          { min: 30, max: 50, pay: 60 },
+          {
+            min: 0,
+            max: 250,
+            pay: 0,
+          },
+          {
+            min: 251,
+            max: 363,
+            pay: 40,
+          },
         ],
-        minSectors: 21,
+        minSectors: 251,
+      },
+    },
+    effectiveYear: 2026,
+    effectiveMonth: 4,
+    isActive: true,
+  },
+  {
+    company: "RYR",
+    role: "pil",
+    rank: "ltcs",
+    ffp: Math.round((93800 / 12) * 100) / 100, // Same as CPT/LTC
+    sbh: Math.round((35852 / 762) * 100) / 100,
+    al: Math.round((5458 / 29) * 100) / 100,
+    oob: 160,
+    woff: 900,
+    allowance: Math.round((8000 / 12) * 100) / 100,
+    diaria: 46.48,
+    noFlyDiaria: 46.55,
+    rsa: 51.92,
+    itud: 120,
+    trainingConfig: {
+      allowance: Math.round((6000 / 12) * 100) / 100, // €6,000/year = €500/month (LTC allowance added during calculation)
+      bonus: {
+        pay: [
+          { min: 0, max: 250, pay: 0 },
+          { min: 251, max: 363, pay: 40 },
+        ],
+        minSectors: 251,
       },
     },
     effectiveYear: 2026,
@@ -173,19 +250,18 @@ const CONTRACTS_2026 = [
     company: "RYR",
     role: "pil",
     rank: "lcc",
-    basic: Math.round((15000 / 13) * 100) / 100,
-    ffp: Math.round((85044 / 12) * 100) / 100, // WITH correction (same as CPT)
-    sbh: Math.round((35870 / 850) * 10000) / 10000,
-    al: Math.round((4785 / 29) * 100) / 100,
+    ffp: Math.round((93800 / 12) * 100) / 100, // Same as CPT pre-correction
+    sbh: Math.round((35852 / 762) * 100) / 100,
+    al: Math.round((5458 / 29) * 100) / 100,
     oob: 160,
     woff: 900,
     allowance: Math.round((8000 / 12) * 100) / 100,
-    diaria: Math.round((8831 / 190) * 10000) / 10000,
-    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
+    diaria: 46.48,
+    noFlyDiaria: 46.55,
     rsa: 51.92,
     itud: 120,
     trainingConfig: {
-      allowance: Math.round((5000 / 12) * 100) / 100,
+      allowance: Math.round((5500 / 12) * 100) / 100,
     },
     effectiveYear: 2026,
     effectiveMonth: 4,
@@ -195,27 +271,50 @@ const CONTRACTS_2026 = [
     company: "RYR",
     role: "pil",
     rank: "sfi",
-    basic: Math.round((5000 / 13) * 100) / 100,
-    ffp: Math.round((41332 / 12) * 100) / 100, // WITH correction (same as FO)
-    sbh: Math.round((15479 / 850) * 10000) / 10000,
+    basic: Math.round((10075 / 13) * 100) / 100,
+    ffp: Math.round((47803 / 12) * 100) / 100, // Pre-correction: 39732
+    sbh: Math.round((12833 / 850) * 100) / 100,
     al: Math.round((3828 / 29) * 100) / 100,
     oob: 155,
     woff: 450,
     allowance: Math.round((7500 / 12) * 100) / 100,
-    diaria: Math.round((8831 / 190) * 10000) / 10000,
-    noFlyDiaria: Math.round((8831 / 190) * 10000) / 10000,
+    diaria: 46.48,
+    noFlyDiaria: 46.55,
     rsa: 51.92,
     itud: 120,
     trainingConfig: {
       nonBtc: {
-        allowance: Math.round((6000 / 12) * 100) / 100,
-        simDiaria: [{ min: 1, max: 999, pay: { ffp: 0, sectorPay: 100.5 } }],
+        allowance: Math.round((6600 / 12) * 100) / 100,
+        simDiaria: [
+          {
+            min: 1,
+            max: 999,
+            pay: {
+              ffp: 0,
+              sectorPay: 111.43,
+            },
+          },
+        ],
       },
       btc: {
-        allowance: Math.round((6000 / 12) * 100) / 100,
+        allowance: Math.round((5500 / 12) * 100) / 100,
         simDiaria: [
-          { min: 1, max: 10, pay: { ffp: 93.75, sectorPay: 61.65 } },
-          { min: 11, max: 999, pay: { ffp: 0, sectorPay: 123.3 } },
+          {
+            min: 1,
+            max: 80,
+            pay: {
+              ffp: 0,
+              sectorPay: 61.65,
+            },
+          },
+          {
+            min: 81,
+            max: 999,
+            pay: {
+              ffp: 0,
+              sectorPay: 167.47,
+            },
+          },
         ],
       },
     },

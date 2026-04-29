@@ -16,7 +16,7 @@ import { UpdateIssueDto } from "./dto/update-issue.dto";
 import { IssueStatus } from "../common/enums/issue-status.enum";
 import { UserRole } from "../common/enums/user-role.enum";
 import { Ruolo } from "../common/enums/ruolo.enum";
-import { OllamaService } from "../ollama/ollama.service";
+import { AiService } from "../ai/ai.service";
 import { NotificationsService } from "../notifications/notifications.service";
 
 @Injectable()
@@ -29,7 +29,7 @@ export class IssuesService {
     private readonly repo: Repository<Issue>,
     @InjectRepository(IssueAttachment)
     private readonly attachmentRepo: Repository<IssueAttachment>,
-    private readonly ollamaService: OllamaService,
+    private readonly aiService: AiService,
     private readonly notificationsService: NotificationsService,
   ) {
     this.uploadsDir =
@@ -288,7 +288,7 @@ export class IssuesService {
     const systemPrompt = `Sei un assistente sindacale. Analizza le seguenti segnalazioni e fornisci un riassunto conciso delle problematiche principali, raggruppandole per categoria e urgenza. Rispondi in italiano con testo semplice, senza markdown.`;
     const prompt = `Segnalazioni aperte:\n${issueText}\n\nRiassunto:`;
 
-    const summary = await this.ollamaService.generate(prompt, systemPrompt);
+    const summary = await this.aiService.generate(prompt, systemPrompt);
     const pdfBuffer = await this.generateSummaryPdf(summary, openIssues.length);
     const pdfBase64 = pdfBuffer.toString("base64");
 

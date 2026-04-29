@@ -16,6 +16,7 @@ import { WhatsappStatus } from "../../common/enums/whatsapp-status.enum";
 import * as bcrypt from "bcrypt";
 import { seedClaContracts2025 } from "./cla-contracts-2025.seed";
 import { seedClaContracts2026 } from "./cla-contracts-2026.seed";
+import { seedClaContracts2026Test } from "./cla-contracts-2026-test.seed";
 
 config();
 
@@ -172,6 +173,7 @@ function seedDates(
     SFI: 2013,
     CPT: 2014,
     LTC: 2010,
+    LTCS: 2009,
     LCC: 2009,
     TRI: 2008,
     TRE: 2007,
@@ -181,7 +183,7 @@ function seedDates(
     SEPE: 2012,
     SEPI: 2008,
   };
-  const captainGrades = ["CPT", "LTC", "LCC", "TRI", "TRE"];
+  const captainGrades = ["CPT", "LTC", "LTCS", "LCC", "TRI", "TRE"];
   const baseYear = entryYearByGrade[gradeCode] ?? 2018;
   // Spread members ±1 year around the base year using index parity
   const yearOffset = index % 3 === 0 ? -1 : index % 3 === 1 ? 0 : 1;
@@ -297,6 +299,11 @@ async function runSeed() {
       { codice: "CPT", nome: "Captain", ruolo: Ruolo.PILOT },
       { codice: "LTC", nome: "Line Training Captain", ruolo: Ruolo.PILOT },
       {
+        codice: "LTCS",
+        nome: "Base LTC Standards Captain",
+        ruolo: Ruolo.PILOT,
+      },
+      {
         codice: "SFI",
         nome: "Synthetic Flight Instructor",
         ruolo: Ruolo.PILOT,
@@ -385,6 +392,7 @@ async function runSeed() {
     if (superAdmin) {
       await seedClaContracts2025(dataSource, superAdmin.id);
       await seedClaContracts2026(dataSource, superAdmin.id);
+      await seedClaContracts2026Test(dataSource, superAdmin.id);
     }
 
     // ── Admin Piloti ──────────────────────────────────────────────────────
