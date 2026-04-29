@@ -63,25 +63,41 @@ export const RestScreen: React.FC = () => {
     return minutesToTime(timeToMinutes(finishTime) + result.minRest);
   }, [result, finishTime]);
 
-  // assumedWakeMinutes from FDP calc (home standby), fallback to manual wakeTime
+  // assumedWakeMinutes from FDP calc (home standby only)
+  // 18h awake rule applies ONLY when called from home standby, not manual wakeTime
   const effectiveWakeMinutes = useMemo(() => {
     if (reportTime && reportTime.length === 5) {
       try {
         const fdp = calcMaxFdp(timeToMinutes(reportTime), sectors, standby);
-        if (fdp.assumedWakeMinutes !== null) return fdp.assumedWakeMinutes;
+        // Only use assumedWakeMinutes if it comes from home standby calculation
+        if (
+          fdp.assumedWakeMinutes !== null &&
+          standby?.type === "home" &&
+          standby.startTime
+        ) {
+          return { value: fdp.assumedWakeMinutes, fromStandby: true };
+        }
       } catch {}
     }
-    if (wakeTime && wakeTime.length === 5) return timeToMinutes(wakeTime);
+    // Manual wakeTime is for reference only, NOT for 18h alert
+    if (wakeTime && wakeTime.length === 5)
+      return { value: timeToMinutes(wakeTime), fromStandby: false };
     return null;
   }, [reportTime, sectors, standby, wakeTime]);
 
   const awakeMinutes = useMemo(() => {
     if (effectiveWakeMinutes === null || !finishTime || finishTime.length < 5)
       return null;
-    return (timeToMinutes(finishTime) - effectiveWakeMinutes + 1440) % 1440;
+    return (
+      (timeToMinutes(finishTime) - effectiveWakeMinutes.value + 1440) % 1440
+    );
   }, [effectiveWakeMinutes, finishTime]);
 
-  const awakeAlert = awakeMinutes !== null && awakeMinutes >= 18 * 60;
+  // 18h awake alert ONLY when coming from home standby (OMA §7.14)
+  const awakeAlert =
+    effectiveWakeMinutes?.fromStandby === true &&
+    awakeMinutes !== null &&
+    awakeMinutes >= 18 * 60;
 
   return (
     <View style={styles.container}>
