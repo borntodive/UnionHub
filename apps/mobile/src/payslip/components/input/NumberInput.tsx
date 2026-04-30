@@ -10,6 +10,7 @@ interface NumberInputProps {
   prefix?: string;
   placeholder?: string;
   decimals?: number;
+  description?: string;
 }
 
 export const NumberInput: React.FC<NumberInputProps> = ({
@@ -20,6 +21,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   prefix,
   placeholder = "0",
   decimals,
+  description,
 }) => {
   const [localText, setLocalText] = useState("");
 
@@ -49,6 +51,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
+      {description && <Text style={styles.description}>{description}</Text>}
       <View style={styles.inputContainer}>
         {prefix && <Text style={styles.prefix}>{prefix}</Text>}
         <TextInput
@@ -72,6 +75,11 @@ const styles = StyleSheet.create({
   label: {
     fontSize: typography.sizes.sm,
     color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  description: {
+    fontSize: typography.sizes.xs,
+    color: colors.textTertiary,
     marginBottom: spacing.xs,
   },
   inputContainer: {
