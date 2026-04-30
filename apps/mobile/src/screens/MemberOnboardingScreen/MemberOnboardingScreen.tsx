@@ -13,7 +13,12 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import {
+  useNavigation,
+  useRoute,
+  RouteProp,
+  DrawerActions,
+} from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -22,7 +27,7 @@ import {
   Clock,
   MessageCircle,
   User,
-  ArrowLeft,
+  Menu,
 } from "lucide-react-native";
 import Constants from "expo-constants";
 
@@ -156,6 +161,8 @@ export const MemberOnboardingScreen: React.FC = () => {
     Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`);
   };
 
+  const openDrawer = () => navigation.dispatch(DrawerActions.openDrawer());
+
   return (
     <View style={styles.wrapper}>
       <View style={[styles.statusBarHack, { height: insets.top }]} />
@@ -167,11 +174,11 @@ export const MemberOnboardingScreen: React.FC = () => {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => navigation.navigate("Members" as any)}
-            style={styles.backButton}
+            onPress={openDrawer}
+            style={styles.menuButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <ArrowLeft size={24} color={colors.textInverse} />
+            <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t("memberOnboarding.title")}</Text>
           <View style={styles.headerSpacer} />
@@ -263,7 +270,14 @@ export const MemberOnboardingScreen: React.FC = () => {
           <View style={styles.actions}>
             <TouchableOpacity
               style={styles.profileButton}
-              onPress={() => navigation.navigate("MemberDetail", { memberId })}
+              onPress={() =>
+                navigation.dispatch(
+                  DrawerActions.jumpTo("Members", {
+                    screen: "MemberDetail",
+                    params: { memberId },
+                  }),
+                )
+              }
             >
               <User size={18} color={colors.primary} />
               <Text style={styles.profileButtonText}>
@@ -273,7 +287,9 @@ export const MemberOnboardingScreen: React.FC = () => {
 
             <TouchableOpacity
               style={styles.listButton}
-              onPress={() => navigation.navigate("Members" as any)}
+              onPress={() =>
+                navigation.dispatch(DrawerActions.jumpTo("Members"))
+              }
             >
               <Text style={styles.listButtonText}>
                 {t("memberOnboarding.backToList")}
@@ -305,7 +321,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     backgroundColor: colors.primary,
   },
-  backButton: {
+  menuButton: {
     padding: spacing.xs,
   },
   headerTitle: {
