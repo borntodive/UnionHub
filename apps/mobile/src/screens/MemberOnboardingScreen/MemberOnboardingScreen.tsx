@@ -35,6 +35,7 @@ import { colors, spacing, typography, borderRadius } from "../../theme";
 import { Card } from "../../components/Card";
 import { usersApi } from "../../api/users";
 import { RootStackParamList } from "../../navigation/types";
+import { navigationRef } from "../../navigation/navigationRef";
 
 type MemberOnboardingRouteProp = RouteProp<
   RootStackParamList,
@@ -161,7 +162,8 @@ export const MemberOnboardingScreen: React.FC = () => {
     Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`);
   };
 
-  const openDrawer = () => navigation.dispatch(DrawerActions.openDrawer());
+  const openDrawer = () =>
+    navigationRef.current?.dispatch(DrawerActions.openDrawer());
 
   return (
     <View style={styles.wrapper}>
@@ -271,7 +273,7 @@ export const MemberOnboardingScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.profileButton}
               onPress={() =>
-                navigation.dispatch(
+                navigationRef.current?.dispatch(
                   DrawerActions.jumpTo("Members", {
                     screen: "MemberDetail",
                     params: { memberId },
@@ -288,7 +290,7 @@ export const MemberOnboardingScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.listButton}
               onPress={() =>
-                navigation.dispatch(DrawerActions.jumpTo("Members"))
+                navigationRef.current?.dispatch(DrawerActions.jumpTo("Members"))
               }
             >
               <Text style={styles.listButtonText}>

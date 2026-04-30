@@ -50,6 +50,7 @@ import { UserRole } from "../types";
 import { useNotifications } from "../hooks/useNotifications";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import apiClient from "../api/client";
+import { navigationRef } from "./navigationRef";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -115,7 +116,7 @@ export const AppNavigator: React.FC = () => {
   const activeStack = getActiveStack();
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {activeStack === "auth" ? (
           // Auth Stack
