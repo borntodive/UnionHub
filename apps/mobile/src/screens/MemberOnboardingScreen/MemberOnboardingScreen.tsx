@@ -19,7 +19,8 @@ import {
   RouteProp,
   DrawerActions,
 } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { DrawerNavigationProp } from "@react-navigation/drawer";
+import { DrawerParamList } from "../../navigation/types";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -34,15 +35,10 @@ import Constants from "expo-constants";
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { Card } from "../../components/Card";
 import { usersApi } from "../../api/users";
-import { RootStackParamList } from "../../navigation/types";
-import { navigationRef } from "../../navigation/navigationRef";
+import { DrawerParamList } from "../../navigation/types";
 
-type MemberOnboardingRouteProp = RouteProp<
-  RootStackParamList,
-  "MemberOnboarding"
->;
-type MemberOnboardingNavigationProp =
-  NativeStackNavigationProp<RootStackParamList>;
+type MemberOnboardingNavigationProp = DrawerNavigationProp<DrawerParamList>;
+type MemberOnboardingRouteProp = RouteProp<DrawerParamList, "MemberOnboarding">;
 
 const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS = 60000;
@@ -162,8 +158,7 @@ export const MemberOnboardingScreen: React.FC = () => {
     Linking.openURL(`https://wa.me/?text=${encodeURIComponent(text)}`);
   };
 
-  const openDrawer = () =>
-    navigationRef.current?.dispatch(DrawerActions.openDrawer());
+  const openDrawer = () => navigation.dispatch(DrawerActions.openDrawer());
 
   return (
     <View style={styles.wrapper}>
@@ -273,7 +268,7 @@ export const MemberOnboardingScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.profileButton}
               onPress={() =>
-                navigationRef.current?.dispatch(
+                navigation.dispatch(
                   DrawerActions.jumpTo("Members", {
                     screen: "MemberDetail",
                     params: { memberId },
@@ -290,7 +285,7 @@ export const MemberOnboardingScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.listButton}
               onPress={() =>
-                navigationRef.current?.dispatch(DrawerActions.jumpTo("Members"))
+                navigation.dispatch(DrawerActions.jumpTo("Members"))
               }
             >
               <Text style={styles.listButtonText}>

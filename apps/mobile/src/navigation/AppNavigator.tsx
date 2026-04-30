@@ -12,7 +12,6 @@ import { ChangePasswordScreen } from "../screens/ChangePasswordScreen/ChangePass
 import { MemberDetailScreen } from "../screens/MemberDetailScreen/MemberDetailScreen";
 import { MemberEditScreen } from "../screens/MemberDetailScreen/MemberEditScreen";
 import { MemberCreateScreen } from "../screens/MembersScreen/MemberCreateScreen";
-import { MemberOnboardingScreen } from "../screens/MemberOnboardingScreen/MemberOnboardingScreen";
 import { DrawerNavigator } from "./DrawerNavigator";
 // Admin screens
 import {
@@ -50,7 +49,6 @@ import { UserRole } from "../types";
 import { useNotifications } from "../hooks/useNotifications";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import apiClient from "../api/client";
-import { navigationRef } from "./navigationRef";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -116,7 +114,7 @@ export const AppNavigator: React.FC = () => {
   const activeStack = getActiveStack();
 
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {activeStack === "auth" ? (
           // Auth Stack
@@ -193,13 +191,6 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen
               name="MemberCreate"
               component={MemberCreateScreen}
-              options={{
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="MemberOnboarding"
-              component={MemberOnboardingScreen}
               options={{
                 headerShown: false,
               }}
