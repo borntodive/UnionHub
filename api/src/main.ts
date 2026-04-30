@@ -6,7 +6,8 @@ import { CarddavService } from "./carddav/carddav.service";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
 import * as express from "express";
 import * as path from "path";
-import helmet from "helmet";
+// @ts-ignore - helmet types issue
+const helmet = require("helmet");
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

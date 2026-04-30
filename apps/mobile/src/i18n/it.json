@@ -254,88 +254,33 @@
     "ctcCalculator": "Corr. Temp. Fredda",
     "gmail": "Casella Sindacale",
     "gmailSetup": "Configurazione Gmail",
-    "ragAssistant": "Assistente Manuali",
-    "ragAdmin": "Gestione RAG",
+    "chatbot": "Assistente AI",
+    "ragAdmin": "Base di Conoscenza",
     "backups": "Backup"
   },
-  "rag": {
-    "title": "Assistente Manuali",
-    "answer": "Risposta",
+  "chatbot": {
+    "title": "Assistente AI",
     "sources": "Fonti",
-    "thinking": "Ricerca nei manuali...",
-    "errorTimeout": "La richiesta ha impiegato troppo tempo. Il modello AI potrebbe essere occupato — riprova.",
-    "errorGeneric": "Impossibile ottenere una risposta. Controlla la connessione e riprova.",
-    "placeholder": "Fai una domanda sui tuoi manuali...",
+    "error": "Impossibile ottenere una risposta. Riprova.",
+    "placeholder": "Fai una domanda su stipendi, regolamenti, procedure...",
     "emptyTitle": "Fai una domanda",
-    "emptySubtitle": "L'assistente cerca nei manuali di volo e fornisce risposte basate sulle fonti, con citazioni.",
-    "admin": {
-      "title": "Gestione RAG",
-      "documents": "Documenti",
-      "noDocuments": "Nessun documento caricato.",
-      "processing": "{{count}} documento in indicizzazione...",
-      "processing_plural": "{{count}} documenti in indicizzazione...",
-      "notIngested": "Non indicizzato",
-      "systemStatus": "Stato Sistema",
-      "healthError": "Impossibile verificare lo stato del sistema",
-      "upload": {
-        "title": "Carica Manuale",
-        "selectPdf": "Seleziona file PDF",
-        "requiredFields": "Codice e titolo sono obbligatori",
-        "noFile": "Seleziona un file PDF",
-        "code": "Codice Documento",
-        "titleField": "Titolo",
-        "titlePlaceholder": "es. Operations Manual Part A",
-        "manualPart": "Parte Manuale",
-        "manualPartPlaceholder": "es. Part A",
-        "issue": "Issue",
-        "revision": "Revisione",
-        "uploadedOn": "Caricato il",
-        "fileName": "File",
-        "submit": "Carica Documento",
-        "success": "Documento {{code}} caricato",
-        "error": "Errore durante il caricamento"
-      },
-      "ingestion": {
-        "title": "Indicizzazione",
-        "start": "Avvia Indicizzazione",
-        "startError": "Errore avvio indicizzazione",
-        "retry": "Riprova Indicizzazione",
-        "retryError": "Errore retry indicizzazione",
-        "running": "Indicizzazione in corso...",
-        "steps": "Fasi di elaborazione",
-        "error": "Errore",
-        "completedMessage": "Indicizzazione completata! Il documento è ora ricercabile.",
-        "failedMessage": "Indicizzazione fallita. Vuoi riprovare?"
-      },
-      "status": {
-        "pending": "In attesa",
-        "running": "In esecuzione",
-        "completed": "Completato",
-        "failed": "Fallito",
-        "retrying": "Riprovo"
-      },
-      "delete": {
-        "title": "Elimina Documento",
-        "confirm": "Sei sicuro di voler eliminare questo documento? Questa azione non può essere annullata.",
-        "button": "Elimina",
-        "success": "Documento eliminato con successo",
-        "error": "Errore durante l'eliminazione"
-      }
-    },
-    "visibility": {
-      "public": "Pubblico",
-      "pilotOnly": "Solo Piloti",
-      "cabinOnly": "Solo Cabin Crew",
-      "adminOnly": "Solo Admin"
-    },
-    "publicDocuments": {
-      "title": "Documenti RAG",
-      "subtitle": "Documenti e manuali disponibili per la ricerca",
-      "empty": "Nessun documento disponibile",
-      "emptySubtitle": "Non ci sono ancora documenti visibili.",
-      "step": "Passo",
-      "processing": "Indicizzazione..."
-    }
+    "emptyText": "L'assistente cercherà nella base di conoscenza e fornirà risposte basate sulle fonti."
+  },
+  "ragAdmin": {
+    "title": "Base di Conoscenza",
+    "permissionDenied": "Accesso Negato",
+    "permissionDeniedText": "Questa funzione è disponibile solo per i SuperAdmin.",
+    "status": "Stato",
+    "totalChunks": "Chunk indicizzati",
+    "lastReindex": "Ultimo reindex",
+    "never": "Mai",
+    "actions": "Azioni",
+    "reindex": "Reindicizza",
+    "reindexSuccess": "{{count}} chunk indicizzati con successo",
+    "reindexError": "Reindicizzazione fallita. Riprova.",
+    "knowledgeBase": "Base di Conoscenza",
+    "files": "file",
+    "noFiles": "Nessun file"
   },
   "ftl": {
     "title": "Calcolatore FTL",

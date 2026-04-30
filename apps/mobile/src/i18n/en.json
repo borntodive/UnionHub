@@ -254,88 +254,33 @@
     "ctcCalculator": "Cold Temp Correction",
     "gmail": "Union Mailbox",
     "gmailSetup": "Gmail Setup",
-    "ragAssistant": "Manual Assistant",
-    "ragAdmin": "RAG Management",
+    "chatbot": "AI Assistant",
+    "ragAdmin": "Knowledge Base",
     "backups": "Backups"
   },
-  "rag": {
-    "title": "Manual Assistant",
-    "answer": "Answer",
+  "chatbot": {
+    "title": "AI Assistant",
     "sources": "Sources",
-    "thinking": "Searching manuals...",
-    "errorTimeout": "The request took too long. The AI model may be busy — please try again.",
-    "errorGeneric": "Failed to get an answer. Please check your connection and try again.",
-    "placeholder": "Ask a question about your manuals...",
+    "error": "Failed to get an answer. Please try again.",
+    "placeholder": "Ask a question about salaries, regulations, procedures...",
     "emptyTitle": "Ask a question",
-    "emptySubtitle": "The assistant will search through your aviation manuals and provide grounded answers with citations.",
-    "admin": {
-      "title": "RAG Management",
-      "documents": "Documents",
-      "noDocuments": "No documents uploaded yet.",
-      "processing": "{{count}} document indexing...",
-      "processing_plural": "{{count}} documents indexing...",
-      "notIngested": "Not ingested",
-      "systemStatus": "System Status",
-      "healthError": "Unable to check system status",
-      "upload": {
-        "title": "Upload Manual",
-        "selectPdf": "Select PDF file",
-        "requiredFields": "Code and title are required",
-        "noFile": "Please select a PDF file",
-        "code": "Document Code",
-        "titleField": "Title",
-        "titlePlaceholder": "e.g. Operations Manual Part A",
-        "manualPart": "Manual Part",
-        "manualPartPlaceholder": "e.g. Part A",
-        "issue": "Issue",
-        "revision": "Revision",
-        "uploadedOn": "Uploaded on",
-        "fileName": "File",
-        "submit": "Upload Document",
-        "success": "Document {{code}} uploaded successfully",
-        "error": "Failed to upload document"
-      },
-      "ingestion": {
-        "title": "Ingestion",
-        "start": "Start Ingestion",
-        "startError": "Failed to start ingestion",
-        "retry": "Retry Ingestion",
-        "retryError": "Failed to retry ingestion",
-        "running": "Ingestion in progress...",
-        "steps": "Processing Steps",
-        "error": "Error",
-        "completedMessage": "Ingestion completed successfully! The document is now searchable.",
-        "failedMessage": "Ingestion failed. Would you like to retry?"
-      },
-      "status": {
-        "pending": "Pending",
-        "running": "Running",
-        "completed": "Completed",
-        "failed": "Failed",
-        "retrying": "Retrying"
-      },
-      "delete": {
-        "title": "Delete Document",
-        "confirm": "Are you sure you want to delete this document? This action cannot be undone.",
-        "button": "Delete",
-        "success": "Document deleted successfully",
-        "error": "Failed to delete document"
-      }
-    },
-    "visibility": {
-      "public": "Public",
-      "pilotOnly": "Pilots Only",
-      "cabinOnly": "Cabin Crew Only",
-      "adminOnly": "Admin Only"
-    },
-    "publicDocuments": {
-      "title": "RAG Documents",
-      "subtitle": "Documents and manuals available for search",
-      "empty": "No documents available",
-      "emptySubtitle": "There are no visible documents yet.",
-      "step": "Step",
-      "processing": "Indexing..."
-    }
+    "emptyText": "The assistant will search through the knowledge base and provide grounded answers with sources."
+  },
+  "ragAdmin": {
+    "title": "Knowledge Base",
+    "permissionDenied": "Permission Denied",
+    "permissionDeniedText": "This feature is only available to SuperAdmins.",
+    "status": "Status",
+    "totalChunks": "Indexed chunks",
+    "lastReindex": "Last reindex",
+    "never": "Never",
+    "actions": "Actions",
+    "reindex": "Reindex",
+    "reindexSuccess": "{{count}} chunks indexed successfully",
+    "reindexError": "Failed to reindex. Please try again.",
+    "knowledgeBase": "Knowledge Base",
+    "files": "files",
+    "noFiles": "No files"
   },
   "ftl": {
     "title": "FTL Calculator",
