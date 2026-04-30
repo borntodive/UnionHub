@@ -25,7 +25,7 @@ import {
   timeToMinutes,
   minutesToDuration,
 } from "../services/FtlCalculator";
-import { TimePickerSheet } from "../components/TimePickerSheet";
+import { TimeInput } from "../../components/TimeInput";
 
 const SECTORS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -186,7 +186,7 @@ export const ExtensionScreen: React.FC = () => {
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>{t("ftl.inputs")}</Text>
 
-          <TimePickerSheet
+          <TimeInput
             label={t("ftl.reportTime")}
             hint={t("ftl.sharedWithFdpTab")}
             value={reportTime}

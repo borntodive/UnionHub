@@ -22,7 +22,7 @@ import {
   minutesToTime,
   minutesToDuration,
 } from "../services/FtlCalculator";
-import { TimePickerSheet } from "../components/TimePickerSheet";
+import { TimeInput } from "../../components/TimeInput";
 
 export const RestScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -160,14 +160,14 @@ export const RestScreen: React.FC = () => {
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>{t("ftl.inputs")}</Text>
 
-          <TimePickerSheet
+          <TimeInput
             label={t("ftl.dutyStart")}
             hint={t("ftl.dutyStartHint")}
             value={dutyStart}
             onChange={(v) => set({ dutyStart: v })}
           />
 
-          <TimePickerSheet
+          <TimeInput
             label={t("ftl.finishTime")}
             value={finishTime}
             onChange={(v) => set({ finishTime: v })}

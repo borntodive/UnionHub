@@ -95,6 +95,9 @@ const PayslipForm: React.FC<PayslipFormProps> = ({
     s.accontoAddComunali.toString(),
   );
   const [regionaliText, setRegionaliText] = useState(s.addRegionali.toString());
+  const [voluntaryText, setVoluntaryText] = useState(
+    s.voluntaryPensionContribution.toString(),
+  );
 
   // Legacy state
   const lc = s.legacyCustom ?? { ffp: 0, sbh: 0, al: 0 };
@@ -132,8 +135,11 @@ const PayslipForm: React.FC<PayslipFormProps> = ({
   };
 
   const handlePensionChange = (value: string) => {
+    setVoluntaryText(value);
     const num = parseFloat(value);
-    if (!isNaN(num) && num >= 0 && num <= 100) {
+    if (value === "") {
+      set({ voluntaryPensionContribution: 0 });
+    } else if (!isNaN(num) && num >= 0 && num <= 100) {
       set({ voluntaryPensionContribution: num });
     }
   };
@@ -279,7 +285,7 @@ const PayslipForm: React.FC<PayslipFormProps> = ({
         <View style={styles.inputRow}>
           <TextInput
             style={styles.numInput}
-            value={s.voluntaryPensionContribution.toString()}
+            value={voluntaryText}
             onChangeText={handlePensionChange}
             keyboardType="numeric"
             maxLength={5}

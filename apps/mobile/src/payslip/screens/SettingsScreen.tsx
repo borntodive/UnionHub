@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -102,6 +102,14 @@ export const SettingsScreen: React.FC = () => {
   const [regionaliText, setRegionaliText] = useState(
     overrideSettings.addRegionali.toString(),
   );
+  const [voluntaryText, setVoluntaryText] = useState(
+    overrideSettings.voluntaryPensionContribution.toString(),
+  );
+
+  // Sync voluntaryText when overrideSettings changes (but not during typing)
+  useEffect(() => {
+    setVoluntaryText(overrideSettings.voluntaryPensionContribution.toString());
+  }, [overrideSettings.voluntaryPensionContribution]);
 
   // Legacy local states
   const olc = overrideSettings.legacyCustom ?? { ffp: 0, sbh: 0, al: 0 };
@@ -165,6 +173,9 @@ export const SettingsScreen: React.FC = () => {
         setComunaliText(settings.addComunali?.toString() || "0");
         setAccontoText(settings.accontoAddComunali?.toString() || "0");
         setRegionaliText(settings.addRegionali?.toString() || "0");
+        setVoluntaryText(
+          settings.voluntaryPensionContribution?.toString() || "0",
+        );
         if (settings.legacyCustom) {
           setLegacyFfpText(
             settings.legacyCustom.ffp > 0
@@ -485,11 +496,16 @@ export const SettingsScreen: React.FC = () => {
                 <View style={styles.inputRow}>
                   <TextInput
                     style={styles.numInput}
-                    value={overrideSettings.voluntaryPensionContribution.toString()}
+                    value={voluntaryText}
                     onChangeText={(v) => {
+                      setVoluntaryText(v);
                       const n = parseFloat(v);
-                      if (!isNaN(n) && n >= 0 && n <= 100)
+                      if (!isNaN(n) && n >= 0 && n <= 100) {
                         set({ voluntaryPensionContribution: n });
+                      }
+                      if (v === "") {
+                        set({ voluntaryPensionContribution: 0 });
+                      }
                     }}
                     keyboardType="numeric"
                     maxLength={5}
