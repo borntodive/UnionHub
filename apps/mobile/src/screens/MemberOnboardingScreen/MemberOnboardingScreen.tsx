@@ -35,7 +35,6 @@ import Constants from "expo-constants";
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { Card } from "../../components/Card";
 import { usersApi } from "../../api/users";
-import { DrawerParamList } from "../../navigation/types";
 
 type MemberOnboardingNavigationProp = DrawerNavigationProp<DrawerParamList>;
 type MemberOnboardingRouteProp = RouteProp<DrawerParamList, "MemberOnboarding">;
