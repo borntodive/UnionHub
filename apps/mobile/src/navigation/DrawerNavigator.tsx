@@ -81,6 +81,7 @@ import { GmailSetupScreen } from "../gmail/screens/GmailSetupScreen";
 import { MemberDetailScreen } from "../screens/MemberDetailScreen/MemberDetailScreen";
 import { MemberEditScreen } from "../screens/MemberDetailScreen/MemberEditScreen";
 import { MemberCreateScreen } from "../screens/MembersScreen/MemberCreateScreen";
+import { MemberOnboardingScreen } from "../screens/MemberOnboardingScreen/MemberOnboardingScreen";
 import { BaseFormScreen } from "../screens/admin/BaseFormScreen";
 import { GradeFormScreen } from "../screens/admin/GradeFormScreen";
 import { IssueCategoryFormScreen } from "../screens/admin/IssueCategoryFormScreen";
@@ -763,6 +764,15 @@ export const DrawerNavigator: React.FC = () => {
             component={MemberCreateScreen}
             options={{
               title: t("navigation.createMember"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="MemberOnboarding"
+            component={MemberOnboardingScreen}
+            options={{
+              title: t("navigation.onboarding"),
               drawerItemStyle: { display: "none" },
               headerShown: false,
             }}

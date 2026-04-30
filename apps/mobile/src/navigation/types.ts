@@ -7,11 +7,6 @@ export type RootStackParamList = {
   MemberDetail: { memberId: string };
   MemberEdit: { memberId: string };
   MemberCreate: { sharedPdfUri?: string; extractedData?: any } | undefined;
-  MemberOnboarding: {
-    memberId: string;
-    memberName: string;
-    hasRegistrationForm: boolean;
-  };
   // Public routes
   PublicDocuments: undefined;
   // Admin routes
@@ -54,6 +49,54 @@ export type RootStackParamList = {
   RagAdmin: undefined;
   RagDocumentDetail: { documentId: string };
   // Backups
+  Backups: undefined;
+};
+
+export type DrawerParamList = {
+  Home: undefined;
+  Members: undefined;
+  MemberDetail: { memberId: string };
+  MemberEdit: { memberId: string };
+  MemberCreate: { sharedPdfUri?: string; extractedData?: any } | undefined;
+  MemberOnboarding: {
+    memberId: string;
+    memberName: string;
+    hasRegistrationForm: boolean;
+  };
+  Notifications: undefined;
+  Settings: undefined;
+  PublicDocuments: undefined;
+  PayslipCalculator: undefined;
+  FtlCalculator: undefined;
+  ColdTempCorrection: undefined;
+  ReportIssue: undefined;
+  MyIssues: undefined;
+  Issues: undefined;
+  IssueDetail: { issueId: string };
+  PendingMembers: undefined;
+  Documents: undefined;
+  DocumentEditor: { documentId?: string } | undefined;
+  Statistics: undefined;
+  BulkImport: undefined;
+  Contracts: undefined;
+  ContractForm: { contractId?: string };
+  ClaContracts: undefined;
+  ContractEditor: { contract?: any } | undefined;
+  DeactivatedMembers: undefined;
+  Bases: undefined;
+  BaseForm: { baseId?: string };
+  Grades: undefined;
+  GradeForm: { gradeId?: string };
+  IssueCategories: undefined;
+  IssueCategoryForm: { categoryId?: string };
+  IssueUrgencies: undefined;
+  IssueUrgencyForm: { urgencyId?: string };
+  GmailSetup: undefined;
+  Gmail: undefined;
+  RagAsk: undefined;
+  RagPublicDocuments: undefined;
+  RagAdmin: undefined;
+  RagDocumentDetail: { documentId: string };
   Backups: undefined;
 };
 
