@@ -17,6 +17,7 @@ export const SbhInput: React.FC<SbhInputProps> = ({ value, onChange }) => {
   return (
     <TimeInput
       label={t("payslip.scheduledBlockHours")}
+      hint={t("payslip.descriptions.hourlyFlightAllowance")}
       value={value}
       onChange={onChange}
       placeholder="--:--"

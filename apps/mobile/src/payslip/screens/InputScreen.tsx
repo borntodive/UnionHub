@@ -105,22 +105,26 @@ export const InputScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>{t("payslip.perDiem")}</Text>
             <NumberInput
               label={t("payslip.flyingPerDiem")}
+              description={t("payslip.descriptions.flyingPerDiem")}
               value={input.flyDiaria}
               onChange={(flyDiaria) => setInput({ flyDiaria })}
             />
             <NumberInput
               label={t("payslip.nonFlyingPerDiem")}
+              description={t("payslip.descriptions.nonFlyingPerDiem")}
               value={input.noFlyDiaria}
               onChange={(noFlyDiaria) => setInput({ noFlyDiaria })}
             />
             <NumberInput
               label={t("payslip.outOfBase")}
+              description={t("payslip.descriptions.outOfBase")}
               value={input.oob}
               onChange={(oob) => setInput({ oob })}
             />
             {isPilot && (
               <NumberInput
                 label={t("payslip.workingDayOff")}
+                description={t("payslip.descriptions.workingDayOff")}
                 value={input.woff}
                 onChange={(woff) => setInput({ woff })}
               />
@@ -133,12 +137,14 @@ export const InputScreen: React.FC = () => {
             </Text>
             <NumberInput
               label={t("payslip.annualLeave")}
+              description={t("payslip.descriptions.annualLeave")}
               value={input.al}
               onChange={(al) => setInput({ al })}
             />
             {!isPilot && (
               <NumberInput
                 label={t("payslip.bankHolidays")}
+                description={t("payslip.descriptions.bankHolidays")}
                 value={input.bankHolydays}
                 onChange={(bankHolydays) => setInput({ bankHolydays })}
               />
@@ -146,22 +152,26 @@ export const InputScreen: React.FC = () => {
             {!isPilot && (
               <NumberInput
                 label={t("payslip.oobUnplanned")}
+                description={t("payslip.descriptions.oobUnplanned")}
                 value={input.oobUnplanned}
                 onChange={(oobUnplanned) => setInput({ oobUnplanned })}
               />
             )}
             <NumberInput
               label={t("payslip.unpaidLeave")}
+              description={t("payslip.descriptions.unpaidLeave")}
               value={input.ul}
               onChange={(ul) => setInput({ ul })}
             />
             <NumberInput
               label={t("payslip.parentalLeave")}
+              description={t("payslip.descriptions.parentalLeave")}
               value={input.parentalDays}
               onChange={(parentalDays) => setInput({ parentalDays })}
             />
             <NumberInput
               label={t("payslip.law104")}
+              description={t("payslip.descriptions.law104")}
               value={input.days104}
               onChange={(days104) => setInput({ days104 })}
             />
@@ -174,6 +184,7 @@ export const InputScreen: React.FC = () => {
               </Text>
               <NumberInput
                 label={t("payslip.trainingSectors")}
+                description={t("payslip.descriptions.trainingSectors")}
                 value={input.trainingSectors}
                 onChange={(trainingSectors) => setInput({ trainingSectors })}
               />
@@ -185,6 +196,7 @@ export const InputScreen: React.FC = () => {
               <Text style={styles.sectionTitle}>{t("payslip.instructor")}</Text>
               <NumberInput
                 label={t("payslip.simulatorDays")}
+                description={t("payslip.descriptions.simulatorDays")}
                 value={input.simDays}
                 onChange={(simDays) => setInput({ simDays })}
               />
@@ -196,16 +208,19 @@ export const InputScreen: React.FC = () => {
               <Text style={styles.sectionTitle}>{t("members.cabinCrew")}</Text>
               <NumberInput
                 label={t("payslip.cabinCrewTraining")}
+                description={t("payslip.descriptions.cabinCrewTraining")}
                 value={input.ccTrainingDays}
                 onChange={(ccTrainingDays) => setInput({ ccTrainingDays })}
               />
               <NumberInput
                 label={t("payslip.landingsOffDay")}
+                description={t("payslip.descriptions.landingsOffDay")}
                 value={input.landingInOffDay}
                 onChange={(landingInOffDay) => setInput({ landingInOffDay })}
               />
               <NumberInput
                 label={t("payslip.commissions")}
+                description={t("payslip.descriptions.commissions")}
                 value={input.commissions}
                 onChange={(commissions) => setInput({ commissions })}
               />
@@ -217,6 +232,7 @@ export const InputScreen: React.FC = () => {
               <Text style={styles.sectionTitle}>{t("payslip.other")}</Text>
               <NumberInput
                 label={t("payslip.itudDays")}
+                description={t("payslip.descriptions.itudDays")}
                 value={input.itud}
                 onChange={(itud) => setInput({ itud })}
               />
