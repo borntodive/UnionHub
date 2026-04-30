@@ -28,7 +28,7 @@ import {
 } from "../services/FtlCalculator";
 import { MAX_AWAKE } from "../data/ftlTables";
 import { StandbyType } from "../types";
-import { TimePickerSheet } from "../components/TimePickerSheet";
+import { TimeInput } from "../../components/TimeInput";
 
 const SECTORS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -155,7 +155,7 @@ export const FdpScreen: React.FC = () => {
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>{t("ftl.inputs")}</Text>
 
-          <TimePickerSheet
+          <TimeInput
             label={t("ftl.reportTime")}
             value={reportTime}
             onChange={(v) => set({ reportTime: v, dutyStart: v })}
@@ -212,7 +212,7 @@ export const FdpScreen: React.FC = () => {
           </View>
 
           {showStandby && standby.type !== "reserve" && (
-            <TimePickerSheet
+            <TimeInput
               label={t("ftl.standbyStart")}
               value={standby.startTime}
               onChange={(v) => set({ standby: { ...standby, startTime: v } })}
@@ -220,7 +220,7 @@ export const FdpScreen: React.FC = () => {
           )}
 
           {showCallTime && (
-            <TimePickerSheet
+            <TimeInput
               label={t("ftl.callTime")}
               value={standby.callTime}
               onChange={(v) => set({ standby: { ...standby, callTime: v } })}

@@ -18,7 +18,7 @@ import { colors, spacing, typography, borderRadius } from "../../theme";
 import { useAuthStore } from "../../store/authStore";
 import { usePayslipStore } from "../store/usePayslipStore";
 import { MonthPicker } from "../components/input/MonthPicker";
-import { SbhPicker } from "../components/input/SbhPicker";
+import { SbhInput } from "../components/input/SbhInput";
 import { NumberInput } from "../components/input/NumberInput";
 import { AdditionalPaymentsSection } from "../components/input/AdditionalPaymentsSection";
 import { AdditionalDeductionsSection } from "../components/input/AdditionalDeductionsSection";
@@ -98,10 +98,7 @@ export const InputScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>
               {t("payslip.flightActivity")}
             </Text>
-            <SbhPicker
-              value={input.sbh}
-              onChange={(sbh) => setInput({ sbh })}
-            />
+            <SbhInput value={input.sbh} onChange={(sbh) => setInput({ sbh })} />
           </View>
 
           <View style={styles.card}>
