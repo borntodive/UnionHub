@@ -17,7 +17,6 @@ import { IssueUrgenciesModule } from "./issue-urgencies/issue-urgencies.module";
 import { IssuesModule } from "./issues/issues.module";
 import { GmailModule } from "./gmail/gmail.module";
 import { CarddavModule } from "./carddav/carddav.module";
-// Integration hook: RAG module (additive, removable without impact)
 import { RagModule } from "./rag/rag.module";
 import { BackupsModule } from "./backups/backups.module";
 

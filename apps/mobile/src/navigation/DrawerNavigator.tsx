@@ -53,9 +53,8 @@ import { PayslipTabs } from "../payslip/navigation/PayslipTabs";
 import { FtlTabs } from "../ftl";
 import { CtcScreen } from "../screens/CtcScreen";
 import { GmailScreen } from "../gmail/screens/GmailScreen";
-import { RagAskScreen } from "../screens/RagAskScreen/RagAskScreen";
-import { RagAdminScreen } from "../screens/RagAdminScreen/RagAdminScreen";
-import { RagPublicDocumentsScreen } from "../screens/RagPublicDocumentsScreen/RagPublicDocumentsScreen";
+import { ChatbotScreen } from "../screens/ChatbotScreen";
+import { RagAdminScreen } from "../screens/admin/RagAdminScreen";
 import AdminContractsScreen from "../payslip/screens/AdminContractsScreen";
 import ContractEditorScreen from "../payslip/screens/ContractEditorScreen";
 import { SettingsScreen } from "../screens/SettingsScreen/SettingsScreen";
@@ -255,25 +254,15 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             />
           )}
 
-          {isOnline && isAdmin && (
-            <>
-              <MenuItem
-                icon={<Search size={22} color={colors.primary} />}
-                label={t("navigation.ragAssistant")}
-                onPress={() => {
-                  props.navigation.navigate("RagAsk");
-                  props.navigation.closeDrawer();
-                }}
-              />
-              <MenuItem
-                icon={<BookOpen size={22} color={colors.primary} />}
-                label={t("rag.publicDocuments.title")}
-                onPress={() => {
-                  props.navigation.navigate("RagPublicDocuments");
-                  props.navigation.closeDrawer();
-                }}
-              />
-            </>
+          {isOnline && (
+            <MenuItem
+              icon={<Search size={22} color={colors.primary} />}
+              label={t("navigation.chatbot")}
+              onPress={() => {
+                props.navigation.navigate("Chatbot");
+                props.navigation.closeDrawer();
+              }}
+            />
           )}
 
           {/* Issues — available offline */}
@@ -912,32 +901,25 @@ export const DrawerNavigator: React.FC = () => {
         />
       )}
       <Drawer.Screen
-        name="RagAsk"
-        component={RagAskScreen}
+        name="Chatbot"
+        component={ChatbotScreen}
         options={{
-          title: t("navigation.ragAssistant"),
+          title: t("navigation.chatbot"),
           drawerItemStyle: { display: "none" },
           headerShown: false,
         }}
       />
-      <Drawer.Screen
-        name="RagPublicDocuments"
-        component={RagPublicDocumentsScreen}
-        options={{
-          title: t("rag.publicDocuments.title"),
-          drawerLabel: t("rag.publicDocuments.title"),
-          headerShown: true,
-        }}
-      />
-      <Drawer.Screen
-        name="RagAdmin"
-        component={RagAdminScreen}
-        options={{
-          title: t("navigation.ragAdmin"),
-          drawerItemStyle: { display: "none" },
-          headerShown: false,
-        }}
-      />
+      {isSuperAdmin && (
+        <Drawer.Screen
+          name="RagAdmin"
+          component={RagAdminScreen}
+          options={{
+            title: t("navigation.ragAdmin"),
+            drawerItemStyle: { display: "none" },
+            headerShown: false,
+          }}
+        />
+      )}
     </Drawer.Navigator>
   );
 };

@@ -8,7 +8,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { google, gmail_v1 } from "googleapis";
+import { google, gmail_v1 } from "googleapis/build/src/index";
 import { OAuth2Client } from "google-auth-library";
 import { User } from "../users/entities/user.entity";
 import { Ruolo } from "../common/enums/ruolo.enum";
@@ -97,6 +97,7 @@ export class GmailService implements OnModuleInit {
     return client;
   }
 
+  // @ts-ignore
   private getGmailClientForRuolo(ruolo: Ruolo): gmail_v1.Gmail {
     const auth = this.getOAuth2ClientForRuolo(ruolo);
     return google.gmail({ version: "v1", auth });
@@ -320,6 +321,7 @@ export class GmailService implements OnModuleInit {
     ).toString("utf-8");
   }
 
+  // @ts-ignore
   private extractBody(payload: gmail_v1.Schema$MessagePart): {
     html: string | null;
     text: string | null;
@@ -327,6 +329,7 @@ export class GmailService implements OnModuleInit {
     let html: string | null = null;
     let text: string | null = null;
 
+    // @ts-ignore
     const walk = (part: gmail_v1.Schema$MessagePart) => {
       if (part.mimeType === "text/html" && part.body?.data) {
         html = this.decodeBase64(part.body.data);
@@ -343,10 +346,12 @@ export class GmailService implements OnModuleInit {
   }
 
   private extractAttachments(
+    // @ts-ignore
     payload: gmail_v1.Schema$MessagePart,
   ): EmailAttachment[] {
     const attachments: EmailAttachment[] = [];
 
+    // @ts-ignore
     const walk = (part: gmail_v1.Schema$MessagePart) => {
       if (
         part.filename &&
@@ -370,6 +375,7 @@ export class GmailService implements OnModuleInit {
   }
 
   private getHeader(
+    // @ts-ignore
     headers: gmail_v1.Schema$MessagePartHeader[] | undefined,
     name: string,
   ): string {

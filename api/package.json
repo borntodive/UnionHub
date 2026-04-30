@@ -30,6 +30,7 @@
     "backup": "bash scripts/backup.sh"
   },
   "dependencies": {
+    "@langchain/classic": "^1.0.32",
     "@langchain/community": "^1.1.27",
     "@langchain/core": "^1.1.42",
     "@langchain/openai": "^1.4.5",
@@ -59,6 +60,7 @@
     "ioredis": "^5.10.1",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.3",
+    "openai": "^6.35.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pdf-lib": "^1.17.1",
