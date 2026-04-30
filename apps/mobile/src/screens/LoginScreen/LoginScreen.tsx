@@ -29,13 +29,18 @@ import { useBiometricAuth } from "../../hooks/useBiometricAuth";
 import { syncPayslipSettings } from "../../payslip/hooks/usePayslipSettingsSync";
 
 function safeErrorMessage(error: any, fallback: string): string {
-  if (__DEV__) {
-    return error.response?.data?.message || error.message || fallback;
-  }
+  const serverMsg = error.response?.data?.message;
   const status = error.response?.data?.statusCode;
-  if (status === 401) return fallback;
-  if (status === 400) return fallback;
-  return t("errors.generic");
+
+  // Always show server message if available
+  if (serverMsg) return serverMsg;
+
+  // Network errors
+  if (error.code === "ECONNABORTED")
+    return "Timeout: impossibile raggiungere il server";
+  if (!error.response) return "Network error: verifica la connessione";
+
+  return fallback;
 }
 
 const QUICK_USERS = [

@@ -167,16 +167,22 @@ export function calcMaxFdp(
 
   // 4. Effective max FDP
   const reducedTableMax = tableMax - standbyReduction;
-  const limitedByAwake = awakeMax < reducedTableMax && awakeMax < cap16h;
+  // Awake limit should override MIN_FDP - crew cannot be awake > 18h
+  const hasAwakeLimit = awakeMax !== Number.MAX_SAFE_INTEGER;
+  const limitedByAwake =
+    hasAwakeLimit &&
+    (awakeMax < reducedTableMax || awakeMax < MIN_FDP) &&
+    awakeMax <= cap16h;
   const limitedByStandby = standbyReduction > 0;
   const limitedBy16hCap =
     cap16h < reducedTableMax &&
     cap16h < awakeMax &&
     cap16h !== Number.MAX_SAFE_INTEGER;
-  const effectiveMax = Math.max(
-    MIN_FDP,
-    Math.min(reducedTableMax, awakeMax, cap16h),
-  );
+  // If awake limit is below MIN_FDP, it wins - otherwise apply MIN_FDP floor
+  const effectiveMax =
+    hasAwakeLimit && awakeMax < MIN_FDP
+      ? Math.min(awakeMax, cap16h) // Awake wins, bypass MIN_FDP
+      : Math.max(MIN_FDP, Math.min(reducedTableMax, awakeMax, cap16h));
 
   // 5. WOCL encroachment
   const woclEncroachmentMin = calcWoclEncroachment(reportMinutes, effectiveMax);
