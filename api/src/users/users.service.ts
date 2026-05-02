@@ -595,6 +595,31 @@ export class UsersService {
     });
   }
 
+  async resetPassword(id: string, requestingUser: User): Promise<void> {
+    const user = await this.findById(id);
+
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    if (requestingUser.role === UserRole.ADMIN) {
+      if (user.ruolo !== requestingUser.ruolo) {
+        throw new ForbiddenException(
+          "Admin can only reset passwords of users in their own professional role",
+        );
+      }
+      if (user.role !== UserRole.USER) {
+        throw new ForbiddenException(
+          "Admin cannot reset the password of another admin",
+        );
+      }
+    }
+
+    const hashedPassword = await bcrypt.hash("password", 10);
+    await this.updatePassword(id, hashedPassword);
+    await this.updateMustChangePassword(id, true);
+  }
+
   async updateLanguage(userId: string, language: string): Promise<void> {
     await this.usersRepository.update(userId, { language });
   }

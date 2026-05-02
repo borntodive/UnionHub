@@ -166,6 +166,39 @@ export const MemberDetailScreen: React.FC = () => {
     ]);
   };
 
+  const resetPasswordMutation = useMutation({
+    mutationFn: () => usersApi.resetPassword(memberId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user", memberId] });
+      Alert.alert(
+        "Success",
+        "Password reset to default. The member will be asked to change it on next login.",
+      );
+    },
+    onError: (error: any) => {
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to reset password",
+      );
+    },
+  });
+
+  const handleResetPassword = () => {
+    if (!member) return;
+    Alert.alert(
+      "Reset Password",
+      `Reset password for ${member.nome} ${member.cognome} to default?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Reset",
+          style: "destructive",
+          onPress: () => resetPasswordMutation.mutate(),
+        },
+      ],
+    );
+  };
+
   const resendWelcomeMutation = useMutation({
     mutationFn: () => usersApi.resendWelcomeEmail(memberId),
     onSuccess: () => {
@@ -563,6 +596,15 @@ export const MemberDetailScreen: React.FC = () => {
           {/* Admin Actions */}
           {isAdmin && (
             <View style={styles.actionsContainer}>
+              {!isOwnProfile && (
+                <Button
+                  title="Reset Password"
+                  onPress={handleResetPassword}
+                  variant="secondary"
+                  loading={resetPasswordMutation.isPending}
+                  style={styles.actionButton}
+                />
+              )}
               <Button
                 title={
                   member.isActive ? "Deactivate Member" : "Activate Member"
