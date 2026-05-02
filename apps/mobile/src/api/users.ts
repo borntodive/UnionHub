@@ -214,6 +214,10 @@ export const usersApi = {
     return response.data;
   },
 
+  resetPassword: async (userId: string): Promise<void> => {
+    await apiClient.post(`/users/${userId}/reset-password`);
+  },
+
   // Deactivated users management (SuperAdmin only)
   getDeactivated: async (params?: {
     page?: number;

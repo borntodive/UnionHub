@@ -282,6 +282,18 @@ export class UsersController {
     return updated.serialize(requestingUser.role);
   }
 
+  @Post(":id/reset-password")
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(
+    @Request() req: RequestWithUser,
+    @Param("id", ParseUUIDPipe) id: string,
+  ) {
+    const requestingUser = await this.usersService.findById(req.user.userId);
+    await this.usersService.resetPassword(id, requestingUser);
+    return { message: "Password reset successfully" };
+  }
+
   @Post()
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async create(
