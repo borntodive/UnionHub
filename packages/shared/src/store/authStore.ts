@@ -119,6 +119,7 @@ export function createAuthStore(
         partialize: (state) => ({
           isAuthenticated: state.isAuthenticated,
           biometricEnabled: state.biometricEnabled,
+          user: state.user,
         }),
         onRehydrateStorage: () => async (state) => {
           try {
