@@ -7,7 +7,10 @@ import {
   Request,
 } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
 import { SuperAdminGuard } from "../common/guards/super-admin.guard";
+import { Roles } from "../common/decorators/roles.decorator";
+import { UserRole } from "../common/enums/user-role.enum";
 import { ChatDto } from "./dto/chat.dto";
 import { RagService } from "./rag.service";
 import type {
@@ -34,10 +37,11 @@ export class RagController {
   }
 
   /**
-   * Chat with RAG (authenticated users)
+   * Chat with RAG (Admin+ only)
    */
   @Post("chat")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async chat(@Body() chatDto: ChatDto) {
     return this.ragService.chat(chatDto.question, chatDto.history);
   }

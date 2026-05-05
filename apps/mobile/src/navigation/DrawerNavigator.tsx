@@ -37,6 +37,7 @@ import {
   Search,
   BookOpen,
   HardDrive,
+  Radio,
 } from "lucide-react-native";
 import { Image } from "react-native";
 import { usersApi } from "../api/users";
@@ -85,6 +86,9 @@ import { BaseFormScreen } from "../screens/admin/BaseFormScreen";
 import { GradeFormScreen } from "../screens/admin/GradeFormScreen";
 import { IssueCategoryFormScreen } from "../screens/admin/IssueCategoryFormScreen";
 import { IssueUrgencyFormScreen } from "../screens/admin/IssueUrgencyFormScreen";
+import { VolmetScreen } from "../screens/VolmetScreen";
+import { VolmetAdminScreen } from "../screens/admin/VolmetAdminScreen";
+import { VolmetFormScreen } from "../screens/admin/VolmetFormScreen";
 import { UserRole } from "../types";
 const Drawer = createDrawerNavigator();
 
@@ -243,6 +247,15 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             }}
           />
 
+          <MenuItem
+            icon={<Radio size={22} color={colors.primary} />}
+            label={t("navigation.volmet")}
+            onPress={() => {
+              props.navigation.navigate("Volmet");
+              props.navigation.closeDrawer();
+            }}
+          />
+
           {isOnline && isRsa && (
             <MenuItem
               icon={<Mail size={22} color={colors.primary} />}
@@ -254,7 +267,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             />
           )}
 
-          {isOnline && (
+          {isOnline && isAdmin && (
             <MenuItem
               icon={<Search size={22} color={colors.primary} />}
               label={t("navigation.chatbot")}
@@ -471,6 +484,14 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                       props.navigation.closeDrawer();
                     }}
                   />
+                  <MenuItem
+                    icon={<Radio size={22} color={colors.primary} />}
+                    label={t("navigation.volmetAdmin")}
+                    onPress={() => {
+                      props.navigation.navigate("VolmetAdmin");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
                 </>
               )}
             </>
@@ -669,6 +690,15 @@ export const DrawerNavigator: React.FC = () => {
         options={{
           title: t("navigation.ctcCalculator"),
           drawerIcon: ({ color }) => <Thermometer size={22} color={color} />,
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
+        name="Volmet"
+        component={VolmetScreen}
+        options={{
+          title: t("navigation.volmet"),
+          drawerIcon: ({ color }) => <Radio size={22} color={color} />,
           headerShown: false,
         }}
       />
@@ -920,6 +950,24 @@ export const DrawerNavigator: React.FC = () => {
           }}
         />
       )}
+      <Drawer.Screen
+        name="VolmetAdmin"
+        component={VolmetAdminScreen}
+        options={{
+          title: t("navigation.volmetAdmin"),
+          drawerItemStyle: { display: "none" },
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
+        name="VolmetForm"
+        component={VolmetFormScreen}
+        options={{
+          title: t("navigation.volmetForm"),
+          drawerItemStyle: { display: "none" },
+          headerShown: false,
+        }}
+      />
     </Drawer.Navigator>
   );
 };
