@@ -56,6 +56,7 @@ const dataSource = new DataSource({
     ClaContractHistory,
     IssueCategory,
     IssueUrgency,
+    Volmet,
   ],
   synchronize: false,
 });
