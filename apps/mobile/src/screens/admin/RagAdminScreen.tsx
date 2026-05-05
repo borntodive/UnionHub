@@ -18,7 +18,13 @@ import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
-import { ragApi, type ReindexProgress } from "../../api/rag";
+import {
+  ragApi,
+  wikiApi,
+  type ReindexProgress,
+  type WikiProgress,
+  type WikiIndex,
+} from "../../api/rag";
 import { UserRole } from "../../types";
 import { useAuthStore } from "../../store/authStore";
 
@@ -35,7 +41,9 @@ export const RagAdminScreen: React.FC = () => {
   } | null>(null);
 
   const [progress, setProgress] = useState<ReindexProgress | null>(null);
+  const [wikiProgress, setWikiProgress] = useState<WikiProgress | null>(null);
   const [isReindexing, setIsReindexing] = useState(false);
+  const [isIngesting, setIsIngesting] = useState(false);
 
   // Check if user is superadmin
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
@@ -60,6 +68,12 @@ export const RagAdminScreen: React.FC = () => {
     enabled: isSuperAdmin,
   });
 
+  const { data: wikiIndex } = useQuery({
+    queryKey: ["wikiIndex"],
+    queryFn: wikiApi.getIndex,
+    enabled: isSuperAdmin,
+  });
+
   const reindexMutation = useMutation({
     mutationFn: ragApi.reindex,
     onSuccess: () => {
@@ -68,6 +82,24 @@ export const RagAdminScreen: React.FC = () => {
     },
     onError: () => {
       setFeedback({ type: "error", message: "Errore avvio reindex" });
+      setTimeout(() => setFeedback(null), 3000);
+    },
+  });
+
+  const ingestMutation = useMutation({
+    mutationFn: wikiApi.ingest,
+    onSuccess: (data) => {
+      setIsIngesting(true);
+      setFeedback({
+        type: "success",
+        message: t("ragAdmin.ingestSuccess", {
+          created: data.pagesCreated,
+          updated: data.pagesUpdated,
+        }),
+      });
+    },
+    onError: () => {
+      setFeedback({ type: "error", message: "Errore avvio ingest" });
       setTimeout(() => setFeedback(null), 3000);
     },
   });
@@ -115,6 +147,52 @@ export const RagAdminScreen: React.FC = () => {
     return () => clearInterval(interval);
   }, [isReindexing, queryClient]);
 
+  // Poll wiki progress during ingest
+  useEffect(() => {
+    if (!isIngesting) {
+      return;
+    }
+
+    const pollWikiProgress = async () => {
+      try {
+        const p = await wikiApi.getProgress();
+        setWikiProgress(p);
+
+        // If done or error, refresh status and wiki index
+        if (p.phase === "done") {
+          setIsIngesting(false);
+          setFeedback({
+            type: "success",
+            message: t("ragAdmin.ingestSuccess", {
+              created: p.total, // Use total as created count approximation
+              updated: 0,
+            }),
+          });
+          queryClient.invalidateQueries({ queryKey: ["ragStatus"] });
+          queryClient.invalidateQueries({ queryKey: ["wikiIndex"] });
+          setTimeout(() => setFeedback(null), 5000);
+        } else if (p.phase === "error") {
+          setIsIngesting(false);
+          setFeedback({
+            type: "error",
+            message: `Ingest fallito: ${p.message}`,
+          });
+          setTimeout(() => setFeedback(null), 5000);
+        }
+      } catch (error) {
+        console.error("Error fetching wiki progress:", error);
+      }
+    };
+
+    // Initial poll
+    pollWikiProgress();
+
+    // Poll every 2 seconds
+    const interval = setInterval(pollWikiProgress, 2000);
+
+    return () => clearInterval(interval);
+  }, [isIngesting, queryClient, t]);
+
   const handleRefresh = async () => {
     await Promise.all([refetchStatus(), refetchDocuments()]);
   };
@@ -123,16 +201,24 @@ export const RagAdminScreen: React.FC = () => {
     reindexMutation.mutate();
   };
 
+  const handleIngest = () => {
+    ingestMutation.mutate();
+  };
+
   const getPhaseLabel = (phase: string): string => {
     switch (phase) {
       case "discovering":
-        return "Scoperta categorie...";
+        return "Scoperta documenti...";
       case "loading":
         return "Caricamento documenti...";
+      case "parsing":
+        return "Analisi documenti...";
       case "splitting":
         return "Divisione in chunk...";
       case "embedding":
         return "Generazione embedding...";
+      case "saving":
+        return "Salvataggio pagine...";
       case "inserting":
         return "Salvataggio nel database...";
       case "done":
@@ -235,6 +321,12 @@ export const RagAdminScreen: React.FC = () => {
                 </View>
                 <View style={styles.statRow}>
                   <Text style={styles.statLabel}>
+                    {t("ragAdmin.totalPages")}
+                  </Text>
+                  <Text style={styles.statValue}>{status.totalPages ?? 0}</Text>
+                </View>
+                <View style={styles.statRow}>
+                  <Text style={styles.statLabel}>
                     {t("ragAdmin.lastReindex")}
                   </Text>
                   <Text style={styles.statValue}>
@@ -271,6 +363,27 @@ export const RagAdminScreen: React.FC = () => {
               )}
             </TouchableOpacity>
 
+            <TouchableOpacity
+              style={[
+                styles.reindexButton,
+                isIngesting && styles.reindexButtonDisabled,
+                { marginTop: spacing.sm },
+              ]}
+              onPress={handleIngest}
+              disabled={isIngesting}
+            >
+              {isIngesting ? (
+                <ActivityIndicator color={colors.textInverse} />
+              ) : (
+                <>
+                  <RefreshCw size={20} color={colors.textInverse} />
+                  <Text style={styles.reindexButtonText}>
+                    {t("ragAdmin.ingest")}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+
             {/* Progress UI */}
             {isReindexing && progress && (
               <View style={styles.progressContainer}>
@@ -294,6 +407,36 @@ export const RagAdminScreen: React.FC = () => {
                       %)
                       {progress.estimatedTimeRemaining > 0 &&
                         ` • ${formatTimeRemaining(progress.estimatedTimeRemaining)}`}
+                    </Text>
+                  </>
+                )}
+              </View>
+            )}
+
+            {/* Wiki Progress UI */}
+            {isIngesting && wikiProgress && (
+              <View style={styles.progressContainer}>
+                <Text style={styles.progressPhase}>
+                  {getPhaseLabel(wikiProgress.phase)}
+                </Text>
+                <Text style={styles.progressMessage}>
+                  {wikiProgress.message}
+                </Text>
+
+                {wikiProgress.total > 0 && (
+                  <>
+                    <View style={styles.progressBarContainer}>
+                      <View
+                        style={[
+                          styles.progressBarFill,
+                          { width: `${wikiProgress.percent}%` },
+                        ]}
+                      />
+                    </View>
+                    <Text style={styles.progressText}>
+                      {wikiProgress.current} / {wikiProgress.total} (
+                      {wikiProgress.percent}
+                      %)
                     </Text>
                   </>
                 )}

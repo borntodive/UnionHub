@@ -23,6 +23,10 @@ export type RootStackParamList = {
   FtlCalculator: undefined;
   ColdTempCorrection: undefined;
   // CLA Contract Admin
+  // VOLMET
+  Volmet: undefined;
+  VolmetAdmin: undefined;
+  VolmetForm: { volmetId?: string };
   ClaContracts: undefined;
   ContractEditor: { contract?: any } | undefined;
   // Documents / Communications
@@ -67,6 +71,10 @@ export type DrawerParamList = {
   PayslipCalculator: undefined;
   FtlCalculator: undefined;
   ColdTempCorrection: undefined;
+  // VOLMET
+  Volmet: undefined;
+  VolmetAdmin: undefined;
+  VolmetForm: { volmetId?: string };
   ReportIssue: undefined;
   MyIssues: undefined;
   Issues: undefined;

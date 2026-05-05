@@ -10,6 +10,7 @@ import { ClaContract } from "../../cla-contracts/entities/cla-contract.entity";
 import { ClaContractHistory } from "../../cla-contracts/entities/cla-contract-history.entity";
 import { IssueCategory } from "../../issue-categories/entities/issue-category.entity";
 import { IssueUrgency } from "../../issue-urgencies/entities/issue-urgency.entity";
+import { Volmet } from "../../volmet/entities/volmet.entity";
 import { UserRole } from "../../common/enums/user-role.enum";
 import { Ruolo } from "../../common/enums/ruolo.enum";
 import { WhatsappStatus } from "../../common/enums/whatsapp-status.enum";
@@ -17,6 +18,7 @@ import * as bcrypt from "bcrypt";
 import { seedClaContracts2025 } from "./cla-contracts-2025.seed";
 import { seedClaContracts2026 } from "./cla-contracts-2026.seed";
 import { seedClaContracts2026Test } from "./cla-contracts-2026-test.seed";
+import { VOLMET_DATA } from "./volmet.seed";
 
 config();
 
@@ -38,6 +40,7 @@ const dataSource = new DataSource({
     ClaContractHistory,
     IssueCategory,
     IssueUrgency,
+    Volmet,
   ],
   synchronize: false,
 });
@@ -588,6 +591,47 @@ async function runSeed() {
           console.log(`  Created category [${ruolo}]: ${cat.nameEn}`);
         }
       }
+    }
+
+    // ── VOLMET Frequencies ──────────────────────────────────────────────────
+    console.log("Seeding VOLMET frequencies...");
+    const volmetRepository = dataSource.getRepository(Volmet);
+    let volmetsCreated = 0;
+    let volmetsUpdated = 0;
+
+    for (const volmetData of VOLMET_DATA) {
+      const existing = await volmetRepository.findOne({
+        where: { icao: volmetData.icao },
+      });
+      if (!existing) {
+        await volmetRepository.save(volmetRepository.create(volmetData));
+        volmetsCreated++;
+      } else {
+        // Update existing records with missing data
+        let needsUpdate = false;
+        if (volmetData.iata && !existing.iata) {
+          existing.iata = volmetData.iata;
+          needsUpdate = true;
+        }
+        if (volmetData.latitude && !existing.latitude) {
+          existing.latitude = volmetData.latitude;
+          needsUpdate = true;
+        }
+        if (volmetData.longitude && !existing.longitude) {
+          existing.longitude = volmetData.longitude;
+          needsUpdate = true;
+        }
+        if (needsUpdate) {
+          await volmetRepository.save(existing);
+          volmetsUpdated++;
+        }
+      }
+    }
+    console.log(`  Created ${volmetsCreated} VOLMET entries`);
+    if (volmetsUpdated > 0) {
+      console.log(
+        `  Updated ${volmetsUpdated} VOLMET entries with IATA codes and/or coordinates`,
+      );
     }
 
     console.log("\nSeed completed successfully!");

@@ -8,7 +8,11 @@ const isEASBuild =
   process.env.EAS_BUILD || process.env.NODE_ENV === "production";
 const envFile = isEASBuild ? ".env.production" : ".env.development";
 
-dotenv.config({ path: path.resolve(__dirname, envFile) });
+const envPath = path.resolve(__dirname, envFile);
+// Only load dotenv if the file exists (EAS builds use env vars from dashboard)
+if (require("fs").existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+}
 console.log("Loading env from:", envFile, "API_URL:", process.env.API_URL);
 
 module.exports = {
@@ -17,8 +21,8 @@ module.exports = {
     slug: "unionhub",
     owner: "acovelli",
     newArchEnabled: true,
-    version: "1.0.4",
-    runtimeVersion: "1.0.4",
+    version: "1.0.5",
+    runtimeVersion: "1.0.5",
     updates: {
       url: "https://u.expo.dev/505f6694-7b00-484d-94cd-fcebdb0ee8e9",
       enabled: true,
@@ -41,6 +45,8 @@ module.exports = {
         ITSAppUsesNonExemptEncryption: false,
         NSCameraUsageDescription:
           "UnionHub uses the camera to scan and upload registration documents.",
+        NSLocationWhenInUseUsageDescription:
+          "Location is used to find nearby VOLMET stations.",
         UIViewControllerBasedStatusBarAppearance: false,
         UISupportsOpeningDocumentsInPlace: true,
         CFBundleDocumentTypes: [
@@ -70,7 +76,11 @@ module.exports = {
         backgroundColor: "#177246",
       },
       package: "it.unionhub.app",
-      permissions: ["android.permission.CAMERA"],
+      permissions: [
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+      ],
       intentFilters: [
         {
           action: "VIEW",
@@ -100,6 +110,13 @@ module.exports = {
       "expo-asset",
       "expo-build-properties",
       "expo-localization",
+      [
+        "expo-location",
+        {
+          locationWhenInUsePermission:
+            "Location is used to find nearby VOLMET stations.",
+        },
+      ],
       "expo-sharing",
       "expo-web-browser",
     ],

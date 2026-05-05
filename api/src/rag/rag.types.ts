@@ -6,6 +6,7 @@ export interface ChatResponse {
 export interface RagStatus {
   lastReindexAt: string | null;
   totalChunks: number;
+  totalPages?: number;
 }
 
 export interface DocumentCategory {

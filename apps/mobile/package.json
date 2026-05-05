@@ -1,6 +1,6 @@
 {
   "name": "mobile",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "main": "./index.js",
   "scripts": {
     "start": "expo start",
@@ -39,6 +39,7 @@
     "expo-document-picker": "~55.0.9",
     "expo-file-system": "~55.0.11",
     "expo-linking": "^55.0.7",
+    "expo-location": "~55.1.8",
     "expo-local-authentication": "~55.0.9",
     "expo-localization": "~55.0.9",
     "expo-notifications": "~55.0.13",

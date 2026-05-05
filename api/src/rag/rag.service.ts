@@ -18,6 +18,7 @@ import {
   ReindexProgress,
   ReindexPhase,
 } from "./rag.types";
+import { WikiService } from "../wiki/wiki.service";
 
 interface WikiEmbedding {
   id: string;
@@ -46,6 +47,7 @@ export class RagService {
   constructor(
     private configService: ConfigService,
     @InjectDataSource() private dataSource: DataSource,
+    private wikiService: WikiService,
   ) {
     const apiKey = this.configService.get<string>("OPENROUTER_API_KEY");
     if (!apiKey) {
@@ -363,13 +365,14 @@ Domanda riformulata:`,
         embedModel,
       );
 
-      // Retrieve top 10 most relevant chunks using cosine similarity
-      const relevantChunks = await this.findRelevantChunks(
+      // Retrieve top 5 most relevant wiki pages using cosine similarity
+      // Changed from 10 chunks to 5 pages - wiki pages are more comprehensive
+      const relevantPages = await this.wikiService.searchPages(
         questionEmbedding,
-        10,
+        5,
       );
 
-      if (relevantChunks.length === 0) {
+      if (relevantPages.length === 0) {
         return {
           answer:
             "Mi dispiace, non ho trovato informazioni pertinenti nella base di conoscenza per rispondere alla tua domanda.",
@@ -377,19 +380,13 @@ Domanda riformulata:`,
         };
       }
 
-      // Build context from retrieved chunks
-      const context = relevantChunks
-        .map((chunk, i) => `[${i + 1}] ${chunk.content}`)
-        .join("\n\n");
+      // Build context from retrieved wiki pages (full page content, not chunks)
+      const context = relevantPages
+        .map((page, i) => `[${i + 1}] ${page.title}\n\n${page.content}`)
+        .join("\n\n---\n\n");
 
-      // Extract unique sources
-      const uniqueSources = [
-        ...new Set(
-          relevantChunks.map(
-            (chunk) => (chunk.metadata as { filename: string }).filename,
-          ),
-        ),
-      ];
+      // Extract unique sources (page titles)
+      const uniqueSources = relevantPages.map((p) => p.title);
 
       // Build system prompt with improved instructions
       const systemPrompt = `Sei l'assistente ufficiale di UnionHub per i piloti Ryanair.
@@ -469,17 +466,25 @@ ${context}`;
 
   /**
    * Get current RAG status
+   * Returns both legacy chunk count and new wiki page count
    */
-  async getStatus(): Promise<RagStatus> {
-    const result = await this.dataSource.query(
+  async getStatus(): Promise<RagStatus & { totalPages?: number }> {
+    // Legacy chunks count (for backward compatibility)
+    const chunksResult = await this.dataSource.query(
       `SELECT COUNT(*) as count FROM wiki_embeddings`,
     );
+    const totalChunks = parseInt(chunksResult[0]?.count || "0", 10);
 
-    const totalChunks = parseInt(result[0]?.count || "0", 10);
+    // New wiki pages count
+    const pagesResult = await this.dataSource.query(
+      `SELECT COUNT(*) as count FROM wiki_pages`,
+    );
+    const totalPages = parseInt(pagesResult[0]?.count || "0", 10);
 
     return {
       lastReindexAt: this.lastReindexAt?.toISOString() || null,
       totalChunks,
+      totalPages,
     };
   }
 
