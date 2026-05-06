@@ -61,6 +61,16 @@ export class CreateVolmetDto {
   region: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  volmetName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  atis?: string;
+
+  @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 }

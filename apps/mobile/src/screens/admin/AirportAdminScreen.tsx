@@ -8,7 +8,7 @@ import {
   Alert,
   RefreshControl,
   TextInput,
-  ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import {
   SafeAreaView,
@@ -17,6 +17,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   Plus,
@@ -24,21 +25,28 @@ import {
   Trash2,
   Edit3,
   Search,
+  RefreshCw,
 } from "lucide-react-native";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { volmetApi, Volmet } from "../../api/volmet";
+import { metarApi } from "../../api/metar";
 import { RootStackParamList } from "../../navigation/types";
 
-type VolmetAdminScreenNavigationProp =
+type AirportAdminScreenNavigationProp =
   NativeStackNavigationProp<RootStackParamList>;
 
-export const VolmetAdminScreen: React.FC = () => {
-  const navigation = useNavigation<VolmetAdminScreenNavigationProp>();
+export const AirportAdminScreen: React.FC = () => {
+  const navigation = useNavigation<AirportAdminScreenNavigationProp>();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [syncing, setSyncing] = useState(false);
+  const [singleSyncing, setSingleSyncing] = useState<Record<string, boolean>>(
+    {},
+  );
 
   const {
     data: volmets,
@@ -55,12 +63,12 @@ export const VolmetAdminScreen: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["volmets-admin"] });
       queryClient.invalidateQueries({ queryKey: ["volmets"] });
       queryClient.invalidateQueries({ queryKey: ["volmet-regions"] });
-      Alert.alert("Success", "VOLMET entry deleted successfully");
+      Alert.alert("Success", "Airport deleted successfully");
     },
     onError: (error: any) => {
       Alert.alert(
         "Error",
-        error.response?.data?.message || "Failed to delete VOLMET entry",
+        error.response?.data?.message || "Failed to delete airport",
       );
     },
   });
@@ -94,17 +102,53 @@ export const VolmetAdminScreen: React.FC = () => {
 
   const handleDelete = (volmet: Volmet) => {
     Alert.alert(
-      "Confirm Delete",
-      `Are you sure you want to delete "${volmet.icao} - ${volmet.name}"?`,
+      t("airports.confirmDelete"),
+      `${volmet.icao} - ${volmet.name}`,
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("common.delete"),
           style: "destructive",
           onPress: () => deleteMutation.mutate(volmet.id),
         },
       ],
     );
+  };
+
+  const handleBulkSync = async () => {
+    const icaos = volmets?.map((v) => v.icao) || [];
+    if (icaos.length === 0) {
+      Alert.alert(t("airports.noEntries"));
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      const result = await metarApi.bulkSyncRunways(icaos);
+      Alert.alert(
+        t("airports.syncComplete"),
+        t("airports.syncResult", {
+          added: result?.added || 0,
+          errors: result?.errors.length || 0,
+        }),
+      );
+    } catch {
+      Alert.alert(t("common.error"), t("airports.syncError"));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleSyncAirport = async (icao: string) => {
+    setSingleSyncing((prev) => ({ ...prev, [icao]: true }));
+    try {
+      await metarApi.syncRunways(icao);
+      Alert.alert(t("airports.syncComplete"), t("airports.runwaySynced"));
+    } catch {
+      Alert.alert(t("common.error"), t("airports.syncError"));
+    } finally {
+      setSingleSyncing((prev) => ({ ...prev, [icao]: false }));
+    }
   };
 
   const renderItem = ({ item }: { item: Volmet }) => (
@@ -155,8 +199,24 @@ export const VolmetAdminScreen: React.FC = () => {
               </View>
             ))}
           </View>
+          {item.volmetName && (
+            <Text style={styles.volmetNameText}>{item.volmetName}</Text>
+          )}
+          {item.atis && <Text style={styles.atisText}>ATIS: {item.atis}</Text>}
         </View>
         <View style={styles.itemActions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleSyncAirport(item.icao)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            disabled={singleSyncing[item.icao]}
+          >
+            {singleSyncing[item.icao] ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <RefreshCw size={18} color={colors.primary} />
+            )}
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => handleEdit(item)}
@@ -187,19 +247,33 @@ export const VolmetAdminScreen: React.FC = () => {
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            style={styles.backButton}
+            style={styles.headerButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <ArrowLeft size={24} color={colors.textInverse} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Manage VOLMET</Text>
-          <TouchableOpacity
-            onPress={handleAdd}
-            style={styles.addButton}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Plus size={24} color={colors.textInverse} />
-          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t("airports.title")}</Text>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              onPress={handleBulkSync}
+              style={styles.headerButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              disabled={syncing}
+            >
+              {syncing ? (
+                <ActivityIndicator size="small" color={colors.textInverse} />
+              ) : (
+                <RefreshCw size={20} color={colors.textInverse} />
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleAdd}
+              style={styles.headerButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Plus size={24} color={colors.textInverse} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Search */}
@@ -213,7 +287,7 @@ export const VolmetAdminScreen: React.FC = () => {
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Search by ICAO, IATA, name, city..."
+            placeholder={t("airports.searchPlaceholder")}
             placeholderTextColor={colors.textTertiary}
           />
           {searchQuery.length > 0 && (
@@ -235,9 +309,9 @@ export const VolmetAdminScreen: React.FC = () => {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Radio size={64} color={colors.textTertiary} />
-              <Text style={styles.emptyText}>No VOLMET entries found</Text>
+              <Text style={styles.emptyText}>{t("airports.noEntries")}</Text>
               <Text style={styles.emptySubtext}>
-                Tap the + button to add a new entry
+                {t("airports.noEntriesSubtext")}
               </Text>
             </View>
           }
@@ -268,11 +342,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     minHeight: 56,
   },
-  backButton: {
+  headerButton: {
     width: 40,
     height: 40,
     justifyContent: "center",
     alignItems: "center",
+  },
+  headerActions: {
+    flexDirection: "row",
+    gap: spacing.sm,
   },
   headerTitle: {
     fontSize: typography.sizes.md,
@@ -280,12 +358,6 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     flex: 1,
     textAlign: "center",
-  },
-  addButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
   },
   searchContainer: {
     flexDirection: "row",
@@ -356,7 +428,7 @@ const styles = StyleSheet.create({
   },
   itemIata: {
     fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.normal,
+    fontWeight: typography.weights.regular,
     color: colors.textSecondary,
   },
   statusBadge: {
@@ -394,6 +466,17 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.medium,
     color: colors.primary,
+  },
+  volmetNameText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  atisText: {
+    fontSize: typography.sizes.sm,
+    color: colors.textTertiary,
+    marginTop: 2,
   },
   itemActions: {
     flexDirection: "row",

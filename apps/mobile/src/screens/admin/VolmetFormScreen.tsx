@@ -85,6 +85,8 @@ export const VolmetFormScreen: React.FC = () => {
     country: "",
     region: "",
     frequencies: [""] as string[],
+    volmetName: "",
+    atis: "",
     isActive: true,
   });
 
@@ -108,6 +110,8 @@ export const VolmetFormScreen: React.FC = () => {
         country: volmet.country,
         region: volmet.region,
         frequencies: volmet.frequencies.length > 0 ? volmet.frequencies : [""],
+        volmetName: volmet.volmetName || "",
+        atis: volmet.atis || "",
         isActive: volmet.isActive,
       });
     }
@@ -123,6 +127,8 @@ export const VolmetFormScreen: React.FC = () => {
         country: data.country,
         region: data.region,
         frequencies: data.frequencies.filter((f) => f.trim()),
+        volmetName: data.volmetName || undefined,
+        atis: data.atis || undefined,
         isActive: data.isActive,
       }),
     onSuccess: () => {
@@ -150,6 +156,8 @@ export const VolmetFormScreen: React.FC = () => {
         country: data.country,
         region: data.region,
         frequencies: data.frequencies.filter((f) => f.trim()),
+        volmetName: data.volmetName || undefined,
+        atis: data.atis || undefined,
         isActive: data.isActive,
       }),
     onSuccess: () => {
@@ -485,6 +493,51 @@ export const VolmetFormScreen: React.FC = () => {
                   <Plus size={18} color={colors.primary} />
                   <Text style={styles.addFreqText}>Add Frequency</Text>
                 </TouchableOpacity>
+              </View>
+
+              {/* VOLMET Station Name */}
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldLabel}>VOLMET Station Name</Text>
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputIcon}>
+                    <Radio size={20} color={colors.primary} />
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    value={formData.volmetName}
+                    onChangeText={(text) =>
+                      setFormData({ ...formData, volmetName: text })
+                    }
+                    placeholder="e.g. Roma VOLMET"
+                    placeholderTextColor={colors.textTertiary}
+                  />
+                </View>
+                <Text style={styles.hint}>
+                  Name of the VOLMET station (optional)
+                </Text>
+              </View>
+
+              {/* ATIS Frequency */}
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldLabel}>ATIS Frequency</Text>
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputIcon}>
+                    <Hash size={20} color={colors.primary} />
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    value={formData.atis}
+                    onChangeText={(text) =>
+                      setFormData({ ...formData, atis: text })
+                    }
+                    placeholder="e.g. 121.950"
+                    placeholderTextColor={colors.textTertiary}
+                    keyboardType="numbers-and-punctuation"
+                  />
+                </View>
+                <Text style={styles.hint}>
+                  ATIS frequency in MHz (optional)
+                </Text>
               </View>
 
               {/* Active Status */}

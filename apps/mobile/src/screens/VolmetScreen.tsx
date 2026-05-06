@@ -8,6 +8,7 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -20,7 +21,7 @@ import {
 } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { colors, spacing, typography, borderRadius } from "../theme";
 import { volmetApi, Volmet } from "../api/volmet";
 
@@ -35,7 +36,9 @@ import { calculateDistance } from "../utils/location";
 export const VolmetScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const isOnline = useOfflineStore((state) => state.isOnline);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Near Me state from store
   const { nearMeEnabled, radiusNm, toggleNearMe, setRadius } = useVolmetStore();
@@ -46,6 +49,7 @@ export const VolmetScreen: React.FC = () => {
     permission,
     isLoading: locationLoading,
     requestPermission,
+    getCurrentLocation,
   } = useLocation();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,7 +78,26 @@ export const VolmetScreen: React.FC = () => {
   useEffect(() => {
     if (nearMeEnabled && permission === "undetermined") {
       requestPermission();
+    } else if (nearMeEnabled && permission === "granted" && !location) {
+      getCurrentLocation();
     }
+  }, [nearMeEnabled, permission, location]);
+
+  // Refresh location every 5 minutes when Near Me is active
+  useEffect(() => {
+    if (!nearMeEnabled || permission !== "granted") return;
+
+    // Initial fetch
+    getCurrentLocation();
+
+    const interval = setInterval(
+      () => {
+        getCurrentLocation();
+      },
+      5 * 60 * 1000,
+    ); // 5 minutes
+
+    return () => clearInterval(interval);
   }, [nearMeEnabled, permission]);
 
   useEffect(() => {
@@ -152,9 +175,13 @@ export const VolmetScreen: React.FC = () => {
   const hasActiveFilter = searchQuery.trim() || selectedRegion || nearMeEnabled;
 
   const handleNearMeToggle = async () => {
-    if (!nearMeEnabled && permission !== "granted") {
-      // Enabling Near Me - request permission
-      await requestPermission();
+    if (!nearMeEnabled) {
+      // Enabling Near Me
+      if (permission !== "granted") {
+        await requestPermission();
+      } else {
+        await getCurrentLocation();
+      }
     }
     toggleNearMe();
   };
@@ -175,6 +202,13 @@ export const VolmetScreen: React.FC = () => {
         [{ text: t("common.ok") }],
       );
     }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await queryClient.refetchQueries({ queryKey: ["volmets"] });
+    await queryClient.refetchQueries({ queryKey: ["volmet-regions"] });
+    setRefreshing(false);
   };
 
   return (
@@ -340,6 +374,16 @@ export const VolmetScreen: React.FC = () => {
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            isOnline ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={colors.primary}
+                colors={[colors.primary]}
+              />
+            ) : undefined
+          }
         >
           {/* Info box */}
           <View style={styles.infoBox}>
@@ -386,6 +430,22 @@ export const VolmetScreen: React.FC = () => {
                       ))}
                     </View>
                   </View>
+
+                  {item.volmetName && (
+                    <View style={styles.volmetNameBox}>
+                      <Text style={styles.volmetNameLabel}>VOLMET:</Text>
+                      <Text style={styles.volmetNameText}>
+                        {item.volmetName}
+                      </Text>
+                    </View>
+                  )}
+
+                  {item.atis && (
+                    <View style={styles.atisBox}>
+                      <Text style={styles.atisLabel}>ATIS:</Text>
+                      <Text style={styles.atisText}>{item.atis}</Text>
+                    </View>
+                  )}
                 </View>
               ))}
             </View>
@@ -641,6 +701,42 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.medium,
     color: colors.primary,
+  },
+  volmetNameBox: {
+    marginTop: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+  },
+  volmetNameLabel: {
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.semibold,
+    color: colors.textTertiary,
+    marginRight: spacing.xs,
+  },
+  volmetNameText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+    color: colors.text,
+  },
+  atisBox: {
+    marginTop: spacing.xs,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  atisLabel: {
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.semibold,
+    color: colors.textTertiary,
+    marginRight: spacing.xs,
+  },
+  atisText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+    color: colors.warning,
   },
   sourceBox: {
     alignItems: "center",

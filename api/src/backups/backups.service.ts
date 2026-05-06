@@ -6,7 +6,7 @@ import {
   Logger,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { google } from "googleapis/build/src/index";
+import { google } from "googleapis";
 import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";

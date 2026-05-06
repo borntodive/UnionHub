@@ -21,6 +21,7 @@ import { WikiModule } from "./wiki/wiki.module";
 import { RagModule } from "./rag/rag.module";
 import { BackupsModule } from "./backups/backups.module";
 import { VolmetModule } from "./volmet/volmet.module";
+import { MetarModule } from "./metar/metar.module";
 
 @Module({
   providers: [
@@ -65,6 +66,7 @@ import { VolmetModule } from "./volmet/volmet.module";
     RagModule,
     BackupsModule,
     VolmetModule,
+    MetarModule,
   ],
 })
 export class AppModule {}

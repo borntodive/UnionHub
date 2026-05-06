@@ -107,7 +107,6 @@ module.exports = {
     },
     plugins: [
       "expo-secure-store",
-      "expo-asset",
       "expo-build-properties",
       "expo-localization",
       [
@@ -119,6 +118,7 @@ module.exports = {
       ],
       "expo-sharing",
       "expo-web-browser",
+      ["./withAndroidRegistration"],
     ],
     // Extra config accessible via Constants.expoConfig.extra
     extra: {

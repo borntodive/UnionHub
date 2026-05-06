@@ -11,6 +11,8 @@ export interface Volmet {
   longitude?: number;
   frequencies: string[];
   region: string;
+  volmetName?: string;
+  atis?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -26,6 +28,8 @@ export interface CreateVolmetData {
   longitude?: number;
   frequencies: string[];
   region: string;
+  volmetName?: string;
+  atis?: string;
   isActive?: boolean;
 }
 
@@ -39,6 +43,8 @@ export interface UpdateVolmetData {
   longitude?: number;
   frequencies?: string[];
   region?: string;
+  volmetName?: string;
+  atis?: string;
   isActive?: boolean;
 }
 

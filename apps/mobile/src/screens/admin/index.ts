@@ -15,3 +15,4 @@ export { IssueUrgenciesScreen } from "./IssueUrgenciesScreen";
 export { IssueUrgencyFormScreen } from "./IssueUrgencyFormScreen";
 export { PendingMembersScreen } from "./PendingMembersScreen";
 export { BackupsScreen } from "./BackupsScreen";
+export { AirportAdminScreen } from "./AirportAdminScreen";

@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { config } from "dotenv";
 import { User } from "../../users/entities/user.entity";
@@ -619,6 +620,14 @@ async function runSeed() {
         }
         if (volmetData.longitude && !existing.longitude) {
           existing.longitude = volmetData.longitude;
+          needsUpdate = true;
+        }
+        if (volmetData.volmetName && !existing.volmetName) {
+          existing.volmetName = volmetData.volmetName;
+          needsUpdate = true;
+        }
+        if (volmetData.atis && !existing.atis) {
+          existing.atis = volmetData.atis;
           needsUpdate = true;
         }
         if (needsUpdate) {

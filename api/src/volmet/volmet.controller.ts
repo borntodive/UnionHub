@@ -72,4 +72,17 @@ export class VolmetController {
   async remove(@Param("id", ParseUUIDPipe) id: string) {
     await this.volmetService.remove(id);
   }
+
+  @Post("sync")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPERADMIN)
+  async syncFromOpenAIP(
+    @Query("country") country?: string,
+    @Query("region") region?: string,
+  ) {
+    return this.volmetService.syncFromOpenAIP(
+      country || "ALL",
+      region || "Europe",
+    );
+  }
 }

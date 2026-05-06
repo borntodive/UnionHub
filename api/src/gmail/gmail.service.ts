@@ -8,7 +8,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { google, gmail_v1 } from "googleapis/build/src/index";
+import { google, gmail_v1 } from "googleapis";
 import { OAuth2Client } from "google-auth-library";
 import { User } from "../users/entities/user.entity";
 import { Ruolo } from "../common/enums/ruolo.enum";

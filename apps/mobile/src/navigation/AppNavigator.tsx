@@ -29,6 +29,7 @@ import {
   IssueCategoryFormScreen,
   IssueUrgenciesScreen,
   IssueUrgencyFormScreen,
+  AirportAdminScreen,
 } from "../screens/admin";
 // Issues screens
 import { MyIssueDetailScreen } from "../screens/MyIssueDetailScreen/MyIssueDetailScreen";
@@ -293,6 +294,11 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen
               name="Backups"
               component={BackupsScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="AirportsAdmin"
+              component={AirportAdminScreen}
               options={{ headerShown: false }}
             />
             {/* Note: CLA Contract screens and PendingMembers moved to DrawerNavigator */}

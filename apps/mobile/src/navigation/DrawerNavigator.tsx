@@ -38,6 +38,7 @@ import {
   BookOpen,
   HardDrive,
   Radio,
+  CloudLightning,
 } from "lucide-react-native";
 import { Image } from "react-native";
 import { usersApi } from "../api/users";
@@ -86,8 +87,11 @@ import { BaseFormScreen } from "../screens/admin/BaseFormScreen";
 import { GradeFormScreen } from "../screens/admin/GradeFormScreen";
 import { IssueCategoryFormScreen } from "../screens/admin/IssueCategoryFormScreen";
 import { IssueUrgencyFormScreen } from "../screens/admin/IssueUrgencyFormScreen";
+import { AirportAdminScreen } from "../screens/admin/AirportAdminScreen";
 import { VolmetScreen } from "../screens/VolmetScreen";
-import { VolmetAdminScreen } from "../screens/admin/VolmetAdminScreen";
+import { MetarScreen } from "../screens/MetarScreen";
+import { MetarDetailScreen } from "../screens/MetarDetailScreen";
+import { MetarManageScreen } from "../screens/MetarManageScreen";
 import { VolmetFormScreen } from "../screens/admin/VolmetFormScreen";
 import { UserRole } from "../types";
 const Drawer = createDrawerNavigator();
@@ -252,6 +256,15 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             label={t("navigation.volmet")}
             onPress={() => {
               props.navigation.navigate("Volmet");
+              props.navigation.closeDrawer();
+            }}
+          />
+
+          <MenuItem
+            icon={<CloudLightning size={22} color={colors.primary} />}
+            label={t("navigation.metar")}
+            onPress={() => {
+              props.navigation.navigate("Metar");
               props.navigation.closeDrawer();
             }}
           />
@@ -486,9 +499,9 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                   />
                   <MenuItem
                     icon={<Radio size={22} color={colors.primary} />}
-                    label={t("navigation.volmetAdmin")}
+                    label={t("navigation.airportsAdmin")}
                     onPress={() => {
-                      props.navigation.navigate("VolmetAdmin");
+                      props.navigation.navigate("AirportsAdmin");
                       props.navigation.closeDrawer();
                     }}
                   />
@@ -699,6 +712,33 @@ export const DrawerNavigator: React.FC = () => {
         options={{
           title: t("navigation.volmet"),
           drawerIcon: ({ color }) => <Radio size={22} color={color} />,
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
+        name="Metar"
+        component={MetarScreen}
+        options={{
+          title: t("navigation.metar"),
+          drawerIcon: ({ color }) => <CloudLightning size={22} color={color} />,
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
+        name="MetarDetail"
+        component={MetarDetailScreen}
+        options={{
+          title: t("navigation.metar"),
+          drawerItemStyle: { display: "none" },
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
+        name="MetarManage"
+        component={MetarManageScreen}
+        options={{
+          title: t("navigation.metar"),
+          drawerItemStyle: { display: "none" },
           headerShown: false,
         }}
       />
@@ -951,8 +991,17 @@ export const DrawerNavigator: React.FC = () => {
         />
       )}
       <Drawer.Screen
+        name="AirportsAdmin"
+        component={AirportAdminScreen}
+        options={{
+          title: t("navigation.airportsAdmin"),
+          drawerItemStyle: { display: "none" },
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
         name="VolmetAdmin"
-        component={VolmetAdminScreen}
+        component={AirportAdminScreen}
         options={{
           title: t("navigation.volmetAdmin"),
           drawerItemStyle: { display: "none" },

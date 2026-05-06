@@ -455,7 +455,7 @@ export class PdfService {
       const page = await browser.newPage();
       const html = this.generateHtml(document, qrBase64);
       // Forward browser console output to NestJS logger so page.evaluate() logs are visible
-      page.on("console", (msg) =>
+      page.on("console", (msg: any) =>
         this.logger.debug(`[browser:${msg.type()}] ${msg.text()}`),
       );
       await page.setContent(html, { waitUntil: "networkidle0" });
@@ -1119,7 +1119,7 @@ ${closingEn}
           widget.getRectangle();
         const pageRef = typeof widget.P === "function" ? widget.P() : undefined;
         const pageIndex = pageRef
-          ? pdfDoc.getPages().findIndex((p) => p.ref === pageRef)
+          ? pdfDoc.getPages().findIndex((p: any) => p.ref === pageRef)
           : 0;
         const targetPage = pdfDoc.getPage(pageIndex >= 0 ? pageIndex : 0);
 
@@ -1201,7 +1201,7 @@ ${closingEn}
           const pageRef =
             typeof widgets[0].P === "function" ? widgets[0].P() : undefined;
           const pageIndex = pageRef
-            ? pdfDoc.getPages().findIndex((p) => p.ref === pageRef)
+            ? pdfDoc.getPages().findIndex((p: any) => p.ref === pageRef)
             : fallbackPageIndex;
           const targetPage =
             pageIndex >= 0 ? pages[pageIndex] : pages[fallbackPageIndex];

@@ -23,9 +23,10 @@ export type RootStackParamList = {
   FtlCalculator: undefined;
   ColdTempCorrection: undefined;
   // CLA Contract Admin
-  // VOLMET
+  // VOLMET / Airports
   Volmet: undefined;
-  VolmetAdmin: undefined;
+  AirportsAdmin: undefined;
+  VolmetAdmin: undefined; // legacy, for backwards compatibility
   VolmetForm: { volmetId?: string };
   ClaContracts: undefined;
   ContractEditor: { contract?: any } | undefined;
@@ -71,9 +72,10 @@ export type DrawerParamList = {
   PayslipCalculator: undefined;
   FtlCalculator: undefined;
   ColdTempCorrection: undefined;
-  // VOLMET
+  // VOLMET / Airports
   Volmet: undefined;
-  VolmetAdmin: undefined;
+  AirportsAdmin: undefined;
+  VolmetAdmin: undefined; // legacy, for backwards compatibility
   VolmetForm: { volmetId?: string };
   ReportIssue: undefined;
   MyIssues: undefined;

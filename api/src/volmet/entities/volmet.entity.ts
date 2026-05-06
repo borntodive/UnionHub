@@ -38,6 +38,12 @@ export class Volmet {
   @Column({ type: "varchar", length: 50 })
   region: string;
 
+  @Column({ type: "varchar", length: 100, nullable: true })
+  volmetName: string;
+
+  @Column({ type: "varchar", length: 20, nullable: true })
+  atis: string;
+
   @Column({ type: "boolean", default: true })
   isActive: boolean;
 
