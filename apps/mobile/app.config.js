@@ -40,7 +40,7 @@ module.exports = {
     assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "it.unionhub.app",
+      bundleIdentifier: "it.acovelli.unionhub",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
         NSCameraUsageDescription:
@@ -75,7 +75,7 @@ module.exports = {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#177246",
       },
-      package: "it.unionhub.app",
+      package: "it.acovelli.unionhub",
       permissions: [
         "android.permission.CAMERA",
         "android.permission.ACCESS_COARSE_LOCATION",
@@ -118,7 +118,6 @@ module.exports = {
       ],
       "expo-sharing",
       "expo-web-browser",
-      ["./withAndroidRegistration"],
     ],
     // Extra config accessible via Constants.expoConfig.extra
     extra: {
