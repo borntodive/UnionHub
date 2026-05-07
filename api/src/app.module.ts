@@ -19,6 +19,7 @@ import { GmailModule } from "./gmail/gmail.module";
 import { CarddavModule } from "./carddav/carddav.module";
 import { WikiModule } from "./wiki/wiki.module";
 import { RagModule } from "./rag/rag.module";
+import { KbModule } from "./ai/kb/kb.module";
 import { BackupsModule } from "./backups/backups.module";
 import { VolmetModule } from "./volmet/volmet.module";
 import { MetarModule } from "./metar/metar.module";
@@ -64,6 +65,7 @@ import { MetarModule } from "./metar/metar.module";
     CarddavModule,
     WikiModule,
     RagModule,
+    KbModule,
     BackupsModule,
     VolmetModule,
     MetarModule,

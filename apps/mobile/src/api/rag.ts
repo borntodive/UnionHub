@@ -56,7 +56,7 @@ export interface ReindexProgress {
 
 export const ragApi = {
   chat: async (data: ChatRequest): Promise<ChatResponse> => {
-    const response = await apiClient.post<ChatResponse>("/rag/chat", data);
+    const response = await apiClient.post<ChatResponse>("/ai/kb/ask", data);
     return response.data;
   },
 
