@@ -30,6 +30,7 @@
     "backup": "bash scripts/backup.sh"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.95.0",
     "@langchain/classic": "^1.0.32",
     "@langchain/community": "^1.1.27",
     "@langchain/core": "^1.1.42",

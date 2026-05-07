@@ -371,7 +371,7 @@ export class DocumentsService {
     return {
       available: isHealthy,
       model: config.model,
-      isCloud: config.isCloud,
+      isCloud: true,
     };
   }
 

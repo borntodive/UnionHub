@@ -1,171 +1,103 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { OpenAI } from "openai";
+import { AnthropicProvider } from "./providers/anthropic.provider";
+import { TRANSLATE_SYSTEM } from "./prompts/translate.prompt";
+import { REWRITE_SYSTEM } from "./prompts/rewrite.prompt";
+import { ISSUE_SUMMARY_SYSTEM } from "./prompts/summarize.prompt";
+import { TITLE_TRANSLATE_SYSTEM } from "./prompts/generate.prompt";
+
+const HTML_RE = /<[a-z][\s\S]*?>/i;
 
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
-  private readonly openai: OpenAI;
-  private readonly model: string;
-  private readonly translationModel: string;
-  private readonly isCloud: boolean;
 
-  constructor(private configService: ConfigService) {
-    const apiKey = this.configService.get<string>("OPENROUTER_API_KEY");
-    if (!apiKey) {
-      this.logger.warn(
-        "OPENROUTER_API_KEY not configured - AI features will be disabled",
-      );
-    }
+  constructor(private readonly anthropic: AnthropicProvider) {}
 
-    this.openai = new OpenAI({
-      baseURL: "https://openrouter.ai/api/v1",
-      apiKey: apiKey || "dummy-key",
+  async rewriteAsUnionCommunication(
+    content: string,
+    userId?: string,
+  ): Promise<string> {
+    const preserveHtml = HTML_RE.test(content);
+    const result = await this.anthropic.complete({
+      functionName: "rewrite",
+      userId,
+      system: REWRITE_SYSTEM(preserveHtml),
+      messages: [{ role: "user", content }],
+      maxTokens: Math.max(1024, Math.ceil(content.length * 1.5)),
     });
-
-    this.model =
-      this.configService.get<string>("OPENROUTER_MODEL") ||
-      "google/gemma-3-27b-it:free";
-    this.translationModel =
-      this.configService.get<string>("OPENROUTER_TRANSLATION_MODEL") ||
-      this.model;
-    this.isCloud = this.configService.get<boolean>("OPENROUTER_CLOUD") || false;
+    return result.text;
   }
 
-  getConfig(): {
-    model: string;
-    translationModel: string;
-    isCloud: boolean;
-  } {
-    return {
-      model: this.model,
-      translationModel: this.translationModel,
-      isCloud: this.isCloud,
-    };
+  async translateToEnglish(content: string, userId?: string): Promise<string> {
+    const preserveHtml = HTML_RE.test(content);
+    const result = await this.anthropic.complete({
+      functionName: "translate",
+      userId,
+      system: TRANSLATE_SYSTEM(preserveHtml),
+      messages: [{ role: "user", content }],
+      maxTokens: Math.max(1024, Math.ceil(content.length * 1.5)),
+    });
+    return result.text;
+  }
+
+  async generate(
+    prompt: string,
+    systemPrompt: string,
+    userId?: string,
+  ): Promise<string> {
+    const result = await this.anthropic.complete({
+      functionName: "generate",
+      userId,
+      system: systemPrompt,
+      messages: [{ role: "user", content: prompt }],
+      maxTokens: 1024,
+    });
+    return result.text;
+  }
+
+  async summarizeIssues(issueText: string, userId?: string): Promise<string> {
+    const result = await this.anthropic.complete({
+      functionName: "summarize_issues",
+      userId,
+      system: ISSUE_SUMMARY_SYSTEM,
+      messages: [
+        {
+          role: "user",
+          content: `Segnalazioni aperte:\n${issueText}\n\nRiassunto:`,
+        },
+      ],
+      maxTokens: 1024,
+    });
+    return result.text;
+  }
+
+  async translateTitle(title: string, userId?: string): Promise<string> {
+    const result = await this.anthropic.complete({
+      functionName: "translate_title",
+      userId,
+      system: TITLE_TRANSLATE_SYSTEM,
+      messages: [{ role: "user", content: title }],
+      maxTokens: 128,
+    });
+    return result.text.trim();
   }
 
   async healthCheck(): Promise<boolean> {
     try {
-      const apiKey = this.configService.get<string>("OPENROUTER_API_KEY");
-      if (!apiKey) {
-        return false;
-      }
-
-      // Use translationModel for health check since that's what we use for translations
-      await this.openai.chat.completions.create({
-        model: this.translationModel,
-        messages: [{ role: "user", content: "test" }],
-        max_tokens: 1,
+      const result = await this.anthropic.complete({
+        functionName: "health_check",
+        system: "Reply with OK.",
+        messages: [{ role: "user", content: "ping" }],
+        maxTokens: 5,
       });
-
-      return true;
-    } catch (error) {
-      this.logger.error(`AI health check failed: ${error.message}`);
+      return result.text.length > 0;
+    } catch (err) {
+      this.logger.error(`AI health check failed: ${(err as Error).message}`);
       return false;
     }
   }
 
-  async rewriteAsUnionCommunication(content: string): Promise<string> {
-    // Combine system prompt into user message for Gemma compatibility
-    // (Gemma doesn't support system role via OpenAI API)
-    const combinedPrompt = `You are an expert union communication writer for CISL aviation union.
-Your task is to rewrite the given text as a professional union communication.
-
-Guidelines:
-- Maintain a formal but approachable tone
-- Emphasize member rights and protections
-- Use clear and direct language
-- Preserve all important details
-- Do not add information not present in the original text
-- Write in Italian
-
-Rewrite the following text as a union communication:
-
-${content}`;
-
-    try {
-      const response = await this.openai.chat.completions.create({
-        model: this.translationModel,
-        messages: [{ role: "user", content: combinedPrompt }],
-        max_tokens: 4000,
-      });
-
-      return response.choices[0]?.message?.content || content;
-    } catch (error: any) {
-      this.logger.error(
-        `[REWRITE] OpenRouter API error: ${JSON.stringify({
-          status: error?.status,
-          message: error?.message,
-          error: error?.error,
-          type: error?.type,
-          code: error?.code,
-        })}`,
-      );
-      throw error;
-    }
-  }
-
-  async translateToEnglish(content: string): Promise<string> {
-    // Combine system prompt into user message for Gemma compatibility
-    // (Gemma doesn't support system role via OpenAI API)
-    const combinedPrompt = `You are a professional translator specializing in aviation and union communications.
-Translate the following Italian text to English while maintaining:
-- Professional tone
-- Aviation terminology accuracy
-- Union context and meaning
-
-Translate ONLY the text below, do not add any explanations or notes:
-
-${content}`;
-
-    try {
-      const response = await this.openai.chat.completions.create({
-        model: this.translationModel,
-        messages: [{ role: "user", content: combinedPrompt }],
-        max_tokens: 4000,
-      });
-
-      return response.choices[0]?.message?.content || content;
-    } catch (error: any) {
-      this.logger.error(
-        `[TRANSLATE] OpenRouter API error: ${JSON.stringify({
-          status: error?.status,
-          message: error?.message,
-          error: error?.error,
-          type: error?.type,
-          code: error?.code,
-        })}`,
-      );
-      throw error;
-    }
-  }
-
-  async generate(prompt: string, systemPrompt: string): Promise<string> {
-    // Combine system prompt into user message for Gemma compatibility
-    // (Gemma doesn't support system role via OpenAI API)
-    const combinedPrompt = `${systemPrompt}
-
-${prompt}`;
-
-    try {
-      const response = await this.openai.chat.completions.create({
-        model: this.translationModel,
-        messages: [{ role: "user", content: combinedPrompt }],
-        max_tokens: 1000,
-      });
-
-      return response.choices[0]?.message?.content || "";
-    } catch (error: any) {
-      this.logger.error(
-        `[GENERATE] OpenRouter API error: ${JSON.stringify({
-          status: error?.status,
-          message: error?.message,
-          error: error?.error,
-          type: error?.type,
-          code: error?.code,
-        })}`,
-      );
-      throw error;
-    }
+  getConfig(): { model: string } {
+    return { model: "claude-haiku-4-5-20251001" };
   }
 }
