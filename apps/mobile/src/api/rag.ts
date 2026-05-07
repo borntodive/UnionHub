@@ -82,6 +82,70 @@ export const ragApi = {
   },
 };
 
+// KB (Knowledge Base) API — replaces deprecated /rag/* endpoints
+export interface KbStatus {
+  totalPages: number;
+  pythonServiceReady: boolean;
+}
+
+export interface KbIngestStartResponse {
+  started: boolean;
+  message: string;
+}
+
+export type KbIngestPhase =
+  | "idle"
+  | "discovering"
+  | "embedding"
+  | "saving"
+  | "done"
+  | "error";
+
+export interface KbIngestProgress {
+  isRunning: boolean;
+  phase: KbIngestPhase;
+  current: number;
+  total: number;
+  percent: number;
+  message: string;
+}
+
+export interface KbAskResponse {
+  answer: string;
+  sources: string[];
+}
+
+export const kbApi = {
+  getStatus: async (): Promise<KbStatus> => {
+    const response = await apiClient.get<KbStatus>("/ai/kb/status");
+    return response.data;
+  },
+
+  ingest: async (): Promise<KbIngestStartResponse> => {
+    const response =
+      await apiClient.post<KbIngestStartResponse>("/ai/kb/ingest");
+    return response.data;
+  },
+
+  getIngestProgress: async (): Promise<KbIngestProgress> => {
+    const response = await apiClient.get<KbIngestProgress>(
+      "/ai/kb/ingest/progress",
+    );
+    return response.data;
+  },
+
+  ask: async (
+    question: string,
+    history: ChatMessage[],
+  ): Promise<KbAskResponse> => {
+    const response = await apiClient.post<KbAskResponse>("/ai/kb/ask", {
+      question,
+      history,
+    });
+    return response.data;
+  },
+};
+
 // Wiki-related types and API
 export type WikiCategory =
   | "entities"

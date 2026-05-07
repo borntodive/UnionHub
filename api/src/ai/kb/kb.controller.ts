@@ -6,6 +6,14 @@ import {
   Request,
   UseGuards,
 } from "@nestjs/common";
+import {
+  IsArray,
+  IsIn,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from "class-validator";
+import { Type } from "class-transformer";
 import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../../auth/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
@@ -13,9 +21,23 @@ import { UserRole } from "../../common/enums/user-role.enum";
 import { SuperAdminGuard } from "../../common/guards/super-admin.guard";
 import { KbService } from "./kb.service";
 
+class ChatMessageDto {
+  @IsIn(["user", "assistant"])
+  role: "user" | "assistant";
+
+  @IsString()
+  content: string;
+}
+
 class AskDto {
+  @IsString()
   question: string;
-  history?: Array<{ role: "user" | "assistant"; content: string }>;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ChatMessageDto)
+  history?: ChatMessageDto[];
 }
 
 @Controller("ai/kb")
@@ -33,18 +55,21 @@ export class KbController {
     return this.kb.ask(dto.question, dto.history ?? [], req.user.userId);
   }
 
-  /**
-   * Trigger full re-ingest from knowledge-base/ (SuperAdmin only)
-   */
+  /** Trigger re-ingest (fire-and-forget). Returns immediately. SuperAdmin only. */
   @Post("ingest")
   @UseGuards(JwtAuthGuard, SuperAdminGuard)
-  async ingest() {
+  ingest() {
     return this.kb.ingest();
   }
 
-  /**
-   * KB status — page count + Python service health (SuperAdmin only)
-   */
+  /** Poll ingest progress. SuperAdmin only. */
+  @Get("ingest/progress")
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  ingestProgress() {
+    return this.kb.getIngestProgress();
+  }
+
+  /** KB status — page count + Python service health. SuperAdmin only. */
   @Get("status")
   @UseGuards(JwtAuthGuard, SuperAdminGuard)
   async status() {

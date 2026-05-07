@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -13,18 +13,12 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { ArrowLeft, RefreshCw, FileText, Package } from "lucide-react-native";
+import { ArrowLeft, RefreshCw } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
-import {
-  ragApi,
-  wikiApi,
-  type ReindexProgress,
-  type WikiProgress,
-  type WikiIndex,
-} from "../../api/rag";
+import { kbApi, type KbIngestProgress } from "../../api/rag";
 import { UserRole } from "../../types";
 import { useAuthStore } from "../../store/authStore";
 
@@ -39,13 +33,9 @@ export const RagAdminScreen: React.FC = () => {
     type: "success" | "error";
     message: string;
   } | null>(null);
+  const [progress, setProgress] = useState<KbIngestProgress | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [progress, setProgress] = useState<ReindexProgress | null>(null);
-  const [wikiProgress, setWikiProgress] = useState<WikiProgress | null>(null);
-  const [isReindexing, setIsReindexing] = useState(false);
-  const [isIngesting, setIsIngesting] = useState(false);
-
-  // Check if user is superadmin
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
 
   const {
@@ -53,50 +43,52 @@ export const RagAdminScreen: React.FC = () => {
     isLoading: statusLoading,
     refetch: refetchStatus,
   } = useQuery({
-    queryKey: ["ragStatus"],
-    queryFn: ragApi.getStatus,
+    queryKey: ["kbStatus"],
+    queryFn: kbApi.getStatus,
     enabled: isSuperAdmin,
   });
 
-  const {
-    data: documents,
-    isLoading: documentsLoading,
-    refetch: refetchDocuments,
-  } = useQuery({
-    queryKey: ["ragDocuments"],
-    queryFn: ragApi.getDocuments,
-    enabled: isSuperAdmin,
-  });
+  const stopPolling = () => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  };
 
-  const { data: wikiIndex } = useQuery({
-    queryKey: ["wikiIndex"],
-    queryFn: wikiApi.getIndex,
-    enabled: isSuperAdmin,
-  });
+  const startPolling = () => {
+    stopPolling();
+    pollRef.current = setInterval(async () => {
+      try {
+        const p = await kbApi.getIngestProgress();
+        setProgress(p);
+        if (p.phase === "done") {
+          stopPolling();
+          setFeedback({ type: "success", message: p.message });
+          queryClient.invalidateQueries({ queryKey: ["kbStatus"] });
+          setTimeout(() => setFeedback(null), 6000);
+        } else if (p.phase === "error") {
+          stopPolling();
+          setFeedback({ type: "error", message: p.message });
+          setTimeout(() => setFeedback(null), 5000);
+        }
+      } catch {
+        // ignore transient poll errors
+      }
+    }, 2000);
+  };
 
-  const reindexMutation = useMutation({
-    mutationFn: ragApi.reindex,
-    onSuccess: () => {
-      // Started successfully, polling will track progress
-      setIsReindexing(true);
-    },
-    onError: () => {
-      setFeedback({ type: "error", message: "Errore avvio reindex" });
-      setTimeout(() => setFeedback(null), 3000);
-    },
-  });
+  useEffect(() => () => stopPolling(), []);
 
   const ingestMutation = useMutation({
-    mutationFn: wikiApi.ingest,
+    mutationFn: kbApi.ingest,
     onSuccess: (data) => {
-      setIsIngesting(true);
-      setFeedback({
-        type: "success",
-        message: t("ragAdmin.ingestSuccess", {
-          created: data.pagesCreated,
-          updated: data.pagesUpdated,
-        }),
-      });
+      if (data.started) {
+        setProgress(null);
+        startPolling();
+      } else {
+        setFeedback({ type: "error", message: data.message });
+        setTimeout(() => setFeedback(null), 3000);
+      }
     },
     onError: () => {
       setFeedback({ type: "error", message: "Errore avvio ingest" });
@@ -104,122 +96,15 @@ export const RagAdminScreen: React.FC = () => {
     },
   });
 
-  // Poll progress during reindex
-  useEffect(() => {
-    if (!isReindexing) {
-      return;
-    }
+  const isRunning = progress?.isRunning ?? false;
 
-    const pollProgress = async () => {
-      try {
-        const p = await ragApi.getProgress();
-        setProgress(p);
-
-        // If done or error, refresh status and documents
-        if (p.phase === "done") {
-          setIsReindexing(false);
-          setFeedback({
-            type: "success",
-            message: `Reindex completato: ${p.total} chunk indicizzati`,
-          });
-          queryClient.invalidateQueries({ queryKey: ["ragStatus"] });
-          queryClient.invalidateQueries({ queryKey: ["ragDocuments"] });
-          setTimeout(() => setFeedback(null), 5000);
-        } else if (p.phase === "error") {
-          setIsReindexing(false);
-          setFeedback({
-            type: "error",
-            message: `Reindex fallito: ${p.message}`,
-          });
-          setTimeout(() => setFeedback(null), 5000);
-        }
-      } catch (error) {
-        console.error("Error fetching progress:", error);
-      }
-    };
-
-    // Initial poll
-    pollProgress();
-
-    // Poll every 2 seconds
-    const interval = setInterval(pollProgress, 2000);
-
-    return () => clearInterval(interval);
-  }, [isReindexing, queryClient]);
-
-  // Poll wiki progress during ingest
-  useEffect(() => {
-    if (!isIngesting) {
-      return;
-    }
-
-    const pollWikiProgress = async () => {
-      try {
-        const p = await wikiApi.getProgress();
-        setWikiProgress(p);
-
-        // If done or error, refresh status and wiki index
-        if (p.phase === "done") {
-          setIsIngesting(false);
-          setFeedback({
-            type: "success",
-            message: t("ragAdmin.ingestSuccess", {
-              created: p.total, // Use total as created count approximation
-              updated: 0,
-            }),
-          });
-          queryClient.invalidateQueries({ queryKey: ["ragStatus"] });
-          queryClient.invalidateQueries({ queryKey: ["wikiIndex"] });
-          setTimeout(() => setFeedback(null), 5000);
-        } else if (p.phase === "error") {
-          setIsIngesting(false);
-          setFeedback({
-            type: "error",
-            message: `Ingest fallito: ${p.message}`,
-          });
-          setTimeout(() => setFeedback(null), 5000);
-        }
-      } catch (error) {
-        console.error("Error fetching wiki progress:", error);
-      }
-    };
-
-    // Initial poll
-    pollWikiProgress();
-
-    // Poll every 2 seconds
-    const interval = setInterval(pollWikiProgress, 2000);
-
-    return () => clearInterval(interval);
-  }, [isIngesting, queryClient, t]);
-
-  const handleRefresh = async () => {
-    await Promise.all([refetchStatus(), refetchDocuments()]);
-  };
-
-  const handleReindex = () => {
-    reindexMutation.mutate();
-  };
-
-  const handleIngest = () => {
-    ingestMutation.mutate();
-  };
-
-  const getPhaseLabel = (phase: string): string => {
+  const getPhaseLabel = (phase: KbIngestProgress["phase"]): string => {
     switch (phase) {
       case "discovering":
-        return "Scoperta documenti...";
-      case "loading":
-        return "Caricamento documenti...";
-      case "parsing":
-        return "Analisi documenti...";
-      case "splitting":
-        return "Divisione in chunk...";
+        return "Scoperta file...";
       case "embedding":
         return "Generazione embedding...";
       case "saving":
-        return "Salvataggio pagine...";
-      case "inserting":
         return "Salvataggio nel database...";
       case "done":
         return "Completato!";
@@ -230,21 +115,6 @@ export const RagAdminScreen: React.FC = () => {
     }
   };
 
-  const formatTimeRemaining = (seconds: number): string => {
-    if (seconds < 60) {
-      return `~${seconds}s rimanenti`;
-    } else if (seconds < 3600) {
-      const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return `~${mins}m ${secs}s rimanenti`;
-    } else {
-      const hours = Math.floor(seconds / 3600);
-      const mins = Math.floor((seconds % 3600) / 60);
-      return `~${hours}h ${mins}m rimanenti`;
-    }
-  };
-
-  // Permission denied view
   if (!isSuperAdmin) {
     return (
       <View style={styles.wrapper}>
@@ -264,7 +134,6 @@ export const RagAdminScreen: React.FC = () => {
             <Text style={styles.headerTitle}>{t("ragAdmin.title")}</Text>
             <View style={styles.headerPlaceholder} />
           </View>
-
           <View style={styles.deniedContainer}>
             <Text style={styles.deniedTitle}>
               {t("ragAdmin.permissionDenied")}
@@ -277,8 +146,6 @@ export const RagAdminScreen: React.FC = () => {
       </View>
     );
   }
-
-  const isLoading = statusLoading || documentsLoading;
 
   return (
     <View style={styles.wrapper}>
@@ -302,82 +169,61 @@ export const RagAdminScreen: React.FC = () => {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           refreshControl={
-            <RefreshControl refreshing={false} onRefresh={handleRefresh} />
+            <RefreshControl
+              refreshing={statusLoading}
+              onRefresh={refetchStatus}
+            />
           }
         >
           {/* Status Card */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>{t("ragAdmin.status")}</Text>
-
-            {isLoading ? (
+            {statusLoading ? (
               <ActivityIndicator color={colors.primary} />
             ) : status ? (
               <>
                 <View style={styles.statRow}>
                   <Text style={styles.statLabel}>
-                    {t("ragAdmin.totalChunks")}
-                  </Text>
-                  <Text style={styles.statValue}>{status.totalChunks}</Text>
-                </View>
-                <View style={styles.statRow}>
-                  <Text style={styles.statLabel}>
                     {t("ragAdmin.totalPages")}
                   </Text>
-                  <Text style={styles.statValue}>{status.totalPages ?? 0}</Text>
+                  <Text style={styles.statValue}>{status.totalPages}</Text>
                 </View>
                 <View style={styles.statRow}>
-                  <Text style={styles.statLabel}>
-                    {t("ragAdmin.lastReindex")}
-                  </Text>
-                  <Text style={styles.statValue}>
-                    {status.lastReindexAt
-                      ? new Date(status.lastReindexAt).toLocaleString()
-                      : t("ragAdmin.never")}
+                  <Text style={styles.statLabel}>Servizio embedding</Text>
+                  <Text
+                    style={[
+                      styles.statValue,
+                      status.pythonServiceReady
+                        ? styles.statusOk
+                        : styles.statusError,
+                    ]}
+                  >
+                    {status.pythonServiceReady ? "Online" : "Offline"}
                   </Text>
                 </View>
               </>
             ) : null}
           </View>
 
-          {/* Reindex Card */}
+          {/* Actions Card */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>{t("ragAdmin.actions")}</Text>
 
             <TouchableOpacity
               style={[
-                styles.reindexButton,
-                isReindexing && styles.reindexButtonDisabled,
+                styles.actionButton,
+                (isRunning || ingestMutation.isPending) &&
+                  styles.actionButtonDisabled,
               ]}
-              onPress={handleReindex}
-              disabled={isReindexing}
+              onPress={() => ingestMutation.mutate()}
+              disabled={isRunning || ingestMutation.isPending}
             >
-              {isReindexing ? (
+              {isRunning || ingestMutation.isPending ? (
                 <ActivityIndicator color={colors.textInverse} />
               ) : (
                 <>
                   <RefreshCw size={20} color={colors.textInverse} />
-                  <Text style={styles.reindexButtonText}>
-                    {t("ragAdmin.reindex")}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.reindexButton,
-                isIngesting && styles.reindexButtonDisabled,
-                { marginTop: spacing.sm },
-              ]}
-              onPress={handleIngest}
-              disabled={isIngesting}
-            >
-              {isIngesting ? (
-                <ActivityIndicator color={colors.textInverse} />
-              ) : (
-                <>
-                  <RefreshCw size={20} color={colors.textInverse} />
-                  <Text style={styles.reindexButtonText}>
+                  <Text style={styles.actionButtonText}>
                     {t("ragAdmin.ingest")}
                   </Text>
                 </>
@@ -385,13 +231,14 @@ export const RagAdminScreen: React.FC = () => {
             </TouchableOpacity>
 
             {/* Progress UI */}
-            {isReindexing && progress && (
+            {progress && progress.phase !== "idle" && (
               <View style={styles.progressContainer}>
                 <Text style={styles.progressPhase}>
                   {getPhaseLabel(progress.phase)}
                 </Text>
-                <Text style={styles.progressMessage}>{progress.message}</Text>
-
+                {progress.message ? (
+                  <Text style={styles.progressMessage}>{progress.message}</Text>
+                ) : null}
                 {progress.total > 0 && (
                   <>
                     <View style={styles.progressBarContainer}>
@@ -404,38 +251,6 @@ export const RagAdminScreen: React.FC = () => {
                     </View>
                     <Text style={styles.progressText}>
                       {progress.current} / {progress.total} ({progress.percent}
-                      %)
-                      {progress.estimatedTimeRemaining > 0 &&
-                        ` • ${formatTimeRemaining(progress.estimatedTimeRemaining)}`}
-                    </Text>
-                  </>
-                )}
-              </View>
-            )}
-
-            {/* Wiki Progress UI */}
-            {isIngesting && wikiProgress && (
-              <View style={styles.progressContainer}>
-                <Text style={styles.progressPhase}>
-                  {getPhaseLabel(wikiProgress.phase)}
-                </Text>
-                <Text style={styles.progressMessage}>
-                  {wikiProgress.message}
-                </Text>
-
-                {wikiProgress.total > 0 && (
-                  <>
-                    <View style={styles.progressBarContainer}>
-                      <View
-                        style={[
-                          styles.progressBarFill,
-                          { width: `${wikiProgress.percent}%` },
-                        ]}
-                      />
-                    </View>
-                    <Text style={styles.progressText}>
-                      {wikiProgress.current} / {wikiProgress.total} (
-                      {wikiProgress.percent}
                       %)
                     </Text>
                   </>
@@ -455,40 +270,6 @@ export const RagAdminScreen: React.FC = () => {
                 {feedback.message}
               </Text>
             )}
-          </View>
-
-          {/* Documents Card */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>{t("ragAdmin.knowledgeBase")}</Text>
-
-            {isLoading ? (
-              <ActivityIndicator color={colors.primary} />
-            ) : documents?.categories ? (
-              documents.categories.map((category) => (
-                <View key={category.name} style={styles.categoryBlock}>
-                  <View style={styles.categoryHeader}>
-                    <Package size={18} color={colors.primary} />
-                    <Text style={styles.categoryName}>{category.name}</Text>
-                    <Text style={styles.categoryCount}>
-                      {category.files.length} {t("ragAdmin.files")}
-                    </Text>
-                  </View>
-
-                  {category.files.length > 0 ? (
-                    category.files.map((file) => (
-                      <View key={file} style={styles.fileRow}>
-                        <FileText size={16} color={colors.textSecondary} />
-                        <Text style={styles.fileName}>{file}</Text>
-                      </View>
-                    ))
-                  ) : (
-                    <Text style={styles.noFilesText}>
-                      {t("ragAdmin.noFiles")}
-                    </Text>
-                  )}
-                </View>
-              ))
-            ) : null}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -515,9 +296,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  headerPlaceholder: {
-    width: 40,
-  },
+  headerPlaceholder: { width: 40 },
   headerTitle: {
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
@@ -525,9 +304,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
   },
-  scrollContent: {
-    padding: spacing.md,
-  },
+  scrollContent: { padding: spacing.md },
   card: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
@@ -550,16 +327,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  statLabel: {
-    fontSize: typography.sizes.base,
-    color: colors.textSecondary,
-  },
+  statLabel: { fontSize: typography.sizes.base, color: colors.textSecondary },
   statValue: {
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.medium,
     color: colors.text,
   },
-  reindexButton: {
+  statusOk: { color: colors.success },
+  statusError: { color: colors.error },
+  actionButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -568,78 +344,11 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     paddingVertical: spacing.md,
   },
-  reindexButtonDisabled: {
-    backgroundColor: colors.border,
-  },
-  reindexButtonText: {
+  actionButtonDisabled: { backgroundColor: colors.border },
+  actionButtonText: {
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.medium,
     color: colors.textInverse,
-  },
-  feedbackText: {
-    marginTop: spacing.md,
-    fontSize: typography.sizes.sm,
-    textAlign: "center",
-  },
-  successText: {
-    color: colors.success,
-  },
-  errorText: {
-    color: colors.error,
-  },
-  categoryBlock: {
-    marginBottom: spacing.md,
-  },
-  categoryHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  categoryName: {
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
-    color: colors.text,
-    flex: 1,
-  },
-  categoryCount: {
-    fontSize: typography.sizes.sm,
-    color: colors.textSecondary,
-  },
-  fileRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    marginLeft: spacing.lg,
-  },
-  fileName: {
-    fontSize: typography.sizes.sm,
-    color: colors.textSecondary,
-  },
-  noFilesText: {
-    fontSize: typography.sizes.sm,
-    color: colors.textTertiary,
-    marginLeft: spacing.lg,
-    fontStyle: "italic",
-  },
-  deniedContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: spacing.xl,
-  },
-  deniedTitle: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  deniedText: {
-    fontSize: typography.sizes.base,
-    color: colors.textSecondary,
-    textAlign: "center",
   },
   progressContainer: {
     marginTop: spacing.md,
@@ -674,6 +383,30 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: typography.sizes.xs,
     color: colors.textTertiary,
+    textAlign: "center",
+  },
+  feedbackText: {
+    marginTop: spacing.md,
+    fontSize: typography.sizes.sm,
+    textAlign: "center",
+  },
+  successText: { color: colors.success },
+  errorText: { color: colors.error },
+  deniedContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: spacing.xl,
+  },
+  deniedTitle: {
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  deniedText: {
+    fontSize: typography.sizes.base,
+    color: colors.textSecondary,
     textAlign: "center",
   },
 });

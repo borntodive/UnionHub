@@ -1,3 +1,6 @@
+import asyncio
+from functools import partial
+
 from fastapi import APIRouter, HTTPException
 from models.schemas import EmbedBatchRequest, EmbedBatchResponse
 from services.embedder import embed_batch, get_embedder
@@ -10,12 +13,15 @@ async def embed_batch_endpoint(req: EmbedBatchRequest) -> EmbedBatchResponse:
     if not req.texts:
         raise HTTPException(status_code=400, detail="texts array must not be empty")
     try:
+        loop = asyncio.get_event_loop()
+        vectors = await loop.run_in_executor(
+            None, partial(embed_batch, req.texts, req.model)
+        )
         embedder = get_embedder(req.model)
-        vectors = embed_batch(req.texts, req.model)
         return EmbedBatchResponse(
             embeddings=vectors,
             model=req.model,
-            dimensions=embedder.get_sentence_embedding_dimension() or 1024,
+            dimensions=embedder.get_embedding_dimension() or 1024,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Embedding failed: {e}")

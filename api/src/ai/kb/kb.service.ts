@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource } from "typeorm";
-import { KbIngestionService, IngestStats } from "./kb-ingestion.service";
+import { KbIngestionService, IngestProgress } from "./kb-ingestion.service";
 import { KbRetrievalService } from "./kb-retrieval.service";
 import { KbGenerationService, GenerationResult } from "./kb-generation.service";
 import { PythonRagProvider } from "../providers/python-rag.provider";
@@ -14,6 +14,11 @@ export interface AskResult {
 export interface KbStatus {
   totalPages: number;
   pythonServiceReady: boolean;
+}
+
+export interface IngestStartResult {
+  started: boolean;
+  message: string;
 }
 
 @Injectable()
@@ -53,8 +58,16 @@ export class KbService {
     return { answer: result.answer, sources: result.sources };
   }
 
-  async ingest(): Promise<IngestStats> {
-    return this.ingestion.ingestAll();
+  ingest(): IngestStartResult {
+    const started = this.ingestion.startIngest();
+    return {
+      started,
+      message: started ? "Ingest avviato" : "Ingest già in corso",
+    };
+  }
+
+  getIngestProgress(): IngestProgress {
+    return this.ingestion.getProgress();
   }
 
   async getStatus(): Promise<KbStatus> {

@@ -19,12 +19,20 @@ export const KB_GENERATION_SYSTEM = `Sei l'assistente ufficiale di UnionHub per 
 
 Se la domanda non riguarda contratti, CLA, FTL, stipendi, basi, gradi o procedure Ryanair/CISL: rispondi "Posso rispondere solo a domande relative al contratto e alle condizioni di lavoro Ryanair."`;
 
+const MAX_CHUNK_CHARS = 4_000;
+
 export const buildKbUserMessage = (
   context: Array<{ title: string; content: string }>,
   question: string,
 ): string => {
   const contextBlock = context
-    .map((c, i) => `[${i + 1}] ${c.title}\n\n${c.content}`)
+    .map((c, i) => {
+      const body =
+        c.content.length > MAX_CHUNK_CHARS
+          ? c.content.slice(0, MAX_CHUNK_CHARS) + "\n…[troncato]"
+          : c.content;
+      return `[${i + 1}] ${c.title}\n\n${body}`;
+    })
     .join("\n\n---\n\n");
 
   return `## Documenti di riferimento\n\n${contextBlock}\n\n## Domanda\n\n${question}`;
