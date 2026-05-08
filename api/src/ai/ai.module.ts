@@ -5,6 +5,6 @@ import { TelemetryService } from "./telemetry/telemetry.service";
 
 @Module({
   providers: [TelemetryService, AnthropicProvider, AiService],
-  exports: [AiService, AnthropicProvider, TelemetryService],
+  exports: [AiService],
 })
 export class AiModule {}

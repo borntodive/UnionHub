@@ -34,8 +34,6 @@ import {
   Mail,
   Thermometer,
   UserCheck,
-  Search,
-  BookOpen,
   HardDrive,
   Radio,
   CloudLightning,
@@ -55,8 +53,6 @@ import { PayslipTabs } from "../payslip/navigation/PayslipTabs";
 import { FtlTabs } from "../ftl";
 import { CtcScreen } from "../screens/CtcScreen";
 import { GmailScreen } from "../gmail/screens/GmailScreen";
-import { ChatbotScreen } from "../screens/ChatbotScreen";
-import { RagAdminScreen } from "../screens/admin/RagAdminScreen";
 import AdminContractsScreen from "../payslip/screens/AdminContractsScreen";
 import ContractEditorScreen from "../payslip/screens/ContractEditorScreen";
 import { SettingsScreen } from "../screens/SettingsScreen/SettingsScreen";
@@ -280,17 +276,6 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             />
           )}
 
-          {isOnline && isAdmin && (
-            <MenuItem
-              icon={<Search size={22} color={colors.primary} />}
-              label={t("navigation.chatbot")}
-              onPress={() => {
-                props.navigation.navigate("Chatbot");
-                props.navigation.closeDrawer();
-              }}
-            />
-          )}
-
           {/* Issues — available offline */}
           <View style={styles.sectionDivider} />
           <Text style={styles.sectionTitle}>
@@ -478,14 +463,6 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                     label={t("navigation.gmailSetup")}
                     onPress={() => {
                       props.navigation.navigate("GmailSetup");
-                      props.navigation.closeDrawer();
-                    }}
-                  />
-                  <MenuItem
-                    icon={<BookOpen size={22} color={colors.primary} />}
-                    label={t("navigation.ragAdmin")}
-                    onPress={() => {
-                      props.navigation.navigate("RagAdmin");
                       props.navigation.closeDrawer();
                     }}
                   />
@@ -966,26 +943,6 @@ export const DrawerNavigator: React.FC = () => {
           options={{
             title: t("navigation.gmail"),
             drawerIcon: ({ color }) => <Mail size={22} color={color} />,
-            headerShown: false,
-          }}
-        />
-      )}
-      <Drawer.Screen
-        name="Chatbot"
-        component={ChatbotScreen}
-        options={{
-          title: t("navigation.chatbot"),
-          drawerItemStyle: { display: "none" },
-          headerShown: false,
-        }}
-      />
-      {isSuperAdmin && (
-        <Drawer.Screen
-          name="RagAdmin"
-          component={RagAdminScreen}
-          options={{
-            title: t("navigation.ragAdmin"),
-            drawerItemStyle: { display: "none" },
             headerShown: false,
           }}
         />

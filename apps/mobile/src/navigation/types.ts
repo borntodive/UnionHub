@@ -50,7 +50,6 @@ export type RootStackParamList = {
   EmailDetail: { messageId: string; subject: string; ruolo?: string };
   GmailSetup: undefined;
   // RAG
-  RagAdmin: undefined;
   // Backups
   Backups: undefined;
 };
@@ -101,7 +100,6 @@ export type DrawerParamList = {
   IssueUrgencyForm: { urgencyId?: string };
   GmailSetup: undefined;
   Gmail: undefined;
-  RagAdmin: undefined;
   Backups: undefined;
 };
 
