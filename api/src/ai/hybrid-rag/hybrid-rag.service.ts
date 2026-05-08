@@ -18,6 +18,23 @@ export interface KbDocument {
   section_count: number;
 }
 
+export interface IngestDocumentResult {
+  filename: string;
+  status: string;
+  title?: string;
+  document_id?: number;
+  sections?: number;
+  reason?: string;
+}
+
+export interface IngestResponse {
+  total: number;
+  ingested: number;
+  skipped: number;
+  failed: number;
+  documents: IngestDocumentResult[];
+}
+
 @Injectable()
 export class HybridRagService implements OnModuleInit {
   private readonly logger = new Logger(HybridRagService.name);
@@ -62,6 +79,15 @@ export class HybridRagService implements OnModuleInit {
 
   async healthCheck(): Promise<{ status: string; kb_documents: number }> {
     const { data } = await this.http.get("/health");
+    return data;
+  }
+
+  async ingest(force = false): Promise<IngestResponse> {
+    const { data } = await this.http.post<IngestResponse>(
+      `/ingest?force=${force}`,
+      null,
+      { timeout: 300_000 },
+    );
     return data;
   }
 }

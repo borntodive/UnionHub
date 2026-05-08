@@ -260,7 +260,8 @@
     "gmail": "Casella Sindacale",
     "gmailSetup": "Configurazione Gmail",
     "chatbot": "Assistente AI",
-    "backups": "Backup"
+    "backups": "Backup",
+    "kbAdmin": "Knowledge Base"
   },
   "chatbot": {
     "title": "Assistente AI",
@@ -1028,5 +1029,27 @@
     "sectionEmpty": "Nessun backup",
     "used": "utilizzati",
     "backupSpaceLabel": "Backup su Drive"
+  },
+  "kbAdmin": {
+    "title": "Knowledge Base",
+    "documentsTitle": "Documenti Indicizzati",
+    "noDocuments": "Nessun documento indicizzato",
+    "sections": "{{count}} sezioni",
+    "ingestSectionTitle": "Indicizzazione",
+    "ingestDescription": "Avvia l'indicizzazione dei file dalla directory del server.",
+    "ingestButton": "Indicizza",
+    "forceIngestButton": "Forza Reindicizzazione",
+    "ingestTitle": "Indicizza Knowledge Base",
+    "ingestMessage": "Verranno indicizzati i file nuovi o modificati dalla directory knowledge base.",
+    "forceIngestTitle": "Forza Reindicizzazione",
+    "forceIngestMessage": "Verranno reindicizzati TUTTI i file, anche quelli già presenti. Potrebbe richiedere diversi minuti.",
+    "confirm": "Conferma",
+    "ingestError": "Indicizzazione fallita",
+    "ingestErrorMessage": "Impossibile contattare il servizio knowledge base. Assicurati che il servizio Hybrid RAG sia avviato.",
+    "resultTitle": "Risultati Indicizzazione",
+    "total": "Totale",
+    "ingested": "Indicizzati",
+    "skipped": "Saltati",
+    "failed": "Falliti"
   }
 }

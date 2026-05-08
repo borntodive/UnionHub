@@ -38,6 +38,7 @@ import {
   Radio,
   CloudLightning,
   MessageCircle,
+  BookOpen,
 } from "lucide-react-native";
 import { Image } from "react-native";
 import { usersApi } from "../api/users";
@@ -76,6 +77,7 @@ import { GradesScreen } from "../screens/admin/GradesScreen";
 import { IssueCategoriesScreen } from "../screens/admin/IssueCategoriesScreen";
 import { IssueUrgenciesScreen } from "../screens/admin/IssueUrgenciesScreen";
 import { BackupsScreen } from "../screens/admin/BackupsScreen";
+import { KbAdminScreen } from "../screens/admin/KbAdminScreen";
 import { GmailSetupScreen } from "../gmail/screens/GmailSetupScreen";
 import { MemberDetailScreen } from "../screens/MemberDetailScreen/MemberDetailScreen";
 import { MemberEditScreen } from "../screens/MemberDetailScreen/MemberEditScreen";
@@ -492,6 +494,14 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                     label={t("navigation.airportsAdmin")}
                     onPress={() => {
                       props.navigation.navigate("AirportsAdmin");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                  <MenuItem
+                    icon={<BookOpen size={22} color={colors.primary} />}
+                    label={t("navigation.kbAdmin")}
+                    onPress={() => {
+                      props.navigation.navigate("KbAdmin");
                       props.navigation.closeDrawer();
                     }}
                   />
@@ -943,6 +953,15 @@ export const DrawerNavigator: React.FC = () => {
             component={BackupsScreen}
             options={{
               title: t("navigation.backups"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="KbAdmin"
+            component={KbAdminScreen}
+            options={{
+              title: t("navigation.kbAdmin"),
               drawerItemStyle: { display: "none" },
               headerShown: false,
             }}

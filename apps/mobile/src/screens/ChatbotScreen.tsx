@@ -25,6 +25,9 @@ import {
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
+import RenderHtml from "react-native-render-html";
+import { useWindowDimensions } from "react-native";
+
 import { colors, spacing, typography, borderRadius } from "../theme";
 import { kbApi, type Citation } from "../api/kb";
 
@@ -41,6 +44,7 @@ export const ChatbotScreen: React.FC = () => {
   const navigation = useNavigation<DrawerNavigationProp<any>>();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const flatListRef = useRef<FlatList>(null);
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -131,9 +135,17 @@ export const ChatbotScreen: React.FC = () => {
           <Text style={styles.errorText}>{item.error}</Text>
         ) : (
           <>
-            <Text style={[styles.messageText, isUser && styles.userText]}>
-              {item.content}
-            </Text>
+            {isUser ? (
+              <Text style={[styles.messageText, styles.userText]}>
+                {item.content}
+              </Text>
+            ) : (
+              <RenderHtml
+                contentWidth={width - spacing.md * 4 - 32}
+                source={{ html: item.content }}
+                tagsStyles={htmlTagStyles}
+              />
+            )}
             {hasCitations && (
               <TouchableOpacity
                 style={styles.citationsToggle}
@@ -241,6 +253,42 @@ export const ChatbotScreen: React.FC = () => {
       </SafeAreaView>
     </View>
   );
+};
+
+const htmlTagStyles = {
+  p: {
+    fontSize: typography.sizes.base,
+    color: colors.text,
+    lineHeight: 22,
+    marginTop: 0,
+    marginBottom: 6,
+  },
+  strong: { fontWeight: typography.weights.bold as any },
+  em: { fontStyle: "italic" as const },
+  ul: { marginVertical: 4 },
+  ol: { marginVertical: 4 },
+  li: {
+    fontSize: typography.sizes.base,
+    color: colors.text,
+    lineHeight: 22,
+    marginBottom: 2,
+  },
+  code: {
+    fontFamily: "monospace",
+    backgroundColor: colors.border,
+    paddingHorizontal: 4,
+    borderRadius: 3,
+    fontSize: typography.sizes.sm,
+  },
+  pre: {
+    backgroundColor: colors.border,
+    padding: spacing.sm,
+    borderRadius: borderRadius.sm,
+    marginVertical: 4,
+  },
+  h1: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold as any, marginBottom: 6 },
+  h2: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold as any, marginBottom: 4 },
+  h3: { fontSize: typography.sizes.base, fontWeight: typography.weights.semibold as any, marginBottom: 4 },
 };
 
 const styles = StyleSheet.create({

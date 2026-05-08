@@ -260,7 +260,8 @@
     "gmail": "Union Mailbox",
     "gmailSetup": "Gmail Setup",
     "chatbot": "AI Assistant",
-    "backups": "Backups"
+    "backups": "Backups",
+    "kbAdmin": "Knowledge Base"
   },
   "chatbot": {
     "title": "AI Assistant",
@@ -1028,5 +1029,27 @@
     "sectionEmpty": "No backups",
     "used": "used",
     "backupSpaceLabel": "Backups on Drive"
+  },
+  "kbAdmin": {
+    "title": "Knowledge Base",
+    "documentsTitle": "Ingested Documents",
+    "noDocuments": "No documents ingested yet",
+    "sections": "{{count}} sections",
+    "ingestSectionTitle": "Ingest",
+    "ingestDescription": "Trigger ingestion of knowledge base files from the server directory.",
+    "ingestButton": "Ingest",
+    "forceIngestButton": "Force Re-ingest",
+    "ingestTitle": "Ingest Knowledge Base",
+    "ingestMessage": "This will ingest new or modified files from the knowledge base directory.",
+    "forceIngestTitle": "Force Re-ingest",
+    "forceIngestMessage": "This will re-ingest ALL files, even those already indexed. This may take several minutes.",
+    "confirm": "Confirm",
+    "ingestError": "Ingest Failed",
+    "ingestErrorMessage": "Could not contact the knowledge base service. Make sure the Hybrid RAG service is running.",
+    "resultTitle": "Ingest Results",
+    "total": "Total",
+    "ingested": "Ingested",
+    "skipped": "Skipped",
+    "failed": "Failed"
   }
 }

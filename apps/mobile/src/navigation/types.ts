@@ -51,6 +51,7 @@ export type RootStackParamList = {
   GmailSetup: undefined;
   Chatbot: undefined;
   Backups: undefined;
+  KbAdmin: undefined;
 };
 
 export type DrawerParamList = {
@@ -100,6 +101,7 @@ export type DrawerParamList = {
   GmailSetup: undefined;
   Gmail: undefined;
   Backups: undefined;
+  KbAdmin: undefined;
 };
 
 declare global {

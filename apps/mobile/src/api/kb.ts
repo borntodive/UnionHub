@@ -21,6 +21,23 @@ export interface KbStatus {
   kb_documents: number;
 }
 
+export interface IngestDocumentResult {
+  filename: string;
+  status: string;
+  title?: string;
+  document_id?: number;
+  sections?: number;
+  reason?: string;
+}
+
+export interface IngestResponse {
+  total: number;
+  ingested: number;
+  skipped: number;
+  failed: number;
+  documents: IngestDocumentResult[];
+}
+
 export const kbApi = {
   ask: async (question: string): Promise<KbAskResponse> => {
     const response = await apiClient.post<KbAskResponse>("/ai/kb/ask", {
@@ -30,14 +47,21 @@ export const kbApi = {
   },
 
   listDocuments: async (): Promise<KbDocument[]> => {
-    const response = await apiClient.get<{ documents: KbDocument[] }>(
-      "/ai/kb/documents",
-    );
-    return response.data.documents;
+    const response = await apiClient.get<KbDocument[]>("/ai/kb/documents");
+    return response.data;
   },
 
   getStatus: async (): Promise<KbStatus> => {
     const response = await apiClient.get<KbStatus>("/ai/kb/status");
+    return response.data;
+  },
+
+  ingest: async (force = false): Promise<IngestResponse> => {
+    const response = await apiClient.post<IngestResponse>(
+      "/ai/kb/ingest",
+      { force },
+      { timeout: 300_000 },
+    );
     return response.data;
   },
 };
