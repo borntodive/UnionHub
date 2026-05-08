@@ -5,7 +5,7 @@ export class DropRagTables1778300000000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE IF EXISTS wiki_embeddings CASCADE`);
     await queryRunner.query(`DROP TABLE IF EXISTS wiki_pages CASCADE`);
     await queryRunner.query(`DROP TABLE IF EXISTS chunk_embeddings CASCADE`);
-    await queryRunner.query(`DROP EXTENSION IF EXISTS vector CASCADE`);
+    // vector extension intentionally not dropped — requires superuser ownership
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
