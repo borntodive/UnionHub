@@ -259,7 +259,16 @@
     "volmetForm": "Airport Entry",
     "gmail": "Union Mailbox",
     "gmailSetup": "Gmail Setup",
+    "chatbot": "AI Assistant",
     "backups": "Backups"
+  },
+  "chatbot": {
+    "title": "AI Assistant",
+    "emptyTitle": "How can I help you?",
+    "emptySubtitle": "Ask questions about your contract, CLA, FTL rules, or working conditions.",
+    "placeholder": "Type your question...",
+    "sources": "Sources",
+    "error": "An error occurred. Please try again."
   },
   "wiki": {
     "title": "Knowledge Base",

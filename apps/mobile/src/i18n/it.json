@@ -259,7 +259,16 @@
     "volmetForm": "Voce Aeroporto",
     "gmail": "Casella Sindacale",
     "gmailSetup": "Configurazione Gmail",
+    "chatbot": "Assistente AI",
     "backups": "Backup"
+  },
+  "chatbot": {
+    "title": "Assistente AI",
+    "emptyTitle": "Come posso aiutarti?",
+    "emptySubtitle": "Fai domande sul contratto, CLA, regole FTL o condizioni di lavoro.",
+    "placeholder": "Scrivi la tua domanda...",
+    "sources": "Fonti",
+    "error": "Si è verificato un errore. Riprova."
   },
   "wiki": {
     "title": "Base di Conoscenza",

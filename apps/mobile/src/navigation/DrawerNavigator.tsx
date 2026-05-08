@@ -37,6 +37,7 @@ import {
   HardDrive,
   Radio,
   CloudLightning,
+  MessageCircle,
 } from "lucide-react-native";
 import { Image } from "react-native";
 import { usersApi } from "../api/users";
@@ -52,6 +53,7 @@ import { MembersScreen } from "../screens/MembersScreen/MembersScreen";
 import { PayslipTabs } from "../payslip/navigation/PayslipTabs";
 import { FtlTabs } from "../ftl";
 import { CtcScreen } from "../screens/CtcScreen";
+import { ChatbotScreen } from "../screens/ChatbotScreen";
 import { GmailScreen } from "../gmail/screens/GmailScreen";
 import AdminContractsScreen from "../payslip/screens/AdminContractsScreen";
 import ContractEditorScreen from "../payslip/screens/ContractEditorScreen";
@@ -271,6 +273,17 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
               label={t("navigation.gmail")}
               onPress={() => {
                 props.navigation.navigate("Gmail");
+                props.navigation.closeDrawer();
+              }}
+            />
+          )}
+
+          {isOnline && (
+            <MenuItem
+              icon={<MessageCircle size={22} color={colors.primary} />}
+              label={t("navigation.chatbot")}
+              onPress={() => {
+                props.navigation.navigate("Chatbot");
                 props.navigation.closeDrawer();
               }}
             />
@@ -947,6 +960,15 @@ export const DrawerNavigator: React.FC = () => {
           }}
         />
       )}
+      <Drawer.Screen
+        name="Chatbot"
+        component={ChatbotScreen}
+        options={{
+          title: t("navigation.chatbot"),
+          drawerItemStyle: { display: "none" },
+          headerShown: false,
+        }}
+      />
       <Drawer.Screen
         name="AirportsAdmin"
         component={AirportAdminScreen}

@@ -49,8 +49,7 @@ export type RootStackParamList = {
   Gmail: undefined;
   EmailDetail: { messageId: string; subject: string; ruolo?: string };
   GmailSetup: undefined;
-  // RAG
-  // Backups
+  Chatbot: undefined;
   Backups: undefined;
 };
 
