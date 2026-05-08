@@ -24,8 +24,10 @@ import {
   XCircle,
   SkipForward,
   FileText,
+  Upload,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
+import * as DocumentPicker from "expo-document-picker";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { Card } from "../../components/Card";
@@ -36,6 +38,9 @@ export function KbAdminScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const [ingestResult, setIngestResult] = useState<IngestResponse | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<
+    { filename: string; size: number }[]
+  >([]);
 
   const {
     data: documents,
@@ -69,6 +74,47 @@ export function KbAdminScreen() {
           onPress: () => ingestMutation.mutate(force),
         },
       ],
+    );
+  };
+
+  const uploadMutation = useMutation({
+    mutationFn: (files: { uri: string; name: string; mimeType?: string }[]) =>
+      kbApi.uploadFiles(files),
+    onSuccess: (data) => {
+      setUploadedFiles(data.uploaded);
+      Alert.alert(
+        t("kbAdmin.uploadSuccess"),
+        t("kbAdmin.uploadSuccessMessage", { count: data.uploaded.length }),
+        [
+          { text: t("common.cancel"), style: "cancel" },
+          {
+            text: t("kbAdmin.ingestButton"),
+            onPress: () => ingestMutation.mutate(false),
+          },
+        ],
+      );
+    },
+    onError: () => {
+      Alert.alert(t("kbAdmin.uploadError"), t("kbAdmin.uploadErrorMessage"));
+    },
+  });
+
+  const handlePickAndUpload = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ["text/markdown", "text/plain", "*/*"],
+      multiple: true,
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled) return;
+    const mdFiles = result.assets.filter((a) =>
+      a.name.toLowerCase().endsWith(".md"),
+    );
+    if (!mdFiles.length) {
+      Alert.alert(t("kbAdmin.uploadError"), t("kbAdmin.uploadMdOnly"));
+      return;
+    }
+    uploadMutation.mutate(
+      mdFiles.map((f) => ({ uri: f.uri, name: f.name, mimeType: f.mimeType })),
     );
   };
 
@@ -128,6 +174,42 @@ export function KbAdminScreen() {
             />
           ) : (
             <Text style={styles.emptyText}>{t("kbAdmin.noDocuments")}</Text>
+          )}
+        </Card>
+
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>{t("kbAdmin.uploadTitle")}</Text>
+          <Text style={styles.ingestDescription}>
+            {t("kbAdmin.uploadDescription")}
+          </Text>
+          <TouchableOpacity
+            style={[
+              styles.ingestButton,
+              uploadMutation.isPending && styles.buttonDisabled,
+            ]}
+            onPress={handlePickAndUpload}
+            disabled={uploadMutation.isPending}
+          >
+            {uploadMutation.isPending ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Upload size={18} color="#fff" />
+            )}
+            <Text style={styles.buttonText}>{t("kbAdmin.uploadButton")}</Text>
+          </TouchableOpacity>
+
+          {uploadedFiles.length > 0 && (
+            <View style={styles.uploadedList}>
+              {uploadedFiles.map((f, i) => (
+                <View key={i} style={styles.uploadedRow}>
+                  <CheckCircle size={14} color={colors.success} />
+                  <Text style={styles.uploadedFilename}>{f.filename}</Text>
+                  <Text style={styles.uploadedSize}>
+                    {(f.size / 1024).toFixed(1)} KB
+                  </Text>
+                </View>
+              ))}
+            </View>
           )}
         </Card>
 
@@ -411,5 +493,23 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xs,
     color: colors.error,
     fontStyle: "italic",
+  },
+  uploadedList: {
+    marginTop: spacing.md,
+    gap: spacing.xs,
+  },
+  uploadedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  uploadedFilename: {
+    flex: 1,
+    fontSize: typography.sizes.sm,
+    color: colors.text,
+  },
+  uploadedSize: {
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
   },
 });

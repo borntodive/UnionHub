@@ -1050,6 +1050,14 @@
     "total": "Totale",
     "ingested": "Indicizzati",
     "skipped": "Saltati",
-    "failed": "Falliti"
+    "failed": "Falliti",
+    "uploadTitle": "Carica File",
+    "uploadDescription": "Seleziona file .md dal dispositivo per aggiungerli alla directory knowledge base sul server.",
+    "uploadButton": "Seleziona e Carica",
+    "uploadSuccess": "Caricamento Completato",
+    "uploadSuccessMessage": "{{count}} file caricati. Avvia l'indicizzazione per indicizzarli.",
+    "uploadError": "Caricamento Fallito",
+    "uploadErrorMessage": "Impossibile caricare i file sul server.",
+    "uploadMdOnly": "Sono supportati solo file .md (Markdown)."
   }
 }

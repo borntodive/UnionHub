@@ -1,6 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import axios, { AxiosInstance } from "axios";
+import { promises as fs } from "fs";
+import { join } from "path";
 
 export interface Citation {
   document_title: string;
@@ -39,11 +41,13 @@ export interface IngestResponse {
 export class HybridRagService implements OnModuleInit {
   private readonly logger = new Logger(HybridRagService.name);
   private readonly http: AxiosInstance;
+  readonly kbDir: string;
 
   constructor(private readonly config: ConfigService) {
     const baseUrl =
       config.get<string>("HYBRID_RAG_URL") ?? "http://127.0.0.1:8000";
     const apiKey = config.get<string>("HYBRID_RAG_API_KEY") ?? "";
+    this.kbDir = config.get<string>("HYBRID_RAG_KB_DIR") ?? "./kb_data";
 
     this.http = axios.create({
       baseURL: baseUrl,
@@ -89,5 +93,19 @@ export class HybridRagService implements OnModuleInit {
       { timeout: 300_000 },
     );
     return data;
+  }
+
+  async saveKbFiles(
+    files: Express.Multer.File[],
+  ): Promise<{ filename: string; size: number }[]> {
+    await fs.mkdir(this.kbDir, { recursive: true });
+    const results: { filename: string; size: number }[] = [];
+    for (const file of files) {
+      const dest = join(this.kbDir, file.originalname);
+      await fs.writeFile(dest, file.buffer);
+      this.logger.log(`KB file saved: ${dest}`);
+      results.push({ filename: file.originalname, size: file.size });
+    }
+    return results;
   }
 }

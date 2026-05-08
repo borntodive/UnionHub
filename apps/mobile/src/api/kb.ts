@@ -64,4 +64,23 @@ export const kbApi = {
     );
     return response.data;
   },
+
+  uploadFiles: async (
+    files: { uri: string; name: string; mimeType?: string }[],
+  ): Promise<{ uploaded: { filename: string; size: number }[] }> => {
+    const form = new FormData();
+    for (const f of files) {
+      form.append("files", {
+        uri: f.uri,
+        name: f.name,
+        type: f.mimeType ?? "text/markdown",
+      } as any);
+    }
+    const response = await apiClient.post<{
+      uploaded: { filename: string; size: number }[];
+    }>("/ai/kb/upload", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
 };
