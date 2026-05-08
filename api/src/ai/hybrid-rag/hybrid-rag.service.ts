@@ -87,8 +87,9 @@ export class HybridRagService implements OnModuleInit {
   }
 
   async ingest(force = false): Promise<IngestResponse> {
+    const dir = encodeURIComponent(this.kbDir);
     const { data } = await this.http.post<IngestResponse>(
-      `/ingest?force=${force}`,
+      `/ingest?directory=${dir}&force=${force}`,
       null,
       { timeout: 300_000 },
     );
