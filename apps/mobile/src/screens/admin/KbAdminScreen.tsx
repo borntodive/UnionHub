@@ -101,20 +101,25 @@ export function KbAdminScreen() {
 
   const handlePickAndUpload = async () => {
     const result = await DocumentPicker.getDocumentAsync({
-      type: ["text/markdown", "text/plain", "*/*"],
+      type: ["text/markdown", "text/plain", "application/pdf", "*/*"],
       multiple: true,
       copyToCacheDirectory: true,
     });
     if (result.canceled) return;
-    const mdFiles = result.assets.filter((a) =>
-      a.name.toLowerCase().endsWith(".md"),
-    );
-    if (!mdFiles.length) {
+    const validFiles = result.assets.filter((a) => {
+      const name = a.name.toLowerCase();
+      return name.endsWith(".md") || name.endsWith(".pdf");
+    });
+    if (!validFiles.length) {
       Alert.alert(t("kbAdmin.uploadError"), t("kbAdmin.uploadMdOnly"));
       return;
     }
     uploadMutation.mutate(
-      mdFiles.map((f) => ({ uri: f.uri, name: f.name, mimeType: f.mimeType })),
+      validFiles.map((f) => ({
+        uri: f.uri,
+        name: f.name,
+        mimeType: f.mimeType,
+      })),
     );
   };
 

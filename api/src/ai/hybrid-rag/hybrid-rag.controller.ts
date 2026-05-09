@@ -49,9 +49,10 @@ export class HybridRagController {
     FilesInterceptor("files", 50, {
       storage: memoryStorage(),
       fileFilter: (_req, file, cb) => {
-        if (extname(file.originalname).toLowerCase() !== ".md") {
+        const ext = extname(file.originalname).toLowerCase();
+        if (ext !== ".md" && ext !== ".pdf") {
           return cb(
-            new BadRequestException("Only .md files are allowed"),
+            new BadRequestException("Only .md and .pdf files are allowed"),
             false,
           );
         }

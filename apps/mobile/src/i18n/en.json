@@ -1052,12 +1052,12 @@
     "skipped": "Skipped",
     "failed": "Failed",
     "uploadTitle": "Upload Files",
-    "uploadDescription": "Pick .md files from your device to add them to the knowledge base directory on the server.",
+    "uploadDescription": "Pick .md or .pdf files from your device to add them to the knowledge base directory on the server.",
     "uploadButton": "Pick & Upload",
     "uploadSuccess": "Upload Complete",
     "uploadSuccessMessage": "{{count}} file(s) uploaded. Trigger ingest to index them.",
     "uploadError": "Upload Failed",
     "uploadErrorMessage": "Could not upload files to the server.",
-    "uploadMdOnly": "Only .md (Markdown) files are supported."
+    "uploadMdOnly": "Only .md (Markdown) and .pdf files are supported."
   }
 }

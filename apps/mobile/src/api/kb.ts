@@ -70,11 +70,12 @@ export const kbApi = {
   ): Promise<{ uploaded: { filename: string; size: number }[] }> => {
     const form = new FormData();
     for (const f of files) {
-      form.append("files", {
-        uri: f.uri,
-        name: f.name,
-        type: f.mimeType ?? "text/markdown",
-      } as any);
+      const type =
+        f.mimeType ??
+        (f.name.toLowerCase().endsWith(".pdf")
+          ? "application/pdf"
+          : "text/markdown");
+      form.append("files", { uri: f.uri, name: f.name, type } as any);
     }
     const response = await apiClient.post<{
       uploaded: { filename: string; size: number }[];
