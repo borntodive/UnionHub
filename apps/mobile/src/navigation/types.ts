@@ -50,6 +50,8 @@ export type RootStackParamList = {
   EmailDetail: { messageId: string; subject: string; ruolo?: string };
   GmailSetup: undefined;
   Chatbot: undefined;
+  ChatRequests: undefined;
+  ChatRequestDetail: { requestId: string };
   Backups: undefined;
   KbAdmin: undefined;
 };
@@ -102,6 +104,8 @@ export type DrawerParamList = {
   Gmail: undefined;
   Backups: undefined;
   KbAdmin: undefined;
+  ChatRequests: undefined;
+  ChatRequestDetail: { requestId: string };
 };
 
 declare global {

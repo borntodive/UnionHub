@@ -286,9 +286,21 @@ const htmlTagStyles = {
     borderRadius: borderRadius.sm,
     marginVertical: 4,
   },
-  h1: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold as any, marginBottom: 6 },
-  h2: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold as any, marginBottom: 4 },
-  h3: { fontSize: typography.sizes.base, fontWeight: typography.weights.semibold as any, marginBottom: 4 },
+  h1: {
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.bold as any,
+    marginBottom: 6,
+  },
+  h2: {
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold as any,
+    marginBottom: 4,
+  },
+  h3: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold as any,
+    marginBottom: 4,
+  },
 };
 
 const styles = StyleSheet.create({

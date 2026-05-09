@@ -260,6 +260,7 @@
     "gmail": "Union Mailbox",
     "gmailSetup": "Gmail Setup",
     "chatbot": "AI Assistant",
+    "chatRequests": "Chatbot History",
     "backups": "Backups",
     "kbAdmin": "Knowledge Base"
   },
@@ -270,6 +271,18 @@
     "placeholder": "Type your question...",
     "sources": "Sources",
     "error": "An error occurred. Please try again."
+  },
+  "chatRequests": {
+    "title": "Chatbot History",
+    "detailTitle": "Request Detail",
+    "empty": "No chatbot requests yet",
+    "deletedUser": "Deleted user",
+    "user": "User",
+    "date": "Date",
+    "question": "Question",
+    "answer": "Answer",
+    "sources": "Sources",
+    "loadError": "Unable to load this request"
   },
   "wiki": {
     "title": "Knowledge Base",

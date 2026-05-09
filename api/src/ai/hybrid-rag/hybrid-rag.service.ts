@@ -1,8 +1,18 @@
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnModuleInit,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 import axios, { AxiosInstance } from "axios";
 import { promises as fs } from "fs";
 import { join } from "path";
+import { ChatRequest } from "./entities/chat-request.entity";
+import { Ruolo } from "../../common/enums/ruolo.enum";
+import { UserRole } from "../../common/enums/user-role.enum";
 
 export interface Citation {
   document_title: string;
@@ -43,7 +53,11 @@ export class HybridRagService implements OnModuleInit {
   private readonly http: AxiosInstance;
   readonly kbDir: string;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    @InjectRepository(ChatRequest)
+    private readonly chatRequestRepo: Repository<ChatRequest>,
+  ) {
     const baseUrl =
       config.get<string>("HYBRID_RAG_URL") ?? "http://127.0.0.1:8000";
     const apiKey = config.get<string>("HYBRID_RAG_API_KEY") ?? "";
@@ -72,6 +86,57 @@ export class HybridRagService implements OnModuleInit {
   async ask(question: string): Promise<AskResponse> {
     const { data } = await this.http.post<AskResponse>("/ask", { question });
     return data;
+  }
+
+  async saveChatRequest(
+    userId: string | null,
+    question: string,
+    answer: string,
+    citations: Citation[],
+  ): Promise<ChatRequest> {
+    const entity = this.chatRequestRepo.create({
+      userId,
+      question,
+      answer,
+      citations: citations ?? [],
+    });
+    return this.chatRequestRepo.save(entity);
+  }
+
+  async listChatRequests(requestingUser: {
+    role: UserRole;
+    ruolo?: Ruolo;
+  }): Promise<ChatRequest[]> {
+    const qb = this.chatRequestRepo
+      .createQueryBuilder("chat")
+      .leftJoinAndSelect("chat.user", "user")
+      .orderBy("chat.createdAt", "DESC");
+
+    if (requestingUser.role === UserRole.ADMIN && requestingUser.ruolo) {
+      qb.where("user.ruolo = :ruolo", { ruolo: requestingUser.ruolo });
+    }
+
+    return qb.getMany();
+  }
+
+  async findChatRequestById(
+    id: string,
+    requestingUser: { role: UserRole; ruolo?: Ruolo },
+  ): Promise<ChatRequest> {
+    const chat = await this.chatRequestRepo.findOne({
+      where: { id },
+      relations: ["user"],
+    });
+    if (!chat) throw new NotFoundException("Chat request not found");
+
+    if (requestingUser.role === UserRole.ADMIN && requestingUser.ruolo) {
+      const userRuolo = (chat.user as { ruolo?: Ruolo } | null)?.ruolo;
+      if (userRuolo && userRuolo !== requestingUser.ruolo) {
+        throw new NotFoundException("Chat request not found");
+      }
+    }
+
+    return chat;
   }
 
   async listDocuments(): Promise<KbDocument[]> {

@@ -64,6 +64,8 @@ import { ContractFormScreen } from "../screens/admin/ContractFormScreen";
 import { DocumentsScreen } from "../screens/admin/DocumentsScreen";
 import { DocumentEditorScreen } from "../screens/admin/DocumentEditorScreen";
 import { IssuesScreen } from "../screens/admin/IssuesScreen";
+import { ChatRequestsScreen } from "../screens/admin/ChatRequestsScreen";
+import { ChatRequestDetailScreen } from "../screens/admin/ChatRequestDetailScreen";
 import { PendingMembersScreen } from "../screens/admin/PendingMembersScreen";
 import { PublicDocumentsScreen } from "../screens/PublicDocumentsScreen";
 import { ReportIssueScreen } from "../screens/ReportIssueScreen/ReportIssueScreen";
@@ -315,14 +317,24 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                 }}
               />
               {isAdmin && (
-                <MenuItem
-                  icon={<AlertTriangle size={22} color={colors.primary} />}
-                  label={t("navigation.issues")}
-                  onPress={() => {
-                    props.navigation.navigate("Issues");
-                    props.navigation.closeDrawer();
-                  }}
-                />
+                <>
+                  <MenuItem
+                    icon={<AlertTriangle size={22} color={colors.primary} />}
+                    label={t("navigation.issues")}
+                    onPress={() => {
+                      props.navigation.navigate("Issues");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                  <MenuItem
+                    icon={<MessageCircle size={22} color={colors.primary} />}
+                    label={t("navigation.chatRequests")}
+                    onPress={() => {
+                      props.navigation.navigate("ChatRequests");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                </>
               )}
             </>
           )}
@@ -769,6 +781,24 @@ export const DrawerNavigator: React.FC = () => {
             component={IssuesScreen}
             options={{
               title: t("navigation.issues"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="ChatRequests"
+            component={ChatRequestsScreen}
+            options={{
+              title: t("navigation.chatRequests"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="ChatRequestDetail"
+            component={ChatRequestDetailScreen}
+            options={{
+              title: t("chatRequests.detailTitle"),
               drawerItemStyle: { display: "none" },
               headerShown: false,
             }}
