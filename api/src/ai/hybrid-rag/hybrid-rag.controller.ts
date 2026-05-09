@@ -3,11 +3,14 @@ import {
   Get,
   Post,
   Body,
+  Param,
+  Req,
   UseGuards,
   HttpCode,
   UploadedFiles,
   UseInterceptors,
   BadRequestException,
+  ParseUUIDPipe,
 } from "@nestjs/common";
 import { FilesInterceptor } from "@nestjs/platform-express";
 import { memoryStorage } from "multer";
@@ -16,6 +19,9 @@ import { IsString, MinLength, IsBoolean, IsOptional } from "class-validator";
 import { Transform } from "class-transformer";
 import { marked } from "marked";
 import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../../auth/guards/roles.guard";
+import { Roles } from "../../common/decorators/roles.decorator";
+import { UserRole } from "../../common/enums/user-role.enum";
 import { SuperAdminGuard } from "../../common/guards/super-admin.guard";
 import { HybridRagService } from "./hybrid-rag.service";
 
@@ -38,7 +44,7 @@ class IngestDto {
 }
 
 @Controller("ai/kb")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class HybridRagController {
   constructor(private readonly rag: HybridRagService) {}
 
@@ -69,9 +75,28 @@ export class HybridRagController {
 
   @Post("ask")
   @HttpCode(200)
-  async ask(@Body() dto: AskDto) {
+  async ask(@Body() dto: AskDto, @Req() req: any) {
     const result = await this.rag.ask(dto.question);
+    const userId = req.user?.userId ?? null;
+    this.rag
+      .saveChatRequest(userId, dto.question, result.answer, result.citations)
+      .catch(() => {
+        /* persistence is best-effort, never fail the user response */
+      });
     return { ...result, answer: mdToHtml(result.answer) };
+  }
+
+  @Get("requests")
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  listRequests(@Req() req: any) {
+    return this.rag.listChatRequests(req.user);
+  }
+
+  @Get("requests/:id")
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  async getRequest(@Param("id", ParseUUIDPipe) id: string, @Req() req: any) {
+    const chat = await this.rag.findChatRequestById(id, req.user);
+    return { ...chat, answer: mdToHtml(chat.answer) };
   }
 
   @Get("documents")

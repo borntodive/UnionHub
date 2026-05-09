@@ -260,6 +260,7 @@
     "gmail": "Casella Sindacale",
     "gmailSetup": "Configurazione Gmail",
     "chatbot": "Assistente AI",
+    "chatRequests": "Cronologia Chatbot",
     "backups": "Backup",
     "kbAdmin": "Knowledge Base"
   },
@@ -270,6 +271,18 @@
     "placeholder": "Scrivi la tua domanda...",
     "sources": "Fonti",
     "error": "Si è verificato un errore. Riprova."
+  },
+  "chatRequests": {
+    "title": "Cronologia Chatbot",
+    "detailTitle": "Dettaglio Richiesta",
+    "empty": "Nessuna richiesta al chatbot",
+    "deletedUser": "Utente eliminato",
+    "user": "Utente",
+    "date": "Data",
+    "question": "Domanda",
+    "answer": "Risposta",
+    "sources": "Fonti",
+    "loadError": "Impossibile caricare questa richiesta"
   },
   "wiki": {
     "title": "Base di Conoscenza",

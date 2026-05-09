@@ -38,11 +38,41 @@ export interface IngestResponse {
   documents: IngestDocumentResult[];
 }
 
+export interface KbChatRequestSummary {
+  id: string;
+  question: string;
+  createdAt: string;
+  user: {
+    id: string;
+    crewcode: string;
+    nome: string;
+    cognome: string;
+  } | null;
+}
+
+export interface KbChatRequest extends KbChatRequestSummary {
+  answer: string;
+  citations: Citation[];
+}
+
 export const kbApi = {
   ask: async (question: string): Promise<KbAskResponse> => {
     const response = await apiClient.post<KbAskResponse>("/ai/kb/ask", {
       question,
     });
+    return response.data;
+  },
+
+  listRequests: async (): Promise<KbChatRequestSummary[]> => {
+    const response =
+      await apiClient.get<KbChatRequestSummary[]>("/ai/kb/requests");
+    return response.data;
+  },
+
+  getRequest: async (id: string): Promise<KbChatRequest> => {
+    const response = await apiClient.get<KbChatRequest>(
+      `/ai/kb/requests/${id}`,
+    );
     return response.data;
   },
 
