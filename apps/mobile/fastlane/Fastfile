@@ -1,0 +1,102 @@
+# Fastfile for UnionHub
+# Automated screenshot generation and App Store uploads
+
+default_platform(:ios)
+
+platform :ios do
+  # App Store Connect API Configuration
+  before_all do
+    ENV["FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD"] = ENV["APP_SPECIFIC_PASSWORD"] || ""
+  end
+
+  # API Key for App Store Connect (from EAS config)
+  api_key_path = "./AuthKey_83MCXVF2V3.p8"
+
+  app_store_connect_api_key(
+    key_id: "83MCXVF2V3",
+    issuer_id: "17de2fec-ab61-40cf-989d-d31a0da26372",
+    key_filepath: api_key_path,
+    duration: 1200,
+    in_house: false
+  )
+
+  #######################
+  # Screenshot Lanes
+  #######################
+
+  desc "Capture screenshots using Detox and organize them"
+  lane :screenshots do
+    # Run Detox tests to capture screenshots
+    Dir.chdir("..") do
+      sh("npm run e2e:build:ios") unless File.exist?("ios/build/Build/Products/Debug-iphonesimulator/UnionHub.app")
+      sh("npm run e2e:test:ios")
+    end
+
+    # Organize screenshots for Frameit
+    ruby("scripts/organize_screenshots.rb")
+
+    # Apply frames using Frameit
+    frameit(
+      path: "./fastlane/screenshots",
+      silver: true
+    )
+  end
+
+  desc "Generate Frameit backgrounds with brand color"
+  lane :generate_backgrounds do
+    ruby("scripts/generate_background.rb")
+  end
+
+  #######################
+  # Metadata Lanes
+  #######################
+
+  desc "Upload metadata to App Store Connect"
+  lane :upload_metadata do |options|
+    upload_to_app_store(
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      metadata_path: "./fastlane/metadata",
+      app_version: options[:version] || get_version_number
+    )
+  end
+
+  #######################
+  # Combined Lanes
+  #######################
+
+  desc "Upload screenshots and metadata to App Store Connect"
+  lane :store_assets do |options|
+    upload_to_app_store(
+      skip_binary_upload: true,
+      skip_app_version_update: true,
+      screenshots_path: "./fastlane/screenshots",
+      metadata_path: "./fastlane/metadata",
+      overwrite_screenshots: true
+    )
+  end
+
+  desc "Prepare and upload beta build"
+  lane :beta do |options|
+    # Build with EAS
+    build_number = increment_build_number(xcodebuild: true)
+    sh("cd .. && eas build --platform ios --profile preview --non-interactive")
+
+    # Upload to TestFlight
+    upload_to_app_store(
+      skip_waiting_for_build_processing: options[:skip_waiting] || false,
+      skip_metadata: true,
+      skip_screenshots: true
+    )
+  end
+
+  #######################
+  # Helper Methods
+  #######################
+
+  def get_version_number
+    app_config = File.read("../app.config.js")
+    version_match = app_config.match(/version:\s*["']([^"']+)["']/)
+    version_match ? version_match[1] : "1.0.0"
+  end
+end

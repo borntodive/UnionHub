@@ -62,13 +62,14 @@ export const MetarScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="metar-screen">
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.menuButton}
             onPress={() => (navigation as any).openDrawer?.()}
+            testID="menu-button"
           >
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>

@@ -83,6 +83,7 @@ export const FdpScreen: React.FC = () => {
           <TouchableOpacity
             onPress={() => (navigation as any).openDrawer?.()}
             style={styles.menuButton}
+            testID="menu-button"
           >
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>

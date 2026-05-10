@@ -1,0 +1,5 @@
+Versione 1.0.5
+
+• Migliorato calcolatore cedolino con nuovo supporto contratti
+• Modalità offline potenziata
+• Correzioni bug e miglioramenti delle prestazioni

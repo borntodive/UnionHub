@@ -190,6 +190,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
               props.navigation.navigate("Notifications");
               props.navigation.closeDrawer();
             }}
+            testID="notifications-drawer-item"
           >
             <Bell size={24} color={colors.textInverse} />
             {notificationCount > 0 && (
@@ -209,6 +210,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             icon={<Home size={22} color={colors.primary} />}
             label={t("navigation.home")}
             onPress={() => navigateToScreen("Home")}
+            testID="home-drawer-item"
           />
 
           {isOnline && (
@@ -223,12 +225,14 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                 }
                 props.navigation.closeDrawer();
               }}
+              testID="profile-drawer-item"
             />
           )}
 
           <MenuItem
             icon={<Calculator size={22} color={colors.primary} />}
             label={t("navigation.payslipCalculator")}
+            testID="payslip-drawer-item"
             onPress={() => {
               props.navigation.navigate("PayslipCalculator");
               props.navigation.closeDrawer();
@@ -238,6 +242,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           <MenuItem
             icon={<Clock size={22} color={colors.primary} />}
             label={t("navigation.ftlCalculator")}
+            testID="ftl-drawer-item"
             onPress={() => {
               props.navigation.navigate("FtlCalculator");
               props.navigation.closeDrawer();
@@ -247,6 +252,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           <MenuItem
             icon={<Thermometer size={22} color={colors.primary} />}
             label={t("navigation.ctcCalculator")}
+            testID="ctc-drawer-item"
             onPress={() => {
               props.navigation.navigate("ColdTempCorrection");
               props.navigation.closeDrawer();
@@ -265,6 +271,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           <MenuItem
             icon={<CloudLightning size={22} color={colors.primary} />}
             label={t("navigation.metar")}
+            testID="metar-drawer-item"
             onPress={() => {
               props.navigation.navigate("Metar");
               props.navigation.closeDrawer();
@@ -323,14 +330,6 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                     label={t("navigation.issues")}
                     onPress={() => {
                       props.navigation.navigate("Issues");
-                      props.navigation.closeDrawer();
-                    }}
-                  />
-                  <MenuItem
-                    icon={<MessageCircle size={22} color={colors.primary} />}
-                    label={t("navigation.chatRequests")}
-                    onPress={() => {
-                      props.navigation.navigate("ChatRequests");
                       props.navigation.closeDrawer();
                     }}
                   />
@@ -394,6 +393,14 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                       props.navigation.closeDrawer();
                     }}
                   />
+                  <MenuItem
+                    icon={<MessageCircle size={22} color={colors.primary} />}
+                    label={t("navigation.chatRequests")}
+                    onPress={() => {
+                      props.navigation.navigate("ChatRequests");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
 
                   {/* Sezione Comunicati */}
                   <View style={styles.sectionDivider} />
@@ -407,6 +414,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                       props.navigation.navigate("Documents");
                       props.navigation.closeDrawer();
                     }}
+                    testID="documents-drawer-item"
                   />
                   <MenuItem
                     icon={<FileText size={22} color={colors.primary} />}
@@ -554,10 +562,17 @@ interface MenuItemProps {
   label: string;
   onPress: () => void;
   badge?: number;
+  testID?: string;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, badge }) => (
-  <TouchableOpacity style={styles.menuItem} onPress={onPress}>
+const MenuItem: React.FC<MenuItemProps> = ({
+  icon,
+  label,
+  onPress,
+  badge,
+  testID,
+}) => (
+  <TouchableOpacity style={styles.menuItem} onPress={onPress} testID={testID}>
     <View style={styles.menuIcon}>{icon}</View>
     <Text style={styles.menuLabel}>{label}</Text>
     {badge !== undefined && badge > 0 && (

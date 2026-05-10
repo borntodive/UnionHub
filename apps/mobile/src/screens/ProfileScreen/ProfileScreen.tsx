@@ -101,7 +101,11 @@ export const ProfileScreen: React.FC = () => {
   const currentUser = user || userData;
 
   return (
-    <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
+    <SafeAreaView
+      style={styles.container}
+      edges={["bottom", "left", "right"]}
+      testID="profile-screen"
+    >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={

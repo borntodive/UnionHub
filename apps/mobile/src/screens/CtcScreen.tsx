@@ -102,7 +102,7 @@ export const CtcScreen: React.FC = () => {
   const unitLabel = unit === "ft" ? "ft" : "m";
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="ctc-screen">
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         {/* Header */}
@@ -110,6 +110,7 @@ export const CtcScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.menuButton}
             onPress={() => (navigation as any).openDrawer?.()}
+            testID="menu-button"
           >
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>

@@ -1,0 +1,14 @@
+UnionHub è l'applicazione ufficiale per i membri del sindacato FIT-CISL. Gestisci la tua iscrizione sindacale direttamente dal telefono.
+
+FUNZIONALITÀ PRINCIPALI:
+• Calcolatore Cedolino - Analisi dettagliata del tuo stipendio con calcoli fiscali italiani
+• Segnalazioni - Invia e monitora problematiche lavorative ai rappresentanti sindacali
+• Documenti - Accedi a documenti sindacali, contratti e comunicazioni
+• Notifiche - Aggiornamenti in tempo reale sulle attività sindacali
+• Directory Membri - Connettiti con altri iscritti
+• Accesso Biometrico - Autenticazione sicura con Face ID e impronta
+• Supporto Offline - Accedi alle funzioni principali anche senza connessione
+
+Progettata per piloti e assistenti di volo, UnionHub mette la tua iscrizione sindacale in tasca.
+
+Rimani connesso. Rimani informato. Rimani protetto.

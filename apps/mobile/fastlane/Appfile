@@ -1,0 +1,5 @@
+app_identifier("it.acovelli.unionhub")
+apple_id(ENV["APPLE_ID"] || "your@email.com")
+team_id(ENV["TEAM_ID"] || "YOUR_TEAM_ID")
+
+itc_team_id(ENV["ITC_TEAM_ID"] || ENV["TEAM_ID"] || "YOUR_ITC_TEAM_ID")

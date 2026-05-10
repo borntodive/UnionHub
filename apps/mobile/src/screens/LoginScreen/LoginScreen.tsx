@@ -223,7 +223,11 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView
+      style={styles.container}
+      edges={["top"]}
+      testID="login-screen"
+    >
       <View style={styles.innerContainer}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -258,6 +262,7 @@ export const LoginScreen: React.FC = () => {
                 autoCorrect={false}
                 leftIcon={<User size={20} color={colors.textTertiary} />}
                 containerStyle={styles.inputContainer}
+                testID="crewcode-input"
               />
 
               <PasswordInput
@@ -267,6 +272,7 @@ export const LoginScreen: React.FC = () => {
                 onChangeText={setPassword}
                 leftIcon={<Lock size={20} color={colors.textTertiary} />}
                 containerStyle={styles.inputContainer}
+                testID="password-input"
               />
 
               <Button
@@ -276,6 +282,7 @@ export const LoginScreen: React.FC = () => {
                 disabled={!crewcode.trim() || !password.trim()}
                 size="lg"
                 style={styles.loginButton}
+                testID="login-button"
               />
 
               {/* Biometric Login Button */}

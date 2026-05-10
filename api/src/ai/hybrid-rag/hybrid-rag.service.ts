@@ -84,7 +84,11 @@ export class HybridRagService implements OnModuleInit {
   }
 
   async ask(question: string): Promise<AskResponse> {
-    const { data } = await this.http.post<AskResponse>("/ask", { question });
+    const { data } = await this.http.post<AskResponse>(
+      "/ask",
+      { question },
+      { timeout: 180_000 },
+    );
     return data;
   }
 

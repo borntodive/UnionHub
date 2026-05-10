@@ -60,7 +60,7 @@ export const PayslipTabs: React.FC = () => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="payslip-screen">
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
       <Tab.Navigator
         screenOptions={{

@@ -1,0 +1,52 @@
+appId: it.acovelli.unionhub
+---
+- assertVisible:
+    id: "home-screen"
+
+# 01 - Payslip Calculator
+- tapOn:
+    id: "menu-button"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "payslip-drawer-item"
+- tapOn:
+    id: "payslip-drawer-item"
+- assertVisible:
+    id: "payslip-screen"
+- takeScreenshot: 01_payslip
+
+# 02 - FTL Calculator
+- tapOn:
+    id: "menu-button"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "ftl-drawer-item"
+- tapOn:
+    id: "ftl-drawer-item"
+- assertVisible:
+    id: "ftl-screen"
+- takeScreenshot: 02_ftl
+
+# 03 - Cold Temperature Correction
+- tapOn:
+    id: "menu-button"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "ctc-drawer-item"
+- tapOn:
+    id: "ctc-drawer-item"
+- assertVisible:
+    id: "ctc-screen"
+- takeScreenshot: 03_ctc
+
+# 04 - METAR
+- tapOn:
+    id: "menu-button"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "metar-drawer-item"
+- tapOn:
+    id: "metar-drawer-item"
+- assertVisible:
+    id: "metar-screen"
+- takeScreenshot: 04_metar

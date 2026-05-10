@@ -18,6 +18,7 @@ interface ButtonProps {
   loading?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  testID?: string;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -29,6 +30,7 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   style,
   textStyle,
+  testID,
 }) => {
   const buttonStyles = [
     styles.base,
@@ -52,6 +54,7 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled || loading}
       style={buttonStyles}
       activeOpacity={0.8}
+      testID={testID}
     >
       {loading ? (
         <ActivityIndicator

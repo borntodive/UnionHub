@@ -39,6 +39,8 @@ import { User as UserType, Ruolo, UserRole } from "../../types";
 
 const ITEMS_PER_PAGE = 20;
 
+type SortOption = "nome" | "cognome" | "crewcode" | "dataIscrizione";
+
 type MembersScreenNavigationProp =
   NativeStackNavigationProp<RootStackParamList>;
 
@@ -65,6 +67,10 @@ export const MembersScreen: React.FC = () => {
     undefined,
   );
 
+  // Sort state
+  const [sortBy, setSortBy] = useState<SortOption>("cognome");
+  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
+
   // Fetch filter options
   const { data: bases } = useQuery({
     queryKey: ["bases"],
@@ -89,6 +95,8 @@ export const MembersScreen: React.FC = () => {
     if (selectedBaseId) f.baseId = selectedBaseId;
     if (selectedContrattoId) f.contrattoId = selectedContrattoId;
     if (selectedGradeId) f.gradeId = selectedGradeId;
+    f.sortBy = sortBy;
+    f.sortOrder = sortOrder;
     return f;
   }, [
     searchQuery,
@@ -96,6 +104,8 @@ export const MembersScreen: React.FC = () => {
     selectedBaseId,
     selectedContrattoId,
     selectedGradeId,
+    sortBy,
+    sortOrder,
   ]);
 
   // Infinite scroll query with filters
@@ -426,10 +436,14 @@ export const MembersScreen: React.FC = () => {
         selectedBaseId={selectedBaseId}
         selectedContrattoId={selectedContrattoId}
         selectedGradeId={selectedGradeId}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
         onSelectRuolo={setSelectedRuolo}
         onSelectBase={setSelectedBaseId}
         onSelectContratto={setSelectedContrattoId}
         onSelectGrade={setSelectedGradeId}
+        onSelectSortBy={setSortBy}
+        onSelectSortOrder={setSortOrder}
         onReset={clearFilters}
       />
     </SafeAreaView>

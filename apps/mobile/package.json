@@ -14,7 +14,10 @@
     "test": "jest",
     "lint": "eslint . --ext .ts,.tsx",
     "build:android:prod": "NODE_ENV=production eas build --platform android",
-    "build:ios:prod": "NODE_ENV=production eas build --platform ios"
+    "build:ios:prod": "NODE_ENV=production eas build --platform ios",
+    "e2e:screenshots:en": "bash scripts/maestro-screenshots.sh en",
+    "e2e:screenshots:it": "bash scripts/maestro-screenshots.sh it",
+    "e2e:screenshots": "pnpm run e2e:screenshots:en && pnpm run e2e:screenshots:it"
   },
   "dependencies": {
     "@expo/metro-runtime": "~55.0.6",
@@ -80,6 +83,7 @@
     "@types/jest": "^30.0.0",
     "@types/react": "~19.2.10",
     "jest": "^30.3.0",
+    "jest-circus": "^30.0.0",
     "metar-taf-parser": "^9.1.3",
     "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"

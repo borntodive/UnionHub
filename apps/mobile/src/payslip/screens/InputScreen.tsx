@@ -69,7 +69,11 @@ export const InputScreen: React.FC = () => {
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
+          <TouchableOpacity
+            onPress={handleMenuPress}
+            style={styles.menuButton}
+            testID="menu-button"
+          >
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t("payslip.title")}</Text>

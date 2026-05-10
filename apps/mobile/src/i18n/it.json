@@ -451,7 +451,14 @@
     "noPendingDesc": "Le nuove richieste di adesione appariranno qui",
     "processing": "Elaborazione in corso...",
     "importSuccess": "Importazione completata con successo",
-    "importError": "Errore durante l'importazione"
+    "importError": "Errore durante l'importazione",
+    "sortBy": "Ordina per",
+    "sortOptions": {
+      "nome": "Nome",
+      "cognome": "Cognome",
+      "crewcode": "Crewcode",
+      "dataIscrizione": "Data di iscrizione"
+    }
   },
   "admin": {
     "bases": "Basi",

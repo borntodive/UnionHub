@@ -119,12 +119,16 @@ export const HomeScreen: React.FC = () => {
   const openDrawer = () => navigation.dispatch(DrawerActions.openDrawer());
 
   return (
-    <View style={styles.wrapper}>
+    <View style={styles.wrapper} testID="home-screen">
       <View style={[styles.statusBarHack, { height: insets.top }]} />
       <SafeAreaView style={{ flex: 1 }} edges={["bottom", "left", "right"]}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.menuButton} onPress={openDrawer}>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={openDrawer}
+            testID="menu-button"
+          >
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>
 

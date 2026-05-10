@@ -73,6 +73,8 @@ export interface GetUsersParams {
   baseId?: string;
   contrattoId?: string;
   gradeId?: string;
+  sortBy?: "nome" | "cognome" | "crewcode" | "dataIscrizione";
+  sortOrder?: "ASC" | "DESC";
 }
 
 export interface ScopedStats {

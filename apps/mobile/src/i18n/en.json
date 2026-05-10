@@ -451,7 +451,14 @@
     "noPendingDesc": "New membership requests will appear here",
     "processing": "Processing...",
     "importSuccess": "Import completed successfully",
-    "importError": "Error during import"
+    "importError": "Error during import",
+    "sortBy": "Sort by",
+    "sortOptions": {
+      "nome": "First Name",
+      "cognome": "Last Name",
+      "crewcode": "Crewcode",
+      "dataIscrizione": "Registration Date"
+    }
   },
   "admin": {
     "bases": "Bases",

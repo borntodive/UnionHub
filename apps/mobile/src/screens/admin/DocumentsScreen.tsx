@@ -383,7 +383,7 @@ export const DocumentsScreen: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="documents-screen">
       <View style={[styles.statusBarHack, { height: insets.top }]} />
       <SafeAreaView
         style={styles.container}
@@ -416,6 +416,7 @@ export const DocumentsScreen: React.FC = () => {
             onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
             style={styles.menuButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            testID="menu-button"
           >
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>

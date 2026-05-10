@@ -49,6 +49,8 @@ interface FindAllOptions {
   page?: number;
   perPage?: number;
   registrationStatus?: string;
+  sortBy?: "nome" | "cognome" | "crewcode" | "dataIscrizione";
+  sortOrder?: "ASC" | "DESC";
 }
 
 @Injectable()
@@ -115,6 +117,8 @@ export class UsersService {
       page = 1,
       perPage = 20,
       registrationStatus,
+      sortBy = "cognome",
+      sortOrder = "ASC",
     } = options;
 
     const where: any = {};
@@ -164,8 +168,8 @@ export class UsersService {
               ? false
               : true,
       })
-      .orderBy("user.cognome", "ASC")
-      .addOrderBy("user.nome", "ASC")
+      .orderBy(`user.${sortBy}`, sortOrder)
+      .addOrderBy("user.nome", sortBy === "cognome" ? sortOrder : "ASC")
       .skip((page - 1) * perPage)
       .take(perPage);
 

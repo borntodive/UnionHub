@@ -82,6 +82,9 @@ export class UsersController {
     @Query("page") page?: string,
     @Query("perPage") perPage?: string,
     @Query("registrationStatus") registrationStatus?: string,
+    @Query("sortBy")
+    sortBy?: "nome" | "cognome" | "crewcode" | "dataIscrizione",
+    @Query("sortOrder") sortOrder?: "ASC" | "DESC",
   ) {
     const requestingUser = await this.usersService.findById(req.user.userId);
 
@@ -97,6 +100,8 @@ export class UsersController {
         page: page ? parseInt(page, 10) : 1,
         perPage: perPage ? parseInt(perPage, 10) : 20,
         registrationStatus,
+        sortBy,
+        sortOrder,
       },
       requestingUser,
     );

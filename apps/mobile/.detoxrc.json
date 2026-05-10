@@ -1,0 +1,40 @@
+{
+  "testRunner": {
+    "$0": "jest",
+    "args": {
+      "config": "e2e/jest.config.js"
+    },
+    "jest": {
+      "setupTimeout": 120000
+    }
+  },
+  "apps": {
+    "ios.sim.debug": {
+      "type": "ios.app",
+      "binaryPath": "ios/build/Build/Products/Debug-iphonesimulator/UnionHub.app",
+      "build": "xcodebuild -workspace ios/UnionHub.xcworkspace -scheme UnionHub -configuration Debug -destination 'platform=iOS Simulator,id=C59A21C3-2D08-479E-9526-57A7F4D72079' -derivedDataPath ios/build",
+      "device": {
+        "type": "iPhone 16 Pro",
+        "os": "iOS 18.2"
+      }
+    }
+  },
+  "devices": {
+    "simulator": {
+      "type": "ios.simulator",
+      "device": {
+        "type": "iPhone 16 Pro",
+        "os": "iOS 18.2"
+      }
+    }
+  },
+  "configurations": {
+    "ios.sim.debug": {
+      "device": "simulator",
+      "app": "ios.sim.debug"
+    }
+  },
+  "cli": {
+    "artifactsLocation": "e2e/artifacts"
+  }
+}

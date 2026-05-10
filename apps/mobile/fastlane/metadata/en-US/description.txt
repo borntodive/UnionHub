@@ -1,0 +1,14 @@
+UnionHub is the official app for FIT-CISL aviation union members. Manage your union membership directly from your phone.
+
+KEY FEATURES:
+• Payslip Calculator - Detailed breakdown of your salary with Italian tax calculations
+• Issue Reporting - Report and track work-related issues directly to union representatives
+• Documents - Access union documents, contracts, and communications
+• Notifications - Real-time updates on union activities and important announcements
+• Member Directory - Connect with other union members
+• Biometric Login - Secure Face ID and fingerprint authentication
+• Offline Support - Access key features even without internet connection
+
+Designed for pilots and cabin crew, UnionHub puts your union membership in your pocket.
+
+Stay connected. Stay informed. Stay protected.

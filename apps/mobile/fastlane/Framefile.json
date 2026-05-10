@@ -1,0 +1,68 @@
+{
+  "device_frame_version": "latest",
+  "default": {
+    "keyword": {
+      "font": "./fonts/SF-Pro-Display-Bold.otf",
+      "color": "#177246",
+      "size": "0.18"
+    },
+    "title": {
+      "font": "./fonts/SF-Pro-Display-Regular.otf",
+      "color": "#333333",
+      "size": "0.12"
+    },
+    "background": "./background.png",
+    "padding": 50,
+    "show_complete_frame": false,
+    "stack_title": true,
+    "title_below_image": false,
+    "frame": "WHITE"
+  },
+  "data": [
+    {
+      "filter": "01-login",
+      "keyword": {
+        "text": "Accesso"
+      },
+      "title": {
+        "text": "Entra nel tuo account"
+      }
+    },
+    {
+      "filter": "02-home",
+      "keyword": {
+        "text": "UnionHub"
+      },
+      "title": {
+        "text": "La tua app sindacale"
+      }
+    },
+    {
+      "filter": "03-documents",
+      "keyword": {
+        "text": "Documenti"
+      },
+      "title": {
+        "text": "Tutto in un posto"
+      }
+    },
+    {
+      "filter": "04-notifications",
+      "keyword": {
+        "text": "Notifiche"
+      },
+      "title": {
+        "text": "Resta aggiornato"
+      }
+    },
+    {
+      "filter": "05-profile",
+      "keyword": {
+        "text": "Profilo"
+      },
+      "title": {
+        "text": "Il tuo spazio personale"
+      }
+    }
+  ]
+}

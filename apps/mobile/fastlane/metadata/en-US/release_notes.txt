@@ -1,0 +1,5 @@
+Version 1.0.5
+
+• Improved payslip calculator with new contract support
+• Enhanced offline mode
+• Bug fixes and performance improvements

@@ -20,7 +20,7 @@ export const FtlTabs: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="ftl-screen">
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
       <Tab.Navigator
         screenOptions={{

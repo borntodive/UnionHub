@@ -13,6 +13,8 @@ import { Button } from "../../components/Button";
 import { Select } from "../../components/Select";
 import { Base, Contract, Grade, Ruolo, UserRole } from "../../types";
 
+type SortOption = "nome" | "cognome" | "crewcode" | "dataIscrizione";
+
 interface FilterSheetProps {
   visible: boolean;
   onClose: () => void;
@@ -32,11 +34,17 @@ interface FilterSheetProps {
   selectedContrattoId?: string;
   selectedGradeId?: string;
 
+  // Sort
+  sortBy?: SortOption;
+  sortOrder?: "ASC" | "DESC";
+
   // Setters
   onSelectRuolo: (ruolo?: Ruolo) => void;
   onSelectBase: (baseId?: string) => void;
   onSelectContratto: (contrattoId?: string) => void;
   onSelectGrade: (gradeId?: string) => void;
+  onSelectSortBy?: (value: SortOption) => void;
+  onSelectSortOrder?: (value: "ASC" | "DESC") => void;
   onReset: () => void;
 }
 
@@ -52,10 +60,14 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
   selectedBaseId,
   selectedContrattoId,
   selectedGradeId,
+  sortBy,
+  sortOrder,
   onSelectRuolo,
   onSelectBase,
   onSelectContratto,
   onSelectGrade,
+  onSelectSortBy,
+  onSelectSortOrder,
   onReset,
 }) => {
   const isSuperAdmin = userRole === UserRole.SUPERADMIN;
@@ -108,6 +120,21 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
   const gradeOptions = [
     { label: "All", value: "" },
     ...(filteredGrades || []).map((g) => ({ label: g.codice, value: g.id })),
+  ];
+
+  const sortOptions = [
+    { label: "Last Name / Cognome", value: "cognome" },
+    { label: "First Name / Nome", value: "nome" },
+    { label: "Crewcode", value: "crewcode" },
+    {
+      label: "Registration Date / Data di iscrizione",
+      value: "dataIscrizione",
+    },
+  ];
+
+  const sortOrderOptions = [
+    { label: "A-Z", value: "ASC" },
+    { label: "Z-A", value: "DESC" },
   ];
 
   return (
@@ -172,6 +199,30 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
               options={gradeOptions}
               placeholder="Select grade..."
             />
+
+            {/* Sort By */}
+            {onSelectSortBy && (
+              <Select
+                label="Sort by"
+                value={sortBy}
+                onValueChange={(val) => onSelectSortBy(val as SortOption)}
+                options={sortOptions}
+                placeholder="Select sort..."
+              />
+            )}
+
+            {/* Sort Order */}
+            {onSelectSortOrder && (
+              <Select
+                label="Order"
+                value={sortOrder}
+                onValueChange={(val) =>
+                  onSelectSortOrder(val as "ASC" | "DESC")
+                }
+                options={sortOrderOptions}
+                placeholder="Select order..."
+              />
+            )}
 
             <View style={styles.footerSpacer} />
           </ScrollView>
