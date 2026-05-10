@@ -24,7 +24,12 @@ export type RootStackParamList = {
   ColdTempCorrection: undefined;
   // CLA Contract Admin
   // VOLMET / Airports
+  Airports: undefined;
+  AirportDetail: { icao: string; volmetId?: string; airportName?: string };
   Volmet: undefined;
+  Metar: undefined;
+  MetarDetail: { icao: string };
+  MetarManage: undefined;
   AirportsAdmin: undefined;
   VolmetAdmin: undefined; // legacy, for backwards compatibility
   VolmetForm: { volmetId?: string };
@@ -74,7 +79,12 @@ export type DrawerParamList = {
   FtlCalculator: undefined;
   ColdTempCorrection: undefined;
   // VOLMET / Airports
+  Airports: undefined;
+  AirportDetail: { icao: string; volmetId?: string; airportName?: string };
   Volmet: undefined;
+  Metar: undefined;
+  MetarDetail: { icao: string };
+  MetarManage: undefined;
   AirportsAdmin: undefined;
   VolmetAdmin: undefined; // legacy, for backwards compatibility
   VolmetForm: { volmetId?: string };

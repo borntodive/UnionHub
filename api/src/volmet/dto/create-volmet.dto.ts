@@ -71,6 +71,11 @@ export class CreateVolmetDto {
   atis?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  handlingFrequency?: string;
+
+  @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 }

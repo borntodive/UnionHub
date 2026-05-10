@@ -12,6 +12,7 @@ import { ClaContractHistory } from "../../cla-contracts/entities/cla-contract-hi
 import { IssueCategory } from "../../issue-categories/entities/issue-category.entity";
 import { IssueUrgency } from "../../issue-urgencies/entities/issue-urgency.entity";
 import { Volmet } from "../../volmet/entities/volmet.entity";
+import { Runway } from "../../metar/entities/runway.entity";
 import { UserRole } from "../../common/enums/user-role.enum";
 import { Ruolo } from "../../common/enums/ruolo.enum";
 import { WhatsappStatus } from "../../common/enums/whatsapp-status.enum";
@@ -20,6 +21,7 @@ import { seedClaContracts2025 } from "./cla-contracts-2025.seed";
 import { seedClaContracts2026 } from "./cla-contracts-2026.seed";
 import { seedClaContracts2026Test } from "./cla-contracts-2026-test.seed";
 import { VOLMET_DATA } from "./volmet.seed";
+import { RUNWAY_DATA } from "./runway.seed";
 
 config();
 
@@ -42,6 +44,7 @@ const dataSource = new DataSource({
     IssueCategory,
     IssueUrgency,
     Volmet,
+    Runway,
   ],
   synchronize: false,
 });
@@ -630,6 +633,10 @@ async function runSeed() {
           existing.atis = volmetData.atis;
           needsUpdate = true;
         }
+        if (volmetData.handlingFrequency && !existing.handlingFrequency) {
+          existing.handlingFrequency = volmetData.handlingFrequency;
+          needsUpdate = true;
+        }
         if (needsUpdate) {
           await volmetRepository.save(existing);
           volmetsUpdated++;
@@ -642,6 +649,22 @@ async function runSeed() {
         `  Updated ${volmetsUpdated} VOLMET entries with IATA codes and/or coordinates`,
       );
     }
+
+    // ── Runways ────────────────────────────────────────────────────────────────
+    console.log("Seeding runways...");
+    const runwayRepository = dataSource.getRepository(Runway);
+
+    // Delete existing records for all seeded airports, then bulk-insert from SQLite
+    const seededIcaos = [...new Set(RUNWAY_DATA.map((r) => r.icao as string))];
+    for (const icao of seededIcaos) {
+      await runwayRepository.delete({ icao });
+    }
+    await runwayRepository.save(
+      RUNWAY_DATA.map((r) => runwayRepository.create(r)),
+    );
+    console.log(
+      `  Replaced runways for ${seededIcaos.length} airports (${RUNWAY_DATA.length} total entries)`,
+    );
 
     console.log("\nSeed completed successfully!");
     console.log("\n--- LOGIN CREDENTIALS ---");

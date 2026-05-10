@@ -44,6 +44,9 @@ export class Volmet {
   @Column({ type: "varchar", length: 20, nullable: true })
   atis: string;
 
+  @Column({ type: "varchar", length: 30, nullable: true })
+  handlingFrequency: string | null;
+
   @Column({ type: "boolean", default: true })
   isActive: boolean;
 

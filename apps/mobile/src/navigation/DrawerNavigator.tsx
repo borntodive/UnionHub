@@ -39,6 +39,7 @@ import {
   CloudLightning,
   MessageCircle,
   BookOpen,
+  Plane,
 } from "lucide-react-native";
 import { Image } from "react-native";
 import { usersApi } from "../api/users";
@@ -90,6 +91,8 @@ import { GradeFormScreen } from "../screens/admin/GradeFormScreen";
 import { IssueCategoryFormScreen } from "../screens/admin/IssueCategoryFormScreen";
 import { IssueUrgencyFormScreen } from "../screens/admin/IssueUrgencyFormScreen";
 import { AirportAdminScreen } from "../screens/admin/AirportAdminScreen";
+import { AirportsScreen } from "../screens/AirportsScreen";
+import { AirportDetailScreen } from "../screens/AirportDetailScreen";
 import { VolmetScreen } from "../screens/VolmetScreen";
 import { MetarScreen } from "../screens/MetarScreen";
 import { MetarDetailScreen } from "../screens/MetarDetailScreen";
@@ -260,20 +263,10 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           />
 
           <MenuItem
-            icon={<Radio size={22} color={colors.primary} />}
-            label={t("navigation.volmet")}
+            icon={<Plane size={22} color={colors.primary} />}
+            label={t("navigation.airports")}
             onPress={() => {
-              props.navigation.navigate("Volmet");
-              props.navigation.closeDrawer();
-            }}
-          />
-
-          <MenuItem
-            icon={<CloudLightning size={22} color={colors.primary} />}
-            label={t("navigation.metar")}
-            testID="metar-drawer-item"
-            onPress={() => {
-              props.navigation.navigate("Metar");
+              props.navigation.navigate("Airports");
               props.navigation.closeDrawer();
             }}
           />
@@ -734,11 +727,29 @@ export const DrawerNavigator: React.FC = () => {
         }}
       />
       <Drawer.Screen
+        name="Airports"
+        component={AirportsScreen}
+        options={{
+          title: t("navigation.airports"),
+          drawerIcon: ({ color }) => <Plane size={22} color={color} />,
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
+        name="AirportDetail"
+        component={AirportDetailScreen}
+        options={{
+          title: t("navigation.airports"),
+          drawerItemStyle: { display: "none" },
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
         name="Volmet"
         component={VolmetScreen}
         options={{
           title: t("navigation.volmet"),
-          drawerIcon: ({ color }) => <Radio size={22} color={color} />,
+          drawerItemStyle: { display: "none" },
           headerShown: false,
         }}
       />
@@ -747,7 +758,7 @@ export const DrawerNavigator: React.FC = () => {
         component={MetarScreen}
         options={{
           title: t("navigation.metar"),
-          drawerIcon: ({ color }) => <CloudLightning size={22} color={color} />,
+          drawerItemStyle: { display: "none" },
           headerShown: false,
         }}
       />

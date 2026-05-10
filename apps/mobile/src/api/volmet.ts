@@ -13,6 +13,7 @@ export interface Volmet {
   region: string;
   volmetName?: string;
   atis?: string;
+  handlingFrequency?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

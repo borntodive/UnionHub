@@ -252,6 +252,7 @@
     "issueUrgencies": "Urgenze Segnalazioni",
     "ftlCalculator": "Calcolatore FTL",
     "ctcCalculator": "Corr. Temp. Fredda",
+    "airports": "Aeroporti",
     "volmet": "Frequenze VOLMET",
     "metar": "METAR / TAF",
     "airportsAdmin": "Gestione Aeroporti",
@@ -946,7 +947,14 @@
     "noEntries": "Nessun aeroporto trovato",
     "confirmDelete": "Eliminare questo aeroporto?",
     "addEntry": "Aggiungi Aeroporto",
-    "noEntriesSubtext": "Premi il pulsante + per aggiungere un nuovo aeroporto"
+    "noEntriesSubtext": "Premi il pulsante + per aggiungere un nuovo aeroporto",
+    "maxSavedTitle": "Limite raggiunto",
+    "maxSavedMessage": "Puoi salvare fino a 10 aeroporti per il meteo. Rimuovine uno prima.",
+    "weatherSection": "Meteo",
+    "frequenciesSection": "Frequenze Radio",
+    "noWeatherData": "Dati meteo non disponibili per questo aeroporto",
+    "noVolmetData": "Nessun dato sulle frequenze disponibile",
+    "handling": "Handling"
   },
   "metar": {
     "title": "METEO METAR / TAF",
@@ -977,6 +985,8 @@
     "observed": "Osservato",
     "manageTitle": "Gestisci Aeroporti",
     "addAirports": "Aggiungi Aeroporti",
+    "noSaved": "Nessun aeroporto salvato",
+    "noSavedHint": "Premi + per aggiungere aeroporti alla tua lista.",
     "savedCount": "aeroporti salvati",
     "noSavedTitle": "Nessun aeroporto salvato",
     "noSavedText": "Aggiungi aeroporti per vedere qui i dati METAR/TAF.",

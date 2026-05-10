@@ -25,8 +25,6 @@ export const useMetarStore = create<MetarState>()(
         set((state) => {
           const upper = icao.toUpperCase();
           if (state.savedIcaos.includes(upper)) return state;
-          // Limit to 10 airports
-          if (state.savedIcaos.length >= 10) return state;
           return { savedIcaos: [...state.savedIcaos, upper] };
         }),
       removeIcao: (icao) =>
@@ -39,7 +37,6 @@ export const useMetarStore = create<MetarState>()(
           if (state.savedIcaos.includes(upper)) {
             return { savedIcaos: state.savedIcaos.filter((i) => i !== upper) };
           }
-          if (state.savedIcaos.length >= 10) return state;
           return { savedIcaos: [...state.savedIcaos, upper] };
         }),
       clearAll: () => set({ savedIcaos: [] }),
