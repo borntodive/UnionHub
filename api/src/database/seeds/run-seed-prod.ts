@@ -28,6 +28,7 @@ import { ClaContractHistory } from "../../cla-contracts/entities/cla-contract-hi
 import { IssueCategory } from "../../issue-categories/entities/issue-category.entity";
 import { IssueUrgency } from "../../issue-urgencies/entities/issue-urgency.entity";
 import { Volmet } from "../../volmet/entities/volmet.entity";
+import { Runway } from "../../metar/entities/runway.entity";
 import { UserRole } from "../../common/enums/user-role.enum";
 import { Ruolo } from "../../common/enums/ruolo.enum";
 import { WhatsappStatus } from "../../common/enums/whatsapp-status.enum";
@@ -35,6 +36,7 @@ import * as bcrypt from "bcrypt";
 import { seedClaContracts2025 } from "./cla-contracts-2025.seed";
 import { seedClaContracts2026 } from "./cla-contracts-2026.seed";
 import { VOLMET_DATA } from "./volmet.seed";
+import { RUNWAY_DATA } from "./runway.seed";
 
 config();
 
@@ -57,6 +59,7 @@ const dataSource = new DataSource({
     IssueCategory,
     IssueUrgency,
     Volmet,
+    Runway,
   ],
   synchronize: false,
 });
@@ -320,6 +323,18 @@ async function runSeedProd() {
           existing.longitude = volmetData.longitude;
           needsUpdate = true;
         }
+        if (volmetData.volmetName && !existing.volmetName) {
+          existing.volmetName = volmetData.volmetName;
+          needsUpdate = true;
+        }
+        if (volmetData.atis && !existing.atis) {
+          existing.atis = volmetData.atis;
+          needsUpdate = true;
+        }
+        if (volmetData.handlingFrequency && !existing.handlingFrequency) {
+          existing.handlingFrequency = volmetData.handlingFrequency;
+          needsUpdate = true;
+        }
         if (needsUpdate) {
           await volmetRepository.save(existing);
           volmetsUpdated++;
@@ -332,6 +347,20 @@ async function runSeedProd() {
         `  Updated ${volmetsUpdated} VOLMET entries with IATA codes and/or coordinates`,
       );
     }
+    // ── Runways ───────────────────────────────────────────────────────────────
+    console.log("Seeding runways...");
+    const runwayRepository = dataSource.getRepository(Runway);
+    const seededIcaos = [...new Set(RUNWAY_DATA.map((r) => r.icao as string))];
+    for (const icao of seededIcaos) {
+      await runwayRepository.delete({ icao });
+    }
+    await runwayRepository.save(
+      RUNWAY_DATA.map((r) => runwayRepository.create(r)),
+    );
+    console.log(
+      `  Replaced runways for ${seededIcaos.length} airports (${RUNWAY_DATA.length} total entries)`,
+    );
+
     console.log("\n[PROD SEED] Completed successfully!");
     console.log(
       `  SuperAdmin: ${adminCrewcode} — password set from DEFAULT_ADMIN_PASSWORD env`,
