@@ -302,7 +302,9 @@ export class GmailService implements OnModuleInit {
     }
 
     if (user.rsa !== true) {
-      throw new ForbiddenException("Access restricted to RSA members");
+      throw new ForbiddenException(
+        `Access restricted to RSA members [userId=${userId} crewcode=${user.crewcode} role=${user.role} rsa=${user.rsa}]`,
+      );
     }
     if (!user.ruolo) {
       throw new ForbiddenException(
