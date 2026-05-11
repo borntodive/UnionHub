@@ -37,7 +37,7 @@ export class GmailController {
     @Query("ruolo") ruolo?: string,
   ) {
     return this.gmailService.listEmails(
-      req.user.id,
+      req.user.userId,
       pageToken,
       ruolo ? this.parseRuoloOptional(ruolo) : undefined,
     );
@@ -50,7 +50,7 @@ export class GmailController {
     @Query("ruolo") ruolo?: string,
   ) {
     return this.gmailService.getEmail(
-      req.user.id,
+      req.user.userId,
       id,
       ruolo ? this.parseRuoloOptional(ruolo) : undefined,
     );
@@ -64,7 +64,7 @@ export class GmailController {
     @Query("ruolo") ruolo?: string,
   ) {
     return this.gmailService.getAttachment(
-      req.user.id,
+      req.user.userId,
       messageId,
       attachmentId,
       ruolo ? this.parseRuoloOptional(ruolo) : undefined,
