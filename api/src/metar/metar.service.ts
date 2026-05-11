@@ -7,6 +7,8 @@ import {
   WeatherResponse,
   ApiWind,
   RunwayInfo,
+  TrendType,
+  TrendForecast,
 } from "./dto/metar.dto";
 import {
   calculateFlightCategory,
@@ -73,9 +75,17 @@ export class MetarService {
         return null;
       }
 
-      // Get first (most recent) TAF
+      // TAF can span multiple lines - join all lines of the first TAF
       const lines = text.trim().split("\n");
-      return lines[0]?.trim() || null;
+      // Join all lines until we hit an empty line or another TAF header
+      const tafLines: string[] = [];
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) break; // Empty line = end of TAF
+        if (trimmed.startsWith("TAF") && tafLines.length > 0) break; // New TAF starts
+        tafLines.push(trimmed);
+      }
+      return tafLines.join(" ") || null;
     } catch (error) {
       this.logger.error(`Failed to fetch TAF for ${icao}:`, error);
       return null;
@@ -169,6 +179,21 @@ export class MetarService {
           dewpoint: parsed.dewPoint,
           altimeter: parsed.altimeter?.value,
           remarks: parsed.remarks?.map((r) => r.raw).join(" "),
+          trends: [
+            // NOSIG is stored as boolean property, not in trends array
+            ...(parsed.nosig ? [{ type: TrendType.NOSIG as TrendType }] : []),
+            // Other trends (TEMPO, BECMG)
+            ...(parsed.trends?.map((t: any) => {
+              const trend: TrendForecast = {
+                type: t.type as TrendType,
+              };
+              if (t.wind) trend.wind = this.formatWind(t.wind);
+              if (t.visibility?.value) trend.visibility = t.visibility.value;
+              if (t.clouds)
+                trend.clouds = t.clouds.map((c: any) => this.formatCloud(c));
+              return trend;
+            }) ?? []),
+          ],
         },
       };
     } catch (error) {
@@ -255,14 +280,60 @@ export class MetarService {
             ...(parsed.trends?.map((t) => {
               const trend = t as any;
               const weatherData = trend.fcst || trend;
+              // Build time from validity for TEMPO/BECMG, or fmDate for FM
+              let trendTime: Date | undefined;
+              let validTo: Date | undefined;
+              if (trend.fmDate) {
+                trendTime = trend.fmDate;
+              } else if (trend.validity?.startDay !== undefined) {
+                trendTime = new Date(
+                  Date.UTC(
+                    now.getUTCFullYear(),
+                    now.getUTCMonth(),
+                    trend.validity.startDay,
+                    trend.validity.startHour ?? 0,
+                    0,
+                    0,
+                  ),
+                );
+                // Handle month rollover
+                if (trendTime < validFrom) {
+                  trendTime.setUTCMonth(trendTime.getUTCMonth() + 1);
+                }
+                // Build validTo for trends with end time (TEMPO, BECMG, PROB)
+                if (trend.validity.endDay !== undefined) {
+                  validTo = new Date(
+                    Date.UTC(
+                      now.getUTCFullYear(),
+                      now.getUTCMonth(),
+                      trend.validity.endDay,
+                      trend.validity.endHour ?? 0,
+                      0,
+                      0,
+                    ),
+                  );
+                  if (validTo < trendTime) {
+                    validTo.setUTCMonth(validTo.getUTCMonth() + 1);
+                  }
+                }
+              }
               return {
-                time: trend.fmDate ?? undefined,
+                type: trend.type as TrendType,
+                probability: trend.probability,
+                time: trendTime,
+                validTo,
                 wind: weatherData.wind
                   ? this.formatWind(weatherData.wind)
                   : undefined,
                 visibility: weatherData.visibility?.value,
                 clouds: weatherData.clouds?.map((c: any) =>
                   this.formatCloud(c),
+                ),
+                weatherConditions: weatherData.weatherConditions?.map(
+                  (wc: any) => ({
+                    descriptive: wc.descriptive,
+                    phenomenons: wc.phenomenons,
+                  }),
                 ),
               };
             }) ?? []),

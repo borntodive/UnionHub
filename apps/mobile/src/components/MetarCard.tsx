@@ -1,9 +1,16 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Plane, Wind, Eye, Cloud, Thermometer } from "lucide-react-native";
+import {
+  Plane,
+  Wind,
+  Eye,
+  Cloud,
+  Thermometer,
+  TrendingUp,
+} from "lucide-react-native";
 import { spacing, typography, borderRadius } from "../theme";
 import { colors } from "../theme";
-import { Metar, FlightCategory } from "../api/metar";
+import { Metar, FlightCategory, TrendType } from "../api/metar";
 import {
   getFlightCategoryColor,
   getFlightCategoryLabel,
@@ -11,6 +18,7 @@ import {
   formatClouds,
   formatWind,
   isBadWeatherPhenomenon,
+  formatUTCDate,
 } from "../utils/metar";
 
 interface MetarCardProps {
@@ -26,6 +34,23 @@ export const MetarCard: React.FC<MetarCardProps> = ({
 }) => {
   const categoryColor = getFlightCategoryColor(metar.decoded.flightCategory);
   const categoryLabel = getFlightCategoryLabel(metar.decoded.flightCategory);
+
+  const getTrendColor = (type?: TrendType) => ({
+    backgroundColor:
+      type === TrendType.TEMPO
+        ? "#FF9500"
+        : type === TrendType.BECMG
+          ? "#007AFF"
+          : type === TrendType.NOSIG
+            ? "#34C759"
+            : type === TrendType.PROB
+              ? "#AF52DE"
+              : type === TrendType.INTER
+                ? "#8E8E93"
+                : type === TrendType.FM
+                  ? "#34C759"
+                  : colors.background,
+  });
 
   const renderHighlight = (text: string, isBad: boolean) => (
     <Text style={[styles.valueText, isBad && styles.badWeather]}>{text}</Text>
@@ -202,6 +227,52 @@ export const MetarCard: React.FC<MetarCardProps> = ({
               <Text style={styles.remarksText}>{metar.decoded.remarks}</Text>
             </View>
           )}
+
+          {/* Trends */}
+          {metar.decoded.trends && metar.decoded.trends.length > 0 && (
+            <View style={styles.trendsContainer}>
+              <View style={styles.trendsHeader}>
+                <TrendingUp
+                  size={14}
+                  color={colors.textSecondary}
+                  style={styles.rowIcon}
+                />
+                <Text style={styles.trendsLabel}>Trend:</Text>
+              </View>
+              {metar.decoded.trends.map((trend, i) => (
+                <View key={i} style={styles.trendItem}>
+                  {trend.type && (
+                    <View
+                      style={[styles.trendBadge, getTrendColor(trend.type)]}
+                    >
+                      <Text style={styles.trendBadgeText}>{trend.type}</Text>
+                    </View>
+                  )}
+                  {trend.wind && (
+                    <Text style={styles.trendDetail}>
+                      Wind: {formatWind(trend.wind)}
+                    </Text>
+                  )}
+                  {trend.visibility !== undefined && (
+                    <Text style={styles.trendDetail}>
+                      Vis: {trend.visibility}m
+                    </Text>
+                  )}
+                  {trend.clouds && trend.clouds.length > 0 && (
+                    <Text style={styles.trendDetail}>
+                      Clouds:{" "}
+                      {trend.clouds
+                        .map(
+                          (c) =>
+                            `${c.amount}${c.height ? ` ${Math.round(c.height)}ft` : ""}`,
+                        )
+                        .join(", ")}
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       ) : (
         /* Raw view */
@@ -210,7 +281,7 @@ export const MetarCard: React.FC<MetarCardProps> = ({
 
       {/* Time */}
       <Text style={styles.timeText}>
-        Observed: {new Date(metar.decoded.time).toLocaleString()}
+        Observed: {formatUTCDate(metar.decoded.time)}
       </Text>
     </View>
   );
@@ -341,6 +412,43 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   remarksText: {
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
+  },
+  trendsContainer: {
+    marginTop: spacing.sm,
+    padding: spacing.sm,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    gap: spacing.xs,
+  },
+  trendsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.xs,
+  },
+  trendsLabel: {
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.bold,
+    color: colors.textSecondary,
+  },
+  trendItem: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  trendBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  trendBadgeText: {
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.bold,
+    color: colors.textInverse,
+  },
+  trendDetail: {
     fontSize: typography.sizes.xs,
     color: colors.textSecondary,
   },

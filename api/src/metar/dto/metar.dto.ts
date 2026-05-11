@@ -5,6 +5,15 @@ export enum FlightCategory {
   VFR = "VFR",
 }
 
+export enum TrendType {
+  NOSIG = "NOSIG",
+  BECMG = "BECMG",
+  TEMPO = "TEMPO",
+  INTER = "INTER",
+  PROB = "PROB",
+  FM = "FM",
+}
+
 export interface RunwayInfo {
   number: string;
   heading: number;
@@ -32,6 +41,23 @@ export interface ApiWind {
   variableTo?: number;
 }
 
+// Shared trend forecast interface for METAR and TAF trends
+export interface TrendForecast {
+  type?: TrendType;
+  probability?: number;
+  wind?: ApiWind;
+  visibility?: number;
+  clouds?: Array<{
+    amount: string;
+    height?: number;
+    type?: string;
+  }>;
+  weatherConditions?: Array<{
+    descriptive?: string;
+    phenomenons?: string[];
+  }>;
+}
+
 export interface MetarResponse {
   icao: string;
   raw: string;
@@ -56,6 +82,7 @@ export interface MetarResponse {
     humidity?: number;
     altimeter?: number;
     remarks?: string;
+    trends?: TrendForecast[];
   };
 }
 
@@ -68,12 +95,20 @@ export interface TafResponse {
     validFrom: Date;
     validUntil: Date;
     forecasts: Array<{
+      type?: TrendType;
+      probability?: number;
       time?: Date;
+      validTo?: Date;
       wind?: ApiWind;
       visibility?: number;
       clouds?: Array<{
         amount: string;
         height?: number;
+        type?: string;
+      }>;
+      weatherConditions?: Array<{
+        descriptive?: string;
+        phenomenons?: string[];
       }>;
     }>;
     remarks?: string;

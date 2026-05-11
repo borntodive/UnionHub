@@ -7,6 +7,15 @@ export enum FlightCategory {
   VFR = "VFR",
 }
 
+export enum TrendType {
+  NOSIG = "NOSIG",
+  BECMG = "BECMG",
+  TEMPO = "TEMPO",
+  INTER = "INTER",
+  PROB = "PROB",
+  FM = "FM",
+}
+
 export interface Wind {
   degrees: number;
   speed: number;
@@ -21,6 +30,11 @@ export interface Cloud {
   amount: string;
   height?: number;
   type?: string;
+}
+
+export interface WeatherCondition {
+  descriptive?: string;
+  phenomenons?: string[];
 }
 
 export interface MetarDecoded {
@@ -40,6 +54,15 @@ export interface MetarDecoded {
   humidity?: number;
   altimeter?: number;
   remarks?: string;
+  trends?: MetarTrend[];
+}
+
+export interface MetarTrend {
+  type?: TrendType;
+  wind?: Wind;
+  visibility?: number;
+  clouds?: Cloud[];
+  weatherConditions?: WeatherCondition[];
 }
 
 export interface Metar {
@@ -49,10 +72,14 @@ export interface Metar {
 }
 
 export interface TafForecast {
+  type?: TrendType;
+  probability?: number;
   time?: string;
+  validTo?: string;
   wind?: Wind;
   visibility?: number;
   clouds?: Cloud[];
+  weatherConditions?: WeatherCondition[];
 }
 
 export interface TafDecoded {

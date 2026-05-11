@@ -15,7 +15,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { colors, spacing, typography, borderRadius } from "../theme";
-import { metarApi } from "../api/metar";
+import { metarApi, TrendType } from "../api/metar";
 import { volmetApi } from "../api/volmet";
 import { MetarCard } from "../components/MetarCard";
 import { WindComponentCard } from "../components/WindComponentCard";
@@ -27,6 +27,8 @@ import {
   getMetarAgeLabel,
   getTafExpiryLabel,
   getTafValidityColor,
+  formatUTCDate,
+  formatWeatherConditions,
 } from "../utils/metar";
 
 type AirportDetailRouteParams = {
@@ -84,6 +86,23 @@ export const AirportDetailScreen: React.FC = () => {
     }
     toggleIcao(icao);
   };
+
+  const getTrendColor = (type?: TrendType) => ({
+    backgroundColor:
+      type === TrendType.TEMPO
+        ? "#FF9500"
+        : type === TrendType.BECMG
+          ? "#007AFF"
+          : type === TrendType.NOSIG
+            ? "#34C759"
+            : type === TrendType.PROB
+              ? "#AF52DE"
+              : type === TrendType.INTER
+                ? "#8E8E93"
+                : type === TrendType.FM
+                  ? "#34C759"
+                  : colors.background,
+  });
 
   const isLoading = weatherLoading || (!!volmetId && volmetLoading);
 
@@ -282,14 +301,8 @@ export const AirportDetailScreen: React.FC = () => {
                           Station: {weather.taf.decoded.station}
                         </Text>
                         <Text style={styles.tafValid}>
-                          Valid from:{" "}
-                          {new Date(
-                            weather.taf.decoded.validFrom,
-                          ).toLocaleString()}{" "}
-                          until{" "}
-                          {new Date(
-                            weather.taf.decoded.validUntil,
-                          ).toLocaleString()}
+                          Valid from: {formatUTCDate(weather.taf.decoded.validFrom)}{" "}
+                          until {formatUTCDate(weather.taf.decoded.validUntil)}
                         </Text>
 
                         {weather.taf.decoded.forecasts.map((forecast, index) =>
@@ -298,12 +311,35 @@ export const AirportDetailScreen: React.FC = () => {
                           forecast.visibility ||
                           forecast.clouds ? (
                             <View key={index} style={styles.forecastItem}>
-                              {forecast.time && (
-                                <Text style={styles.forecastTime}>
-                                  From:{" "}
-                                  {new Date(forecast.time).toLocaleString()}
-                                </Text>
-                              )}
+                              <View style={styles.forecastHeader}>
+                                {forecast.type && (
+                                  <View
+                                    style={[
+                                      styles.trendBadge,
+                                      getTrendColor(forecast.type),
+                                    ]}
+                                  >
+                                    <Text style={styles.trendBadgeText}>
+                                      {forecast.type}
+                                      {forecast.probability
+                                        ? `${forecast.probability}%`
+                                        : ""}
+                                    </Text>
+                                  </View>
+                                )}
+                                {forecast.time && (
+                                  <View style={styles.forecastTimeContainer}>
+                                    <Text style={styles.forecastTime}>
+                                      From {formatUTCDate(forecast.time)}
+                                    </Text>
+                                    {forecast.validTo && (
+                                      <Text style={styles.forecastTime}>
+                                        to {formatUTCDate(forecast.validTo)}
+                                      </Text>
+                                    )}
+                                  </View>
+                                )}
+                              </View>
                               {forecast.wind && (
                                 <Text style={styles.forecastWind}>
                                   Wind: {formatWind(forecast.wind)}
@@ -314,6 +350,12 @@ export const AirportDetailScreen: React.FC = () => {
                                   Visibility: {forecast.visibility}m
                                 </Text>
                               )}
+                              {forecast.weatherConditions &&
+                                forecast.weatherConditions.length > 0 && (
+                                  <Text style={styles.forecastWeather}>
+                                  Weather: {formatWeatherConditions(forecast.weatherConditions)}
+                                </Text>
+                              )}
                               {forecast.clouds &&
                                 forecast.clouds.length > 0 && (
                                   <Text style={styles.forecastClouds}>
@@ -321,7 +363,7 @@ export const AirportDetailScreen: React.FC = () => {
                                     {forecast.clouds
                                       .map(
                                         (c) =>
-                                          `${c.amount}${c.height ? ` ${Math.round(c.height)}ft` : ""}`,
+                                          `${c.amount}${c.height ? ` ${Math.round(c.height)}ft` : ""}${c.type ? ` ${c.type}` : ""}`,
                                       )
                                       .join(", ")}
                                   </Text>
@@ -565,10 +607,28 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
     marginTop: spacing.xs,
   },
+  forecastHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  trendBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  trendBadgeText: {
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.bold,
+    color: colors.textInverse,
+  },
+  forecastTimeContainer: {
+    flexDirection: "column",
+  },
   forecastTime: {
     fontSize: typography.sizes.xs,
     color: colors.textTertiary,
-    marginBottom: spacing.xs,
   },
   forecastWind: {
     fontSize: typography.sizes.sm,
@@ -577,6 +637,10 @@ const styles = StyleSheet.create({
   forecastVis: {
     fontSize: typography.sizes.sm,
     color: colors.text,
+  },
+  forecastWeather: {
+    fontSize: typography.sizes.sm,
+    color: colors.warning,
   },
   forecastClouds: {
     fontSize: typography.sizes.sm,

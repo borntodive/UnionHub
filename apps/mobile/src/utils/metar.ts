@@ -170,3 +170,32 @@ export function getTafValidityColor(validUntil: string | Date): string {
   if (remainingHours > 2) return "#FFC107"; // Yellow
   return "#F44336"; // Red
 }
+
+/**
+ * Format date as DD/MM/YYYY HH:mm UTC
+ */
+export function formatUTCDate(date: string | Date): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const year = d.getUTCFullYear();
+  const hours = String(d.getUTCHours()).padStart(2, "0");
+  const mins = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${day}/${month}/${year} ${hours}:${mins} UTC`;
+}
+
+/**
+ * Format weather conditions (e.g., TSRA, BCFG, SHRA)
+ */
+export function formatWeatherConditions(
+  conditions?: Array<{ descriptive?: string; phenomenons?: string[] }>,
+): string {
+  if (!conditions || conditions.length === 0) return "";
+  return conditions
+    .map((c) => {
+      const desc = c.descriptive || "";
+      const phen = c.phenomenons?.join("") || "";
+      return desc + phen;
+    })
+    .join(" ");
+}
