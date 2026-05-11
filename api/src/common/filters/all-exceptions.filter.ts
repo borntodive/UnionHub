@@ -41,6 +41,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
         `Unhandled exception on ${request.method} ${request.url}`,
         exception instanceof Error ? exception.stack : String(exception),
       );
+    } else if (status === 403) {
+      this.logger.warn(
+        `[403] ${request.method} ${request.url} — ${JSON.stringify(message)}`,
+      );
     }
 
     response.status(status).json({ statusCode: status, message });
