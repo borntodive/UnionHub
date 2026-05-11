@@ -77,6 +77,7 @@
     "biometricNotAvailable": "Biometric not available on this device",
     "firstLoginRequired": "First login with crewcode and password required",
     "sessionExpired": "Session expired. Please login again.",
+    "biometricSessionExpired": "Session expired. Login with crewcode and password to re-enable {{method}}.",
     "invalidCredentials": "Invalid credentials",
     "changePassword": "Change Password",
     "currentPassword": "Current Password",

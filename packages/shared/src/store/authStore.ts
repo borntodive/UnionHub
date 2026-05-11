@@ -94,6 +94,18 @@ export function createAuthStore(
           set({ biometricEnabled: false, biometricCredentials: null });
         },
 
+        updateBiometricCredentials: async (newRefreshToken: string) => {
+          const current = get().biometricCredentials;
+          if (current) {
+            const updated = { ...current, refreshToken: newRefreshToken };
+            await secureStorage.setItemAsync(
+              BIOMETRIC_CREDENTIALS_KEY,
+              JSON.stringify(updated),
+            );
+            set({ biometricCredentials: updated });
+          }
+        },
+
         loadBiometricCredentials: async () => {
           try {
             const raw = await secureStorage.getItemAsync(

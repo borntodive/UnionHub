@@ -61,6 +61,10 @@ export const LoginScreen: React.FC = () => {
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const setAuth = useAuthStore((state) => state.setAuth);
   const enableBiometric = useAuthStore((state) => state.enableBiometric);
+  const disableBiometric = useAuthStore((state) => state.disableBiometric);
+  const updateBiometricCredentials = useAuthStore(
+    (state) => state.updateBiometricCredentials,
+  );
   const biometricEnabled = useAuthStore((state) => state.biometricEnabled);
   const biometricCredentials = useAuthStore(
     (state) => state.biometricCredentials,
@@ -145,6 +149,10 @@ export const LoginScreen: React.FC = () => {
                     t("auth.biometricLogin", { method: getBiometricLabel() }),
                   );
                   if (success) {
+                    console.log(
+                      "[Login] Saving biometric credentials, refreshToken:",
+                      data.refreshToken?.substring(0, 20) + "...",
+                    );
                     enableBiometric(variables.crewcode, data.refreshToken);
                     Alert.alert(
                       t("common.success"),
@@ -202,9 +210,16 @@ export const LoginScreen: React.FC = () => {
     );
     if (success) {
       try {
+        console.log(
+          "[BiometricLogin] Using refreshToken:",
+          biometricCredentials.refreshToken?.substring(0, 20) + "...",
+        );
         const response = await authApi.refreshToken(
           biometricCredentials.refreshToken,
         );
+        console.log("[BiometricLogin] Success:", response.user?.crewcode);
+        // Update stored refresh token with the new one
+        await updateBiometricCredentials(response.refreshToken);
         setAuth(response);
         // Set language from user preference
         if (response.user?.language) {
@@ -212,7 +227,16 @@ export const LoginScreen: React.FC = () => {
         }
         syncPayslipSettings();
       } catch (error: any) {
-        Alert.alert(t("errors.generic"), t("auth.sessionExpired"));
+        console.log(
+          "[BiometricLogin] Error:",
+          error?.response?.data || error?.message,
+        );
+        // Clear expired biometric credentials
+        disableBiometric();
+        Alert.alert(
+          t("common.error"),
+          t("auth.biometricSessionExpired", { method: getBiometricLabel() }),
+        );
       }
     }
   };
