@@ -301,8 +301,9 @@ export const AirportDetailScreen: React.FC = () => {
                           Station: {weather.taf.decoded.station}
                         </Text>
                         <Text style={styles.tafValid}>
-                          Valid from: {formatUTCDate(weather.taf.decoded.validFrom)}{" "}
-                          until {formatUTCDate(weather.taf.decoded.validUntil)}
+                          Valid from:{" "}
+                          {formatUTCDate(weather.taf.decoded.validFrom)} until{" "}
+                          {formatUTCDate(weather.taf.decoded.validUntil)}
                         </Text>
 
                         {weather.taf.decoded.forecasts.map((forecast, index) =>
@@ -353,9 +354,12 @@ export const AirportDetailScreen: React.FC = () => {
                               {forecast.weatherConditions &&
                                 forecast.weatherConditions.length > 0 && (
                                   <Text style={styles.forecastWeather}>
-                                  Weather: {formatWeatherConditions(forecast.weatherConditions)}
-                                </Text>
-                              )}
+                                    Weather:{" "}
+                                    {formatWeatherConditions(
+                                      forecast.weatherConditions,
+                                    )}
+                                  </Text>
+                                )}
                               {forecast.clouds &&
                                 forecast.clouds.length > 0 && (
                                   <Text style={styles.forecastClouds}>

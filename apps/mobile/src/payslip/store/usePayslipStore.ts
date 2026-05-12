@@ -14,6 +14,7 @@ import { calculatePayroll } from "../services/PayslipCalculator";
 import { getContractData as getLiveContractData } from "../services/contractDataService";
 import { payslipSettingsApi } from "../../api/payslipSettings";
 import { useOfflineStore } from "../../store/offlineStore";
+import { registerPayslipReset } from "../../api/client";
 
 interface PayslipState {
   input: PayslipInput;
@@ -411,3 +412,6 @@ export const usePayslipStore = create<PayslipState>()(
     },
   ),
 );
+
+// Register reset callback with API client (breaks circular dependency)
+registerPayslipReset(() => usePayslipStore.getState().resetSettings());

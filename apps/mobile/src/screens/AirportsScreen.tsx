@@ -225,7 +225,7 @@ export const AirportsScreen: React.FC = () => {
   const isLoading = volmetsLoading || (savedIcaos.length > 0 && weatherLoading);
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="airports-screen">
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <View style={styles.header}>
           <TouchableOpacity

@@ -9,6 +9,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   ScrollView,
+  StatusBar,
 } from "react-native";
 import {
   SafeAreaView,
@@ -17,7 +18,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
-  ArrowLeft,
+  Menu,
   BookOpen,
   RefreshCw,
   CheckCircle,
@@ -136,197 +137,214 @@ export function KbAdminScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      <View
-        style={[styles.header, { paddingTop: insets.top > 0 ? 0 : spacing.md }]}
+    <View style={styles.wrapper}>
+      <StatusBar barStyle="light-content" />
+      <View style={[styles.statusBarHack, { height: insets.top }]} />
+      <SafeAreaView
+        style={styles.container}
+        edges={["bottom", "left", "right"]}
       >
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <ArrowLeft size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t("kbAdmin.title")}</Text>
-        <View style={styles.headerRight} />
-      </View>
-
-      <ScrollView
-        style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
-        }
-      >
-        <Card style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <BookOpen size={20} color={colors.primary} />
-            <Text style={styles.sectionTitle}>
-              {t("kbAdmin.documentsTitle")}
-            </Text>
-            <Text style={styles.documentCount}>
-              {documents ? `(${documents.length})` : ""}
-            </Text>
-          </View>
-
-          {isLoading ? (
-            <ActivityIndicator color={colors.primary} style={styles.loader} />
-          ) : documents && documents.length > 0 ? (
-            <FlatList
-              data={documents}
-              keyExtractor={(item) => String(item.id)}
-              renderItem={renderDocument}
-              scrollEnabled={false}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
-            />
-          ) : (
-            <Text style={styles.emptyText}>{t("kbAdmin.noDocuments")}</Text>
-          )}
-        </Card>
-
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>{t("kbAdmin.uploadTitle")}</Text>
-          <Text style={styles.ingestDescription}>
-            {t("kbAdmin.uploadDescription")}
-          </Text>
+        <View style={styles.header}>
           <TouchableOpacity
-            style={[
-              styles.ingestButton,
-              uploadMutation.isPending && styles.buttonDisabled,
-            ]}
-            onPress={handlePickAndUpload}
-            disabled={uploadMutation.isPending}
+            onPress={() => navigation.openDrawer()}
+            style={styles.backButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            {uploadMutation.isPending ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Upload size={18} color="#fff" />
-            )}
-            <Text style={styles.buttonText}>{t("kbAdmin.uploadButton")}</Text>
+            <Menu size={24} color={colors.white} />
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t("kbAdmin.title")}</Text>
+          <View style={styles.headerRight} />
+        </View>
 
-          {uploadedFiles.length > 0 && (
-            <View style={styles.uploadedList}>
-              {uploadedFiles.map((f, i) => (
-                <View key={i} style={styles.uploadedRow}>
-                  <CheckCircle size={14} color={colors.success} />
-                  <Text style={styles.uploadedFilename}>{f.filename}</Text>
-                  <Text style={styles.uploadedSize}>
-                    {(f.size / 1024).toFixed(1)} KB
-                  </Text>
-                </View>
-              ))}
+        <ScrollView
+          style={styles.content}
+          refreshControl={
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+          }
+        >
+          <Card style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <BookOpen size={20} color={colors.primary} />
+              <Text style={styles.sectionTitle}>
+                {t("kbAdmin.documentsTitle")}
+              </Text>
+              <Text style={styles.documentCount}>
+                {documents ? `(${documents.length})` : ""}
+              </Text>
             </View>
-          )}
-        </Card>
 
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t("kbAdmin.ingestSectionTitle")}
-          </Text>
-          <Text style={styles.ingestDescription}>
-            {t("kbAdmin.ingestDescription")}
-          </Text>
+            {isLoading ? (
+              <ActivityIndicator color={colors.primary} style={styles.loader} />
+            ) : documents && documents.length > 0 ? (
+              <FlatList
+                data={documents}
+                keyExtractor={(item) => String(item.id)}
+                renderItem={renderDocument}
+                scrollEnabled={false}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+              />
+            ) : (
+              <Text style={styles.emptyText}>{t("kbAdmin.noDocuments")}</Text>
+            )}
+          </Card>
 
-          <View style={styles.buttonRow}>
+          <Card style={styles.section}>
+            <Text style={styles.sectionTitle}>{t("kbAdmin.uploadTitle")}</Text>
+            <Text style={styles.ingestDescription}>
+              {t("kbAdmin.uploadDescription")}
+            </Text>
             <TouchableOpacity
               style={[
                 styles.ingestButton,
-                ingestMutation.isPending && styles.buttonDisabled,
+                uploadMutation.isPending && styles.buttonDisabled,
               ]}
-              onPress={() => handleIngest(false)}
-              disabled={ingestMutation.isPending}
+              onPress={handlePickAndUpload}
+              disabled={uploadMutation.isPending}
             >
-              {ingestMutation.isPending ? (
+              {uploadMutation.isPending ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <RefreshCw size={18} color="#fff" />
+                <Upload size={18} color="#fff" />
               )}
-              <Text style={styles.buttonText}>{t("kbAdmin.ingestButton")}</Text>
+              <Text style={styles.buttonText}>{t("kbAdmin.uploadButton")}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                styles.forceButton,
-                ingestMutation.isPending && styles.buttonDisabled,
-              ]}
-              onPress={() => handleIngest(true)}
-              disabled={ingestMutation.isPending}
-            >
-              {ingestMutation.isPending ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <RefreshCw size={18} color={colors.primary} />
-              )}
-              <Text style={styles.forceButtonText}>
-                {t("kbAdmin.forceIngestButton")}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </Card>
-
-        {ingestResult && (
-          <Card style={styles.section}>
-            <Text style={styles.sectionTitle}>{t("kbAdmin.resultTitle")}</Text>
-
-            <View style={styles.statsRow}>
-              <View style={styles.stat}>
-                <Text style={styles.statValue}>{ingestResult.total}</Text>
-                <Text style={styles.statLabel}>{t("kbAdmin.total")}</Text>
-              </View>
-              <View style={styles.stat}>
-                <CheckCircle size={16} color={colors.success} />
-                <Text style={[styles.statValue, { color: colors.success }]}>
-                  {ingestResult.ingested}
-                </Text>
-                <Text style={styles.statLabel}>{t("kbAdmin.ingested")}</Text>
-              </View>
-              <View style={styles.stat}>
-                <SkipForward size={16} color={colors.warning} />
-                <Text style={[styles.statValue, { color: colors.warning }]}>
-                  {ingestResult.skipped}
-                </Text>
-                <Text style={styles.statLabel}>{t("kbAdmin.skipped")}</Text>
-              </View>
-              <View style={styles.stat}>
-                <XCircle size={16} color={colors.error} />
-                <Text style={[styles.statValue, { color: colors.error }]}>
-                  {ingestResult.failed}
-                </Text>
-                <Text style={styles.statLabel}>{t("kbAdmin.failed")}</Text>
-              </View>
-            </View>
-
-            {ingestResult.documents.map((doc, idx) => (
-              <View key={idx} style={styles.resultRow}>
-                {doc.status === "ingested" ? (
-                  <CheckCircle size={14} color={colors.success} />
-                ) : doc.status === "failed" ? (
-                  <XCircle size={14} color={colors.error} />
-                ) : (
-                  <SkipForward size={14} color={colors.warning} />
-                )}
-                <View style={styles.resultInfo}>
-                  <Text style={styles.resultFilename}>
-                    {doc.title ?? doc.filename}
-                  </Text>
-                  {doc.sections != null && (
-                    <Text style={styles.resultMeta}>
-                      {t("kbAdmin.sections", { count: doc.sections })}
+            {uploadedFiles.length > 0 && (
+              <View style={styles.uploadedList}>
+                {uploadedFiles.map((f, i) => (
+                  <View key={i} style={styles.uploadedRow}>
+                    <CheckCircle size={14} color={colors.success} />
+                    <Text style={styles.uploadedFilename}>{f.filename}</Text>
+                    <Text style={styles.uploadedSize}>
+                      {(f.size / 1024).toFixed(1)} KB
                     </Text>
-                  )}
-                  {doc.reason && (
-                    <Text style={styles.resultReason}>{doc.reason}</Text>
-                  )}
+                  </View>
+                ))}
+              </View>
+            )}
+          </Card>
+
+          <Card style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              {t("kbAdmin.ingestSectionTitle")}
+            </Text>
+            <Text style={styles.ingestDescription}>
+              {t("kbAdmin.ingestDescription")}
+            </Text>
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                style={[
+                  styles.ingestButton,
+                  ingestMutation.isPending && styles.buttonDisabled,
+                ]}
+                onPress={() => handleIngest(false)}
+                disabled={ingestMutation.isPending}
+              >
+                {ingestMutation.isPending ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <RefreshCw size={18} color="#fff" />
+                )}
+                <Text style={styles.buttonText}>
+                  {t("kbAdmin.ingestButton")}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.forceButton,
+                  ingestMutation.isPending && styles.buttonDisabled,
+                ]}
+                onPress={() => handleIngest(true)}
+                disabled={ingestMutation.isPending}
+              >
+                {ingestMutation.isPending ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <RefreshCw size={18} color={colors.primary} />
+                )}
+                <Text style={styles.forceButtonText}>
+                  {t("kbAdmin.forceIngestButton")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Card>
+
+          {ingestResult && (
+            <Card style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                {t("kbAdmin.resultTitle")}
+              </Text>
+
+              <View style={styles.statsRow}>
+                <View style={styles.stat}>
+                  <Text style={styles.statValue}>{ingestResult.total}</Text>
+                  <Text style={styles.statLabel}>{t("kbAdmin.total")}</Text>
+                </View>
+                <View style={styles.stat}>
+                  <CheckCircle size={16} color={colors.success} />
+                  <Text style={[styles.statValue, { color: colors.success }]}>
+                    {ingestResult.ingested}
+                  </Text>
+                  <Text style={styles.statLabel}>{t("kbAdmin.ingested")}</Text>
+                </View>
+                <View style={styles.stat}>
+                  <SkipForward size={16} color={colors.warning} />
+                  <Text style={[styles.statValue, { color: colors.warning }]}>
+                    {ingestResult.skipped}
+                  </Text>
+                  <Text style={styles.statLabel}>{t("kbAdmin.skipped")}</Text>
+                </View>
+                <View style={styles.stat}>
+                  <XCircle size={16} color={colors.error} />
+                  <Text style={[styles.statValue, { color: colors.error }]}>
+                    {ingestResult.failed}
+                  </Text>
+                  <Text style={styles.statLabel}>{t("kbAdmin.failed")}</Text>
                 </View>
               </View>
-            ))}
-          </Card>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+
+              {ingestResult.documents.map((doc, idx) => (
+                <View key={idx} style={styles.resultRow}>
+                  {doc.status === "ingested" ? (
+                    <CheckCircle size={14} color={colors.success} />
+                  ) : doc.status === "failed" ? (
+                    <XCircle size={14} color={colors.error} />
+                  ) : (
+                    <SkipForward size={14} color={colors.warning} />
+                  )}
+                  <View style={styles.resultInfo}>
+                    <Text style={styles.resultFilename}>
+                      {doc.title ?? doc.filename}
+                    </Text>
+                    {doc.sections != null && (
+                      <Text style={styles.resultMeta}>
+                        {t("kbAdmin.sections", { count: doc.sections })}
+                      </Text>
+                    )}
+                    {doc.reason && (
+                      <Text style={styles.resultReason}>{doc.reason}</Text>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </Card>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: colors.primary,
+  },
+  statusBarHack: {
+    backgroundColor: colors.primary,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -335,10 +353,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.surface,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.primary,
   },
   backButton: {
     padding: spacing.xs,
@@ -348,7 +364,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: typography.sizes.lg,
     fontWeight: typography.weights.bold,
-    color: colors.text,
+    color: colors.white,
   },
   headerRight: {
     width: 40,

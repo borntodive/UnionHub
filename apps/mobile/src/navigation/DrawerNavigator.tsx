@@ -265,6 +265,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           <MenuItem
             icon={<Plane size={22} color={colors.primary} />}
             label={t("navigation.airports")}
+            testID="airports-drawer-item"
             onPress={() => {
               props.navigation.navigate("Airports");
               props.navigation.closeDrawer();

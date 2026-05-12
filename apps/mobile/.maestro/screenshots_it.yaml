@@ -39,14 +39,14 @@ appId: it.acovelli.unionhub
     id: "ctc-screen"
 - takeScreenshot: 03_ctc
 
-# 04 - METAR
+# 04 - Airports
 - tapOn:
     id: "menu-button"
 - waitForAnimationToEnd
 - assertVisible:
-    id: "metar-drawer-item"
+    id: "airports-drawer-item"
 - tapOn:
-    id: "metar-drawer-item"
+    id: "airports-drawer-item"
 - assertVisible:
-    id: "metar-screen"
-- takeScreenshot: 04_metar
+    id: "airports-screen"
+- takeScreenshot: 04_airports
