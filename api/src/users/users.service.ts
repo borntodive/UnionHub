@@ -586,6 +586,63 @@ export class UsersService {
     });
   }
 
+  async selfDeactivate(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    if (!user.isActive) return;
+
+    const reason = "Self-deactivation";
+
+    user.isActive = false;
+    this.addStatusLogEntry(user, false, reason, userId);
+    await this.usersRepository.save(user);
+
+    await this.statusHistoryRepository.save({
+      userId,
+      changeType: StatusChangeType.DEACTIVATION,
+      reason,
+      changedById: userId,
+    });
+
+    const fullName = `${user.nome} ${user.cognome}`.trim();
+    const title = "Iscritto disattivato";
+    const body = `${fullName} (${user.crewcode}) si è disiscritto dall'app.`;
+    const data = {
+      type: "USER_SELF_DEACTIVATED",
+      userId: user.id,
+      crewcode: user.crewcode,
+    };
+
+    try {
+      if (user.ruolo) {
+        await this.notificationsService.notifyAdmins(
+          user.ruolo,
+          title,
+          body,
+          data,
+        );
+      } else {
+        // SuperAdmin self-deactivation: notify all SuperAdmins via broadcast
+        // through both ruoli (notifyAdmins picks up SuperAdmins regardless of ruolo).
+        await this.notificationsService.notifyAdmins(
+          Ruolo.PILOT,
+          title,
+          body,
+          data,
+        );
+      }
+    } catch (err) {
+      console.error(
+        `Failed to notify admins about self-deactivation of ${userId}`,
+        err,
+      );
+    }
+  }
+
   async updatePassword(userId: string, hashedPassword: string): Promise<void> {
     await this.usersRepository.update(userId, { password: hashedPassword });
   }

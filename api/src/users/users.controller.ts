@@ -169,6 +169,12 @@ export class UsersController {
     return user.serialize(user.role);
   }
 
+  @Delete("me/deactivate")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async selfDeactivate(@Request() req: RequestWithUser): Promise<void> {
+    await this.usersService.selfDeactivate(req.user.userId);
+  }
+
   @Get("recent")
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   async getRecentUsers(

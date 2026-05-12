@@ -105,6 +105,10 @@ export const usersApi = {
     return response.data;
   },
 
+  selfDeactivate: async (): Promise<void> => {
+    await apiClient.delete("/users/me/deactivate");
+  },
+
   getUsers: async (params?: GetUsersParams): Promise<User[]> => {
     const response = await apiClient.get<PaginatedResponse<User>>("/users", {
       params,

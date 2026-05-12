@@ -20,6 +20,7 @@ import {
   Bug,
   Mail,
   BookUser,
+  UserX,
 } from "lucide-react-native";
 import { Linking, Share } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -565,7 +566,7 @@ const CheckboxRow: React.FC<CheckboxRowProps> = ({
 export const SettingsScreen: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { biometricEnabled, disableBiometric, user } = useAuthStore();
+  const { biometricEnabled, disableBiometric, user, logout } = useAuthStore();
   const { settings, setSettings } = usePayslipStore();
   const { notificationPrefs, setNotificationPrefs } = useOfflineStore();
   const isAdmin =
@@ -698,6 +699,39 @@ export const SettingsScreen: React.FC = () => {
     } finally {
       setCarddavLoading(false);
     }
+  };
+
+  const handleUnsubscribe = () => {
+    Alert.alert(
+      t("settings.unsubscribeConfirmTitle"),
+      t("settings.unsubscribeConfirmBody"),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("settings.unsubscribeAction"),
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await usersApi.selfDeactivate();
+              Alert.alert(
+                t("common.success"),
+                t("settings.unsubscribeSuccess"),
+                [
+                  {
+                    text: t("common.ok"),
+                    onPress: async () => {
+                      await logout();
+                    },
+                  },
+                ],
+              );
+            } catch {
+              Alert.alert(t("common.error"), t("settings.unsubscribeError"));
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handleDisableBiometric = () => {
@@ -937,6 +971,34 @@ export const SettingsScreen: React.FC = () => {
           )}
         </View>
       </View>
+
+      {/* Account */}
+      {user && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t("settings.account")}</Text>
+          <View style={styles.card}>
+            <View style={styles.row}>
+              <View style={styles.iconContainer}>
+                <UserX size={24} color={colors.error} />
+              </View>
+              <View style={styles.textContainer}>
+                <Text style={styles.label}>{t("settings.unsubscribe")}</Text>
+                <Text style={styles.value}>
+                  {t("settings.unsubscribeDescription")}
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.disableButton}
+              onPress={handleUnsubscribe}
+            >
+              <Text style={styles.disableButtonText}>
+                {t("settings.unsubscribe")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* App Info */}
       <View style={styles.section}>
