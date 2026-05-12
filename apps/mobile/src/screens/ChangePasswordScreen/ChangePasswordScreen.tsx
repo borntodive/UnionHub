@@ -20,12 +20,11 @@ import { Button } from "../../components/Button";
 import { PasswordInput } from "../../components/PasswordInput";
 import { authApi } from "../../api/auth";
 import { useAuthStore } from "../../store/authStore";
-import { usePayslipStore } from "../../payslip/store/usePayslipStore";
 
 export const ChangePasswordScreen: React.FC = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
+  const setUser = useAuthStore((state) => state.setUser);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -34,27 +33,32 @@ export const ChangePasswordScreen: React.FC = () => {
   const wasMandatoryChange = user?.mustChangePassword ?? false;
 
   const changePasswordMutation = useMutation({
-    mutationFn: authApi.changePassword,
+    mutationFn: async (data: {
+      currentPassword: string;
+      newPassword: string;
+    }) => {
+      if (wasMandatoryChange) {
+        await authApi.forceChangePassword({ newPassword: data.newPassword });
+      } else {
+        await authApi.changePassword(data);
+      }
+    },
     onSuccess: () => {
       setTimeout(() => {
-        Alert.alert(
-          t("auth.passwordChanged"),
-          wasMandatoryChange
-            ? t("auth.sessionExpired")
-            : t("auth.passwordChanged"),
-          [
-            {
-              text: t("common.ok"),
-              onPress: async () => {
-                if (wasMandatoryChange) {
-                  // Reset payslip settings before logout
-                  usePayslipStore.getState().resetSettings();
-                  await logout();
-                }
-              },
-            },
-          ],
-        );
+        if (wasMandatoryChange) {
+          // Mandatory first-login change: stay logged in, flip
+          // mustChangePassword so AppNavigator routes the user forward.
+          if (user) {
+            setUser({ ...user, mustChangePassword: false });
+          }
+          Alert.alert(t("auth.passwordChanged"), t("auth.passwordChanged"), [
+            { text: t("common.ok") },
+          ]);
+        } else {
+          Alert.alert(t("auth.passwordChanged"), t("auth.passwordChanged"), [
+            { text: t("common.ok") },
+          ]);
+        }
       }, 100);
     },
     onError: (error: any) => {
@@ -80,7 +84,12 @@ export const ChangePasswordScreen: React.FC = () => {
   });
 
   const handleChangePassword = useCallback(() => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
+    const currentPasswordRequired = !wasMandatoryChange;
+    if (
+      (currentPasswordRequired && !currentPassword) ||
+      !newPassword ||
+      !confirmPassword
+    ) {
       Alert.alert(t("common.error"), t("errors.requiredField"));
       return;
     }
@@ -117,6 +126,7 @@ export const ChangePasswordScreen: React.FC = () => {
     newPassword,
     confirmPassword,
     changePasswordMutation,
+    wasMandatoryChange,
     t,
   ]);
 
@@ -156,14 +166,16 @@ export const ChangePasswordScreen: React.FC = () => {
 
             {/* Form */}
             <View style={styles.formContainer}>
-              <PasswordInput
-                label={t("auth.currentPassword")}
-                placeholder={t("auth.enterPassword")}
-                value={currentPassword}
-                onChangeText={setCurrentPassword}
-                leftIcon={<Lock size={20} color={colors.textTertiary} />}
-                containerStyle={styles.inputContainer}
-              />
+              {!wasMandatoryChange && (
+                <PasswordInput
+                  label={t("auth.currentPassword")}
+                  placeholder={t("auth.enterPassword")}
+                  value={currentPassword}
+                  onChangeText={setCurrentPassword}
+                  leftIcon={<Lock size={20} color={colors.textTertiary} />}
+                  containerStyle={styles.inputContainer}
+                />
+              )}
 
               <PasswordInput
                 label={t("auth.newPassword")}
@@ -237,7 +249,7 @@ export const ChangePasswordScreen: React.FC = () => {
                 onPress={handleChangePassword}
                 loading={changePasswordMutation.isPending}
                 disabled={
-                  !currentPassword ||
+                  (!wasMandatoryChange && !currentPassword) ||
                   !newPassword ||
                   !confirmPassword ||
                   newPassword !== confirmPassword
