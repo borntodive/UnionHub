@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class CreateVolmetsTable1778100000001 implements MigrationInterface {
+export class CreateVolmetsTable1778010000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TABLE "volmets" (
@@ -19,17 +19,14 @@ export class CreateVolmetsTable1778100000001 implements MigrationInterface {
       )
     `);
 
-    // Create index on icao for faster lookups
     await queryRunner.query(`
       CREATE INDEX "IDX_volmets_icao" ON "volmets" ("icao")
     `);
 
-    // Create index on region for filtering
     await queryRunner.query(`
       CREATE INDEX "IDX_volmets_region" ON "volmets" ("region")
     `);
 
-    // Create index on isActive for filtering active entries
     await queryRunner.query(`
       CREATE INDEX "IDX_volmets_isActive" ON "volmets" ("isActive")
     `);

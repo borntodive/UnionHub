@@ -7,5 +7,8 @@
     "mobile": "pnpm --filter mobile start",
     "web": "pnpm --filter web dev",
     "shared:build": "pnpm --filter @unionhub/shared build"
+  },
+  "dependencies": {
+    "expo-updates": "~55.0.21"
   }
 }
