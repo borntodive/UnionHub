@@ -220,25 +220,27 @@ export class UsersController {
   @Post("debug/test-welcome-email")
   @Roles(UserRole.SUPERADMIN)
   @HttpCode(HttpStatus.OK)
-  async testWelcomeEmail() {
+  async testWelcomeEmail(@Body() body: { overrideEmail?: string } = {}) {
     if (process.env.NODE_ENV === "production") {
       throw new ForbiddenException(
         "Debug endpoints are disabled in production",
       );
     }
-    return this.usersService.sendTestWelcomeEmail();
+    return this.usersService.sendTestWelcomeEmail(body.overrideEmail);
   }
 
   @Post("debug/test-registration-form-email")
   @Roles(UserRole.SUPERADMIN)
   @HttpCode(HttpStatus.OK)
-  async testRegistrationFormEmail() {
+  async testRegistrationFormEmail(
+    @Body() body: { overrideEmail?: string } = {},
+  ) {
     if (process.env.NODE_ENV === "production") {
       throw new ForbiddenException(
         "Debug endpoints are disabled in production",
       );
     }
-    return this.usersService.sendTestRegistrationFormEmail();
+    return this.usersService.sendTestRegistrationFormEmail(body.overrideEmail);
   }
 
   @Post(":id/resend-welcome-email")

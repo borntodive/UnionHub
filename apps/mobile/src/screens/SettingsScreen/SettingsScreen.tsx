@@ -33,6 +33,8 @@ import apiClient from "../../api/client";
 import { usersApi } from "../../api/users";
 import { gradesApi } from "../../api/grades";
 import { setLanguage, getLanguage } from "../../i18n";
+import Constants from "expo-constants";
+import * as Updates from "expo-updates";
 import { usePayslipStore } from "../../payslip/store/usePayslipStore";
 import { useOfflineStore } from "../../store/offlineStore";
 import { PayslipSettings, LegacyCustom } from "../../payslip/types";
@@ -579,6 +581,7 @@ export const SettingsScreen: React.FC = () => {
   const [testFormEmailResult, setTestFormEmailResult] = useState<string | null>(
     null,
   );
+  const [debugEmail, setDebugEmail] = useState("andrea.covelli@gmail.com");
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const currentLanguage = getLanguage();
   const [carddavLoading, setCarddavLoading] = useState(false);
@@ -598,6 +601,23 @@ export const SettingsScreen: React.FC = () => {
   }));
 
   const [isChangingGrade, setIsChangingGrade] = useState(false);
+  const [updateCheckStatus, setUpdateCheckStatus] = useState<
+    "idle" | "checking" | "upToDate" | "available"
+  >("idle");
+
+  async function handleCheckForUpdate() {
+    if (!Updates.isEnabled) {
+      setUpdateCheckStatus("upToDate");
+      return;
+    }
+    setUpdateCheckStatus("checking");
+    try {
+      const result = await Updates.checkForUpdateAsync();
+      setUpdateCheckStatus(result.isAvailable ? "available" : "upToDate");
+    } catch {
+      setUpdateCheckStatus("idle");
+    }
+  }
 
   const handleGradeChange = async (gradeId: string) => {
     if (gradeId === user?.grade?.id) return;
@@ -924,13 +944,42 @@ export const SettingsScreen: React.FC = () => {
         <View style={styles.card}>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>{t("settings.version")}</Text>
-            <Text style={styles.infoValue}>1.0.0</Text>
+            <Text style={styles.infoValue}>
+              {Constants.expoConfig?.version ?? "—"}
+            </Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>{t("settings.build")}</Text>
-            <Text style={styles.infoValue}>2025.03.16</Text>
+            <Text style={styles.infoLabel}>{t("settings.otaUpdate")}</Text>
+            <Text style={styles.infoValue}>
+              {Updates.updateId
+                ? Updates.updateId.slice(0, 8)
+                : t("settings.baseBundle")}
+            </Text>
           </View>
+          <View style={styles.divider} />
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={handleCheckForUpdate}
+            disabled={updateCheckStatus === "checking"}
+          >
+            <Text style={styles.infoLabel}>
+              {t("settings.checkForUpdates")}
+            </Text>
+            {updateCheckStatus === "checking" ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : updateCheckStatus === "upToDate" ? (
+              <Text style={[styles.infoValue, { color: colors.success }]}>
+                {t("settings.upToDate")}
+              </Text>
+            ) : updateCheckStatus === "available" ? (
+              <Text style={[styles.infoValue, { color: colors.warning }]}>
+                {t("settings.updateAvailable")}
+              </Text>
+            ) : (
+              <ChevronRight size={16} color={colors.textSecondary} />
+            )}
+          </TouchableOpacity>
         </View>
       </View>
     </>
@@ -944,7 +993,7 @@ export const SettingsScreen: React.FC = () => {
         sent: boolean;
         to: string;
         crewcode: string;
-      }>("/users/debug/test-welcome-email");
+      }>("/users/debug/test-welcome-email", { overrideEmail: debugEmail });
       setTestEmailResult(`✓ Inviata a ${res.data.crewcode} (${res.data.to})`);
     } catch (err: any) {
       setTestEmailResult(
@@ -963,9 +1012,11 @@ export const SettingsScreen: React.FC = () => {
         sent: boolean;
         to: string;
         crewcode: string;
-      }>("/users/debug/test-registration-form-email");
+      }>("/users/debug/test-registration-form-email", {
+        overrideEmail: debugEmail,
+      });
       setTestFormEmailResult(
-        `✓ Inviata a segreteria (utente: ${res.data.crewcode})`,
+        `✓ Inviata a ${res.data.to} (utente: ${res.data.crewcode})`,
       );
     } catch (err: any) {
       setTestFormEmailResult(
@@ -978,6 +1029,29 @@ export const SettingsScreen: React.FC = () => {
 
   const renderDebugTab = () => (
     <View style={styles.section}>
+      <View style={styles.card}>
+        <Text style={styles.label}>Destinatario debug email</Text>
+        <TextInput
+          style={{
+            marginTop: 8,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: 8,
+            paddingHorizontal: spacing.md,
+            paddingVertical: spacing.sm,
+            fontSize: typography.sizes.base,
+            color: colors.text,
+          }}
+          value={debugEmail}
+          onChangeText={setDebugEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          placeholder="email@esempio.com"
+          placeholderTextColor={colors.textSecondary}
+        />
+      </View>
+
       <View style={styles.card}>
         <View style={styles.row}>
           <View style={styles.iconContainer}>

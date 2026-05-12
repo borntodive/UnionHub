@@ -18,12 +18,11 @@ export class MailService {
   private readonly transporter: nodemailer.Transporter;
 
   constructor(private readonly configService: ConfigService) {
+    const port = this.configService.get<number>("MAIL_PORT", 587);
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get<string>(
-        "MAIL_HOST",
-        "sandbox.smtp.mailtrap.io",
-      ),
-      port: this.configService.get<number>("MAIL_PORT", 587),
+      host: this.configService.get<string>("MAIL_HOST", "smtp.gmail.com"),
+      port,
+      secure: port === 465,
       auth: {
         user: this.configService.get<string>("MAIL_USER", ""),
         pass: this.configService.get<string>("MAIL_PASS", ""),
@@ -35,6 +34,7 @@ export class MailService {
     user: User,
     plainPassword: string,
     contacts: RsaRlsContact[] = [],
+    overrideTo?: string,
   ): Promise<void> {
     const from = this.configService.get<string>(
       "MAIL_FROM",
@@ -660,7 +660,7 @@ export class MailService {
     try {
       await this.transporter.sendMail({
         from,
-        to: user.email,
+        to: overrideTo ?? user.email,
         subject: `Benvenuto in FIT-CISL, ${user.nome}! / Welcome to FIT-CISL, ${user.nome}!`,
         html,
       });
@@ -677,8 +677,10 @@ export class MailService {
     user: User,
     pdfBuffer: Buffer,
     originalFilename: string,
+    overrideTo?: string,
   ): Promise<void> {
-    const secretaryEmail = this.configService.get<string>("MAIL_SECRETARY", "");
+    const secretaryEmail =
+      overrideTo ?? this.configService.get<string>("MAIL_SECRETARY", "");
     if (!secretaryEmail) {
       this.logger.warn(
         "MAIL_SECRETARY not configured — skipping secretary notification",

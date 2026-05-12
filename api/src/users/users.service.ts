@@ -1318,7 +1318,7 @@ export class UsersService {
     return settings;
   }
 
-  async sendTestWelcomeEmail(): Promise<{
+  async sendTestWelcomeEmail(overrideEmail?: string): Promise<{
     sent: boolean;
     to: string;
     crewcode: string;
@@ -1332,11 +1332,20 @@ export class UsersService {
     }
     const user = users[Math.floor(Math.random() * users.length)];
     const contacts = await this.getRsaRlsContacts();
-    await this.mailService.sendWelcomeEmail(user, "password", contacts);
-    return { sent: true, to: user.email, crewcode: user.crewcode };
+    await this.mailService.sendWelcomeEmail(
+      user,
+      "password",
+      contacts,
+      overrideEmail,
+    );
+    return {
+      sent: true,
+      to: overrideEmail ?? user.email,
+      crewcode: user.crewcode,
+    };
   }
 
-  async sendTestRegistrationFormEmail(): Promise<{
+  async sendTestRegistrationFormEmail(overrideEmail?: string): Promise<{
     sent: boolean;
     to: string;
     crewcode: string;
@@ -1359,8 +1368,13 @@ export class UsersService {
       user,
       pdfBuffer,
       `modulo_iscrizione_${user.crewcode}_TEST.pdf`,
+      overrideEmail,
     );
-    return { sent: true, to: user.email, crewcode: user.crewcode };
+    return {
+      sent: true,
+      to: overrideEmail ?? user.email,
+      crewcode: user.crewcode,
+    };
   }
 
   async resendWelcomeEmail(userId: string): Promise<void> {
