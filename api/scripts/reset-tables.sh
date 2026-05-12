@@ -52,13 +52,23 @@ DO $$
 DECLARE
   r RECORD;
 BEGIN
-  -- Drop all tables
+  -- Drop all tables in public and non-system schemas (ai, etc.)
   FOR r IN
-    SELECT tablename
+    SELECT schemaname, tablename
     FROM pg_tables
-    WHERE schemaname = 'public'
+    WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
   LOOP
-    EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+    EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.schemaname) || '.' || quote_ident(r.tablename) || ' CASCADE';
+  END LOOP;
+
+  -- Drop non-system schemas (except public which is always present)
+  FOR r IN
+    SELECT nspname
+    FROM pg_namespace
+    WHERE nspname NOT IN ('public', 'pg_catalog', 'information_schema', 'pg_toast')
+      AND nspname NOT LIKE 'pg_%'
+  LOOP
+    EXECUTE 'DROP SCHEMA IF EXISTS ' || quote_ident(r.nspname) || ' CASCADE';
   END LOOP;
 
   -- Drop all custom types (enums, composites, etc.)

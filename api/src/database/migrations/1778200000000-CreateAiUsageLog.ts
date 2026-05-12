@@ -5,7 +5,7 @@ export class CreateAiUsageLog1778200000000 implements MigrationInterface {
     await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS ai`);
 
     await queryRunner.query(`
-      CREATE TABLE ai.usage_log (
+      CREATE TABLE IF NOT EXISTS ai.usage_log (
         id                    BIGSERIAL PRIMARY KEY,
         function              TEXT        NOT NULL,
         user_id               TEXT,
@@ -24,16 +24,16 @@ export class CreateAiUsageLog1778200000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(
-      `CREATE INDEX idx_ai_usage_function_created
+      `CREATE INDEX IF NOT EXISTS idx_ai_usage_function_created
        ON ai.usage_log (function, created_at DESC)`,
     );
     await queryRunner.query(
-      `CREATE INDEX idx_ai_usage_user_created
+      `CREATE INDEX IF NOT EXISTS idx_ai_usage_user_created
        ON ai.usage_log (user_id, created_at DESC)
        WHERE user_id IS NOT NULL`,
     );
     await queryRunner.query(
-      `CREATE INDEX idx_ai_usage_created
+      `CREATE INDEX IF NOT EXISTS idx_ai_usage_created
        ON ai.usage_log (created_at DESC)`,
     );
   }
