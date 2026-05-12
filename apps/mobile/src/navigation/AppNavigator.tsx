@@ -113,8 +113,8 @@ export const AppNavigator: React.FC = () => {
   const activeStack = getActiveStack();
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator key={activeStack} screenOptions={{ headerShown: false }}>
+    <NavigationContainer key={activeStack}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
         {activeStack === "auth" ? (
           // Auth Stack
           <>
