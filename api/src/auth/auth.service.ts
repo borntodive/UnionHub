@@ -301,7 +301,7 @@ export class AuthService {
     const refreshSecret =
       this.configService.get<string>("JWT_REFRESH_SECRET") || secret;
     const refreshToken = this.jwtService.sign(
-      { ...basePayload, type: "refresh" },
+      { ...basePayload, type: "refresh", jti: crypto.randomUUID() },
       { secret: refreshSecret, expiresIn: "30d" },
     );
 
