@@ -1010,10 +1010,14 @@ export class UsersService {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const recentRegistrations = await this.usersRepository
       .createQueryBuilder("user")
-      .where(where + " AND user.createdAt >= :thirtyDaysAgo", {
-        ...params,
-        thirtyDaysAgo,
-      })
+      .where(
+        where +
+          " AND (COALESCE(user.dataIscrizione, user.createdAt) >= :thirtyDaysAgo)",
+        {
+          ...params,
+          thirtyDaysAgo,
+        },
+      )
       .getCount();
 
     const itudCount = await this.usersRepository
