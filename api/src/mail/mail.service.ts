@@ -86,6 +86,37 @@ export class MailService {
               </table>`
       : "";
 
+    const whatsappUrl = this.configService.get<string>(
+      "WHATSAPP_GROUP_URL",
+      "",
+    );
+    const whatsappBlock = whatsappUrl
+      ? `
+              <p style="margin:24px 0 6px;font-size:15px;font-weight:bold;color:#177246;">
+                Unisciti al gruppo WhatsApp / Join the WhatsApp group
+              </p>
+              <p style="margin:0 0 16px;font-size:14px;color:#555;line-height:1.5;">
+                Iscriviti al gruppo WhatsApp per restare aggiornato su notizie e comunicazioni sindacali.<br/>
+                <em style="color:#888;">Join the WhatsApp group to stay up to date on union news and communications.</em>
+              </p>
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto;text-align:center;">
+                <tr>
+                  <td align="center" style="padding:0 16px;">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(whatsappUrl)}"
+                         width="160" height="160"
+                         alt="QR WhatsApp"
+                         style="display:block;border:1px solid #e0e0e0;border-radius:6px;margin-bottom:12px;" />
+                    <a href="${whatsappUrl}"
+                       style="display:inline-block;padding:10px 24px;background:#25D366;color:#ffffff;
+                              font-size:14px;font-weight:bold;border-radius:20px;text-decoration:none;">
+                      Entra nel gruppo
+                    </a>
+                    <p style="margin:6px 0 0;font-size:12px;color:#888;">WhatsApp</p>
+                  </td>
+                </tr>
+              </table>`
+      : "";
+
     // ── Section 3: RSA / RLS / USO contacts ──────────────────────────────────
     const rsaList = contacts.filter((c) => c.isRsa);
     const rlsList = contacts.filter((c) => c.isRls);
@@ -283,6 +314,7 @@ export class MailService {
                       Ti invitiamo a scegliere una password sicura e a non condividerla con nessuno.
                     </p>
 
+                    ${whatsappBlock}
                     ${storeBlock}
                   </td>
                 </tr>
@@ -533,6 +565,7 @@ export class MailService {
                       Please choose a strong password and do not share it with anyone.
                     </p>
 
+                    ${whatsappBlock}
                     ${storeBlock}
                   </td>
                 </tr>

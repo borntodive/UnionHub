@@ -203,8 +203,8 @@ export class BackupsService {
 
     this.isBackupRunning = true;
 
-    const scriptPath = path.resolve(__dirname, "../../scripts/backup.sh");
-    const cwd = path.resolve(__dirname, "../../");
+    const scriptPath = path.resolve(__dirname, "../../../scripts/backup.sh");
+    const cwd = path.resolve(__dirname, "../../../");
 
     return new Promise((resolve, reject) => {
       const proc = spawn("bash", [scriptPath], {
