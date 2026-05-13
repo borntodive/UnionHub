@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # backup.sh — UnionConnect daily backup: PostgreSQL dump + uploads archive
-# Usage: bash scripts/backup.sh [path/to/.env]
+# Usage: bash api/scripts/backup.sh [path/to/.env]
 #
 # Env resolution order:
 #   1. PM2 process environment (if pm2 is running and the app is found)
 #   2. .env file (path as first argument, default: <script-root>/../.env)
 #
 # Crontab example (23:00 every day):
-#   0 23 * * * cd /home/cleavr/api.unionhub.app/current && bash scripts/backup.sh >> /var/log/unionhub-backup.log 2>&1
+#   0 23 * * * cd /home/cleavr/api.unionhub.app/current && bash api/scripts/backup.sh >> /var/log/unionhub-backup.log 2>&1
 
 set -euo pipefail
 
