@@ -48,10 +48,11 @@ export class PdfService {
   private readonly qrImagePath: string;
 
   // Resolve templates relative to this file so it works regardless of cwd.
-  // __dirname = dist/documents/ (compiled) or src/documents/ (ts-node)
-  // ../../templates → api/templates/
+  // __dirname = dist/src/documents/ (compiled) or src/documents/ (ts-node)
+  // ../../../templates → api/templates/
   private static readonly TEMPLATES_DIR = path.join(
     __dirname,
+    "..",
     "..",
     "..",
     "templates",

@@ -335,7 +335,7 @@ export class BackupsService {
       if (uploadsFile && tmpUploadsGz) {
         const uploadBaseDir =
           this.configService.get<string>("UPLOAD_BASE_DIR") ||
-          path.resolve(__dirname, "../../uploads");
+          path.resolve(__dirname, "../../../uploads");
 
         const dlUploads = await drive.files.get(
           { fileId: uploadsFile.id!, alt: "media" },
