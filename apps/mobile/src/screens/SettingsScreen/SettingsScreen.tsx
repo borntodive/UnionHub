@@ -582,6 +582,11 @@ export const SettingsScreen: React.FC = () => {
   const [testFormEmailResult, setTestFormEmailResult] = useState<string | null>(
     null,
   );
+  const [testCredentialsEmailLoading, setTestCredentialsEmailLoading] =
+    useState(false);
+  const [testCredentialsEmailResult, setTestCredentialsEmailResult] = useState<
+    string | null
+  >(null);
   const [debugEmail, setDebugEmail] = useState("andrea.covelli@gmail.com");
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const currentLanguage = getLanguage();
@@ -1089,6 +1094,27 @@ export const SettingsScreen: React.FC = () => {
     }
   };
 
+  const handleTestCredentialsEmail = async () => {
+    setTestCredentialsEmailLoading(true);
+    setTestCredentialsEmailResult(null);
+    try {
+      const res = await apiClient.post<{
+        sent: boolean;
+        to: string;
+        crewcode: string;
+      }>("/users/debug/test-credentials-email", { overrideEmail: debugEmail });
+      setTestCredentialsEmailResult(
+        `✓ Inviata a ${res.data.crewcode} (${res.data.to})`,
+      );
+    } catch (err: any) {
+      setTestCredentialsEmailResult(
+        `✗ Errore: ${err?.response?.data?.message ?? err.message}`,
+      );
+    } finally {
+      setTestCredentialsEmailLoading(false);
+    }
+  };
+
   const renderDebugTab = () => (
     <View style={styles.section}>
       <View style={styles.card}>
@@ -1187,6 +1213,46 @@ export const SettingsScreen: React.FC = () => {
             ]}
           >
             {testFormEmailResult}
+          </Text>
+        )}
+      </View>
+
+      <View style={styles.card}>
+        <View style={styles.row}>
+          <View style={styles.iconContainer}>
+            <Mail size={24} color={colors.primary} />
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.label}>Test email credenziali</Text>
+            <Text style={styles.value}>
+              Invia credenziali di accesso + link download UnionHub
+            </Text>
+          </View>
+        </View>
+        <TouchableOpacity
+          style={[
+            styles.debugBtn,
+            testCredentialsEmailLoading && styles.debugBtnDisabled,
+          ]}
+          onPress={handleTestCredentialsEmail}
+          disabled={testCredentialsEmailLoading}
+        >
+          {testCredentialsEmailLoading ? (
+            <ActivityIndicator size="small" color={colors.textInverse} />
+          ) : (
+            <Text style={styles.debugBtnText}>Invia test credenziali</Text>
+          )}
+        </TouchableOpacity>
+        {testCredentialsEmailResult !== null && (
+          <Text
+            style={[
+              styles.debugResult,
+              testCredentialsEmailResult.startsWith("✓")
+                ? styles.debugResultOk
+                : styles.debugResultErr,
+            ]}
+          >
+            {testCredentialsEmailResult}
           </Text>
         )}
       </View>

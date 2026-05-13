@@ -30,7 +30,7 @@ export function createAuthStore(
 ) {
   const store = create<AuthState>()(
     persist(
-      (set) => ({
+      (set, get) => ({
         user: null,
         accessToken: null,
         refreshToken: null,

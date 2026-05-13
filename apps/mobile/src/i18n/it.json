@@ -89,7 +89,18 @@
     "joinUsPrompt": "Non sei ancora iscritto?",
     "joinUsLink": "Unisciti a noi",
     "quickLogin": "Quick Login",
-    "email": "Email"
+    "email": "Email",
+    "forgotPasswordTitle": "Password Dimenticata",
+    "forgotPasswordDescription": "Inserisci la tua email o crewcode per ricevere una password temporanea.",
+    "emailOrCrewcode": "Email o Crewcode",
+    "enterEmailOrCrewcode": "Inserisci email o crewcode",
+    "sendResetLink": "Invia Password Temporanea",
+    "resetEmailSent": "Email Inviata",
+    "resetEmailSentDescription": "Se il tuo account esiste, riceverai a breve un'email con una password temporanea. Controlla la tua casella di posta.",
+    "backToLogin": "Torna al Login",
+    "inputMethod": "Modalità di inserimento",
+    "byEmail": "Via Email",
+    "byCrewcode": "Via Crewcode"
   },
   "documents": {
     "title": "Comunicati",

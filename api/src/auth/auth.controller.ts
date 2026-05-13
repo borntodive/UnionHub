@@ -26,6 +26,7 @@ import {
   ChangePasswordDto,
   ForceChangePasswordDto,
 } from "./dto/change-password.dto";
+import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { AuthResponseDto } from "./dto/auth-response.dto";
 import { PublicRegisterDto } from "../users/dto/public-register.dto";
 import { User } from "../users/entities/user.entity";
@@ -160,6 +161,19 @@ export class AuthController {
       false,
     );
     return { message: "Password changed successfully" };
+  }
+
+  @Throttle({ default: { ttl: 60000, limit: 3 } })
+  @Post("forgot-password")
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<{ message: string }> {
+    await this.authService.requestPasswordReset(forgotPasswordDto);
+    return {
+      message:
+        "If your account exists, you will receive an email with a temporary password.",
+    };
   }
 
   @Post("force-change-password")

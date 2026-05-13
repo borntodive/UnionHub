@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   Plane,
   Users,
+  Mail,
 } from "lucide-react-native";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
@@ -53,6 +54,12 @@ export const BulkImportScreen: React.FC = () => {
   const [selectedRole, setSelectedRole] = useState<Ruolo | null>(null);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
+  const [sendingCredentials, setSendingCredentials] = useState(false);
+  const [credentialsResult, setCredentialsResult] = useState<{
+    sent: number;
+    failed: number;
+    total: number;
+  } | null>(null);
 
   const handleSelectFile = async () => {
     try {
@@ -138,6 +145,39 @@ DEF456,Bianchi,Laura,laura.bianchi@email.com,+39987654321,MXP,Purser,`;
         }),
       )
       .catch((e) => console.error("Failed to share template:", e));
+  };
+
+  const handleSendBulkCredentials = async () => {
+    Alert.alert(
+      "Send Credentials Email",
+      "Send login credentials to all users who haven't received them yet?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Send",
+          style: "default",
+          onPress: async () => {
+            try {
+              setSendingCredentials(true);
+              setCredentialsResult(null);
+              const response = await usersApi.sendBulkCredentialsEmail();
+              setCredentialsResult(response);
+              Alert.alert(
+                "Emails Sent",
+                `${response.sent} emails sent successfully${response.failed > 0 ? `, ${response.failed} failed` : ""}.`,
+              );
+            } catch (error: any) {
+              Alert.alert(
+                "Error",
+                error.response?.data?.message || "Failed to send emails",
+              );
+            } finally {
+              setSendingCredentials(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const renderRoleSelector = () => {
@@ -273,6 +313,33 @@ DEF456,Bianchi,Laura,laura.bianchi@email.com,+39987654321,MXP,Purser,`;
                 : "Supported formats: .csv, .xlsx, .xls"}
             </Text>
           </TouchableOpacity>
+
+          {/* Send Bulk Credentials Button - always visible */}
+          <Button
+            title={
+              sendingCredentials
+                ? "Sending..."
+                : "Send Credentials to All Users"
+            }
+            onPress={handleSendBulkCredentials}
+            loading={sendingCredentials}
+            disabled={sendingCredentials}
+            variant="outline"
+            style={styles.bulkCredentialsButton}
+          />
+
+          {credentialsResult && (
+            <View style={styles.credentialsResultCard}>
+              <Text style={styles.credentialsResultTitle}>
+                Emails Sent: {credentialsResult.sent}/{credentialsResult.total}
+              </Text>
+              {credentialsResult.failed > 0 && (
+                <Text style={styles.credentialsResultFailed}>
+                  Failed: {credentialsResult.failed}
+                </Text>
+              )}
+            </View>
+          )}
 
           {/* Import Button */}
           {selectedFile && !result && (
@@ -571,5 +638,24 @@ const styles = StyleSheet.create({
   },
   newImportButton: {
     marginTop: spacing.lg,
+  },
+  bulkCredentialsButton: {
+    marginTop: spacing.md,
+  },
+  credentialsResultCard: {
+    backgroundColor: colors.success + "15",
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginTop: spacing.md,
+  },
+  credentialsResultTitle: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+    color: colors.success,
+  },
+  credentialsResultFailed: {
+    fontSize: typography.sizes.sm,
+    color: colors.error,
+    marginTop: spacing.xs,
   },
 });

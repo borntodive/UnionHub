@@ -4,6 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, Brackets, In } from "typeorm";
@@ -55,6 +56,8 @@ interface FindAllOptions {
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
@@ -1291,7 +1294,7 @@ export class UsersService {
           note: note || null,
           whatsappStatus: whatsappStatus,
           dataIscrizione: dataIscrizione || null,
-          welcomeEmailSent: true,
+          welcomeEmailSent: false,
           secretaryEmailSent: true,
         });
 
@@ -1434,6 +1437,30 @@ export class UsersService {
     };
   }
 
+  async sendTestCredentialsEmail(overrideEmail?: string): Promise<{
+    sent: boolean;
+    to: string;
+    crewcode: string;
+  }> {
+    const users = await this.usersRepository.find({
+      where: { isActive: true },
+      take: 50,
+    });
+    if (users.length === 0)
+      throw new NotFoundException("No active users found");
+    const user = users[Math.floor(Math.random() * users.length)];
+    await this.mailService.sendCredentialsEmail(
+      user,
+      "password",
+      overrideEmail,
+    );
+    return {
+      sent: true,
+      to: overrideEmail ?? user.email,
+      crewcode: user.crewcode,
+    };
+  }
+
   async resendWelcomeEmail(userId: string): Promise<void> {
     const user = await this.findById(userId);
     const contacts = await this.getRsaRlsContacts();
@@ -1443,6 +1470,46 @@ export class UsersService {
 
   async markSecretaryEmailSent(userId: string): Promise<void> {
     await this.usersRepository.update(userId, { secretaryEmailSent: true });
+  }
+
+  async sendBulkCredentialsEmail(requestingUser: User): Promise<{
+    sent: number;
+    failed: number;
+    total: number;
+  }> {
+    // Find all active users who haven't received welcome email
+    const users = await this.usersRepository.find({
+      where: {
+        isActive: true,
+        welcomeEmailSent: false,
+        ...(requestingUser.role === UserRole.ADMIN && requestingUser.ruolo
+          ? { ruolo: requestingUser.ruolo }
+          : {}),
+      },
+      take: 100, // Limit to 100 at a time to avoid overwhelming
+    });
+
+    let sent = 0;
+    let failed = 0;
+
+    for (const user of users) {
+      try {
+        await this.mailService.sendCredentialsEmail(user, "password");
+        await this.usersRepository.update(user.id, { welcomeEmailSent: true });
+        sent++;
+      } catch (err: any) {
+        this.logger.error(
+          `Failed to send credentials email to ${user.email}: ${err.message}`,
+        );
+        failed++;
+      }
+    }
+
+    return {
+      sent,
+      failed,
+      total: users.length,
+    };
   }
 
   // ==================== SELF-REGISTRATION (PUBLIC) ====================

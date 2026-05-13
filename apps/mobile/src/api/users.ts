@@ -321,6 +321,19 @@ export const usersApi = {
     return response.data.count;
   },
 
+  sendBulkCredentialsEmail: async (): Promise<{
+    sent: number;
+    failed: number;
+    total: number;
+  }> => {
+    const response = await apiClient.post<{
+      sent: number;
+      failed: number;
+      total: number;
+    }>("/users/send-bulk-credentials-email");
+    return response.data;
+  },
+
   getPendingUsers: async (): Promise<PaginatedResponse<User>> => {
     const response = await apiClient.get<PaginatedResponse<User>>("/users", {
       params: { registrationStatus: "pending", perPage: 50 },

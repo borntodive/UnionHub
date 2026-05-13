@@ -673,6 +673,248 @@ export class MailService {
     }
   }
 
+  async sendCredentialsEmail(
+    user: User,
+    plainPassword: string,
+    overrideTo?: string,
+  ): Promise<void> {
+    const from = this.configService.get<string>(
+      "MAIL_FROM",
+      "FIT-CISL Malta Air Pilot Board <pilmalta.fitcisl@gmail.com>",
+    );
+    const iosUrl = this.configService.get<string>("APP_STORE_URL", "");
+    const androidUrl = this.configService.get<string>("PLAY_STORE_URL", "");
+
+    // App download links + QR codes
+    const qrSize = "140x140";
+    const qrBase =
+      "https://api.qrserver.com/v1/create-qr-code/?size=" + qrSize + "&data=";
+
+    const buildStoreCell = (label: string, url: string, badgeLabel: string) => {
+      if (!url) return "";
+      const qrSrc = qrBase + encodeURIComponent(url);
+      return `
+        <td align="center" style="padding:0 16px;">
+          <img src="${qrSrc}" width="140" height="140"
+               alt="QR ${badgeLabel}"
+               style="display:block;border:1px solid #e0e0e0;border-radius:6px;margin-bottom:10px;" />
+          <a href="${url}"
+             style="display:inline-block;padding:8px 20px;background:#177246;color:#ffffff;
+                    font-size:13px;font-weight:bold;border-radius:20px;text-decoration:none;">
+            ${badgeLabel}
+          </a>
+          <p style="margin:6px 0 0;font-size:12px;color:#888;">${label}</p>
+        </td>`;
+    };
+
+    const iosCell = buildStoreCell("iPhone / iPad", iosUrl, "App Store");
+    const androidCell = buildStoreCell("Android", androidUrl, "Google Play");
+    const hasStoreLinks = iosUrl || androidUrl;
+
+    const storeBlock = hasStoreLinks
+      ? `
+              <p style="margin:24px 0 6px;font-size:15px;font-weight:bold;color:#177246;">
+                Scarica l'app
+              </p>
+              <p style="margin:0 0 16px;font-size:14px;color:#555;line-height:1.5;">
+                Inquadra il QR code con la fotocamera del tuo smartphone oppure
+                clicca sul pulsante corrispondente al tuo dispositivo.
+              </p>
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                <tr>
+                  ${iosCell}
+                  ${androidCell}
+                </tr>
+              </table>`
+      : "";
+
+    const html = `
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Credenziali di accesso</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0"
+               style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:#177246;padding:28px 32px;text-align:center;">
+              <p style="margin:0 0 4px;font-size:11px;font-weight:bold;color:#a8d5bc;text-transform:uppercase;letter-spacing:2px;">
+                Federazione Italiana Trasporti
+              </p>
+              <span style="font-size:24px;font-weight:bold;color:#ffffff;letter-spacing:1px;">
+                FIT-CISL · Piloti Malta Air
+              </span>
+            </td>
+          </tr>
+
+          <!-- Language banner -->
+          <tr>
+            <td style="background:#f0f7f3;padding:10px 36px;text-align:center;border-bottom:1px solid #d4eadc;">
+              <p style="margin:0;font-size:12px;color:#177246;">
+                🇮🇹 <strong>Italiano</strong> &nbsp;·&nbsp;
+                <a href="#english" style="color:#177246;text-decoration:underline;">🇬🇧 English version below</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- ITALIAN CONTENT -->
+          <tr>
+            <td style="padding:36px 36px 28px;">
+              <p style="margin:0 0 8px;font-size:15px;color:#555;">
+                Ciao <strong style="color:#222;">${user.nome}</strong>,
+              </p>
+              <p style="margin:0 0 20px;font-size:15px;color:#444;line-height:1.7;">
+                ecco le tue credenziali per accedere a <strong>UnionHub</strong>, l'app ufficiale FIT-CISL.
+              </p>
+
+              <p style="margin:0 0 10px;font-size:15px;font-weight:bold;color:#222;">
+                Le tue credenziali di accesso
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0"
+                     style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:6px;margin-bottom:14px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="font-size:11px;color:#888;padding-bottom:3px;text-transform:uppercase;letter-spacing:0.8px;">
+                          Username
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:22px;font-weight:bold;color:#177246;font-family:monospace;padding-bottom:14px;">
+                          ${user.crewcode}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:11px;color:#888;padding-bottom:3px;text-transform:uppercase;letter-spacing:0.8px;">
+                          Password temporanea
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:22px;font-weight:bold;color:#333;font-family:monospace;">
+                          ${plainPassword}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 20px;font-size:13px;color:#e53935;font-weight:bold;">
+                ⚠️ Al primo accesso ti verrà chiesto di impostare una nuova password.
+              </p>
+
+              ${storeBlock}
+            </td>
+          </tr>
+
+          <!-- ENGLISH HEADER -->
+          <tr>
+            <td id="english" style="background:#177246;padding:20px 36px;text-align:center;">
+              <p style="margin:0 0 4px;font-size:11px;font-weight:bold;color:#a8d5bc;text-transform:uppercase;letter-spacing:2px;">
+                Federazione Italiana Trasporti
+              </p>
+              <span style="font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:1px;">
+                FIT-CISL · Malta Air Pilots
+              </span>
+            </td>
+          </tr>
+
+          <!-- ENGLISH CONTENT -->
+          <tr>
+            <td style="padding:36px 36px 28px;">
+              <p style="margin:0 0 8px;font-size:15px;color:#555;">
+                Hi <strong style="color:#222;">${user.nome}</strong>,
+              </p>
+              <p style="margin:0 0 20px;font-size:15px;color:#444;line-height:1.7;">
+                here are your login credentials for <strong>UnionHub</strong>, the official FIT-CISL app.
+              </p>
+
+              <p style="margin:0 0 10px;font-size:15px;font-weight:bold;color:#222;">
+                Your login credentials
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0"
+                     style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:6px;margin-bottom:14px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="font-size:11px;color:#888;padding-bottom:3px;text-transform:uppercase;letter-spacing:0.8px;">
+                          Username
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:22px;font-weight:bold;color:#177246;font-family:monospace;padding-bottom:14px;">
+                          ${user.crewcode}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:11px;color:#888;padding-bottom:3px;text-transform:uppercase;letter-spacing:0.8px;">
+                          Temporary password
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:22px;font-weight:bold;color:#333;font-family:monospace;">
+                          ${plainPassword}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 20px;font-size:13px;color:#e53935;font-weight:bold;">
+                ⚠️ You will be asked to set a new password on your first login.
+              </p>
+
+              ${storeBlock}
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f8f9fa;padding:16px 36px;text-align:center;border-top:1px solid #eee;">
+              <p style="margin:0;font-size:11px;color:#bbb;line-height:1.6;">
+                FIT-CISL · Federazione Italiana Trasporti<br/>
+                This is an automated message — please do not reply to this email.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    try {
+      await this.transporter.sendMail({
+        from,
+        to: overrideTo ?? user.email,
+        subject: `Credenziali UnionHub / UnionHub Credentials`,
+        html,
+      });
+      this.logger.log(
+        `Credentials email sent to ${overrideTo ?? user.email} (${user.crewcode})`,
+      );
+    } catch (err: any) {
+      this.logger.error(
+        `Failed to send credentials email to ${overrideTo ?? user.email}: ${err.message}`,
+      );
+    }
+  }
+
   async sendRegistrationFormToSecretary(
     user: User,
     pdfBuffer: Buffer,
@@ -803,6 +1045,177 @@ export class MailService {
     } catch (err: any) {
       this.logger.error(
         `Failed to send registration form to secretary for ${user.crewcode}: ${err.message}`,
+      );
+    }
+  }
+
+  async sendPasswordResetEmail(
+    user: User,
+    tempPassword: string,
+    overrideTo?: string,
+  ): Promise<void> {
+    const from = this.configService.get<string>(
+      "MAIL_FROM",
+      "FIT-CISL Malta Air Pilot Board <pilmalta.fitcisl@gmail.com>",
+    );
+
+    const html = `
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reset Password</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0"
+               style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:#177246;padding:28px 32px;text-align:center;">
+              <p style="margin:0 0 4px;font-size:11px;font-weight:bold;color:#a8d5bc;text-transform:uppercase;letter-spacing:2px;">
+                Federazione Italiana Trasporti
+              </p>
+              <span style="font-size:24px;font-weight:bold;color:#ffffff;letter-spacing:1px;">
+                FIT-CISL · Piloti Malta Air
+              </span>
+            </td>
+          </tr>
+
+          <!-- Language banner -->
+          <tr>
+            <td style="background:#f0f7f3;padding:10px 36px;text-align:center;border-bottom:1px solid #d4eadc;">
+              <p style="margin:0;font-size:12px;color:#177246;">
+                🇮🇹 <strong>Italiano</strong> &nbsp;·&nbsp;
+                <a href="#english" style="color:#177246;text-decoration:underline;">🇬🇧 English version below</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- ITALIAN CONTENT -->
+          <tr>
+            <td style="padding:36px 36px 28px;">
+              <p style="margin:0 0 8px;font-size:15px;color:#555;">
+                Ciao <strong style="color:#222;">${user.nome}</strong>,
+              </p>
+              <p style="margin:0 0 20px;font-size:15px;color:#444;line-height:1.7;">
+                hai richiesto di resettare la tua password. Ecco una password temporanea per accedere a UnionHub.
+              </p>
+
+              <p style="margin:0 0 10px;font-size:15px;font-weight:bold;color:#222;">
+                Password temporanea
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0"
+                     style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:6px;margin-bottom:20px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0;font-size:26px;font-weight:bold;color:#177246;font-family:monospace;letter-spacing:2px;">
+                      ${tempPassword}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 10px;font-size:15px;color:#444;line-height:1.7;">
+                Accedi con il tuo <strong>crewcode</strong> e questa password temporanea.
+                Verrai immediatamente invitato a impostare una nuova password.
+              </p>
+
+              <p style="margin:0 0 4px;font-size:13px;color:#e53935;font-weight:bold;">
+                ⚠️ Questa password scadrà dopo il primo utilizzo.
+              </p>
+              <p style="margin:0;font-size:13px;color:#666;line-height:1.6;">
+                Se non hai richiesto il reset della password, ignora questa email.
+              </p>
+            </td>
+          </tr>
+
+          <!-- ENGLISH HEADER -->
+          <tr>
+            <td id="english" style="background:#177246;padding:20px 36px;text-align:center;">
+              <p style="margin:0 0 4px;font-size:11px;font-weight:bold;color:#a8d5bc;text-transform:uppercase;letter-spacing:2px;">
+                Federazione Italiana Trasporti
+              </p>
+              <span style="font-size:24px;font-weight:bold;color:#ffffff;letter-spacing:1px;">
+                FIT-CISL · Malta Air Pilots
+              </span>
+            </td>
+          </tr>
+
+          <!-- ENGLISH CONTENT -->
+          <tr>
+            <td style="padding:36px 36px 36px;">
+              <p style="margin:0 0 8px;font-size:15px;color:#555;">
+                Hi <strong style="color:#222;">${user.nome}</strong>,
+              </p>
+              <p style="margin:0 0 20px;font-size:15px;color:#444;line-height:1.7;">
+                you requested to reset your password. Here is a temporary password to access UnionHub.
+              </p>
+
+              <p style="margin:0 0 10px;font-size:15px;font-weight:bold;color:#222;">
+                Temporary Password
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0"
+                     style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:6px;margin-bottom:20px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0;font-size:26px;font-weight:bold;color:#177246;font-family:monospace;letter-spacing:2px;">
+                      ${tempPassword}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 10px;font-size:15px;color:#444;line-height:1.7;">
+                Log in with your <strong>crewcode</strong> and this temporary password.
+                You will be immediately prompted to set a new password.
+              </p>
+
+              <p style="margin:0 0 4px;font-size:13px;color:#e53935;font-weight:bold;">
+                ⚠️ This password expires after first use.
+              </p>
+              <p style="margin:0;font-size:13px;color:#666;line-height:1.6;">
+                If you did not request a password reset, please ignore this email.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f8f9fa;padding:16px 36px;text-align:center;border-top:1px solid #eee;">
+              <p style="margin:0;font-size:11px;color:#bbb;line-height:1.6;">
+                FIT-CISL · Federazione Italiana Trasporti<br/>
+                This is an automated message — please do not reply to this email.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    try {
+      await this.transporter.sendMail({
+        from,
+        to: overrideTo ?? user.email,
+        subject: `Reset Password UnionHub / UnionHub Password Reset`,
+        html,
+      });
+      this.logger.log(
+        `Password reset email sent to ${overrideTo ?? user.email} (${user.crewcode})`,
+      );
+    } catch (err: any) {
+      this.logger.error(
+        `Failed to send password reset email to ${overrideTo ?? user.email}: ${err.message}`,
       );
     }
   }

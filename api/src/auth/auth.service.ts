@@ -18,8 +18,10 @@ import {
   ChangePasswordDto,
   ForceChangePasswordDto,
 } from "./dto/change-password.dto";
+import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { AuthResponseDto, TokenPayloadDto } from "./dto/auth-response.dto";
 import { User } from "../users/entities/user.entity";
+import { MailService } from "../mail/mail.service";
 
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
 const MAX_LOGIN_DELAY_MS = 30000;
@@ -57,6 +59,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private mailService: MailService,
     @InjectRepository(RefreshToken)
     private refreshTokenRepository: Repository<RefreshToken>,
   ) {}
@@ -211,6 +214,69 @@ export class AuthService {
     }
 
     return user.serialize(user.role);
+  }
+
+  private generateTempPassword(): string {
+    const chars = {
+      lower: "abcdefghijklmnopqrstuvwxyz",
+      upper: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      numbers: "0123456789",
+      symbols: "!@#$%^&*",
+    };
+    const allChars = chars.lower + chars.upper + chars.numbers + chars.symbols;
+    let password = "";
+
+    // Ensure at least one of each type
+    password += chars.lower[Math.floor(Math.random() * chars.lower.length)];
+    password += chars.upper[Math.floor(Math.random() * chars.upper.length)];
+    password += chars.numbers[Math.floor(Math.random() * chars.numbers.length)];
+    password += chars.symbols[Math.floor(Math.random() * chars.symbols.length)];
+
+    // Fill remaining with random chars (total 12)
+    for (let i = password.length; i < 12; i++) {
+      password += allChars[Math.floor(Math.random() * allChars.length)];
+    }
+
+    // Shuffle the password
+    return password
+      .split("")
+      .sort(() => Math.random() - 0.5)
+      .join("");
+  }
+
+  async requestPasswordReset(dto: ForgotPasswordDto): Promise<void> {
+    let user: User | null = null;
+
+    if (dto.email) {
+      user = await this.usersService.findByEmail(dto.email);
+    } else if (dto.crewcode) {
+      user = await this.usersService.findByCrewcode(dto.crewcode);
+    }
+
+    // Always return success to prevent user enumeration
+    if (!user) {
+      this.logger.warn(
+        `Password reset requested for non-existent identifier: ${dto.email || dto.crewcode}`,
+      );
+      return;
+    }
+
+    if (!user.isActive) {
+      this.logger.warn(
+        `Password reset requested for deactivated user: ${user.crewcode}`,
+      );
+      return;
+    }
+
+    const tempPassword = this.generateTempPassword();
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+    await this.usersService.updatePassword(user.id, hashedPassword);
+    await this.usersService.updateMustChangePassword(user.id, true);
+
+    this.logger.log(`Password reset for user ${user.crewcode}`);
+
+    await this.mailService.sendPasswordResetEmail(user, tempPassword);
   }
 
   private async generateTokens(

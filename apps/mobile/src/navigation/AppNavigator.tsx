@@ -8,6 +8,8 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import { RootStackParamList } from "./types";
 import { LoginScreen } from "../screens/LoginScreen/LoginScreen";
+import { ForgotPasswordScreen } from "../screens/ForgotPasswordScreen/ForgotPasswordScreen";
+import { ForgotPasswordSuccessScreen } from "../screens/ForgotPasswordScreen/ForgotPasswordSuccessScreen";
 import { ChangePasswordScreen } from "../screens/ChangePasswordScreen/ChangePasswordScreen";
 import { MemberDetailScreen } from "../screens/MemberDetailScreen/MemberDetailScreen";
 import { MemberEditScreen } from "../screens/MemberDetailScreen/MemberEditScreen";
@@ -119,6 +121,16 @@ export const AppNavigator: React.FC = () => {
           // Auth Stack
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen
+              name="ForgotPassword"
+              component={ForgotPasswordScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="ForgotPasswordSuccess"
+              component={ForgotPasswordSuccessScreen}
+              options={{ headerShown: false }}
+            />
             <Stack.Screen
               name="JoinUs"
               component={JoinUsScreen}

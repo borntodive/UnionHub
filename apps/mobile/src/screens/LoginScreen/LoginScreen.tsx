@@ -76,6 +76,7 @@ export const LoginScreen: React.FC = () => {
   const [crewcode, setCrewcode] = useState("");
   const [password, setPassword] = useState("");
   const [currentLang, setCurrentLang] = useState(getLanguage());
+  const scrollRef = React.useRef<ScrollView>(null);
 
   const {
     isAvailable,
@@ -256,10 +257,16 @@ export const LoginScreen: React.FC = () => {
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
+          keyboardVerticalOffset={0}
         >
           <ScrollView
+            ref={scrollRef}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
+            bounces={false}
+            showsVerticalScrollIndicator={false}
+            automaticallyAdjustContentInsets={false}
+            contentInsetAdjustmentBehavior="never"
           >
             {/* Logo Section */}
             <View style={styles.logoContainer}>
@@ -294,10 +301,22 @@ export const LoginScreen: React.FC = () => {
                 placeholder={t("auth.enterPassword")}
                 value={password}
                 onChangeText={setPassword}
+                onFocus={() =>
+                  scrollRef.current?.scrollTo({ y: 100, animated: true })
+                }
                 leftIcon={<Lock size={20} color={colors.textTertiary} />}
                 containerStyle={styles.inputContainer}
                 testID="password-input"
               />
+
+              <TouchableOpacity
+                onPress={() => navigation.navigate("ForgotPassword")}
+                style={styles.forgotPasswordLink}
+              >
+                <Text style={styles.forgotPasswordText}>
+                  {t("auth.forgotPassword")}
+                </Text>
+              </TouchableOpacity>
 
               <Button
                 title={t("auth.login")}
@@ -427,7 +446,8 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: spacing.lg,
-    justifyContent: "space-between",
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xl,
   },
   logoContainer: {
     alignItems: "center",
@@ -483,6 +503,17 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: spacing.md,
+  },
+  forgotPasswordLink: {
+    alignSelf: "flex-end",
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  forgotPasswordText: {
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
+    fontWeight: typography.weights.medium,
   },
   loginButton: {
     marginTop: spacing.sm,

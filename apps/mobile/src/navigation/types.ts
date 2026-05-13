@@ -1,6 +1,8 @@
 export type RootStackParamList = {
   Login: undefined;
   JoinUs: undefined;
+  ForgotPassword: undefined;
+  ForgotPasswordSuccess: undefined;
   ChangePassword: undefined;
   CompleteProfile: undefined;
   MainTabs: undefined;

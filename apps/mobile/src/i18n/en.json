@@ -89,7 +89,18 @@
     "joinUsPrompt": "Not a member yet?",
     "joinUsLink": "Join us",
     "quickLogin": "Quick Login",
-    "email": "Email"
+    "email": "Email",
+    "forgotPasswordTitle": "Forgot Password",
+    "forgotPasswordDescription": "Enter your email or crewcode to receive a temporary password.",
+    "emailOrCrewcode": "Email or Crewcode",
+    "enterEmailOrCrewcode": "Enter email or crewcode",
+    "sendResetLink": "Send Temporary Password",
+    "resetEmailSent": "Email Sent",
+    "resetEmailSentDescription": "If your account exists, you will receive an email with a temporary password shortly. Check your inbox.",
+    "backToLogin": "Back to Login",
+    "inputMethod": "Input Method",
+    "byEmail": "By Email",
+    "byCrewcode": "By Crewcode"
   },
   "documents": {
     "title": "Communications",

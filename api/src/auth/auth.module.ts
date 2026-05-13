@@ -9,6 +9,7 @@ import { JwtStrategy } from "./strategies/jwt.strategy";
 import { UsersModule } from "../users/users.module";
 import { BasesModule } from "../bases/bases.module";
 import { GradesModule } from "../grades/grades.module";
+import { MailModule } from "../mail/mail.module";
 import { RefreshToken } from "../refresh-tokens/entities/refresh-token.entity";
 
 @Module({
@@ -16,6 +17,7 @@ import { RefreshToken } from "../refresh-tokens/entities/refresh-token.entity";
     UsersModule,
     BasesModule,
     GradesModule,
+    MailModule,
     PassportModule.register({ defaultStrategy: "jwt" }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

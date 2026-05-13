@@ -227,11 +227,6 @@ export class UsersController {
   @Roles(UserRole.SUPERADMIN)
   @HttpCode(HttpStatus.OK)
   async testWelcomeEmail(@Body() body: { overrideEmail?: string } = {}) {
-    if (process.env.NODE_ENV === "production") {
-      throw new ForbiddenException(
-        "Debug endpoints are disabled in production",
-      );
-    }
     return this.usersService.sendTestWelcomeEmail(body.overrideEmail);
   }
 
@@ -241,12 +236,14 @@ export class UsersController {
   async testRegistrationFormEmail(
     @Body() body: { overrideEmail?: string } = {},
   ) {
-    if (process.env.NODE_ENV === "production") {
-      throw new ForbiddenException(
-        "Debug endpoints are disabled in production",
-      );
-    }
     return this.usersService.sendTestRegistrationFormEmail(body.overrideEmail);
+  }
+
+  @Post("debug/test-credentials-email")
+  @Roles(UserRole.SUPERADMIN)
+  @HttpCode(HttpStatus.OK)
+  async testCredentialsEmail(@Body() body: { overrideEmail?: string } = {}) {
+    return this.usersService.sendTestCredentialsEmail(body.overrideEmail);
   }
 
   @Post(":id/resend-welcome-email")
@@ -260,6 +257,14 @@ export class UsersController {
     await this.usersService.resendWelcomeEmail(id);
     const user = await this.usersService.findById(id);
     return user.serialize(requestingUser.role);
+  }
+
+  @Post("send-bulk-credentials-email")
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @HttpCode(HttpStatus.OK)
+  async sendBulkCredentialsEmail(@Request() req: RequestWithUser) {
+    const requestingUser = await this.usersService.findById(req.user.userId);
+    return this.usersService.sendBulkCredentialsEmail(requestingUser);
   }
 
   @Post(":id/resend-secretary-email")
