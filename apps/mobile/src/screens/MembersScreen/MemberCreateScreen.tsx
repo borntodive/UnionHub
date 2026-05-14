@@ -718,47 +718,76 @@ export const MemberCreateScreen: React.FC = () => {
                   </Card>
                 )}
 
-                {/* Date Picker Action Sheet Modal — hidden after save to prevent SIGSEGV */}
-                <Modal
-                  visible={!isSaved && activePicker !== null}
-                  transparent={true}
-                  animationType="slide"
-                  onRequestClose={() => setActivePicker(null)}
-                >
-                  <View style={styles.actionSheetOverlay}>
-                    <View style={styles.actionSheetContainer}>
-                      <View style={styles.actionSheetHeader}>
-                        <Text style={styles.actionSheetTitle}>Select Date</Text>
-                        <TouchableOpacity
-                          onPress={() => setActivePicker(null)}
-                          style={styles.actionSheetDoneButton}
-                        >
-                          <Text style={styles.actionSheetDoneText}>Done</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <DateTimePicker
-                        value={
-                          parseDate(
-                            activePicker
-                              ? (formData as any)[activePicker]
-                              : undefined,
-                          ) || new Date()
-                        }
-                        mode="date"
-                        display="spinner"
-                        maximumDate={new Date()}
-                        onChange={(event, selectedDate) => {
-                          if (selectedDate && activePicker) {
-                            setFormData({
-                              ...formData,
-                              [activePicker]: formatDate(selectedDate),
-                            });
+                {/* Date Picker — hidden after save to prevent SIGSEGV */}
+                {Platform.OS === "ios" ? (
+                  <Modal
+                    visible={!isSaved && activePicker !== null}
+                    transparent={true}
+                    animationType="slide"
+                    onRequestClose={() => setActivePicker(null)}
+                  >
+                    <View style={styles.actionSheetOverlay}>
+                      <View style={styles.actionSheetContainer}>
+                        <View style={styles.actionSheetHeader}>
+                          <Text style={styles.actionSheetTitle}>
+                            Select Date
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => setActivePicker(null)}
+                            style={styles.actionSheetDoneButton}
+                          >
+                            <Text style={styles.actionSheetDoneText}>Done</Text>
+                          </TouchableOpacity>
+                        </View>
+                        <DateTimePicker
+                          value={
+                            parseDate(
+                              activePicker
+                                ? (formData as any)[activePicker]
+                                : undefined,
+                            ) || new Date()
                           }
-                        }}
-                      />
+                          mode="date"
+                          display="spinner"
+                          maximumDate={new Date()}
+                          onChange={(event, selectedDate) => {
+                            if (selectedDate && activePicker) {
+                              setFormData({
+                                ...formData,
+                                [activePicker]: formatDate(selectedDate),
+                              });
+                            }
+                          }}
+                        />
+                      </View>
                     </View>
-                  </View>
-                </Modal>
+                  </Modal>
+                ) : (
+                  !isSaved &&
+                  activePicker !== null && (
+                    <DateTimePicker
+                      value={
+                        parseDate(
+                          activePicker
+                            ? (formData as any)[activePicker]
+                            : undefined,
+                        ) || new Date()
+                      }
+                      mode="date"
+                      display="default"
+                      maximumDate={new Date()}
+                      onChange={(event, selectedDate) => {
+                        if (selectedDate && activePicker) {
+                          setFormData({
+                            ...formData,
+                            [activePicker]: formatDate(selectedDate),
+                          });
+                        }
+                        setActivePicker(null);
+                      }}
+                    />
+                  )
+                )}
 
                 {/* Personal Info Section */}
                 <Card style={styles.sectionCard}>

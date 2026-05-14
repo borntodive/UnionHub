@@ -549,47 +549,69 @@ export const CompleteProfileScreen: React.FC = () => {
           </ScrollView>
         </KeyboardAvoidingView>
 
-        {/* Date Picker Modal */}
-        <Modal
-          visible={activePicker !== null}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setActivePicker(null)}
-        >
-          <View style={styles.actionSheetOverlay}>
-            <View style={styles.actionSheetContainer}>
-              <View style={styles.actionSheetHeader}>
-                <Text style={styles.actionSheetTitle}>
-                  {t("completeProfile.selectDate")}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => setActivePicker(null)}
-                  style={styles.actionSheetDoneButton}
-                >
-                  <Text style={styles.actionSheetDoneText}>
-                    {t("common.done")}
+        {/* Date Picker */}
+        {Platform.OS === "ios" ? (
+          <Modal
+            visible={activePicker !== null}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setActivePicker(null)}
+          >
+            <View style={styles.actionSheetOverlay}>
+              <View style={styles.actionSheetContainer}>
+                <View style={styles.actionSheetHeader}>
+                  <Text style={styles.actionSheetTitle}>
+                    {t("completeProfile.selectDate")}
                   </Text>
-                </TouchableOpacity>
-              </View>
-              <DateTimePicker
-                value={parseDate(activeValue) || new Date()}
-                mode="date"
-                display="spinner"
-                maximumDate={new Date()}
-                onChange={(_, selectedDate) => {
-                  if (selectedDate && activePicker) {
-                    const formatted = formatDate(selectedDate);
-                    if (activePicker === "dateOfEntry") {
-                      setDateOfEntry(formatted);
-                    } else {
-                      setDateOfCaptaincy(formatted);
+                  <TouchableOpacity
+                    onPress={() => setActivePicker(null)}
+                    style={styles.actionSheetDoneButton}
+                  >
+                    <Text style={styles.actionSheetDoneText}>
+                      {t("common.done")}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <DateTimePicker
+                  value={parseDate(activeValue) || new Date()}
+                  mode="date"
+                  display="spinner"
+                  maximumDate={new Date()}
+                  onChange={(_, selectedDate) => {
+                    if (selectedDate && activePicker) {
+                      const formatted = formatDate(selectedDate);
+                      if (activePicker === "dateOfEntry") {
+                        setDateOfEntry(formatted);
+                      } else {
+                        setDateOfCaptaincy(formatted);
+                      }
                     }
-                  }
-                }}
-              />
+                  }}
+                />
+              </View>
             </View>
-          </View>
-        </Modal>
+          </Modal>
+        ) : (
+          activePicker !== null && (
+            <DateTimePicker
+              value={parseDate(activeValue) || new Date()}
+              mode="date"
+              display="default"
+              maximumDate={new Date()}
+              onChange={(_, selectedDate) => {
+                if (selectedDate && activePicker) {
+                  const formatted = formatDate(selectedDate);
+                  if (activePicker === "dateOfEntry") {
+                    setDateOfEntry(formatted);
+                  } else {
+                    setDateOfCaptaincy(formatted);
+                  }
+                }
+                setActivePicker(null);
+              }}
+            />
+          )
+        )}
       </SafeAreaView>
     </View>
   );
