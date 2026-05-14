@@ -125,7 +125,10 @@ export function createApiClient({
           processQueue(refreshError, null);
           const isNetworkError = !(refreshError as AxiosError).response;
           if (!isNetworkError) {
-            onLogout();
+            const currentRefreshToken = getRefreshToken();
+            if (!currentRefreshToken || currentRefreshToken === refreshToken) {
+              onLogout();
+            }
           }
           return Promise.reject(refreshError);
         } finally {
