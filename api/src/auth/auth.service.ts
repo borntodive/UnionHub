@@ -127,18 +127,30 @@ export class AuthService {
 
     if (!tokenEntity || !tokenEntity.isValid()) {
       if (tokenEntity && tokenEntity.isRevoked) {
-        this.logger.warn(
-          `Refresh token replay detected for user ${tokenEntity.userId}. Revoking all sessions.`,
-        );
-        await this.refreshTokenRepository.update(
-          { userId: tokenEntity.userId, isRevoked: false },
-          { isRevoked: true },
-        );
+        const RACE_WINDOW_MS = 30_000;
+        const isRace =
+          tokenEntity.revokedAt &&
+          Date.now() - tokenEntity.revokedAt.getTime() < RACE_WINDOW_MS;
+
+        if (isRace) {
+          this.logger.debug(
+            `Concurrent refresh race for user ${tokenEntity.userId} — ignoring (within ${RACE_WINDOW_MS}ms window)`,
+          );
+        } else {
+          this.logger.warn(
+            `Refresh token replay detected for user ${tokenEntity.userId}. Revoking all sessions.`,
+          );
+          await this.refreshTokenRepository.update(
+            { userId: tokenEntity.userId, isRevoked: false },
+            { isRevoked: true, revokedAt: new Date() },
+          );
+        }
       }
       throw new UnauthorizedException("Invalid or expired refresh token");
     }
 
     tokenEntity.isRevoked = true;
+    tokenEntity.revokedAt = new Date();
     await this.refreshTokenRepository.save(tokenEntity);
 
     const tokens = await this.generateTokens(
@@ -168,7 +180,7 @@ export class AuthService {
   async logoutAllDevices(userId: string): Promise<void> {
     await this.refreshTokenRepository.update(
       { userId, isRevoked: false },
-      { isRevoked: true },
+      { isRevoked: true, revokedAt: new Date() },
     );
   }
 

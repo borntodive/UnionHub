@@ -39,6 +39,9 @@ export class RefreshToken {
   @Column({ type: "boolean", default: false })
   isRevoked: boolean;
 
+  @Column({ type: "timestamptz", nullable: true })
+  revokedAt: Date | null;
+
   @CreateDateColumn({ type: "timestamptz" })
   createdAt: Date;
 
