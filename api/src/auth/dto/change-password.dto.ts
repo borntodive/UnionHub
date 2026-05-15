@@ -15,13 +15,10 @@ export class ChangePasswordDto {
   @IsNotEmpty()
   @MinLength(8)
   @MaxLength(100)
-  @Matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
-    {
-      message:
-        "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
-    },
-  )
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d\s]).+$/, {
+    message:
+      "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
+  })
   newPassword: string;
 }
 
@@ -30,12 +27,9 @@ export class ForceChangePasswordDto {
   @IsNotEmpty()
   @MinLength(8)
   @MaxLength(100)
-  @Matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
-    {
-      message:
-        "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
-    },
-  )
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d\s]).+$/, {
+    message:
+      "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
+  })
   newPassword: string;
 }
