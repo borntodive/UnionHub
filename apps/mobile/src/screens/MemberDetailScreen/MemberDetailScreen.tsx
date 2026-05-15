@@ -8,12 +8,10 @@ import {
   Alert,
   ActivityIndicator,
   StatusBar,
-  Linking,
   AppState,
   AppStateStatus,
   RefreshControl,
 } from "react-native";
-import * as WebBrowser from "expo-web-browser";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -35,14 +33,13 @@ import {
   X,
   ArrowLeft,
   FileText,
-  ExternalLink,
+  ChevronRight,
 } from "lucide-react-native";
 
 import { colors, spacing, typography, borderRadius } from "../../theme";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { usersApi } from "../../api/users";
-import { API_BASE_URL } from "../../api/client";
 import { useAuthStore } from "../../store/authStore";
 import { RootStackParamList } from "../../navigation/types";
 import { Ruolo, UserRole } from "../../types";
@@ -94,6 +91,7 @@ export const MemberDetailScreen: React.FC = () => {
   );
   const [screenKey, setScreenKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [isLoadingPdf, setIsLoadingPdf] = useState(false);
 
   const {
     data: member,
@@ -544,21 +542,21 @@ export const MemberDetailScreen: React.FC = () => {
               <Text style={styles.sectionTitle}>Registration Form</Text>
               <TouchableOpacity
                 style={styles.pdfButton}
+                disabled={isLoadingPdf}
                 onPress={async () => {
-                  // Open PDF in in-app browser (Safari View Controller)
-                  // This prevents the white screen issue when returning to the app
-                  const baseUrl = API_BASE_URL.replace(/\/api\/v1$/, "");
-                  const fullUrl = `${baseUrl}${member.registrationFormUrl}`;
                   try {
-                    await WebBrowser.openBrowserAsync(fullUrl, {
-                      presentationStyle:
-                        WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+                    setIsLoadingPdf(true);
+                    const base64 = await usersApi.getRegistrationFormBase64(
+                      member.id,
+                    );
+                    navigation.navigate("PdfViewer", {
+                      url: base64,
+                      title: "Registration Form",
                     });
-                  } catch (error) {
-                    // Fallback to Linking if WebBrowser fails
-                    Linking.openURL(fullUrl).catch(() => {
-                      Alert.alert("Error", "Could not open PDF");
-                    });
+                  } catch {
+                    Alert.alert("Error", "Could not open PDF");
+                  } finally {
+                    setIsLoadingPdf(false);
                   }
                 }}
               >
@@ -569,7 +567,14 @@ export const MemberDetailScreen: React.FC = () => {
                   <Text style={styles.pdfLabel}>Signed Membership Form</Text>
                   <Text style={styles.pdfHint}>Tap to view PDF</Text>
                 </View>
-                <ExternalLink size={20} color={colors.textSecondary} />
+                {isLoadingPdf ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={colors.textSecondary}
+                  />
+                ) : (
+                  <ChevronRight size={20} color={colors.textSecondary} />
+                )}
               </TouchableOpacity>
             </Card>
           )}

@@ -589,6 +589,56 @@ export class UsersController {
     };
   }
 
+  @Get(":id/registration-form/download")
+  async downloadRegistrationForm(
+    @Request() req: RequestWithUser,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Response() res: any,
+  ) {
+    const requestingUser = await this.usersService.findById(req.user.userId);
+    const user = await this.usersService.findById(id);
+
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    if (requestingUser.role === UserRole.USER && requestingUser.id !== id) {
+      throw new ForbiddenException("Access denied");
+    }
+
+    if (
+      requestingUser.role === UserRole.ADMIN &&
+      requestingUser.ruolo &&
+      user.ruolo !== requestingUser.ruolo
+    ) {
+      throw new ForbiddenException("Access denied");
+    }
+
+    if (!user.registrationFormUrl) {
+      throw new NotFoundException("No registration form found for this user");
+    }
+
+    const filePath = this.fileStorageService.getFilePathFromUrl(
+      user.registrationFormUrl,
+    );
+    const uploadsDir = path.resolve("uploads");
+    const resolvedPath = path.resolve(filePath);
+    if (!resolvedPath.startsWith(uploadsDir + path.sep)) {
+      throw new ForbiddenException("Access denied");
+    }
+
+    if (!this.fileStorageService.fileExists(user.registrationFormUrl)) {
+      throw new NotFoundException("File not found");
+    }
+
+    const pdfBuffer = await fs.promises.readFile(resolvedPath);
+    const filename = filePath.split("/").pop() || "registration-form.pdf";
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+    res.send(pdfBuffer);
+  }
+
   @Get(":id/registration-form/preview")
   async getRegistrationFormPreview(
     @Request() req: RequestWithUser,

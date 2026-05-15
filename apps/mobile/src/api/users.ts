@@ -194,6 +194,21 @@ export const usersApi = {
     return response.data;
   },
 
+  getRegistrationFormBase64: async (userId: string): Promise<string> => {
+    const response = await apiClient.get(
+      `/users/${userId}/registration-form/download`,
+      { responseType: "arraybuffer" },
+    );
+    const arrayBuffer = response.data as ArrayBuffer;
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = "";
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  },
+
   convertPdfToImage: async (
     base64Pdf: string,
   ): Promise<{ imageBase64: string; mimeType: string }> => {
