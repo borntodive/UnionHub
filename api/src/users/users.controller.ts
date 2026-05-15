@@ -22,6 +22,7 @@ import {
   ForbiddenException,
   InternalServerErrorException,
   Logger,
+  Response,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { memoryStorage } from "multer";
