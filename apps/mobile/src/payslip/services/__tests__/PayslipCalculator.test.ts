@@ -38,8 +38,8 @@ const defaultSettings: PayslipSettings = {
   btc: false,
   cu: false,
   voluntaryPensionContribution: 0,
-  fondoVoloAnteL996: false,
-  fondoVoloOltre18Anni: false,
+  fondoVoloAnteL996: true,
+  fondoVoloOltre18Anni: true,
 };
 
 const defaultInput: PayslipInput = {
