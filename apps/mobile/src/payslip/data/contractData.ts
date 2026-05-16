@@ -43,9 +43,8 @@ export const INPS_RATES = {
 
 // Fondo Volo D.Lgs. 164/97 — IVS addizionale per categoria
 // Verified against real Malta Air payslip (Dec 2024): Cat B total IVS = 12.48% → add = 3.29%
-// Cat A: 9.19% + 3.59% = 12.78% (no Previvolo deduction)
-// Cat B: 9.19% + 3.29% = 12.48% + 1.028% Previvolo/FONDAV separately
-// Cat C: 9.19% + 0%   = 9.19%  (standard AGO, no addizionale, no Previvolo)
+// Cat A: 9.19% + 3.59% = 12.78% (no Previvolo) — ante 1996 >18 anni OR post-1995
+// Cat B: 9.19% + 3.29% = 12.48% + 1.028% Previvolo/FONDAV — ante 1996 <18 anni
 export const IVS_ADD_CAT_A = 0.0359;
 export const IVS_ADD_CAT_B = 0.0329;
 export const FONDO_VOLO_PREVIVOLO_RATE = 0.01028;
@@ -82,9 +81,9 @@ export const IRPEF_BRACKETS: Record<number, { limit: number; rate: number }[]> =
 export function deriveFondoVoloCategoria(
   anteL996: boolean,
   oltre18Anni: boolean,
-): "A" | "B" | "C" {
-  if (!anteL996) return "C";
-  return oltre18Anni ? "A" : "B";
+): "A" | "B" {
+  if (anteL996 && !oltre18Anni) return "B";
+  return "A";
 }
 
 export function getUnionFee(rank: string, role: string): number {

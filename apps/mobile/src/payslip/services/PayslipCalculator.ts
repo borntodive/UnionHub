@@ -607,10 +607,8 @@ export class PayslipCalculator {
         imponibileArrotondato * FONDO_VOLO_PREVIVOLO_RATE; // 1.028% → Previvolo/FONDAV employee
       contribuzioneComplementareAzienda =
         imponibileArrotondato * FONDO_VOLO_PREVIVOLO_AZIENDA_RATE; // 2.092% → employer share (informational)
-    } else if (categoria === "C") {
-      ivsAddRate = 0; // Standard AGO, no addizionale
     } else {
-      ivsAddRate = IVS_ADD_CAT_A; // 3.59% → total IVS 12.78% (Cat A, default)
+      ivsAddRate = IVS_ADD_CAT_A; // 3.59% → total IVS 12.78% (Cat A)
     }
 
     const contribuzione = {
