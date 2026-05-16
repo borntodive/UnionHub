@@ -134,6 +134,8 @@ const defaultSettings: PayslipSettings = {
   btc: false,
   cu: false,
   voluntaryPensionContribution: 0,
+  fondoVoloAnteL996: false,
+  fondoVoloOltre18Anni: false,
 };
 
 export const usePayslipStore = create<PayslipState>()(

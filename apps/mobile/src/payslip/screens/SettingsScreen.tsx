@@ -166,6 +166,8 @@ export const SettingsScreen: React.FC = () => {
           legacy: settings.legacy,
           legacyCustom: settings.legacyCustom ?? { ffp: 0, sbh: 0, al: 0 },
           legacyDeltas: settings.legacyDeltas ?? { ffp: 0, sbh: 0, al: 0 },
+          fondoVoloAnteL996: settings.fondoVoloAnteL996 ?? false,
+          fondoVoloOltre18Anni: settings.fondoVoloOltre18Anni ?? false,
         });
         // Note: RSA and ITUD are not stored in PayslipSettings
         // They come from user profile, so we keep current override values
@@ -232,6 +234,8 @@ export const SettingsScreen: React.FC = () => {
               addRegionali: 0,
               legacy: false,
               legacyCustom: { ffp: 0, sbh: 0, al: 0 },
+              fondoVoloAnteL996: false,
+              fondoVoloOltre18Anni: false,
             });
             setLegacyFfpText("");
             setLegacySbhText("");
@@ -517,6 +521,35 @@ export const SettingsScreen: React.FC = () => {
                 <Text style={styles.hint}>
                   {t("settings.payslipPensionHint")}
                 </Text>
+              </View>
+
+              {/* Fondo Volo */}
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>
+                  {t("settings.payslipFondoVolo")}
+                </Text>
+                <CheckboxRow
+                  label={t("settings.payslipAnteL996")}
+                  value={overrideSettings.fondoVoloAnteL996}
+                  onToggle={() =>
+                    set({
+                      fondoVoloAnteL996: !overrideSettings.fondoVoloAnteL996,
+                      fondoVoloOltre18Anni: false,
+                    })
+                  }
+                />
+                {overrideSettings.fondoVoloAnteL996 && (
+                  <CheckboxRow
+                    label={t("settings.payslipOltre18Anni")}
+                    value={overrideSettings.fondoVoloOltre18Anni}
+                    onToggle={() =>
+                      set({
+                        fondoVoloOltre18Anni:
+                          !overrideSettings.fondoVoloOltre18Anni,
+                      })
+                    }
+                  />
+                )}
               </View>
 
               {/* Part-Time */}

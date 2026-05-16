@@ -75,6 +75,8 @@ export interface INPS {
     fsta: number;
   };
   contribuzioneTotale: number;
+  contribuzioneComplementare: number; // Cat B: Previvolo/FONDAV employee (1.028%), not included in contribuzioneTotale
+  contribuzioneComplementareAzienda: number; // Cat B: Previvolo/FONDAV employer (2.092%), informational only
   pensionAcc: number;
   esenzioneIVS: {
     percentage: number;
@@ -215,6 +217,8 @@ export interface PayslipSettings {
   btc: boolean; // BTC-based contract
   cu: boolean; // New captain
   voluntaryPensionContribution: number; // Voluntary pension contribution %
+  fondoVoloAnteL996: boolean; // enrolled in Fondo Volo before 01/01/1996
+  fondoVoloOltre18Anni: boolean; // had ≥18 contribution years at 31/12/1995 (only relevant if anteL996)
 }
 
 // ============================================

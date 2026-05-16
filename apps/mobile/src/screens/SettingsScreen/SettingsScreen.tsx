@@ -300,6 +300,32 @@ const PayslipForm: React.FC<PayslipFormProps> = ({
         <Text style={styles.hint}>{t("settings.payslipPensionHint")}</Text>
       </View>
 
+      {/* Fondo Volo */}
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>
+          {t("settings.payslipFondoVolo")}
+        </Text>
+        <CheckboxRow
+          label={t("settings.payslipAnteL996")}
+          value={s.fondoVoloAnteL996}
+          onToggle={() =>
+            set({
+              fondoVoloAnteL996: !s.fondoVoloAnteL996,
+              fondoVoloOltre18Anni: false,
+            })
+          }
+        />
+        {s.fondoVoloAnteL996 && (
+          <CheckboxRow
+            label={t("settings.payslipOltre18Anni")}
+            value={s.fondoVoloOltre18Anni}
+            onToggle={() =>
+              set({ fondoVoloOltre18Anni: !s.fondoVoloOltre18Anni })
+            }
+          />
+        )}
+      </View>
+
       {/* Part-Time */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>{t("settings.payslipPartTime")}</Text>

@@ -20,6 +20,11 @@ import {
   RYR_CONFIG,
   MAX_TAX_FREE_DIARIA,
   INPS_RATES,
+  IVS_ADD_CAT_A,
+  IVS_ADD_CAT_B,
+  FONDO_VOLO_PREVIVOLO_RATE,
+  FONDO_VOLO_PREVIVOLO_AZIENDA_RATE,
+  deriveFondoVoloCategoria,
   IRPEF_BRACKETS,
   MIN_IMPONIBILE_INPS,
 } from "../data/contractData";
@@ -156,6 +161,7 @@ export class PayslipCalculator {
 
     const totaleTrattenute =
       areaINPS.contribuzioneTotale +
+      areaINPS.contribuzioneComplementare +
       areaIRPEF.lordo +
       areaIRPEF.fondoPensione.volontaria +
       areaIRPEF.fondoPensione.volontariaAggiuntiva +
@@ -586,9 +592,30 @@ export class PayslipCalculator {
     // (non-rounded) imponibile is used when deriving the IRPEF taxable base.
     const imponibileArrotondato = Math.round(imponibile);
 
+    // Fondo Volo D.Lgs. 164/97 — ivsAdd rate depends on enrollment category
+    const categoria = deriveFondoVoloCategoria(
+      this.settings.fondoVoloAnteL996 ?? false,
+      this.settings.fondoVoloOltre18Anni ?? false,
+    );
+    let ivsAddRate: number;
+    let contribuzioneComplementare = 0;
+    let contribuzioneComplementareAzienda = 0;
+
+    if (categoria === "B") {
+      ivsAddRate = IVS_ADD_CAT_B; // 3.29% → total IVS 12.48%
+      contribuzioneComplementare =
+        imponibileArrotondato * FONDO_VOLO_PREVIVOLO_RATE; // 1.028% → Previvolo/FONDAV employee
+      contribuzioneComplementareAzienda =
+        imponibileArrotondato * FONDO_VOLO_PREVIVOLO_AZIENDA_RATE; // 2.092% → employer share (informational)
+    } else if (categoria === "C") {
+      ivsAddRate = 0; // Standard AGO, no addizionale
+    } else {
+      ivsAddRate = IVS_ADD_CAT_A; // 3.59% → total IVS 12.78% (Cat A, default)
+    }
+
     const contribuzione = {
       ivs: imponibileArrotondato * INPS_RATES.ivs,
-      ivsAdd: imponibileArrotondato * INPS_RATES.ivsAdd,
+      ivsAdd: imponibileArrotondato * ivsAddRate,
       fis: imponibileArrotondato * INPS_RATES.fis,
       cigs: imponibileArrotondato * INPS_RATES.cigs,
       fsta: imponibileArrotondato * INPS_RATES.fsta,
@@ -604,6 +631,8 @@ export class PayslipCalculator {
       minimoImponibile: minImponibile,
       contribuzione,
       contribuzioneTotale,
+      contribuzioneComplementare,
+      contribuzioneComplementareAzienda,
       pensionAcc: imponibile * INPS_RATES.pensionFactor,
       esenzioneIVS: {
         percentage: esenzioneIVS.percentage,

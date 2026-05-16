@@ -21,6 +21,7 @@ import { usePayslipStore } from "../store/usePayslipStore";
 import { PayslipItemRow } from "../components/results/PayslipItemRow";
 import { TotalCard } from "../components/results/TotalCard";
 import { formatCurrency, formatPercent } from "../utils/formatters";
+import { deriveFondoVoloCategoria } from "../data/contractData";
 
 export const ResultScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -525,12 +526,21 @@ export const ResultScreen: React.FC = () => {
               {formatCurrency(areaINPS.contribuzione.ivs)}
             </Text>
           </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>IVS Additional (3.59%)</Text>
-            <Text style={styles.value}>
-              {formatCurrency(areaINPS.contribuzione.ivsAdd)}
-            </Text>
-          </View>
+          {areaINPS.contribuzione.ivsAdd > 0 && (
+            <View style={styles.row}>
+              <Text style={styles.label}>
+                {deriveFondoVoloCategoria(
+                  activeSettings.fondoVoloAnteL996 ?? false,
+                  activeSettings.fondoVoloOltre18Anni ?? false,
+                ) === "B"
+                  ? "IVS Additional (3.29%)"
+                  : "IVS Additional (3.59%)"}
+              </Text>
+              <Text style={styles.value}>
+                {formatCurrency(areaINPS.contribuzione.ivsAdd)}
+              </Text>
+            </View>
+          )}
           <View style={styles.row}>
             <Text style={styles.label}>FIS</Text>
             <Text style={styles.value}>
@@ -976,18 +986,35 @@ export const ResultScreen: React.FC = () => {
                   </Text>
                 </View>
               )}
+            </>
+          )}
+          {areaINPS.contribuzioneComplementare > 0 && (
+            <>
               <View style={styles.divider} />
+              <Text style={styles.subsectionTitle}>
+                {t("payslip.previvolo")}
+              </Text>
               <View style={styles.row}>
-                <Text style={styles.labelBold}>
-                  {t("payslip.totalPensionFund")}
+                <Text style={styles.label}>
+                  {t("payslip.previvoloLavoratore")}
                 </Text>
-                <Text style={styles.valueBold}>
-                  {formatCurrency(areaIRPEF.fondoPensione.totale)}
+                <Text style={styles.value}>
+                  {formatCurrency(areaINPS.contribuzioneComplementare)}
+                </Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>
+                  {t("payslip.previvoloAzienda")}
+                </Text>
+                <Text style={styles.value}>
+                  {formatCurrency(areaINPS.contribuzioneComplementareAzienda)}
                 </Text>
               </View>
             </>
           )}
-          {(areaIRPEF.tfr > 0 || areaIRPEF.fondoPensione.totale > 0) && (
+          {(areaIRPEF.tfr > 0 ||
+            areaIRPEF.fondoPensione.totale > 0 ||
+            areaINPS.contribuzioneComplementare > 0) && (
             <>
               <View style={styles.divider} />
               <View style={styles.row}>
@@ -996,7 +1023,9 @@ export const ResultScreen: React.FC = () => {
                 </Text>
                 <Text style={styles.valueBold}>
                   {formatCurrency(
-                    areaIRPEF.tfr + areaIRPEF.fondoPensione.totale,
+                    areaIRPEF.tfr +
+                      areaIRPEF.fondoPensione.totale +
+                      areaINPS.contribuzioneComplementare,
                   )}
                 </Text>
               </View>

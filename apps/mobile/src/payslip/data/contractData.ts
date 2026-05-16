@@ -34,12 +34,22 @@ export const MIN_IMPONIBILE_INPS: Record<number, number> = {
 // INPS Rates
 export const INPS_RATES = {
   ivs: 0.0919,
-  ivsAdd: 0.0359,
+  ivsAdd: 0.0359, // Cat A rate (default). Cat B uses IVS_ADD_CAT_B below.
   cigs: 0.003,
   fsta: 0.00167,
   fis: 0.0026667,
   pensionFactor: 0.33,
 };
+
+// Fondo Volo D.Lgs. 164/97 — IVS addizionale per categoria
+// Verified against real Malta Air payslip (Dec 2024): Cat B total IVS = 12.48% → add = 3.29%
+// Cat A: 9.19% + 3.59% = 12.78% (no Previvolo deduction)
+// Cat B: 9.19% + 3.29% = 12.48% + 1.028% Previvolo/FONDAV separately
+// Cat C: 9.19% + 0%   = 9.19%  (standard AGO, no addizionale, no Previvolo)
+export const IVS_ADD_CAT_A = 0.0359;
+export const IVS_ADD_CAT_B = 0.0329;
+export const FONDO_VOLO_PREVIVOLO_RATE = 0.01028;
+export const FONDO_VOLO_PREVIVOLO_AZIENDA_RATE = 0.02092;
 
 // IRPEF Tax Brackets
 export const IRPEF_BRACKETS: Record<number, { limit: number; rate: number }[]> =
@@ -68,6 +78,15 @@ export const IRPEF_BRACKETS: Record<number, { limit: number; rate: number }[]> =
   };
 
 // Helper functions
+// Derives A/B/C from the two user-facing toggles
+export function deriveFondoVoloCategoria(
+  anteL996: boolean,
+  oltre18Anni: boolean,
+): "A" | "B" | "C" {
+  if (!anteL996) return "C";
+  return oltre18Anni ? "A" : "B";
+}
+
 export function getUnionFee(rank: string, role: string): number {
   const key =
     role === "pilot" || role === "pil"
