@@ -61,6 +61,8 @@ export type RootStackParamList = {
   ChatRequestDetail: { requestId: string };
   Backups: undefined;
   KbAdmin: undefined;
+  ChatRooms: undefined;
+  ChatRoom: { roomId: string; roomName: string };
 };
 
 export type DrawerParamList = {
@@ -118,6 +120,7 @@ export type DrawerParamList = {
   KbAdmin: undefined;
   ChatRequests: undefined;
   ChatRequestDetail: { requestId: string };
+  ChatRooms: undefined;
 };
 
 declare global {

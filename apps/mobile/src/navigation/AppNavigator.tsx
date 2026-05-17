@@ -46,6 +46,7 @@ import { EmailDetailScreen } from "../gmail/screens/EmailDetailScreen";
 import { GmailSetupScreen } from "../gmail/screens/GmailSetupScreen";
 import { CtcScreen } from "../screens/CtcScreen";
 import { BackupsScreen } from "../screens/admin";
+import { ChatRoomScreen } from "../screens/chat/ChatRoomScreen";
 import { UserRole } from "../types";
 import { useNotifications } from "../hooks/useNotifications";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
@@ -311,6 +312,11 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen
               name="AirportsAdmin"
               component={AirportAdminScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="ChatRoom"
+              component={ChatRoomScreen}
               options={{ headerShown: false }}
             />
             {/* Note: CLA Contract screens and PendingMembers moved to DrawerNavigator */}

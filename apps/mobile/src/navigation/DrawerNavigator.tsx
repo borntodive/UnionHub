@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   View,
   Text,
   StyleSheet,
@@ -98,6 +99,7 @@ import { MetarScreen } from "../screens/MetarScreen";
 import { MetarDetailScreen } from "../screens/MetarDetailScreen";
 import { MetarManageScreen } from "../screens/MetarManageScreen";
 import { VolmetFormScreen } from "../screens/admin/VolmetFormScreen";
+import { ChatRoomsScreen } from "../screens/chat/ChatRoomsScreen";
 import { UserRole } from "../types";
 const Drawer = createDrawerNavigator();
 
@@ -119,6 +121,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const logoutAll = useAuthStore((state) => state.logoutAll);
   const refreshToken = useAuthStore((state) => state.refreshToken);
   const navigation = useNavigation();
   const isOnline = useOfflineStore((state) => state.isOnline);
@@ -131,13 +134,38 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       if (refreshToken) {
         await authApi.logout(refreshToken);
       }
-    } catch (e) {
+    } catch {
       // Ignore logout errors
     } finally {
-      // Reset payslip settings before logout to prevent next user inheriting them
       usePayslipStore.getState().resetSettings();
-      await logout();
+      logout();
     }
+  };
+
+  const handleLogoutAll = async () => {
+    Alert.alert(
+      "Disconnetti da tutti i dispositivi",
+      "Verrai disconnesso da tutti i dispositivi e dovrai accedere nuovamente con le tue credenziali. Face ID verrà disabilitato.",
+      [
+        { text: "Annulla", style: "cancel" },
+        {
+          text: "Disconnetti tutti",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              if (refreshToken) {
+                await authApi.logoutAll(refreshToken);
+              }
+            } catch {
+              // Ignore server errors — local cleanup always runs
+            } finally {
+              usePayslipStore.getState().resetSettings();
+              await logoutAll();
+            }
+          },
+        },
+      ],
+    );
   };
 
   const navigateToScreen = (screenName: string) => {
@@ -289,6 +317,17 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
               label={t("navigation.chatbot")}
               onPress={() => {
                 props.navigation.navigate("Chatbot");
+                props.navigation.closeDrawer();
+              }}
+            />
+          )}
+
+          {isOnline && (
+            <MenuItem
+              icon={<MessageCircle size={22} color={colors.primary} />}
+              label="Chat Sindacale"
+              onPress={() => {
+                props.navigation.navigate("ChatRooms");
                 props.navigation.closeDrawer();
               }}
             />
@@ -540,6 +579,15 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             <Text style={styles.logoutText}>{t("auth.logout")}</Text>
           </TouchableOpacity>
 
+          <TouchableOpacity
+            style={styles.logoutAllButton}
+            onPress={handleLogoutAll}
+          >
+            <Text style={styles.logoutAllText}>
+              Disconnetti da tutti i dispositivi
+            </Text>
+          </TouchableOpacity>
+
           <Text style={styles.versionText}>
             {t("settings.version")}{" "}
             {Updates.updateId ? Updates.updateId.slice(0, 8) : "1.0.0"}
@@ -582,6 +630,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
 export const DrawerNavigator: React.FC = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const isOnline = useOfflineStore((state) => state.isOnline);
   const isAdmin =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
@@ -1046,6 +1095,18 @@ export const DrawerNavigator: React.FC = () => {
         }}
       />
       <Drawer.Screen
+        name="ChatRooms"
+        component={ChatRoomsScreen}
+        options={{
+          title: "Chat Sindacale",
+          drawerIcon: ({ color }: { color: string }) => (
+            <Text style={{ color, fontSize: 18 }}>💬</Text>
+          ),
+          drawerItemStyle: isOnline ? undefined : { display: "none" },
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
         name="AirportsAdmin"
         component={AirportAdminScreen}
         options={{
@@ -1205,6 +1266,15 @@ const styles = StyleSheet.create({
     color: colors.error,
     marginLeft: spacing.md,
     fontWeight: typography.weights.medium,
+  },
+  logoutAllButton: {
+    paddingVertical: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  logoutAllText: {
+    fontSize: typography.sizes.sm,
+    color: colors.textTertiary,
+    textDecorationLine: "underline",
   },
   versionText: {
     fontSize: typography.sizes.xs,
