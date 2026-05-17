@@ -2,6 +2,7 @@ import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AppModule } from "./app.module";
+import { RedisIoAdapter } from "./chat/redis-io.adapter";
 import { CarddavService } from "./carddav/carddav.service";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
 import * as express from "express";
@@ -11,6 +12,10 @@ const helmet = require("helmet");
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  const redisIoAdapter = new RedisIoAdapter(app);
+  await redisIoAdapter.connectToRedis();
+  app.useWebSocketAdapter(redisIoAdapter);
 
   const configService = app.get(ConfigService);
 

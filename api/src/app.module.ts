@@ -21,6 +21,7 @@ import { HybridRagModule } from "./ai/hybrid-rag/hybrid-rag.module";
 import { BackupsModule } from "./backups/backups.module";
 import { VolmetModule } from "./volmet/volmet.module";
 import { MetarModule } from "./metar/metar.module";
+import { ChatModule } from "./chat/chat.module";
 
 @Module({
   providers: [
@@ -65,6 +66,7 @@ import { MetarModule } from "./metar/metar.module";
     BackupsModule,
     VolmetModule,
     MetarModule,
+    ChatModule,
   ],
 })
 export class AppModule {}
