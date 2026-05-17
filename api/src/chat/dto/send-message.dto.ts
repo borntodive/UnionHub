@@ -8,6 +8,7 @@ import {
 
 export class SendMessageDto {
   @IsString()
+  @MaxLength(100)
   roomId: string;
 
   @IsOptional()

@@ -110,10 +110,14 @@ export class ChatController {
 
   @Get("attachments/:id")
   async downloadAttachment(
+    @Req() req: any,
     @Param("id", ParseUUIDPipe) id: string,
     @Res() res: Response,
   ) {
-    const { attachment, filePath } = await this.chatService.getAttachment(id);
+    const { attachment, filePath } = await this.chatService.getAttachment(
+      id,
+      req.user,
+    );
     res.setHeader("Content-Type", attachment.mimeType);
     res.setHeader(
       "Content-Disposition",

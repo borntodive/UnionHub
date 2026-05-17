@@ -234,9 +234,26 @@ export class ChatService {
 
   async getAttachment(
     id: string,
+    requestingUser: {
+      role: UserRole;
+      ruolo?: Ruolo | null;
+      baseId?: string | null;
+    },
   ): Promise<{ attachment: ChatAttachment; filePath: string }> {
-    const attachment = await this.attachmentRepo.findOne({ where: { id } });
+    const attachment = await this.attachmentRepo.findOne({
+      where: { id },
+      relations: ["message"],
+    });
     if (!attachment) throw new NotFoundException("Attachment not found");
+
+    // If the attachment is linked to a message, verify room access
+    if (
+      attachment.message &&
+      !this.canAccessRoom(requestingUser, attachment.message.roomId)
+    ) {
+      throw new ForbiddenException("Access denied");
+    }
+
     const filePath = path.join(this.uploadsDir, "chat", attachment.filename);
     if (!fs.existsSync(filePath)) throw new NotFoundException("File not found");
     return { attachment, filePath };
