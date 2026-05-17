@@ -100,3 +100,6 @@ api/uploads/
 /*.PDF
 unionhub-491115-770d9db6cab0.json
 landing/*.apk
+
+# Brainstorm session files
+.superpowers/
