@@ -7,6 +7,7 @@ import {
   ConnectedSocket,
   MessageBody,
 } from "@nestjs/websockets";
+import { Logger } from "@nestjs/common";
 import { Server, Socket } from "socket.io";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
@@ -24,6 +25,8 @@ import { UserRole } from "../common/enums/user-role.enum";
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
+
+  private readonly logger = new Logger(ChatGateway.name);
 
   constructor(
     private readonly chatService: ChatService,
@@ -111,7 +114,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         .pushToOfflineUsers(dto.roomId, message, onlineUserIds)
         .catch(() => {});
     } catch (err: any) {
-      client.emit("error", { code: "SAVE_FAILED", message: err.message });
+      this.logger.error("send_message failed", err);
+      client.emit("error", {
+        code: "SAVE_FAILED",
+        message: "Failed to send message",
+      });
     }
   }
 
@@ -135,7 +142,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         roomId: data.roomId,
       });
     } catch (err: any) {
-      client.emit("error", { code: "DELETE_FAILED", message: err.message });
+      this.logger.error("delete_message failed", err);
+      client.emit("error", {
+        code: "DELETE_FAILED",
+        message: "Failed to delete message",
+      });
     }
   }
 
@@ -160,7 +171,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         isPinned: updated.isPinned,
       });
     } catch (err: any) {
-      client.emit("error", { code: "PIN_FAILED", message: err.message });
+      this.logger.error("pin_message failed", err);
+      client.emit("error", {
+        code: "PIN_FAILED",
+        message: "Failed to pin message",
+      });
     }
   }
 
