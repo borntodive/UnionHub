@@ -27,6 +27,21 @@ export function useChatSocket({
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
+  // Keep callback refs stable so the effect dep array stays [accessToken]
+  // without capturing stale closures.
+  const onNewMessageRef = useRef(onNewMessage);
+  const onMessageDeletedRef = useRef(onMessageDeleted);
+  const onMessagePinnedRef = useRef(onMessagePinned);
+  useEffect(() => {
+    onNewMessageRef.current = onNewMessage;
+  }, [onNewMessage]);
+  useEffect(() => {
+    onMessageDeletedRef.current = onMessageDeleted;
+  }, [onMessageDeleted]);
+  useEffect(() => {
+    onMessagePinnedRef.current = onMessagePinned;
+  }, [onMessagePinned]);
+
   useEffect(() => {
     if (!accessToken) return;
 
@@ -42,14 +57,21 @@ export function useChatSocket({
 
     socket.on("connect", () => setIsConnected(true));
     socket.on("disconnect", () => setIsConnected(false));
-    socket.on("new_message", onNewMessage);
-    socket.on("message_deleted", onMessageDeleted);
-    socket.on("message_pinned", onMessagePinned);
+    socket.on("new_message", (msg: ChatMessage) =>
+      onNewMessageRef.current(msg),
+    );
+    socket.on(
+      "message_deleted",
+      (data: { messageId: string; roomId: string }) =>
+        onMessageDeletedRef.current(data),
+    );
+    socket.on(
+      "message_pinned",
+      (data: { messageId: string; roomId: string; isPinned: boolean }) =>
+        onMessagePinnedRef.current(data),
+    );
 
     return () => {
-      socket.off("new_message", onNewMessage);
-      socket.off("message_deleted", onMessageDeleted);
-      socket.off("message_pinned", onMessagePinned);
       socket.disconnect();
       socketRef.current = null;
     };

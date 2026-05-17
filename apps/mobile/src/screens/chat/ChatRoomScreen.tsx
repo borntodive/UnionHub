@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   Alert,
   Linking,
 } from "react-native";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as DocumentPicker from "expo-document-picker";
 import { chatApi, ChatMessage } from "../../api/chat";
@@ -30,6 +30,7 @@ export function ChatRoomScreen({ navigation, route }: Props) {
   const { roomId, roomName } = route.params;
   const insets = useSafeAreaInsets();
   const { accessToken, user } = useAuthStore();
+  const queryClient = useQueryClient();
   const [inputText, setInputText] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const flatListRef = useRef<FlatList>(null);
@@ -45,9 +46,10 @@ export function ChatRoomScreen({ navigation, route }: Props) {
     if (history) setMessages(history);
   }, [history]);
 
-  const pinnedMessage = [...messages]
-    .reverse()
-    .find((m) => m.isPinned && !m.deletedAt);
+  const pinnedMessage = useMemo(
+    () => [...messages].reverse().find((m) => m.isPinned && !m.deletedAt),
+    [messages],
+  );
   const isAdmin =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
 
@@ -59,8 +61,12 @@ export function ChatRoomScreen({ navigation, route }: Props) {
   const onMessageDeleted = useCallback(
     ({ messageId }: { messageId: string; roomId: string }) => {
       setMessages((prev) => prev.filter((m) => m.id !== messageId));
+      queryClient.setQueryData<ChatMessage[]>(
+        QUERY_KEYS.chatMessages(roomId),
+        (old) => (old ? old.filter((m) => m.id !== messageId) : old),
+      );
     },
-    [],
+    [queryClient, roomId],
   );
 
   const onMessagePinned = useCallback(
