@@ -26,7 +26,7 @@ export class ChatMessage {
 
   @ManyToOne(() => User, { eager: false, onDelete: "CASCADE" })
   @JoinColumn({ name: "senderId" })
-  sender: Pick<User, "id" | "nome" | "cognome">;
+  sender: User;
 
   @Column({ type: "text", nullable: true })
   content: string | null;
@@ -41,7 +41,7 @@ export class ChatMessage {
   createdAt: Date;
 
   @OneToMany(() => ChatAttachment, (a) => a.message, {
-    eager: true,
+    eager: false,
     cascade: true,
   })
   attachments: ChatAttachment[];
