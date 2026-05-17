@@ -39,4 +39,8 @@ export const QUERY_KEYS = {
 
   // Notifications
   notifications: ["notifications"] as const,
+
+  // Chat
+  chatRooms: ["chatRooms"] as const,
+  chatMessages: (roomId: string) => ["chatMessages", roomId] as const,
 } as const;
