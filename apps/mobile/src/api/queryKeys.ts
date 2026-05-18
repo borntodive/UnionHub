@@ -43,4 +43,9 @@ export const QUERY_KEYS = {
   // Chat
   chatRooms: ["chatRooms"] as const,
   chatMessages: (roomId: string) => ["chatMessages", roomId] as const,
+
+  // App releases
+  appReleasesLatest: (platform: string) =>
+    ["appReleasesLatest", platform] as const,
+  appReleases: ["appReleases"] as const,
 } as const;
