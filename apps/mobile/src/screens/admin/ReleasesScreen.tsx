@@ -55,6 +55,19 @@ export const ReleasesScreen: React.FC = () => {
     queryFn: releasesApi.getAll,
   });
 
+  const otaMutation = useMutation({
+    mutationFn: releasesApi.notifyOTA,
+    onSuccess: () => {
+      Alert.alert("Successo", "Notifica OTA inviata a tutti gli utenti.");
+    },
+    onError: (error: any) => {
+      Alert.alert(
+        "Errore",
+        error.response?.data?.message ?? "Impossibile inviare la notifica OTA.",
+      );
+    },
+  });
+
   const createMutation = useMutation({
     mutationFn: (payload: CreateReleasePayload) => releasesApi.create(payload),
     onSuccess: () => {
@@ -318,6 +331,39 @@ export const ReleasesScreen: React.FC = () => {
             </TouchableOpacity>
           </Card>
 
+          <Card style={styles.otaCard}>
+            <Text style={styles.sectionTitle}>Notifica aggiornamento OTA</Text>
+            <Text style={styles.otaDescription}>
+              Invia una push notification a tutti gli utenti dopo aver
+              pubblicato un aggiornamento OTA via EAS Update.
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.publishButton,
+                otaMutation.isPending && styles.publishButtonDisabled,
+              ]}
+              onPress={() => {
+                Alert.alert(
+                  "Notifica OTA",
+                  "Inviare notifica push a tutti gli utenti?",
+                  [
+                    { text: "Annulla", style: "cancel" },
+                    { text: "Invia", onPress: () => otaMutation.mutate() },
+                  ],
+                );
+              }}
+              disabled={otaMutation.isPending}
+            >
+              {otaMutation.isPending ? (
+                <ActivityIndicator color={colors.textInverse} />
+              ) : (
+                <Text style={styles.publishButtonText}>
+                  Notifica aggiornamento OTA
+                </Text>
+              )}
+            </TouchableOpacity>
+          </Card>
+
           <Text style={styles.historyTitle}>Storico releases</Text>
 
           {isLoading ? (
@@ -477,6 +523,14 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.semibold,
     color: colors.textInverse,
+  },
+  otaCard: {
+    marginBottom: spacing.lg,
+  },
+  otaDescription: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
   },
   historyTitle: {
     fontSize: typography.sizes.md,

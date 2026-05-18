@@ -37,6 +37,10 @@ export const releasesApi = {
     return res.data;
   },
 
+  notifyOTA: async (): Promise<void> => {
+    await apiClient.post("/notifications/broadcast-ota");
+  },
+
   create: async (payload: CreateReleasePayload): Promise<AppRelease> => {
     const formData = new FormData();
     formData.append("version", payload.version);

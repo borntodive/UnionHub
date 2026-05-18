@@ -1,6 +1,9 @@
 import { Controller, Post, Body, Request, UseGuards } from "@nestjs/common";
 import { NotificationsService } from "./notifications.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../common/decorators/roles.decorator";
+import { UserRole } from "../common/enums/user-role.enum";
 
 interface RequestWithUser extends Request {
   user: {
@@ -40,5 +43,13 @@ export class NotificationsController {
   ) {
     await this.notificationsService.unregisterToken(dto.token, req.user.userId);
     return { message: "Token unregistered successfully" };
+  }
+
+  @Post("broadcast-ota")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.SUPERADMIN)
+  async broadcastOta() {
+    await this.notificationsService.broadcastOtaNotification();
+    return { message: "OTA notification sent" };
   }
 }

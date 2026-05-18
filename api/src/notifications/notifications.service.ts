@@ -242,6 +242,26 @@ export class NotificationsService {
     }
   }
 
+  async broadcastOtaNotification(): Promise<void> {
+    const tokens = await this.deviceTokenRepository.find({
+      where: { isActive: true },
+    });
+    if (tokens.length === 0) return;
+
+    const messages: ExpoPushMessage[] = tokens.map((t) => ({
+      to: t.token,
+      sound: "default",
+      title: "Aggiornamento disponibile 🔄",
+      body: "Riapri l'app per installare l'ultimo aggiornamento.",
+      data: { type: "OTA_UPDATE" },
+    }));
+
+    const BATCH = 100;
+    for (let i = 0; i < messages.length; i += BATCH) {
+      await this.sendExpoNotifications(messages.slice(i, i + BATCH));
+    }
+  }
+
   private async sendExpoNotifications(
     messages: ExpoPushMessage[],
   ): Promise<void> {
