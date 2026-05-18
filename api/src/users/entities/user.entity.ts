@@ -209,6 +209,7 @@ export class User {
       rls: this.rls,
       itud: this.itud,
       isUSO: this.isUSO,
+      mailboxAccess: this.mailboxAccess,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };
@@ -222,6 +223,7 @@ export class User {
         rsa: this.rsa,
         rls: this.rls,
         isUSO: this.isUSO,
+        mailboxAccess: this.mailboxAccess,
         whatsappStatus: this.whatsappStatus,
         statusLog: this.statusLog,
         welcomeEmailSent: this.welcomeEmailSent,
