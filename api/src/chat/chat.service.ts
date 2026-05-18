@@ -18,6 +18,9 @@ import { User } from "../users/entities/user.entity";
 import { Base } from "../bases/entities/base.entity";
 import { NotificationsService } from "../notifications/notifications.service";
 
+// Flip to true to roll out chat notifications to all users
+const CHAT_FOR_ALL_USERS = false;
+
 export interface ChatRoom {
   id: string;
   name: string;
@@ -267,7 +270,13 @@ export class ChatService {
     onlineUserIds: string[],
   ): Promise<void> {
     const roomUsers = await this.getUsersInRoom(roomId);
-    const offlineUsers = roomUsers.filter((u) => !onlineUserIds.includes(u.id));
+    const offlineUsers = roomUsers.filter(
+      (u) =>
+        !onlineUserIds.includes(u.id) &&
+        (CHAT_FOR_ALL_USERS ||
+          u.role === UserRole.ADMIN ||
+          u.role === UserRole.SUPERADMIN),
+    );
     const senderName = `${message.sender.nome} ${message.sender.cognome}`;
     const preview = message.content?.slice(0, 60) ?? "📎 allegato";
 
