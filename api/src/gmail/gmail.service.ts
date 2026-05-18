@@ -280,6 +280,10 @@ export class GmailService {
   }
 
   private async checkUnseenForRuolo(ruolo: Ruolo): Promise<void> {
+    const passKey =
+      ruolo === Ruolo.PILOT ? "MAIL_PASS" : "GMAIL_APP_PASSWORD_CABIN_CREW";
+    if (!this.configService.get<string>(passKey)) return;
+
     const client = this.getImapClient(ruolo);
     try {
       await client.connect();
