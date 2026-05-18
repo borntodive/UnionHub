@@ -7,11 +7,13 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { Cron } from "@nestjs/schedule";
 import { ImapFlow } from "imapflow";
 import { simpleParser } from "mailparser";
 import { User } from "../users/entities/user.entity";
 import { Ruolo } from "../common/enums/ruolo.enum";
 import { UserRole } from "../common/enums/user-role.enum";
+import { NotificationsService } from "../notifications/notifications.service";
 
 export interface EmailSummary {
   id: string;
@@ -51,11 +53,13 @@ const PAGE_SIZE = 20;
 @Injectable()
 export class GmailService {
   private readonly logger = new Logger(GmailService.name);
+  private readonly lastUnseenCount: Record<string, number> = {};
 
   constructor(
     private readonly configService: ConfigService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private getImapClient(ruolo: Ruolo): ImapFlow {
@@ -102,12 +106,12 @@ export class GmailService {
       return ruoloOverride;
     }
 
-    if (user.rsa !== true)
-      throw new ForbiddenException("Access restricted to RSA members");
-    if (!user.ruolo)
+    if (user.mailboxAccess !== true)
       throw new ForbiddenException(
-        "RSA user has no professional role assigned",
+        "Access restricted to users with mailbox access",
       );
+    if (!user.ruolo)
+      throw new ForbiddenException("User has no professional role assigned");
     return user.ruolo;
   }
 
@@ -265,6 +269,53 @@ export class GmailService {
       throw new InternalServerErrorException("Failed to retrieve attachment");
     } finally {
       await client.logout();
+    }
+  }
+
+  @Cron("*/5 * * * *")
+  async pollNewMail(): Promise<void> {
+    for (const ruolo of [Ruolo.PILOT, Ruolo.CABIN_CREW]) {
+      await this.checkUnseenForRuolo(ruolo);
+    }
+  }
+
+  private async checkUnseenForRuolo(ruolo: Ruolo): Promise<void> {
+    const client = this.getImapClient(ruolo);
+    try {
+      await client.connect();
+      const status = await client.status("INBOX", { unseen: true });
+      const unseen = status.unseen ?? 0;
+      const prev = this.lastUnseenCount[ruolo] ?? unseen;
+
+      if (unseen > prev) {
+        await this.notifyRsaUsers(ruolo);
+      }
+
+      this.lastUnseenCount[ruolo] = unseen;
+    } catch (err: any) {
+      this.logger.warn(`pollNewMail [${ruolo}] failed: ${err.message}`);
+    } finally {
+      try {
+        await client.logout();
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  private async notifyRsaUsers(ruolo: Ruolo): Promise<void> {
+    const users = await this.userRepository.find({
+      where: { ruolo, mailboxAccess: true },
+      select: ["id"],
+    });
+    const label = ruolo === Ruolo.PILOT ? "Piloti" : "Cabin Crew";
+    for (const user of users) {
+      await this.notificationsService.sendPushNotification(
+        user.id,
+        "Nuova mail sindacale",
+        `Hai una nuova email nella casella ${label}`,
+        { type: "NEW_MAIL", ruolo },
+      );
     }
   }
 }

@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
@@ -36,6 +37,7 @@ import { AppReleasesModule } from "./app-releases/app-releases.module";
       isGlobal: true,
       load: [databaseConfig],
     }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       {
         name: "default",
