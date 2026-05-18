@@ -18,6 +18,6 @@ export class AddAppReleasesTable1779100000000 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE "app_releases"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "app_releases"`);
   }
 }
