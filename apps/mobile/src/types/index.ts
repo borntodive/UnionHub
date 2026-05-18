@@ -52,6 +52,7 @@ export interface User {
   note?: string;
   itud?: boolean;
   rsa?: boolean;
+  mailboxAccess?: boolean;
   rls?: boolean;
   registrationStatus?: "pending" | "approved" | "rejected";
   registrationFormUrl?: string | null;

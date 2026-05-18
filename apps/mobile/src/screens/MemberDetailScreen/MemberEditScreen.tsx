@@ -106,6 +106,7 @@ export const MemberEditScreen: React.FC = () => {
     note: "",
     itud: false,
     rsa: false,
+    mailboxAccess: false,
     rls: false,
     isUSO: false,
     whatsappStatus: null as "yes" | "no" | "declined" | null,
@@ -167,6 +168,7 @@ export const MemberEditScreen: React.FC = () => {
         note: member.note || "",
         itud: member.itud || false,
         rsa: member.rsa || false,
+        mailboxAccess: member.mailboxAccess || false,
         rls: member.rls || false,
         isUSO: member.isUSO || false,
         whatsappStatus: member.whatsappStatus ?? null,
@@ -306,6 +308,8 @@ export const MemberEditScreen: React.FC = () => {
       if (formData.itud !== (member.itud || false))
         updateData.itud = formData.itud;
       if (formData.rsa !== (member.rsa || false)) updateData.rsa = formData.rsa;
+      if (formData.mailboxAccess !== (member.mailboxAccess || false))
+        updateData.mailboxAccess = formData.mailboxAccess;
       if (formData.rls !== (member.rls || false)) updateData.rls = formData.rls;
       if (formData.isUSO !== (member.isUSO || false))
         updateData.isUSO = formData.isUSO;
@@ -707,6 +711,30 @@ export const MemberEditScreen: React.FC = () => {
                     thumbColor={colors.background}
                   />
                 </View>
+
+                {isSuperAdmin && (
+                  <View style={styles.switchRow}>
+                    <View style={styles.switchLabelContainer}>
+                      <Shield
+                        size={20}
+                        color={colors.primary}
+                        style={styles.switchIcon}
+                      />
+                      <Text style={styles.switchLabel}>Mailbox Access</Text>
+                    </View>
+                    <Switch
+                      value={formData.mailboxAccess}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, mailboxAccess: value })
+                      }
+                      trackColor={{
+                        false: colors.border,
+                        true: colors.primary,
+                      }}
+                      thumbColor={colors.background}
+                    />
+                  </View>
+                )}
 
                 <View style={styles.switchRow}>
                   <View style={styles.switchLabelContainer}>

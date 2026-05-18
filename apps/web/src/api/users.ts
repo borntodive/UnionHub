@@ -32,6 +32,7 @@ export interface CreateUserData {
   note?: string;
   itud?: boolean;
   rsa?: boolean;
+  mailboxAccess?: boolean;
   rls?: boolean;
   isUSO?: boolean;
   dataIscrizione?: string;
@@ -52,6 +53,7 @@ export interface UpdateUserData {
   note?: string;
   itud?: boolean;
   rsa?: boolean;
+  mailboxAccess?: boolean;
   rls?: boolean;
   isUSO?: boolean;
   dataIscrizione?: string;

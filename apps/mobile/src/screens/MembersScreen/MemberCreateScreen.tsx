@@ -107,6 +107,7 @@ export const MemberCreateScreen: React.FC = () => {
     note: "",
     itud: false,
     rsa: false,
+    mailboxAccess: false,
     rls: false,
     isUSO: false,
     dataIscrizione: "",
@@ -430,6 +431,7 @@ export const MemberCreateScreen: React.FC = () => {
       note: formData.note || undefined,
       itud: formData.itud,
       rsa: formData.rsa,
+      mailboxAccess: formData.mailboxAccess,
       rls: formData.rls,
       isUSO: formData.isUSO,
       role: formData.role,
@@ -946,6 +948,30 @@ export const MemberCreateScreen: React.FC = () => {
                         thumbColor={colors.background}
                       />
                     </View>
+
+                    {isSuperAdmin && (
+                      <View style={styles.switchRow}>
+                        <View style={styles.switchLabelContainer}>
+                          <Shield
+                            size={20}
+                            color={colors.primary}
+                            style={styles.switchIcon}
+                          />
+                          <Text style={styles.switchLabel}>Mailbox Access</Text>
+                        </View>
+                        <Switch
+                          value={formData.mailboxAccess}
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, mailboxAccess: value })
+                          }
+                          trackColor={{
+                            false: colors.border,
+                            true: colors.primary,
+                          }}
+                          thumbColor={colors.background}
+                        />
+                      </View>
+                    )}
 
                     <View style={styles.switchRow}>
                       <View style={styles.switchLabelContainer}>

@@ -53,6 +53,7 @@ export interface User {
   note?: string;
   itud?: boolean;
   rsa?: boolean;
+  mailboxAccess?: boolean;
   rls?: boolean;
   isUSO?: boolean;
   registrationFormUrl?: string | null;

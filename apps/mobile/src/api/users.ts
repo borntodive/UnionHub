@@ -30,6 +30,7 @@ export interface CreateUserData {
   note?: string;
   itud?: boolean;
   rsa?: boolean;
+  mailboxAccess?: boolean;
   dataIscrizione?: string;
   dateOfEntry?: string;
   dateOfCaptaincy?: string;
@@ -46,6 +47,7 @@ export interface UpdateUserData {
   note?: string;
   itud?: boolean;
   rsa?: boolean;
+  mailboxAccess?: boolean;
   rls?: boolean;
   isUSO?: boolean;
   whatsappStatus?: "yes" | "no" | "declined" | null;

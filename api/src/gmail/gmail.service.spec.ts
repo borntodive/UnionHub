@@ -3,6 +3,7 @@ import { getRepositoryToken } from "@nestjs/typeorm";
 import { ConfigService } from "@nestjs/config";
 import { GmailService } from "./gmail.service";
 import { User } from "../users/entities/user.entity";
+import { NotificationsService } from "../notifications/notifications.service";
 import { UserRole } from "../common/enums/user-role.enum";
 import { Ruolo } from "../common/enums/ruolo.enum";
 
@@ -29,6 +30,7 @@ describe("GmailService", () => {
     id: "user-1",
     role: UserRole.USER,
     rsa: true,
+    mailboxAccess: true,
     ruolo: Ruolo.PILOT,
   };
 
@@ -56,6 +58,10 @@ describe("GmailService", () => {
           useValue: {
             findOne: jest.fn().mockResolvedValue(rsaUser),
           },
+        },
+        {
+          provide: NotificationsService,
+          useValue: { broadcastSilent: jest.fn() },
         },
       ],
     }).compile();

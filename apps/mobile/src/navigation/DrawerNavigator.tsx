@@ -181,7 +181,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const isAdmin =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
-  const isRsa = user?.rsa === true;
+  const isMailbox = user?.mailboxAccess === true;
 
   const [pendingCount, setPendingCount] = useState(0);
 
@@ -305,7 +305,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             }}
           />
 
-          {isOnline && isRsa && (
+          {isOnline && isMailbox && (
             <MenuItem
               icon={<Mail size={22} color={colors.primary} />}
               label={t("navigation.gmail")}
@@ -647,7 +647,7 @@ export const DrawerNavigator: React.FC = () => {
   const isAdmin =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
-  const isRsa = user?.rsa === true;
+  const isMailbox = user?.mailboxAccess === true;
 
   return (
     <Drawer.Navigator
@@ -1096,7 +1096,7 @@ export const DrawerNavigator: React.FC = () => {
           />
         </>
       )}
-      {isRsa && (
+      {isMailbox && (
         <Drawer.Screen
           name="Gmail"
           component={GmailScreen}

@@ -57,6 +57,7 @@ interface FormFields {
   note: string;
   itud: boolean;
   rsa: boolean;
+  mailboxAccess: boolean;
   rls: boolean;
   isUSO: boolean;
   dataIscrizione: string;
@@ -130,6 +131,7 @@ export function MemberFormPage({ mode }: { mode: "create" | "edit" }) {
       note: "",
       itud: false,
       rsa: false,
+      mailboxAccess: false,
       rls: false,
       isUSO: false,
       dataIscrizione: "",
@@ -155,6 +157,7 @@ export function MemberFormPage({ mode }: { mode: "create" | "edit" }) {
         note: member.note ?? "",
         itud: member.itud ?? false,
         rsa: member.rsa ?? false,
+        mailboxAccess: member.mailboxAccess ?? false,
         rls: member.rls ?? false,
         isUSO: member.isUSO ?? false,
         dataIscrizione: toDisplay(member.dataIscrizione),
@@ -245,6 +248,7 @@ export function MemberFormPage({ mode }: { mode: "create" | "edit" }) {
           note: data.note.trim() || undefined,
           itud: data.itud,
           rsa: data.rsa,
+          mailboxAccess: data.mailboxAccess,
           rls: data.rls,
           isUSO: data.isUSO,
           dataIscrizione: toIso(data.dataIscrizione),
@@ -278,6 +282,7 @@ export function MemberFormPage({ mode }: { mode: "create" | "edit" }) {
           note: data.note.trim() || undefined,
           itud: data.itud,
           rsa: data.rsa,
+          mailboxAccess: data.mailboxAccess,
           rls: data.rls,
           isUSO: data.isUSO,
           dataIscrizione: toIso(data.dataIscrizione),
@@ -584,6 +589,9 @@ export function MemberFormPage({ mode }: { mode: "create" | "edit" }) {
             {[
               { name: "itud" as const, label: "ITUD" },
               { name: "rsa" as const, label: "RSA" },
+              ...(isSuperAdmin
+                ? [{ name: "mailboxAccess" as const, label: "Mailbox Access" }]
+                : []),
               { name: "rls" as const, label: "RLS" },
               { name: "isUSO" as const, label: "USO" },
             ].map(({ name, label }) => (

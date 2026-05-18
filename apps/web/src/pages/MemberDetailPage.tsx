@@ -60,6 +60,7 @@ export function MemberDetailPage() {
   const isAdmin =
     currentUser?.role === UserRole.ADMIN ||
     currentUser?.role === UserRole.SUPERADMIN;
+  const isSuperAdmin = currentUser?.role === UserRole.SUPERADMIN;
   const [deactivating, setDeactivating] = useState(false);
 
   const {
@@ -208,6 +209,9 @@ export function MemberDetailPage() {
               )}
               {member.rsa && (
                 <Badge label="RSA" color="bg-cyan-100 text-cyan-700" />
+              )}
+              {isSuperAdmin && member.mailboxAccess && (
+                <Badge label="Mailbox" color="bg-blue-100 text-blue-700" />
               )}
               {member.isUSO && (
                 <Badge label="USO" color="bg-amber-100 text-amber-700" />

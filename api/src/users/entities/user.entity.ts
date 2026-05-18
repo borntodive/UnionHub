@@ -111,6 +111,9 @@ export class User {
   rsa: boolean;
 
   @Column({ type: "boolean", default: false })
+  mailboxAccess: boolean;
+
+  @Column({ type: "boolean", default: false })
   rls: boolean;
 
   @Column({ type: "boolean", default: false })

@@ -196,6 +196,9 @@ function MemberPanel({
             ? { l: "ITUD", c: "bg-indigo-100 text-indigo-700" }
             : null,
           member.rsa ? { l: "RSA", c: "bg-cyan-100 text-cyan-700" } : null,
+          isSuperAdmin && member.mailboxAccess
+            ? { l: "Mailbox", c: "bg-blue-100 text-blue-700" }
+            : null,
         ]
           .filter(Boolean)
           .map((b, i) => (
