@@ -41,6 +41,7 @@ import {
   MessageCircle,
   BookOpen,
   Plane,
+  Smartphone,
 } from "lucide-react-native";
 import { Image } from "react-native";
 import { usersApi } from "../api/users";
@@ -82,6 +83,7 @@ import { IssueCategoriesScreen } from "../screens/admin/IssueCategoriesScreen";
 import { IssueUrgenciesScreen } from "../screens/admin/IssueUrgenciesScreen";
 import { BackupsScreen } from "../screens/admin/BackupsScreen";
 import { KbAdminScreen } from "../screens/admin/KbAdminScreen";
+import { ReleasesScreen } from "../screens/admin/ReleasesScreen";
 import { GmailSetupScreen } from "../gmail/screens/GmailSetupScreen";
 import { MemberDetailScreen } from "../screens/MemberDetailScreen/MemberDetailScreen";
 import { MemberEditScreen } from "../screens/MemberDetailScreen/MemberEditScreen";
@@ -555,6 +557,14 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                     label={t("navigation.kbAdmin")}
                     onPress={() => {
                       props.navigation.navigate("KbAdmin");
+                      props.navigation.closeDrawer();
+                    }}
+                  />
+                  <MenuItem
+                    icon={<Smartphone size={22} color={colors.primary} />}
+                    label={t("navigation.releases")}
+                    onPress={() => {
+                      props.navigation.navigate("Releases");
                       props.navigation.closeDrawer();
                     }}
                   />
@@ -1068,6 +1078,15 @@ export const DrawerNavigator: React.FC = () => {
             component={KbAdminScreen}
             options={{
               title: t("navigation.kbAdmin"),
+              drawerItemStyle: { display: "none" },
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="Releases"
+            component={ReleasesScreen}
+            options={{
+              title: t("navigation.releases"),
               drawerItemStyle: { display: "none" },
               headerShown: false,
             }}

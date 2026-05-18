@@ -9,7 +9,9 @@ import { AuthProvider } from "./src/providers/AuthProvider";
 import { AppNavigator } from "./src/navigation/AppNavigator";
 import { useNotifications } from "./src/hooks/useNotifications";
 import { useOTAUpdate } from "./src/hooks/useOTAUpdate";
+import { useVersionCheck } from "./src/hooks/useVersionCheck";
 import { useNetworkStatus } from "./src/hooks/useNetworkStatus";
+import { UpdateModal } from "./src/components/UpdateModal";
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -89,19 +91,30 @@ const queryClient = new QueryClient({
 });
 
 function AppContent() {
-  // Initialize push notifications
+  const [updateDismissed, setUpdateDismissed] = React.useState(false);
+
   useNotifications();
-
-  // Check for OTA updates
-  useOTAUpdate();
-
-  // Monitor network status and sync pending offline data
   useNetworkStatus();
+
+  const { otaUpdate, isDownloading, applyUpdate } = useOTAUpdate();
+  const { nativeUpdate } = useVersionCheck();
+
+  const showModal = !updateDismissed && !!(nativeUpdate || otaUpdate);
+  const isForced = nativeUpdate?.isForced ?? false;
 
   return (
     <AuthProvider>
       <StatusBar style="light" backgroundColor="#177246" />
       <AppNavigator />
+      {showModal && (
+        <UpdateModal
+          nativeUpdate={nativeUpdate}
+          otaUpdate={otaUpdate}
+          isDownloading={isDownloading}
+          onApplyOTA={applyUpdate}
+          onDismiss={() => setUpdateDismissed(true)}
+        />
+      )}
     </AuthProvider>
   );
 }

@@ -290,7 +290,8 @@
     "chatbot": "Assistente AI",
     "chatRequests": "Cronologia Chatbot",
     "backups": "Backup",
-    "kbAdmin": "Knowledge Base"
+    "kbAdmin": "Knowledge Base",
+    "releases": "Releases"
   },
   "chatbot": {
     "title": "Assistente AI",

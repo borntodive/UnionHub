@@ -61,6 +61,7 @@ export type RootStackParamList = {
   ChatRequestDetail: { requestId: string };
   Backups: undefined;
   KbAdmin: undefined;
+  Releases: undefined;
   ChatRooms: undefined;
   ChatRoom: { roomId: string; roomName: string };
 };
@@ -118,6 +119,7 @@ export type DrawerParamList = {
   Gmail: undefined;
   Backups: undefined;
   KbAdmin: undefined;
+  Releases: undefined;
   ChatRequests: undefined;
   ChatRequestDetail: { requestId: string };
   ChatRooms: undefined;
