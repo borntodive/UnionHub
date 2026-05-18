@@ -6,7 +6,12 @@ import {
   Logger,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { google } from "googleapis";
+import {
+  S3Client,
+  ListObjectsV2Command,
+  DeleteObjectsCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
 import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
@@ -14,6 +19,7 @@ import { spawn, execSync } from "child_process";
 import { pipeline } from "stream/promises";
 import { createWriteStream, createReadStream } from "fs";
 import { createGunzip } from "zlib";
+import { Readable } from "stream";
 import {
   BackupFolderDto,
   BackupFileDto,
@@ -21,8 +27,7 @@ import {
   DriveSpaceDto,
 } from "./dto/backup-folder.dto";
 
-const SUBFOLDER_AUTOMATIC = "Automatic";
-const SUBFOLDER_MANUAL = "Manual";
+const VALID_PREFIX = /^(automatic|manual)\/\d{4}-\d{2}-\d{2}_\d{4}$/;
 
 @Injectable()
 export class BackupsService {
@@ -31,100 +36,104 @@ export class BackupsService {
 
   constructor(private readonly configService: ConfigService) {}
 
-  private getDrive() {
-    const clientId = this.configService.get<string>("GOOGLE_CLIENT_ID");
-    const clientSecret = this.configService.get<string>("GOOGLE_CLIENT_SECRET");
-    const refreshToken = this.configService.get<string>(
-      "BACKUP_DRIVE_REFRESH_TOKEN",
+  private getS3Client(): S3Client {
+    const accountId = this.configService.get<string>("R2_ACCOUNT_ID");
+    const accessKeyId = this.configService.get<string>("R2_ACCESS_KEY_ID");
+    const secretAccessKey = this.configService.get<string>(
+      "R2_SECRET_ACCESS_KEY",
     );
 
-    if (!clientId || !clientSecret || !refreshToken) {
-      throw new InternalServerErrorException(
-        "Google Drive credentials not configured",
-      );
+    if (!accountId || !accessKeyId || !secretAccessKey) {
+      throw new InternalServerErrorException("R2 credentials not configured");
     }
 
-    const auth = new google.auth.OAuth2(clientId, clientSecret);
-    auth.setCredentials({ refresh_token: refreshToken });
-    return google.drive({ version: "v3", auth });
-  }
-
-  private getRootFolderId(): string {
-    const folderId = this.configService.get<string>("BACKUP_DRIVE_FOLDER_ID");
-    if (!folderId) {
-      throw new InternalServerErrorException(
-        "BACKUP_DRIVE_FOLDER_ID not configured",
-      );
-    }
-    return folderId;
-  }
-
-  /** Returns the Drive ID of a named subfolder, creating it if needed. */
-  private async getOrCreateSubfolder(
-    drive: ReturnType<typeof google.drive>,
-    name: string,
-    parentId: string,
-  ): Promise<string> {
-    const res = await drive.files.list({
-      q: `name='${name}' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`,
-      fields: "files(id)",
-      spaces: "drive",
+    return new S3Client({
+      region: "auto",
+      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      credentials: { accessKeyId, secretAccessKey },
     });
-
-    if (res.data.files && res.data.files.length > 0) {
-      return res.data.files[0].id!;
-    }
-
-    const created = await drive.files.create({
-      requestBody: {
-        name,
-        mimeType: "application/vnd.google-apps.folder",
-        parents: [parentId],
-      },
-      fields: "id",
-    });
-    return created.data.id!;
   }
 
-  /** Lists dated backup folders inside a type subfolder. */
-  private async listFoldersInSubfolder(
-    drive: ReturnType<typeof google.drive>,
-    typeFolderId: string,
-    type: "automatic" | "manual",
+  private getBucketName(): string {
+    const bucket = this.configService.get<string>("R2_BUCKET_NAME");
+    if (!bucket) {
+      throw new InternalServerErrorException("R2_BUCKET_NAME not configured");
+    }
+    return bucket;
+  }
+
+  private encodeId(prefix: string): string {
+    return Buffer.from(prefix).toString("base64url");
+  }
+
+  private decodeAndValidate(folderId: string): string {
+    let prefix: string;
+    try {
+      prefix = Buffer.from(folderId, "base64url").toString("utf8");
+    } catch {
+      throw new NotFoundException("Backup not found");
+    }
+    if (!VALID_PREFIX.test(prefix)) {
+      throw new NotFoundException("Backup not found");
+    }
+    return prefix;
+  }
+
+  private createdTimeFromName(name: string): string {
+    const [datePart, timePart] = name.split("_");
+    const hh = timePart.slice(0, 2);
+    const mm = timePart.slice(2, 4);
+    return new Date(`${datePart}T${hh}:${mm}:00Z`).toISOString();
+  }
+
+  private async listFoldersByPrefix(
+    s3: S3Client,
+    bucket: string,
+    typePrefix: "automatic/" | "manual/",
   ): Promise<BackupFolderDto[]> {
-    const res = await drive.files.list({
-      q: `mimeType='application/vnd.google-apps.folder' and '${typeFolderId}' in parents and trashed=false`,
-      fields: "files(id, name, createdTime)",
-      orderBy: "name desc",
-      spaces: "drive",
-      pageSize: 200,
-    });
+    const type = typePrefix.replace("/", "") as "automatic" | "manual";
+    const folders = new Set<string>();
+    let continuationToken: string | undefined;
 
-    const folders = (res.data.files || []).filter((f: any) =>
-      /^\d{4}-\d{2}-\d{2}_\d{4}$/.test(f.name || ""),
-    );
-
-    const result: BackupFolderDto[] = [];
-    for (const folder of folders) {
-      const filesRes = await drive.files.list({
-        q: `'${folder.id}' in parents and trashed=false`,
-        fields: "files(id, name, size)",
-        spaces: "drive",
-      });
-
-      const files: BackupFileDto[] = (filesRes.data.files || []).map(
-        (f: any) => ({
-          id: f.id!,
-          name: f.name!,
-          size: parseInt(f.size || "0", 10),
+    do {
+      const res = await s3.send(
+        new ListObjectsV2Command({
+          Bucket: bucket,
+          Prefix: typePrefix,
+          Delimiter: "/",
+          ContinuationToken: continuationToken,
         }),
       );
+      for (const cp of res.CommonPrefixes || []) {
+        if (cp.Prefix) folders.add(cp.Prefix);
+      }
+      continuationToken = res.NextContinuationToken;
+    } while (continuationToken);
 
+    const result: BackupFolderDto[] = [];
+
+    for (const folderKey of [...folders].sort().reverse()) {
+      const name = folderKey.replace(typePrefix, "").replace(/\/$/, "");
+      if (!/^\d{4}-\d{2}-\d{2}_\d{4}$/.test(name)) continue;
+
+      const filesRes = await s3.send(
+        new ListObjectsV2Command({ Bucket: bucket, Prefix: folderKey }),
+      );
+
+      const files: BackupFileDto[] = (filesRes.Contents || [])
+        .filter((obj) => obj.Key && obj.Key !== folderKey)
+        .map((obj) => ({
+          id: path.basename(obj.Key!),
+          name: path.basename(obj.Key!),
+          size: obj.Size || 0,
+        }));
+
+      const prefix = `${type}/${name}`;
       result.push({
-        id: folder.id!,
-        name: folder.name!,
+        id: this.encodeId(prefix),
+        name,
         type,
-        createdTime: folder.createdTime!,
+        createdTime: this.createdTimeFromName(name),
         files,
         totalSize: files.reduce((acc, f) => acc + f.size, 0),
       });
@@ -134,30 +143,22 @@ export class BackupsService {
   }
 
   async listBackups(): Promise<BackupsListDto> {
-    const drive = this.getDrive();
-    const rootFolderId = this.getRootFolderId();
-
-    // Fetch subfolders + Drive quota in parallel
-    const [autoFolderId, manualFolderId, aboutRes] = await Promise.all([
-      this.getOrCreateSubfolder(drive, SUBFOLDER_AUTOMATIC, rootFolderId),
-      this.getOrCreateSubfolder(drive, SUBFOLDER_MANUAL, rootFolderId),
-      drive.about.get({ fields: "storageQuota" }),
-    ]);
+    const s3 = this.getS3Client();
+    const bucket = this.getBucketName();
 
     const [automatic, manual] = await Promise.all([
-      this.listFoldersInSubfolder(drive, autoFolderId, "automatic"),
-      this.listFoldersInSubfolder(drive, manualFolderId, "manual"),
+      this.listFoldersByPrefix(s3, bucket, "automatic/"),
+      this.listFoldersByPrefix(s3, bucket, "manual/"),
     ]);
 
-    const quota = aboutRes.data.storageQuota || {};
     const backupSize = [...automatic, ...manual].reduce(
       (acc, f) => acc + f.totalSize,
       0,
     );
 
     const driveSpace: DriveSpaceDto = {
-      total: parseInt(quota.limit || "0", 10),
-      used: parseInt(quota.usage || "0", 10),
+      total: 0,
+      used: 0,
       backupSize,
     };
 
@@ -165,33 +166,28 @@ export class BackupsService {
   }
 
   async deleteBackup(folderId: string): Promise<void> {
-    const drive = this.getDrive();
-    const rootFolderId = this.getRootFolderId();
+    const prefix = this.decodeAndValidate(folderId);
+    const s3 = this.getS3Client();
+    const bucket = this.getBucketName();
 
-    // Safety: verify the folder's parent is one of our type subfolders,
-    // which itself lives inside rootFolderId.
-    const meta = await drive.files
-      .get({ fileId: folderId, fields: "parents, name" })
-      .catch(() => null);
-    if (!meta?.data.parents?.length) {
+    const res = await s3.send(
+      new ListObjectsV2Command({ Bucket: bucket, Prefix: `${prefix}/` }),
+    );
+
+    const objects = (res.Contents || [])
+      .filter((obj) => obj.Key)
+      .map((obj) => ({ Key: obj.Key! }));
+
+    if (objects.length === 0) {
       throw new NotFoundException("Backup not found");
     }
 
-    const typeFolderId = meta.data.parents[0];
-    const typeMeta = await drive.files
-      .get({ fileId: typeFolderId, fields: "parents, name" })
-      .catch(() => null);
-
-    if (
-      !typeMeta?.data.parents?.includes(rootFolderId) ||
-      ![SUBFOLDER_AUTOMATIC, SUBFOLDER_MANUAL].includes(
-        typeMeta.data.name || "",
-      )
-    ) {
-      throw new NotFoundException("Backup not found");
-    }
-
-    await drive.files.delete({ fileId: folderId });
+    await s3.send(
+      new DeleteObjectsCommand({
+        Bucket: bucket,
+        Delete: { Objects: objects },
+      }),
+    );
   }
 
   async createBackup(): Promise<{ message: string; folder: string }> {
@@ -209,7 +205,7 @@ export class BackupsService {
     return new Promise((resolve, reject) => {
       const proc = spawn("bash", [scriptPath], {
         cwd,
-        env: { ...process.env, BACKUP_TYPE: SUBFOLDER_MANUAL },
+        env: { ...process.env, BACKUP_TYPE: "Manual" },
         stdio: ["ignore", "pipe", "pipe"],
       });
 
@@ -248,67 +244,45 @@ export class BackupsService {
   }
 
   async restoreBackup(folderId: string): Promise<{ message: string }> {
-    const drive = this.getDrive();
-    const rootFolderId = this.getRootFolderId();
+    const prefix = this.decodeAndValidate(folderId);
+    const s3 = this.getS3Client();
+    const bucket = this.getBucketName();
 
-    // Safety: same 2-hop check as deleteBackup
-    const meta = await drive.files
-      .get({ fileId: folderId, fields: "parents, name" })
-      .catch(() => null);
-    if (!meta?.data.parents?.length) {
-      throw new NotFoundException("Backup not found");
-    }
-
-    const typeFolderId = meta.data.parents[0];
-    const typeMeta = await drive.files
-      .get({ fileId: typeFolderId, fields: "parents, name" })
-      .catch(() => null);
-
-    if (
-      !typeMeta?.data.parents?.includes(rootFolderId) ||
-      ![SUBFOLDER_AUTOMATIC, SUBFOLDER_MANUAL].includes(
-        typeMeta.data.name || "",
-      )
-    ) {
-      throw new NotFoundException("Backup not found");
-    }
-
-    // List files inside the backup folder
-    const filesRes = await drive.files.list({
-      q: `'${folderId}' in parents and trashed=false`,
-      fields: "files(id, name)",
-      spaces: "drive",
-    });
-
-    const driveFiles = filesRes.data.files || [];
-
-    const dbFile = driveFiles.find(
-      (f: any) => f.name?.startsWith("db_") && f.name.endsWith(".sql.gz"),
+    const folderKey = `${prefix}/`;
+    const res = await s3.send(
+      new ListObjectsV2Command({ Bucket: bucket, Prefix: folderKey }),
     );
-    if (!dbFile) {
+
+    const keys = (res.Contents || [])
+      .filter((obj) => obj.Key && obj.Key !== folderKey)
+      .map((obj) => obj.Key!);
+
+    const dbKey = keys.find(
+      (k) => path.basename(k).startsWith("db_") && k.endsWith(".sql.gz"),
+    );
+    if (!dbKey) {
       throw new NotFoundException(
         "No database dump found in this backup folder",
       );
     }
 
-    const uploadsFile = driveFiles.find(
-      (f: any) => f.name?.startsWith("uploads_") && f.name.endsWith(".tar.gz"),
+    const uploadsKey = keys.find(
+      (k) => path.basename(k).startsWith("uploads_") && k.endsWith(".tar.gz"),
     );
 
     const ts = Date.now();
     const tmpDbGz = path.join(os.tmpdir(), `uc-restore-${ts}.sql.gz`);
     const tmpDbSql = path.join(os.tmpdir(), `uc-restore-${ts}.sql`);
-    const tmpUploadsGz = uploadsFile
+    const tmpUploadsGz = uploadsKey
       ? path.join(os.tmpdir(), `uc-restore-${ts}-uploads.tar.gz`)
       : null;
 
     try {
-      // --- 1. Download & restore DB ---
-      const dlDb = await drive.files.get(
-        { fileId: dbFile.id!, alt: "media" },
-        { responseType: "stream" },
+      // 1. Download & restore DB
+      const dbObj = await s3.send(
+        new GetObjectCommand({ Bucket: bucket, Key: dbKey }),
       );
-      await pipeline(dlDb.data as any, createWriteStream(tmpDbGz));
+      await pipeline(dbObj.Body as Readable, createWriteStream(tmpDbGz));
       await pipeline(
         createReadStream(tmpDbGz),
         createGunzip(),
@@ -331,17 +305,19 @@ export class BackupsService {
         { env },
       );
 
-      // --- 2. Download & restore uploads (if present) ---
-      if (uploadsFile && tmpUploadsGz) {
+      // 2. Download & restore uploads (if present)
+      if (uploadsKey && tmpUploadsGz) {
         const uploadBaseDir =
           this.configService.get<string>("UPLOAD_BASE_DIR") ||
           path.resolve(__dirname, "../../../uploads");
 
-        const dlUploads = await drive.files.get(
-          { fileId: uploadsFile.id!, alt: "media" },
-          { responseType: "stream" },
+        const uploadsObj = await s3.send(
+          new GetObjectCommand({ Bucket: bucket, Key: uploadsKey }),
         );
-        await pipeline(dlUploads.data as any, createWriteStream(tmpUploadsGz));
+        await pipeline(
+          uploadsObj.Body as Readable,
+          createWriteStream(tmpUploadsGz),
+        );
 
         execSync(`rm -rf "${uploadBaseDir}"`);
         fs.mkdirSync(path.dirname(uploadBaseDir), { recursive: true });
@@ -351,7 +327,7 @@ export class BackupsService {
       }
 
       return {
-        message: uploadsFile
+        message: uploadsKey
           ? "Database and uploads restored successfully"
           : "Database restored successfully (no uploads archive in this backup)",
       };

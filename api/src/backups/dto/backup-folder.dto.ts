@@ -14,11 +14,11 @@ export class BackupFolderDto {
 }
 
 export class DriveSpaceDto {
-  /** Total Drive quota for the account (bytes) */
+  /** Always 0 — R2 has no quota API */
   total: number;
-  /** Total bytes used on the Drive account */
+  /** Always 0 — R2 has no quota API */
   used: number;
-  /** Bytes used by all files inside the backup root folder */
+  /** Bytes used by all backup files in R2 */
   backupSize: number;
 }
 
