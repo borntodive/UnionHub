@@ -48,6 +48,17 @@ export class AppReleasesController {
     return this.appReleasesService.getLatest(platform);
   }
 
+  // Public — no guard — download latest APK without knowing release ID
+  @Get("latest/download")
+  async downloadLatestApk(
+    @Query("platform") platform: string = "android",
+    @Res() res: Response,
+  ) {
+    const { filePath, filename } =
+      await this.appReleasesService.getLatestApkPath(platform);
+    res.download(filePath, filename);
+  }
+
   // Public — no guard — Android devices download APK directly
   @Get(":id/download")
   async downloadApk(@Param("id") id: string, @Res() res: Response) {

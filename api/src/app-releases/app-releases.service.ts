@@ -65,6 +65,28 @@ export class AppReleasesService {
     return this.appReleaseRepository.find({ order: { createdAt: "DESC" } });
   }
 
+  async getLatestApkPath(
+    platform: string,
+  ): Promise<{ filePath: string; filename: string }> {
+    const release = await this.appReleaseRepository
+      .createQueryBuilder("r")
+      .where("r.platform IN (:...platforms)", { platforms: [platform, "all"] })
+      .andWhere("r.apkFilename IS NOT NULL")
+      .orderBy("r.createdAt", "DESC")
+      .getOne();
+
+    if (!release) throw new NotFoundException("No APK release found");
+
+    const filePath = path.join(uploadsDir, "apk", release.apkFilename!);
+    if (!fs.existsSync(filePath))
+      throw new NotFoundException("APK file not found on disk");
+
+    return {
+      filePath,
+      filename: `UnionHub_${release.version.replace(/\./g, "_")}.apk`,
+    };
+  }
+
   async getApkPath(
     id: string,
   ): Promise<{ filePath: string; filename: string }> {
