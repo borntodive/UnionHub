@@ -431,7 +431,7 @@ export const MemberCreateScreen: React.FC = () => {
       note: formData.note || undefined,
       itud: formData.itud,
       rsa: formData.rsa,
-      mailboxAccess: formData.mailboxAccess,
+      ...(isSuperAdmin ? { mailboxAccess: formData.mailboxAccess } : {}),
       rls: formData.rls,
       isUSO: formData.isUSO,
       role: formData.role,
