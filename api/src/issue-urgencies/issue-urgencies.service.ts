@@ -26,9 +26,7 @@ export class IssueUrgenciesService {
 
   async create(dto: CreateIssueUrgencyDto): Promise<IssueUrgency> {
     const urg = await this.repo.save(this.repo.create(dto));
-    this.notificationsService
-      .broadcastSilent("URGENCIES_UPDATED")
-      .catch(() => {});
+    this.notificationsService.fireSilentBroadcast("URGENCIES_UPDATED");
     return urg;
   }
 
@@ -36,17 +34,13 @@ export class IssueUrgenciesService {
     const urg = await this.findById(id);
     Object.assign(urg, dto);
     const saved = await this.repo.save(urg);
-    this.notificationsService
-      .broadcastSilent("URGENCIES_UPDATED")
-      .catch(() => {});
+    this.notificationsService.fireSilentBroadcast("URGENCIES_UPDATED");
     return saved;
   }
 
   async remove(id: string): Promise<void> {
     const urg = await this.findById(id);
     await this.repo.remove(urg);
-    this.notificationsService
-      .broadcastSilent("URGENCIES_UPDATED")
-      .catch(() => {});
+    this.notificationsService.fireSilentBroadcast("URGENCIES_UPDATED");
   }
 }

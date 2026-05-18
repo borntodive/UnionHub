@@ -69,6 +69,15 @@ describe("GmailService", () => {
   });
 
   describe("listEmails", () => {
+    it("connects, acquires lock, releases lock, and logs out", async () => {
+      mockClient.search.mockResolvedValue([]);
+      await service.listEmails("user-1");
+      expect(mockClient.connect).toHaveBeenCalledTimes(1);
+      expect(mockClient.getMailboxLock).toHaveBeenCalledWith("INBOX");
+      expect(mockLock.release).toHaveBeenCalledTimes(1);
+      expect(mockClient.logout).toHaveBeenCalledTimes(1);
+    });
+
     it("returns first page of emails sorted newest first", async () => {
       mockClient.search.mockResolvedValue([1, 2, 3]);
       mockClient.fetchOne.mockResolvedValue({
@@ -105,6 +114,23 @@ describe("GmailService", () => {
   });
 
   describe("getEmail", () => {
+    it("connects, acquires lock, releases lock, and logs out", async () => {
+      mockClient.fetchOne.mockResolvedValue({ source: Buffer.from("raw") });
+      (simpleParser as jest.Mock).mockResolvedValue({
+        from: { text: "a@b.com" },
+        subject: "S",
+        date: new Date(),
+        html: null,
+        text: "t",
+        attachments: [],
+      });
+      await service.getEmail("user-1", "42");
+      expect(mockClient.connect).toHaveBeenCalledTimes(1);
+      expect(mockClient.getMailboxLock).toHaveBeenCalledWith("INBOX");
+      expect(mockLock.release).toHaveBeenCalledTimes(1);
+      expect(mockClient.logout).toHaveBeenCalledTimes(1);
+    });
+
     it("parses source email and returns structured detail", async () => {
       mockClient.fetchOne.mockResolvedValue({ source: Buffer.from("raw") });
       (simpleParser as jest.Mock).mockResolvedValue({
@@ -132,6 +158,19 @@ describe("GmailService", () => {
   });
 
   describe("getAttachment", () => {
+    it("connects, acquires lock, releases lock, and logs out", async () => {
+      const content = Buffer.from("x");
+      mockClient.fetchOne.mockResolvedValue({ source: Buffer.from("raw") });
+      (simpleParser as jest.Mock).mockResolvedValue({
+        attachments: [{ content, size: content.length }],
+      });
+      await service.getAttachment("user-1", "42", "0");
+      expect(mockClient.connect).toHaveBeenCalledTimes(1);
+      expect(mockClient.getMailboxLock).toHaveBeenCalledWith("INBOX");
+      expect(mockLock.release).toHaveBeenCalledTimes(1);
+      expect(mockClient.logout).toHaveBeenCalledTimes(1);
+    });
+
     it("returns base64-encoded attachment content", async () => {
       const content = Buffer.from("PDF content");
       mockClient.fetchOne.mockResolvedValue({ source: Buffer.from("raw") });

@@ -178,6 +178,10 @@ export class NotificationsService {
     }
   }
 
+  fireSilentBroadcast(type: string): void {
+    this.broadcastSilent(type).catch(() => {});
+  }
+
   /**
    * Broadcast a silent data-only notification to all active devices.
    * No alert, no sound — used to trigger client-side cache invalidation.

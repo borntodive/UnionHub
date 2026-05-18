@@ -105,6 +105,108 @@ export class UsersService {
     }
   }
 
+  private async logStatusChange(
+    userId: string,
+    changeType: StatusChangeType,
+    reason: string,
+    changedById: string,
+  ): Promise<void> {
+    await this.statusHistoryRepository.save({
+      userId,
+      changeType,
+      reason,
+      changedById,
+    });
+  }
+
+  private applyUserSearch(
+    queryBuilder: import("typeorm").SelectQueryBuilder<User>,
+    search: string,
+  ): void {
+    const safeSearch = escapeLikeWildcard(search);
+    queryBuilder.andWhere(
+      new Brackets((qb) => {
+        qb.where("user.nome ILIKE :search ESCAPE '\\'", {
+          search: `%${safeSearch}%`,
+        })
+          .orWhere("user.cognome ILIKE :search ESCAPE '\\'", {
+            search: `%${safeSearch}%`,
+          })
+          .orWhere("user.crewcode ILIKE :search ESCAPE '\\'", {
+            search: `%${safeSearch}%`,
+          })
+          .orWhere("user.email ILIKE :search ESCAPE '\\'", {
+            search: `%${safeSearch}%`,
+          });
+      }),
+    );
+  }
+
+  private baseUserQuery(): import("typeorm").SelectQueryBuilder<User> {
+    return this.usersRepository
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.base", "base")
+      .leftJoinAndSelect("user.contratto", "contratto")
+      .leftJoinAndSelect("user.grade", "grade");
+  }
+
+  private async hashDefaultPassword(): Promise<string> {
+    return bcrypt.hash("password", 10);
+  }
+
+  private normalizePersonalFields(dto: {
+    crewcode: string;
+    nome: string;
+    cognome: string;
+    email: string;
+    telefono?: string | null;
+  }): {
+    crewcode: string;
+    nome: string;
+    cognome: string;
+    email: string;
+    telefono?: string | null;
+  } {
+    return {
+      crewcode: dto.crewcode.toUpperCase(),
+      nome: toTitleCase(dto.nome) ?? dto.nome,
+      cognome: toTitleCase(dto.cognome) ?? dto.cognome,
+      email: dto.email.toLowerCase(),
+      telefono: normalizePhone(dto.telefono) ?? dto.telefono,
+    };
+  }
+
+  private parseDateFields(dto: {
+    dataIscrizione?: string;
+    dateOfEntry?: string;
+    dateOfCaptaincy?: string;
+  }): {
+    dataIscrizione?: string | null;
+    dateOfEntry?: string | null;
+    dateOfCaptaincy?: string | null;
+  } {
+    return {
+      dataIscrizione: parseDMYOptional(dto.dataIscrizione),
+      dateOfEntry: parseDMYOptional(dto.dateOfEntry),
+      dateOfCaptaincy: parseDMYOptional(dto.dateOfCaptaincy),
+    };
+  }
+
+  private applyUpdateNormalization(dto: UpdateUserDto): void {
+    if (dto.email) dto.email = dto.email.toLowerCase();
+    if (dto.crewcode) dto.crewcode = dto.crewcode.toUpperCase();
+    if (dto.nome) dto.nome = toTitleCase(dto.nome) ?? dto.nome;
+    if (dto.cognome) dto.cognome = toTitleCase(dto.cognome) ?? dto.cognome;
+    if (dto.telefono)
+      dto.telefono = normalizePhone(dto.telefono) ?? dto.telefono;
+    if (dto.dataIscrizione)
+      dto.dataIscrizione = parseDMYOptional(dto.dataIscrizione) ?? undefined;
+    if (dto.dateOfEntry)
+      dto.dateOfEntry = parseDMYOptional(dto.dateOfEntry) ?? undefined;
+    if (dto.dateOfCaptaincy)
+      dto.dateOfCaptaincy = parseDMYOptional(dto.dateOfCaptaincy) ?? undefined;
+  }
+
   async findAll(
     options: FindAllOptions,
     requestingUser: User,
@@ -155,11 +257,7 @@ export class UsersService {
     }
 
     // Use QueryBuilder for more complex queries
-    const queryBuilder = this.usersRepository
-      .createQueryBuilder("user")
-      .leftJoinAndSelect("user.base", "base")
-      .leftJoinAndSelect("user.contratto", "contratto")
-      .leftJoinAndSelect("user.grade", "grade")
+    const queryBuilder = this.baseUserQuery()
       .where(where)
       .andWhere("user.isActive = :isActive", {
         // pending/rejected users are always isActive=false; skip the default true filter
@@ -176,25 +274,8 @@ export class UsersService {
       .skip((page - 1) * perPage)
       .take(perPage);
 
-    // Search by nome, cognome, crewcode, or email
     if (search) {
-      const safeSearch = escapeLikeWildcard(search);
-      queryBuilder.andWhere(
-        new Brackets((qb) => {
-          qb.where("user.nome ILIKE :search ESCAPE '\\'", {
-            search: `%${safeSearch}%`,
-          })
-            .orWhere("user.cognome ILIKE :search ESCAPE '\\'", {
-              search: `%${safeSearch}%`,
-            })
-            .orWhere("user.crewcode ILIKE :search ESCAPE '\\'", {
-              search: `%${safeSearch}%`,
-            })
-            .orWhere("user.email ILIKE :search ESCAPE '\\'", {
-              search: `%${safeSearch}%`,
-            });
-        }),
-      );
+      this.applyUserSearch(queryBuilder, search);
     }
 
     const [data, total] = await queryBuilder.getManyAndCount();
@@ -224,12 +305,9 @@ export class UsersService {
     crewcode: string,
     includeDeleted = false,
   ): Promise<User | null> {
-    const query = this.usersRepository
-      .createQueryBuilder("user")
-      .where("user.crewcode = :crewcode", { crewcode: crewcode.toUpperCase() })
-      .leftJoinAndSelect("user.base", "base")
-      .leftJoinAndSelect("user.contratto", "contratto")
-      .leftJoinAndSelect("user.grade", "grade");
+    const query = this.baseUserQuery().where("user.crewcode = :crewcode", {
+      crewcode: crewcode.toUpperCase(),
+    });
 
     if (!includeDeleted) {
       query.andWhere("user.isActive = true");
@@ -298,23 +376,14 @@ export class UsersService {
     }
 
     // Hash default password
-    const hashedPassword = await bcrypt.hash("password", 10);
-
-    const dataIscrizione = parseDMYOptional(createUserDto.dataIscrizione);
-    const dateOfEntry = parseDMYOptional(createUserDto.dateOfEntry);
-    const dateOfCaptaincy = parseDMYOptional(createUserDto.dateOfCaptaincy);
+    const hashedPassword = await this.hashDefaultPassword();
+    const normalized = this.normalizePersonalFields(createUserDto);
+    const dates = this.parseDateFields(createUserDto);
 
     const user = this.usersRepository.create({
       ...createUserDto,
-      crewcode: createUserDto.crewcode.toUpperCase(),
-      nome: toTitleCase(createUserDto.nome) ?? createUserDto.nome,
-      cognome: toTitleCase(createUserDto.cognome) ?? createUserDto.cognome,
-      email: createUserDto.email.toLowerCase(),
-      telefono:
-        normalizePhone(createUserDto.telefono) ?? createUserDto.telefono,
-      dataIscrizione,
-      dateOfEntry,
-      dateOfCaptaincy,
+      ...normalized,
+      ...dates,
       password: hashedPassword,
       mustChangePassword: true,
       isActive: true,
@@ -325,13 +394,12 @@ export class UsersService {
 
     const savedUser = await this.usersRepository.save(user);
 
-    // Create status history entry for new user
-    await this.statusHistoryRepository.save({
-      userId: savedUser.id,
-      changeType: StatusChangeType.ACTIVATION,
-      reason: "User created",
-      changedById: requestingUser.id,
-    });
+    await this.logStatusChange(
+      savedUser.id,
+      StatusChangeType.ACTIVATION,
+      "User created",
+      requestingUser.id,
+    );
 
     // Send welcome email (fire-and-forget — 3s delay to avoid Mailtrap rate limit)
     setTimeout(() => {
@@ -354,24 +422,15 @@ export class UsersService {
     requestingUser: User,
   ): Promise<User> {
     // Hash default password
-    const hashedPassword = await bcrypt.hash("password", 10);
-
-    const dataIscrizione = parseDMYOptional(createUserDto.dataIscrizione);
-    const dateOfEntry = parseDMYOptional(createUserDto.dateOfEntry);
-    const dateOfCaptaincy = parseDMYOptional(createUserDto.dateOfCaptaincy);
+    const hashedPassword = await this.hashDefaultPassword();
+    const normalized = this.normalizePersonalFields(createUserDto);
+    const dates = this.parseDateFields(createUserDto);
 
     // Update user with new data
     Object.assign(existingUser, {
       ...createUserDto,
-      crewcode: createUserDto.crewcode.toUpperCase(),
-      nome: toTitleCase(createUserDto.nome) ?? createUserDto.nome,
-      cognome: toTitleCase(createUserDto.cognome) ?? createUserDto.cognome,
-      email: createUserDto.email.toLowerCase(),
-      telefono:
-        normalizePhone(createUserDto.telefono) ?? createUserDto.telefono,
-      dataIscrizione,
-      dateOfEntry,
-      dateOfCaptaincy,
+      ...normalized,
+      ...dates,
       password: hashedPassword,
       mustChangePassword: true,
       isActive: true,
@@ -387,13 +446,12 @@ export class UsersService {
 
     const savedUser = await this.usersRepository.save(existingUser);
 
-    // Create status history entry for reactivation
-    await this.statusHistoryRepository.save({
-      userId: savedUser.id,
-      changeType: StatusChangeType.REACTIVATION,
-      reason: "User re-registered with same crewcode (previously deactivated)",
-      changedById: requestingUser.id,
-    });
+    await this.logStatusChange(
+      savedUser.id,
+      StatusChangeType.REACTIVATION,
+      "User re-registered with same crewcode (previously deactivated)",
+      requestingUser.id,
+    );
 
     // Send welcome email (fire-and-forget — 3s delay to avoid Mailtrap rate limit)
     setTimeout(() => {
@@ -464,38 +522,7 @@ export class UsersService {
     const oldContractId = user.contrattoId;
 
     // Apply updates
-    if (updateUserDto.email) {
-      updateUserDto.email = updateUserDto.email.toLowerCase();
-    }
-    if (updateUserDto.crewcode) {
-      updateUserDto.crewcode = updateUserDto.crewcode.toUpperCase();
-    }
-    if (updateUserDto.nome) {
-      updateUserDto.nome =
-        toTitleCase(updateUserDto.nome) ?? updateUserDto.nome;
-    }
-    if (updateUserDto.cognome) {
-      updateUserDto.cognome =
-        toTitleCase(updateUserDto.cognome) ?? updateUserDto.cognome;
-    }
-    if (updateUserDto.telefono) {
-      updateUserDto.telefono =
-        normalizePhone(updateUserDto.telefono) ?? updateUserDto.telefono;
-    }
-
-    // Convert date fields from DD/MM/YYYY to YYYY-MM-DD for PostgreSQL
-    if (updateUserDto.dataIscrizione) {
-      updateUserDto.dataIscrizione =
-        parseDMYOptional(updateUserDto.dataIscrizione) ?? undefined;
-    }
-    if (updateUserDto.dateOfEntry) {
-      updateUserDto.dateOfEntry =
-        parseDMYOptional(updateUserDto.dateOfEntry) ?? undefined;
-    }
-    if (updateUserDto.dateOfCaptaincy) {
-      updateUserDto.dateOfCaptaincy =
-        parseDMYOptional(updateUserDto.dateOfCaptaincy) ?? undefined;
-    }
+    this.applyUpdateNormalization(updateUserDto);
 
     Object.assign(user, updateUserDto);
 
@@ -539,14 +566,14 @@ export class UsersService {
       updateUserDto.isActive !== undefined &&
       updateUserDto.isActive !== oldIsActive
     ) {
-      await this.statusHistoryRepository.save({
-        userId: savedUser.id,
-        changeType: updateUserDto.isActive
+      await this.logStatusChange(
+        savedUser.id,
+        updateUserDto.isActive
           ? StatusChangeType.ACTIVATION
           : StatusChangeType.DEACTIVATION,
-        reason: updateUserDto.isActive ? "User activated" : "User deactivated",
-        changedById: requestingUser.id,
-      });
+        updateUserDto.isActive ? "User activated" : "User deactivated",
+        requestingUser.id,
+      );
     }
 
     return this.findById(savedUser.id);
@@ -580,13 +607,12 @@ export class UsersService {
     );
     await this.usersRepository.save(user);
 
-    // Create status history entry for deactivation
-    await this.statusHistoryRepository.save({
-      userId: id,
-      changeType: StatusChangeType.DEACTIVATION,
-      reason: "User deactivated (soft delete)",
-      changedById: requestingUser.id,
-    });
+    await this.logStatusChange(
+      id,
+      StatusChangeType.DEACTIVATION,
+      "User deactivated (soft delete)",
+      requestingUser.id,
+    );
   }
 
   async selfDeactivate(userId: string): Promise<void> {
@@ -604,12 +630,12 @@ export class UsersService {
     this.addStatusLogEntry(user, false, reason, userId);
     await this.usersRepository.save(user);
 
-    await this.statusHistoryRepository.save({
+    await this.logStatusChange(
       userId,
-      changeType: StatusChangeType.DEACTIVATION,
+      StatusChangeType.DEACTIVATION,
       reason,
-      changedById: userId,
-    });
+      userId,
+    );
 
     const fullName = `${user.nome} ${user.cognome}`.trim();
     const title = "Iscritto disattivato";
@@ -679,7 +705,7 @@ export class UsersService {
       }
     }
 
-    const hashedPassword = await bcrypt.hash("password", 10);
+    const hashedPassword = await this.hashDefaultPassword();
     await this.updatePassword(id, hashedPassword);
     await this.updateMustChangePassword(id, true);
   }
@@ -754,34 +780,14 @@ export class UsersService {
 
     const { search, page = 1, perPage = 20 } = options;
 
-    const queryBuilder = this.usersRepository
-      .createQueryBuilder("user")
-      .leftJoinAndSelect("user.base", "base")
-      .leftJoinAndSelect("user.contratto", "contratto")
-      .leftJoinAndSelect("user.grade", "grade")
+    const queryBuilder = this.baseUserQuery()
       .where("user.isActive = false") // Only deactivated users
       .orderBy("user.cognome", "ASC")
       .skip((page - 1) * perPage)
       .take(perPage);
 
     if (search) {
-      const safeSearch = escapeLikeWildcard(search);
-      queryBuilder.andWhere(
-        new Brackets((qb) => {
-          qb.where("user.nome ILIKE :search ESCAPE '\\'", {
-            search: `%${safeSearch}%`,
-          })
-            .orWhere("user.cognome ILIKE :search ESCAPE '\\'", {
-              search: `%${safeSearch}%`,
-            })
-            .orWhere("user.crewcode ILIKE :search ESCAPE '\\'", {
-              search: `%${safeSearch}%`,
-            })
-            .orWhere("user.email ILIKE :search ESCAPE '\\'", {
-              search: `%${safeSearch}%`,
-            });
-        }),
-      );
+      this.applyUserSearch(queryBuilder, search);
     }
 
     const [data, total] = await queryBuilder.getManyAndCount();
@@ -830,13 +836,12 @@ export class UsersService {
 
     const savedUser = await this.usersRepository.save(user);
 
-    // Create status history entry
-    await this.statusHistoryRepository.save({
-      userId: savedUser.id,
-      changeType: StatusChangeType.REACTIVATION,
-      reason: "User reactivated by SuperAdmin",
-      changedById: requestingUser.id,
-    });
+    await this.logStatusChange(
+      savedUser.id,
+      StatusChangeType.REACTIVATION,
+      "User reactivated by SuperAdmin",
+      requestingUser.id,
+    );
 
     return savedUser;
   }
@@ -1271,19 +1276,17 @@ export class UsersService {
               defaultContract;
 
         // Create user
-        const hashedPassword = await bcrypt.hash("password", 10);
+        const hashedPassword = await this.hashDefaultPassword();
+        const bulkNorm = this.normalizePersonalFields({
+          crewcode,
+          nome: name.trim(),
+          cognome: surname.trim(),
+          email,
+          telefono: phone ?? null,
+        });
         const user = this.usersRepository.create({
-          crewcode: crewcode.toUpperCase(),
-          nome: name
-            .trim()
-            .toLowerCase()
-            .replace(/\b\w/g, (c) => c.toUpperCase()),
-          cognome: surname
-            .trim()
-            .toLowerCase()
-            .replace(/\b\w/g, (c) => c.toUpperCase()),
-          email: email.toLowerCase(),
-          telefono: normalizePhone(phone) || null,
+          ...bulkNorm,
+          telefono: bulkNorm.telefono || null,
           ruolo,
           baseId: base?.id || null,
           contrattoId: contract?.id || null,
@@ -1304,13 +1307,12 @@ export class UsersService {
 
         await this.usersRepository.save(user);
 
-        // Create status history
-        await this.statusHistoryRepository.save({
-          userId: user.id,
-          changeType: StatusChangeType.ACTIVATION,
-          reason: "User imported via bulk upload",
-          changedById: requestingUser.id,
-        });
+        await this.logStatusChange(
+          user.id,
+          StatusChangeType.ACTIVATION,
+          "User imported via bulk upload",
+          requestingUser.id,
+        );
 
         // Attach registration form if a matching PDF is staged in bulkimport/
         const formUrl = await this.fileStorageService.moveBulkImportPdf(
@@ -1645,15 +1647,12 @@ export class UsersService {
     }
 
     // 3. Hash default password
-    const hashedPassword = await bcrypt.hash("password", 10);
+    const hashedPassword = await this.hashDefaultPassword();
+    const regNorm = this.normalizePersonalFields(dto);
 
     // 4. Create user
     const user = this.usersRepository.create({
-      nome: toTitleCase(dto.nome) ?? dto.nome,
-      cognome: toTitleCase(dto.cognome) ?? dto.cognome,
-      email: dto.email.toLowerCase(),
-      crewcode: dto.crewcode.toUpperCase(),
-      telefono: normalizePhone(dto.telefono) ?? dto.telefono,
+      ...regNorm,
       ruolo: dto.ruolo,
       gradeId: dto.gradeId,
       baseId: dto.baseId,

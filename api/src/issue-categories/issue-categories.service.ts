@@ -30,9 +30,7 @@ export class IssueCategoriesService {
 
   async create(dto: CreateIssueCategoryDto): Promise<IssueCategory> {
     const cat = await this.repo.save(this.repo.create(dto));
-    this.notificationsService
-      .broadcastSilent("CATEGORIES_UPDATED")
-      .catch(() => {});
+    this.notificationsService.fireSilentBroadcast("CATEGORIES_UPDATED");
     return cat;
   }
 
@@ -43,17 +41,13 @@ export class IssueCategoriesService {
     const cat = await this.findById(id);
     Object.assign(cat, dto);
     const saved = await this.repo.save(cat);
-    this.notificationsService
-      .broadcastSilent("CATEGORIES_UPDATED")
-      .catch(() => {});
+    this.notificationsService.fireSilentBroadcast("CATEGORIES_UPDATED");
     return saved;
   }
 
   async remove(id: string): Promise<void> {
     const cat = await this.findById(id);
     await this.repo.remove(cat);
-    this.notificationsService
-      .broadcastSilent("CATEGORIES_UPDATED")
-      .catch(() => {});
+    this.notificationsService.fireSilentBroadcast("CATEGORIES_UPDATED");
   }
 }

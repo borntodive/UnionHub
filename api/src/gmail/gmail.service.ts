@@ -82,6 +82,28 @@ export class GmailService {
     });
   }
 
+  private async withInbox<T>(
+    client: ImapFlow,
+    fn: (client: ImapFlow) => Promise<T>,
+    logContext: string,
+    userMessage: string,
+  ): Promise<T> {
+    await client.connect();
+    try {
+      const lock = await client.getMailboxLock("INBOX");
+      try {
+        return await fn(client);
+      } finally {
+        lock.release();
+      }
+    } catch (err: any) {
+      this.logger.error(`${logContext} failed: ${err.message}`);
+      throw new InternalServerErrorException(userMessage);
+    } finally {
+      await client.logout();
+    }
+  }
+
   private getGmailUserForRuolo(ruolo: Ruolo): string {
     return ruolo === Ruolo.PILOT
       ? this.configService.get<string>("GMAIL_USER_PILOT") || ""
@@ -124,11 +146,10 @@ export class GmailService {
     const client = this.getImapClient(ruolo);
     const page = pageToken ? Math.max(1, parseInt(pageToken, 10)) : 1;
 
-    await client.connect();
-    try {
-      const lock = await client.getMailboxLock("INBOX");
-      try {
-        const uids = (await client.search({}, { uid: true })) as number[];
+    return this.withInbox(
+      client,
+      async (c) => {
+        const uids = (await c.search({}, { uid: true })) as number[];
         uids.sort((a, b) => b - a);
 
         const start = (page - 1) * PAGE_SIZE;
@@ -137,7 +158,7 @@ export class GmailService {
 
         const emails: EmailSummary[] = [];
         for (const uid of pageUids) {
-          const msg = await client.fetchOne(
+          const msg = await c.fetchOne(
             String(uid),
             { envelope: true, flags: true },
             { uid: true },
@@ -167,15 +188,10 @@ export class GmailService {
           emails,
           nextPageToken: hasMore ? String(page + 1) : undefined,
         };
-      } finally {
-        lock.release();
-      }
-    } catch (err: any) {
-      this.logger.error(`listEmails failed: ${err.message}`);
-      throw new InternalServerErrorException("Failed to retrieve emails");
-    } finally {
-      await client.logout();
-    }
+      },
+      "listEmails",
+      "Failed to retrieve emails",
+    );
   }
 
   async getEmail(
@@ -187,11 +203,10 @@ export class GmailService {
     const client = this.getImapClient(ruolo);
     const uid = parseInt(messageId, 10);
 
-    await client.connect();
-    try {
-      const lock = await client.getMailboxLock("INBOX");
-      try {
-        const msg = await client.fetchOne(
+    return this.withInbox(
+      client,
+      async (c) => {
+        const msg = await c.fetchOne(
           String(uid),
           { source: true },
           { uid: true },
@@ -219,15 +234,10 @@ export class GmailService {
           bodyText: parsed.text ?? null,
           attachments,
         };
-      } finally {
-        lock.release();
-      }
-    } catch (err: any) {
-      this.logger.error(`getEmail ${messageId} failed: ${err.message}`);
-      throw new InternalServerErrorException("Failed to retrieve email");
-    } finally {
-      await client.logout();
-    }
+      },
+      `getEmail ${messageId}`,
+      "Failed to retrieve email",
+    );
   }
 
   async getAttachment(
@@ -241,11 +251,10 @@ export class GmailService {
     const uid = parseInt(messageId, 10);
     const attIdx = parseInt(attachmentId, 10);
 
-    await client.connect();
-    try {
-      const lock = await client.getMailboxLock("INBOX");
-      try {
-        const msg = await client.fetchOne(
+    return this.withInbox(
+      client,
+      async (c) => {
+        const msg = await c.fetchOne(
           String(uid),
           { source: true },
           { uid: true },
@@ -261,15 +270,10 @@ export class GmailService {
           data: att.content.toString("base64"),
           size: att.content.length,
         };
-      } finally {
-        lock.release();
-      }
-    } catch (err: any) {
-      this.logger.error(`getAttachment failed: ${err.message}`);
-      throw new InternalServerErrorException("Failed to retrieve attachment");
-    } finally {
-      await client.logout();
-    }
+      },
+      "getAttachment",
+      "Failed to retrieve attachment",
+    );
   }
 
   @Cron("*/5 * * * *")
