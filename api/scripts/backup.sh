@@ -18,7 +18,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 PM2_APP_NAME="${PM2_APP_NAME:-api.unionhub.app}"
 
 # Env vars to extract from PM2 (everything backup.sh needs)
-PM2_KEYS="DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_DATABASE UPLOAD_BASE_DIR R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET_NAME"
+PM2_KEYS="DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_DATABASE UPLOAD_BASE_DIR R2_ENDPOINT R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET_NAME"
 
 # ---------------------------------------------------------------------------
 # 1. Try to load env from PM2

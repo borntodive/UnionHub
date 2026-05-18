@@ -37,19 +37,19 @@ export class BackupsService {
   constructor(private readonly configService: ConfigService) {}
 
   private getS3Client(): S3Client {
-    const accountId = this.configService.get<string>("R2_ACCOUNT_ID");
+    const endpoint = this.configService.get<string>("R2_ENDPOINT");
     const accessKeyId = this.configService.get<string>("R2_ACCESS_KEY_ID");
     const secretAccessKey = this.configService.get<string>(
       "R2_SECRET_ACCESS_KEY",
     );
 
-    if (!accountId || !accessKeyId || !secretAccessKey) {
+    if (!endpoint || !accessKeyId || !secretAccessKey) {
       throw new InternalServerErrorException("R2 credentials not configured");
     }
 
     return new S3Client({
       region: "auto",
-      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      endpoint,
       credentials: { accessKeyId, secretAccessKey },
     });
   }

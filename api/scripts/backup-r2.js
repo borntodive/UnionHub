@@ -40,14 +40,14 @@ if (!tmpDir || !dateLabel) {
   process.exit(1);
 }
 
-const accountId = process.env.R2_ACCOUNT_ID;
+const r2Endpoint = process.env.R2_ENDPOINT;
 const accessKeyId = process.env.R2_ACCESS_KEY_ID;
 const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
 const bucketName = process.env.R2_BUCKET_NAME;
 
-if (!accountId || !accessKeyId || !secretAccessKey) {
+if (!r2Endpoint || !accessKeyId || !secretAccessKey) {
   console.error(
-    "[backup-r2] ERROR: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY must be set.",
+    "[backup-r2] ERROR: R2_ENDPOINT, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY must be set.",
   );
   process.exit(1);
 }
@@ -60,7 +60,7 @@ const RETENTION_DAYS = 15;
 
 const s3 = new S3Client({
   region: "auto",
-  endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+  endpoint: r2Endpoint,
   credentials: { accessKeyId, secretAccessKey },
 });
 
