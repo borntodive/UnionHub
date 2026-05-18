@@ -14,7 +14,6 @@ import {
   Linking,
   Modal,
   Image,
-  InteractionManager,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
@@ -331,7 +330,7 @@ export const MemberCreateScreen: React.FC = () => {
       // Wait for React to paint (removing Modal), then wait for native
       // animations to finish before navigating away — prevents SIGSEGV
       requestAnimationFrame(() => {
-        InteractionManager.runAfterInteractions(() => {
+        requestIdleCallback(() => {
           const user = savedUserRef.current;
           navigation.navigate("MemberOnboarding", {
             memberId: user.id,

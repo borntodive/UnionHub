@@ -70,6 +70,7 @@ export interface AuthResponse {
   refreshToken: string;
   expiresIn: number;
   user: User;
+  biometricToken?: string;
 }
 
 export interface LoginCredentials {

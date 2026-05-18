@@ -43,8 +43,7 @@ export const ReleasesScreen: React.FC = () => {
 
   const [version, setVersion] = useState("");
   const [minVersion, setMinVersion] = useState("");
-  const [platform, setPlatform] =
-    useState<"all" | "ios" | "android">("all");
+  const [platform, setPlatform] = useState<"all" | "ios" | "android">("all");
   const [releaseNotes, setReleaseNotes] = useState("");
   const [apkFile, setApkFile] = useState<ApkFile | null>(null);
 

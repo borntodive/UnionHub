@@ -3,9 +3,12 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { User, AuthResponse } from "../types";
 import { StorageAdapter, SecureStorageAdapter } from "./storageAdapter";
 
-const BIOMETRIC_CREDENTIALS_KEY = "biometric_credentials";
 const SECURE_ACCESS_TOKEN_KEY = "auth_access_token";
 const SECURE_REFRESH_TOKEN_KEY = "auth_refresh_token";
+const SECURE_BIOMETRIC_TOKEN_KEY = "biometric_token";
+const BIOMETRIC_ENABLED_KEY = "biometric_enabled";
+// Legacy key — written by previous app versions; cleaned up on first launch
+const LEGACY_BIOMETRIC_CREDENTIALS_KEY = "biometric_credentials";
 
 export interface AuthState {
   user: User | null;
@@ -14,14 +17,14 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   biometricEnabled: boolean;
-  biometricCredentials: { crewcode: string; refreshToken: string } | null;
   setAuth: (data: Partial<AuthResponse>) => void;
   logout: () => void;
+  logoutAll: () => Promise<void>;
   setUser: (user: User) => void;
   setLoading: (loading: boolean) => void;
-  enableBiometric: (crewcode: string, refreshToken: string) => Promise<void>;
+  enableBiometric: () => Promise<void>;
   disableBiometric: () => Promise<void>;
-  loadBiometricCredentials: () => Promise<void>;
+  getBiometricToken: () => Promise<string | null>;
 }
 
 export function createAuthStore(
@@ -30,14 +33,13 @@ export function createAuthStore(
 ) {
   const store = create<AuthState>()(
     persist(
-      (set, get) => ({
+      (set) => ({
         user: null,
         accessToken: null,
         refreshToken: null,
         isAuthenticated: false,
         isLoading: true,
         biometricEnabled: false,
-        biometricCredentials: null,
 
         setAuth: (data) => {
           if (data.accessToken) {
@@ -48,6 +50,11 @@ export function createAuthStore(
           if (data.refreshToken) {
             secureStorage
               .setItemAsync(SECURE_REFRESH_TOKEN_KEY, data.refreshToken)
+              .catch(() => {});
+          }
+          if (data.biometricToken) {
+            secureStorage
+              .setItemAsync(SECURE_BIOMETRIC_TOKEN_KEY, data.biometricToken)
               .catch(() => {});
           }
           set({
@@ -66,6 +73,7 @@ export function createAuthStore(
           secureStorage
             .deleteItemAsync(SECURE_REFRESH_TOKEN_KEY)
             .catch(() => {});
+          // biometric_token and biometric_enabled intentionally preserved
           set({
             user: null,
             accessToken: null,
@@ -75,53 +83,44 @@ export function createAuthStore(
           });
         },
 
-        setUser: (user) => set({ user }),
-        setLoading: (isLoading) => set({ isLoading }),
-
-        enableBiometric: async (crewcode: string, refreshToken: string) => {
-          await secureStorage.setItemAsync(
-            BIOMETRIC_CREDENTIALS_KEY,
-            JSON.stringify({ crewcode, refreshToken }),
-          );
+        logoutAll: async () => {
+          await Promise.allSettled([
+            secureStorage.deleteItemAsync(SECURE_ACCESS_TOKEN_KEY),
+            secureStorage.deleteItemAsync(SECURE_REFRESH_TOKEN_KEY),
+            secureStorage.deleteItemAsync(SECURE_BIOMETRIC_TOKEN_KEY),
+            secureStorage.setItemAsync(BIOMETRIC_ENABLED_KEY, "false"),
+          ]);
           set({
-            biometricEnabled: true,
-            biometricCredentials: { crewcode, refreshToken },
+            user: null,
+            accessToken: null,
+            refreshToken: null,
+            isAuthenticated: false,
+            isLoading: false,
+            biometricEnabled: false,
           });
         },
 
+        setUser: (user) => set({ user }),
+        setLoading: (isLoading) => set({ isLoading }),
+
+        enableBiometric: async () => {
+          await secureStorage.setItemAsync(BIOMETRIC_ENABLED_KEY, "true");
+          set({ biometricEnabled: true });
+        },
+
         disableBiometric: async () => {
-          await secureStorage.deleteItemAsync(BIOMETRIC_CREDENTIALS_KEY);
-          set({ biometricEnabled: false, biometricCredentials: null });
+          await Promise.allSettled([
+            secureStorage.deleteItemAsync(SECURE_BIOMETRIC_TOKEN_KEY),
+            secureStorage.setItemAsync(BIOMETRIC_ENABLED_KEY, "false"),
+          ]);
+          set({ biometricEnabled: false });
         },
 
-        updateBiometricCredentials: async (newRefreshToken: string) => {
-          const current = get().biometricCredentials;
-          if (current) {
-            const updated = { ...current, refreshToken: newRefreshToken };
-            await secureStorage.setItemAsync(
-              BIOMETRIC_CREDENTIALS_KEY,
-              JSON.stringify(updated),
-            );
-            set({ biometricCredentials: updated });
-          }
-        },
-
-        loadBiometricCredentials: async () => {
+        getBiometricToken: async () => {
           try {
-            const raw = await secureStorage.getItemAsync(
-              BIOMETRIC_CREDENTIALS_KEY,
-            );
-            if (raw) {
-              const credentials = JSON.parse(raw) as {
-                crewcode: string;
-                refreshToken: string;
-              };
-              set({ biometricCredentials: credentials });
-            } else {
-              set({ biometricCredentials: null, biometricEnabled: false });
-            }
+            return await secureStorage.getItemAsync(SECURE_BIOMETRIC_TOKEN_KEY);
           } catch {
-            set({ biometricCredentials: null, biometricEnabled: false });
+            return null;
           }
         },
       }),
@@ -135,15 +134,46 @@ export function createAuthStore(
         }),
         onRehydrateStorage: () => async (state) => {
           try {
-            const [accessToken, refreshToken] = await Promise.all([
-              secureStorage.getItemAsync(SECURE_ACCESS_TOKEN_KEY),
-              secureStorage.getItemAsync(SECURE_REFRESH_TOKEN_KEY),
-            ]);
+            // One-time migration: detect legacy biometric_credentials key
+            const legacyCredentials = await secureStorage
+              .getItemAsync(LEGACY_BIOMETRIC_CREDENTIALS_KEY)
+              .catch(() => null);
+
+            if (legacyCredentials !== null && legacyCredentials !== undefined) {
+              // Force logout and disable biometric — user must re-enable after login
+              await Promise.allSettled([
+                secureStorage.deleteItemAsync(LEGACY_BIOMETRIC_CREDENTIALS_KEY),
+                secureStorage.deleteItemAsync(SECURE_ACCESS_TOKEN_KEY),
+                secureStorage.deleteItemAsync(SECURE_REFRESH_TOKEN_KEY),
+                secureStorage.setItemAsync(BIOMETRIC_ENABLED_KEY, "false"),
+              ]);
+              store.setState({
+                isAuthenticated: false,
+                biometricEnabled: false,
+                user: null,
+                accessToken: null,
+                refreshToken: null,
+              });
+              if (state) state.setLoading(false);
+              else store.getState().setLoading(false);
+              return;
+            }
+
+            const [accessToken, refreshToken, biometricEnabledRaw] =
+              await Promise.all([
+                secureStorage.getItemAsync(SECURE_ACCESS_TOKEN_KEY),
+                secureStorage.getItemAsync(SECURE_REFRESH_TOKEN_KEY),
+                secureStorage.getItemAsync(BIOMETRIC_ENABLED_KEY),
+              ]);
+
+            const biometricEnabled = biometricEnabledRaw === "true";
+
             if (accessToken && refreshToken) {
               store.setState({
                 accessToken,
                 refreshToken,
                 isAuthenticated: true,
+                biometricEnabled,
               });
             } else {
               store.setState({
@@ -151,6 +181,7 @@ export function createAuthStore(
                 user: null,
                 accessToken: null,
                 refreshToken: null,
+                biometricEnabled,
               });
             }
           } catch {

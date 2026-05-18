@@ -42,7 +42,8 @@ export const releasesApi = {
     formData.append("version", payload.version);
     if (payload.minVersion) formData.append("minVersion", payload.minVersion);
     if (payload.platform) formData.append("platform", payload.platform);
-    if (payload.releaseNotes) formData.append("releaseNotes", payload.releaseNotes);
+    if (payload.releaseNotes)
+      formData.append("releaseNotes", payload.releaseNotes);
     if (payload.apk) {
       formData.append("apk", payload.apk as any);
     }

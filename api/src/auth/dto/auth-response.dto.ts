@@ -5,6 +5,7 @@ export class AuthResponseDto {
   refreshToken: string;
   user: Partial<User>;
   expiresIn: number;
+  biometricToken?: string;
 }
 
 export class TokenPayloadDto {

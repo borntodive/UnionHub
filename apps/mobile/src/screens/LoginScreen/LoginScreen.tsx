@@ -62,16 +62,8 @@ export const LoginScreen: React.FC = () => {
   const setAuth = useAuthStore((state) => state.setAuth);
   const enableBiometric = useAuthStore((state) => state.enableBiometric);
   const disableBiometric = useAuthStore((state) => state.disableBiometric);
-  const updateBiometricCredentials = useAuthStore(
-    (state) => state.updateBiometricCredentials,
-  );
+  const getBiometricToken = useAuthStore((state) => state.getBiometricToken);
   const biometricEnabled = useAuthStore((state) => state.biometricEnabled);
-  const biometricCredentials = useAuthStore(
-    (state) => state.biometricCredentials,
-  );
-  const loadBiometricCredentials = useAuthStore(
-    (state) => state.loadBiometricCredentials,
-  );
 
   const [crewcode, setCrewcode] = useState("");
   const [password, setPassword] = useState("");
@@ -86,11 +78,6 @@ export const LoginScreen: React.FC = () => {
     checkAvailability,
   } = useBiometricAuth();
 
-  // Load biometric credentials from SecureStore on mount
-  useEffect(() => {
-    loadBiometricCredentials();
-  }, [loadBiometricCredentials]);
-
   // Check if biometric is available on mount
   useEffect(() => {
     checkAvailability();
@@ -99,37 +86,42 @@ export const LoginScreen: React.FC = () => {
   // Try biometric login on mount if enabled
   useEffect(() => {
     const tryBiometricLogin = async () => {
-      if (biometricEnabled && isAvailable && biometricCredentials) {
-        const success = await authenticate(
-          t("auth.biometricLogin", { method: getBiometricLabel() }),
-        );
-        if (success) {
-          try {
-            const response = await authApi.refreshToken(
-              biometricCredentials.refreshToken,
-            );
-            setAuth(response);
-            if (response.user?.language) {
-              await setLanguage(response.user.language);
-            }
-            syncPayslipSettings();
-          } catch {
-            Alert.alert(t("errors.generic"), t("auth.sessionExpired"), [
-              { text: t("common.ok") },
-            ]);
-          }
+      if (!biometricEnabled || !isAvailable) return;
+
+      const success = await authenticate("Accedi a UnionHub con Face ID");
+      if (!success) return;
+
+      try {
+        const storedToken = await getBiometricToken();
+        if (!storedToken) {
+          Alert.alert(
+            t("common.error"),
+            "Sessione biometrica non trovata. Accedi con le tue credenziali.",
+          );
+          return;
         }
+        const response = await authApi.biometricLogin(storedToken);
+        setAuth(response);
+        if (response.user?.language) {
+          await setLanguage(response.user.language);
+        }
+        syncPayslipSettings();
+      } catch {
+        Alert.alert(
+          t("common.error"),
+          "Sessione biometrica scaduta. Accedi con le tue credenziali.",
+          [{ text: t("common.ok") }],
+        );
       }
     };
 
     tryBiometricLogin();
-  }, [biometricEnabled, isAvailable, biometricCredentials]);
+  }, [biometricEnabled, isAvailable]);
 
   const loginMutation = useMutation({
     mutationFn: authApi.login,
-    onSuccess: async (data, variables) => {
+    onSuccess: async (data) => {
       setAuth(data);
-      // Set language from user preference
       if (data.user?.language) {
         await setLanguage(data.user.language);
       }
@@ -139,26 +131,18 @@ export const LoginScreen: React.FC = () => {
       if (isAvailable && !biometricEnabled) {
         setTimeout(() => {
           Alert.alert(
-            t("auth.enableBiometric", { method: getBiometricLabel() }),
-            t("auth.biometricLogin", { method: getBiometricLabel() }),
+            `Vuoi usare ${getBiometricLabel()} per i prossimi accessi?`,
+            "Accedi a UnionHub con Face ID",
             [
-              { text: t("common.no"), style: "cancel" },
+              { text: "Non ora", style: "cancel" },
               {
-                text: t("common.yes"),
+                text: "Attiva",
                 onPress: async () => {
                   const success = await authenticate(
-                    t("auth.biometricLogin", { method: getBiometricLabel() }),
+                    "Accedi a UnionHub con Face ID",
                   );
                   if (success) {
-                    console.log(
-                      "[Login] Saving biometric credentials, refreshToken:",
-                      data.refreshToken?.substring(0, 20) + "...",
-                    );
-                    enableBiometric(variables.crewcode, data.refreshToken);
-                    Alert.alert(
-                      t("common.success"),
-                      t("auth.biometricLogin", { method: getBiometricLabel() }),
-                    );
+                    await enableBiometric();
                   }
                 },
               },
@@ -201,44 +185,30 @@ export const LoginScreen: React.FC = () => {
       return;
     }
 
-    if (!biometricCredentials) {
-      Alert.alert(t("common.error"), t("auth.firstLoginRequired"));
-      return;
-    }
+    const success = await authenticate("Accedi a UnionHub con Face ID");
+    if (!success) return;
 
-    const success = await authenticate(
-      t("auth.biometricLogin", { method: getBiometricLabel() }),
-    );
-    if (success) {
-      try {
-        console.log(
-          "[BiometricLogin] Using refreshToken:",
-          biometricCredentials.refreshToken?.substring(0, 20) + "...",
-        );
-        const response = await authApi.refreshToken(
-          biometricCredentials.refreshToken,
-        );
-        console.log("[BiometricLogin] Success:", response.user?.crewcode);
-        // Update stored refresh token with the new one
-        await updateBiometricCredentials(response.refreshToken);
-        setAuth(response);
-        // Set language from user preference
-        if (response.user?.language) {
-          await setLanguage(response.user.language);
-        }
-        syncPayslipSettings();
-      } catch (error: any) {
-        console.log(
-          "[BiometricLogin] Error:",
-          error?.response?.data || error?.message,
-        );
-        // Clear expired biometric credentials
-        disableBiometric();
+    try {
+      const storedToken = await getBiometricToken();
+      if (!storedToken) {
         Alert.alert(
           t("common.error"),
-          t("auth.biometricSessionExpired", { method: getBiometricLabel() }),
+          "Sessione biometrica non trovata. Accedi con le tue credenziali.",
         );
+        return;
       }
+      const response = await authApi.biometricLogin(storedToken);
+      setAuth(response);
+      if (response.user?.language) {
+        await setLanguage(response.user.language);
+      }
+      syncPayslipSettings();
+    } catch {
+      Alert.alert(
+        t("common.error"),
+        "Sessione biometrica scaduta. Accedi con le tue credenziali.",
+        [{ text: t("common.ok") }],
+      );
     }
   };
 
@@ -329,7 +299,7 @@ export const LoginScreen: React.FC = () => {
               />
 
               {/* Biometric Login Button */}
-              {isAvailable && biometricCredentials && (
+              {isAvailable && biometricEnabled && (
                 <TouchableOpacity
                   style={styles.biometricButton}
                   onPress={handleBiometricLogin}

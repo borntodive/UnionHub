@@ -45,6 +45,8 @@ module.exports = {
         ITSAppUsesNonExemptEncryption: false,
         NSCameraUsageDescription:
           "UnionHub uses the camera to scan and upload registration documents.",
+        NSPhotoLibraryUsageDescription:
+          "UnionHub accesses your photo library to send images in chat.",
         NSLocationWhenInUseUsageDescription:
           "Location is used to find nearby VOLMET stations.",
         UIViewControllerBasedStatusBarAppearance: false,
@@ -118,6 +120,13 @@ module.exports = {
       ],
       "expo-sharing",
       "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          photosPermission:
+            "UnionHub accesses your photo library to send images in chat.",
+        },
+      ],
     ],
     // Extra config accessible via Constants.expoConfig.extra
     extra: {

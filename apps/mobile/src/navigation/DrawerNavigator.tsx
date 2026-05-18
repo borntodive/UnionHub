@@ -103,6 +103,9 @@ import { MetarManageScreen } from "../screens/MetarManageScreen";
 import { VolmetFormScreen } from "../screens/admin/VolmetFormScreen";
 import { ChatRoomsScreen } from "../screens/chat/ChatRoomsScreen";
 import { UserRole } from "../types";
+
+const CHAT_FOR_ALL_USERS = false; // flip to true to roll out chat to everyone
+
 const Drawer = createDrawerNavigator();
 
 const AdminScreen = () => {
@@ -324,7 +327,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             />
           )}
 
-          {isOnline && (
+          {isOnline && (CHAT_FOR_ALL_USERS || isAdmin) && (
             <MenuItem
               icon={<MessageCircle size={22} color={colors.primary} />}
               label="Chat Sindacale"
@@ -1121,7 +1124,10 @@ export const DrawerNavigator: React.FC = () => {
           drawerIcon: ({ color }: { color: string }) => (
             <Text style={{ color, fontSize: 18 }}>💬</Text>
           ),
-          drawerItemStyle: isOnline ? undefined : { display: "none" },
+          drawerItemStyle:
+            isOnline && (CHAT_FOR_ALL_USERS || isAdmin)
+              ? undefined
+              : { display: "none" },
           headerShown: false,
         }}
       />

@@ -11,6 +11,7 @@ import * as bcrypt from "bcrypt";
 import * as crypto from "crypto";
 import { UsersService } from "../users/users.service";
 import { RefreshToken } from "../refresh-tokens/entities/refresh-token.entity";
+import { BiometricToken } from "../biometric-tokens/entities/biometric-token.entity";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { LoginDto } from "./dto/login.dto";
@@ -62,6 +63,8 @@ export class AuthService {
     private mailService: MailService,
     @InjectRepository(RefreshToken)
     private refreshTokenRepository: Repository<RefreshToken>,
+    @InjectRepository(BiometricToken)
+    private biometricTokenRepository: Repository<BiometricToken>,
   ) {}
 
   private hashToken(token: string): string {
@@ -107,9 +110,11 @@ export class AuthService {
     }
 
     const tokens = await this.generateTokens(user, ipAddress, userAgent);
+    const biometricToken = await this.generateBiometricToken(user);
 
     return {
       ...tokens,
+      biometricToken,
       user: user.serialize(user.role),
     };
   }
@@ -182,6 +187,62 @@ export class AuthService {
       { userId, isRevoked: false },
       { isRevoked: true, revokedAt: new Date() },
     );
+    await this.revokeBiometricTokens(userId);
+  }
+
+  async revokeBiometricTokens(userId: string): Promise<void> {
+    await this.biometricTokenRepository.update(
+      { userId, isRevoked: false },
+      { isRevoked: true, revokedAt: new Date() },
+    );
+  }
+
+  private async generateBiometricToken(user: User): Promise<string> {
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const tokenHash = this.hashToken(rawToken);
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 90);
+
+    const entity = this.biometricTokenRepository.create({
+      userId: user.id,
+      token: tokenHash,
+      expiresAt,
+    });
+    await this.biometricTokenRepository.save(entity);
+
+    return rawToken;
+  }
+
+  async biometricLogin(
+    biometricToken: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<AuthResponseDto> {
+    const tokenHash = this.hashToken(biometricToken);
+    const tokenEntity = await this.biometricTokenRepository.findOne({
+      where: { token: tokenHash },
+      relations: ["user"],
+    });
+
+    if (!tokenEntity || !tokenEntity.isValid()) {
+      throw new UnauthorizedException("Invalid or expired biometric token");
+    }
+
+    if (!tokenEntity.user.isActive) {
+      throw new UnauthorizedException("Account is deactivated");
+    }
+
+    const tokens = await this.generateTokens(
+      tokenEntity.user,
+      ipAddress,
+      userAgent,
+    );
+
+    return {
+      ...tokens,
+      user: tokenEntity.user.serialize(tokenEntity.user.role),
+    };
   }
 
   async changePassword(

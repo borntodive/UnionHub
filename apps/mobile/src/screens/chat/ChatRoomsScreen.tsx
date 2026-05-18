@@ -7,10 +7,15 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { MessageCircle } from "lucide-react-native";
 import { chatApi, ChatRoom } from "../../api/chat";
 import { QUERY_KEYS } from "../../api/queryKeys";
+import { colors, spacing, typography, borderRadius } from "../../theme";
 
 interface Props {
   navigation: any;
@@ -18,7 +23,11 @@ interface Props {
 
 export function ChatRoomsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const { data: rooms, isLoading } = useQuery({
+  const {
+    data: rooms,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: QUERY_KEYS.chatRooms,
     queryFn: chatApi.getRooms,
   });
@@ -33,64 +42,99 @@ export function ChatRoomsScreen({ navigation }: Props) {
         })
       }
     >
-      <Text style={styles.roomHash}>#</Text>
-      <View style={styles.roomInfo}>
-        <Text style={styles.roomName}>{item.name}</Text>
+      <View style={styles.roomIcon}>
+        <Text style={styles.roomHash}>#</Text>
       </View>
+      <Text style={styles.roomName}>{item.name}</Text>
     </TouchableOpacity>
   );
 
-  if (isLoading) {
-    return (
-      <View style={[styles.container, styles.center]}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
-
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.openDrawer()}>
-          <Text style={styles.menuIcon}>☰</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Chat Sindacale</Text>
-      </View>
-      <FlatList
-        data={rooms ?? []}
-        keyExtractor={(item) => item.id}
-        renderItem={renderRoom}
-        contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-      />
-    </View>
+    <>
+      <View style={[styles.statusBarHack, { height: insets.top }]} />
+      <SafeAreaView style={styles.flex} edges={["bottom", "left", "right"]}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.openDrawer()}>
+            <Text style={styles.menuIcon}>☰</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Chat Sindacale</Text>
+        </View>
+
+        {isLoading ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        ) : isError ? (
+          <View style={styles.center}>
+            <Text style={styles.errorText}>Impossibile caricare le chat</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={rooms ?? []}
+            keyExtractor={(item) => item.id}
+            renderItem={renderRoom}
+            contentContainerStyle={styles.listContent}
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            ListEmptyComponent={
+              <View style={styles.center}>
+                <Text style={styles.emptyText}>Nessuna stanza disponibile</Text>
+              </View>
+            }
+          />
+        )}
+      </SafeAreaView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0f1923" },
-  center: { justifyContent: "center", alignItems: "center" },
+  flex: { flex: 1, backgroundColor: colors.background },
+  statusBarHack: { backgroundColor: colors.primary },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#1e2a4a",
+    gap: spacing.md,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
   },
-  menuIcon: { color: "#fff", fontSize: 20 },
-  title: { color: "#fff", fontSize: 18, fontWeight: "700" },
-  listContent: { paddingVertical: 8 },
+  menuIcon: { color: colors.textInverse, fontSize: 20, width: 28 },
+  headerTitle: {
+    flex: 1,
+    color: colors.textInverse,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.bold,
+  },
+  listContent: { paddingVertical: spacing.sm },
   roomItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
     paddingVertical: 14,
-    gap: 12,
+    backgroundColor: colors.surface,
+    gap: spacing.md,
   },
-  roomHash: { color: "#748ffc", fontSize: 20, fontWeight: "700", width: 20 },
-  roomInfo: { flex: 1 },
-  roomName: { color: "#e9ecef", fontSize: 15, fontWeight: "600" },
-  separator: { height: 1, backgroundColor: "#1a2233", marginHorizontal: 16 },
+  roomIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primaryLight,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  roomHash: {
+    color: colors.textInverse,
+    fontSize: 16,
+    fontWeight: typography.weights.bold,
+  },
+  roomName: {
+    flex: 1,
+    color: colors.text,
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.medium,
+  },
+  separator: { height: 1, backgroundColor: colors.border },
+  errorText: { color: colors.error, fontSize: typography.sizes.sm },
+  emptyText: { color: colors.textSecondary, fontSize: typography.sizes.sm },
 });

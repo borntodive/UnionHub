@@ -28,6 +28,7 @@ import {
 } from "./dto/change-password.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { AuthResponseDto } from "./dto/auth-response.dto";
+import { BiometricLoginDto } from "./dto/biometric-login.dto";
 import { PublicRegisterDto } from "../users/dto/public-register.dto";
 import { User } from "../users/entities/user.entity";
 
@@ -135,6 +136,17 @@ export class AuthController {
   ): Promise<{ message: string }> {
     await this.authService.logout(refreshTokenDto.refreshToken);
     return { message: "Logged out successfully" };
+  }
+
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @Post("biometric")
+  @HttpCode(HttpStatus.OK)
+  async biometricLogin(
+    @Body() dto: BiometricLoginDto,
+    @Ip() ip: string,
+    @Headers("user-agent") userAgent: string,
+  ): Promise<AuthResponseDto> {
+    return this.authService.biometricLogin(dto.biometricToken, ip, userAgent);
   }
 
   @Post("logout-all")

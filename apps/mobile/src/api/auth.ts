@@ -58,8 +58,19 @@ export const authApi = {
     return response.data;
   },
 
+  biometricLogin: async (biometricToken: string): Promise<AuthResponse> => {
+    const response = await apiClient.post<AuthResponse>("/auth/biometric", {
+      biometricToken,
+    });
+    return response.data;
+  },
+
   logout: async (refreshToken: string): Promise<void> => {
     await apiClient.post("/auth/logout", { refreshToken });
+  },
+
+  logoutAll: async (refreshToken: string): Promise<void> => {
+    await apiClient.post("/auth/logout-all", { refreshToken });
   },
 
   changePassword: async (data: ChangePasswordData): Promise<void> => {

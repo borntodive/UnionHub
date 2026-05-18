@@ -10,16 +10,24 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
-  Linking,
+  ActionSheetIOS,
+  Modal,
+  Image,
 } from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as DocumentPicker from "expo-document-picker";
 import { chatApi, ChatMessage } from "../../api/chat";
 import { QUERY_KEYS } from "../../api/queryKeys";
 import { useAuthStore } from "../../store/authStore";
 import { useChatSocket } from "../../hooks/useChatSocket";
 import { UserRole } from "../../types";
+import { colors, spacing, typography, borderRadius } from "../../theme";
 
 interface Props {
   navigation: any;
@@ -33,6 +41,12 @@ export function ChatRoomScreen({ navigation, route }: Props) {
   const queryClient = useQueryClient();
   const [inputText, setInputText] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{
+    uri: string;
+    mimeType: string;
+    name: string;
+  } | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
   const { data: history, isLoading } = useQuery({
@@ -100,19 +114,13 @@ export function ChatRoomScreen({ navigation, route }: Props) {
     setInputText("");
   };
 
-  const handleAttachment = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      copyToCacheDirectory: true,
-    });
-    if (result.canceled || !result.assets?.length) return;
-
-    const asset = result.assets[0];
+  const uploadAsset = async (uri: string, name: string, type: string) => {
     setIsUploading(true);
     try {
       const { attachmentId } = await chatApi.uploadAttachment(roomId, {
-        uri: asset.uri,
-        name: asset.name,
-        type: asset.mimeType ?? "application/octet-stream",
+        uri,
+        name,
+        type,
       });
       sendMessage(inputText.trim() || undefined, [attachmentId]);
       setInputText("");
@@ -120,6 +128,90 @@ export function ChatRoomScreen({ navigation, route }: Props) {
       Alert.alert("Errore", "Upload fallito, riprova.");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handlePickFromLibrary = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ["image/*", "video/*"],
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets?.length) return;
+    const asset = result.assets[0];
+    await uploadAsset(
+      asset.uri,
+      asset.name,
+      asset.mimeType ?? "application/octet-stream",
+    );
+  };
+
+  const handlePickFile = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets?.length) return;
+    const asset = result.assets[0];
+    await uploadAsset(
+      asset.uri,
+      asset.name,
+      asset.mimeType ?? "application/octet-stream",
+    );
+  };
+
+  const handleAttachment = () => {
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ["Annulla", "Scegli dalla libreria", "Allega file"],
+          cancelButtonIndex: 0,
+        },
+        (index) => {
+          if (index === 1) handlePickFromLibrary();
+          else if (index === 2) handlePickFile();
+        },
+      );
+    } else {
+      Alert.alert("Allegato", "Scegli un'opzione", [
+        { text: "Annulla", style: "cancel" },
+        { text: "Scegli dalla libreria", onPress: handlePickFromLibrary },
+        { text: "Allega file", onPress: handlePickFile },
+      ]);
+    }
+  };
+
+  const handleOpenAttachment = async (
+    attId: string,
+    originalName: string,
+    mimeType: string,
+  ) => {
+    if (downloadingId) return;
+    setDownloadingId(attId);
+    try {
+      const url = chatApi.getAttachmentUrl(attId);
+      const ext = originalName.includes(".")
+        ? originalName.slice(originalName.lastIndexOf("."))
+        : "";
+      const localUri =
+        (FileSystem.cacheDirectory ?? "") + `chat_att_${attId}${ext}`;
+      const { status } = await FileSystem.downloadAsync(url, localUri, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (status !== 200) {
+        Alert.alert("Errore", `Download fallito (HTTP ${status}).`);
+        return;
+      }
+      if (mimeType.startsWith("image/")) {
+        setPreview({ uri: localUri, mimeType, name: originalName });
+      } else {
+        await Sharing.shareAsync(localUri, {
+          mimeType,
+          dialogTitle: originalName,
+        });
+      }
+    } catch (e: any) {
+      Alert.alert("Errore", e?.message ?? "Impossibile aprire l'allegato.");
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -156,15 +248,22 @@ export function ChatRoomScreen({ navigation, route }: Props) {
             </Text>
           )}
           {item.content ? (
-            <Text style={styles.messageText}>{item.content}</Text>
+            <Text style={[styles.messageText, isOwn && styles.messageTextOwn]}>
+              {item.content}
+            </Text>
           ) : null}
           {item.attachments?.map((att) => (
             <TouchableOpacity
               key={att.id}
               style={styles.attachmentCard}
-              onPress={() => Linking.openURL(chatApi.getAttachmentUrl(att.id))}
+              onPress={() =>
+                handleOpenAttachment(att.id, att.originalName, att.mimeType)
+              }
+              disabled={downloadingId === att.id}
             >
-              <Text style={styles.attachmentIcon}>📄</Text>
+              <Text style={styles.attachmentIcon}>
+                {downloadingId === att.id ? "⏳" : "📄"}
+              </Text>
               <View>
                 <Text style={styles.attachmentName} numberOfLines={1}>
                   {att.originalName}
@@ -175,7 +274,7 @@ export function ChatRoomScreen({ navigation, route }: Props) {
               </View>
             </TouchableOpacity>
           ))}
-          <Text style={styles.timestamp}>
+          <Text style={[styles.timestamp, isOwn && styles.timestampOwn]}>
             {new Date(item.createdAt).toLocaleTimeString("it-IT", {
               hour: "2-digit",
               minute: "2-digit",
@@ -188,173 +287,277 @@ export function ChatRoomScreen({ navigation, route }: Props) {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.center]}>
-        <ActivityIndicator />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={insets.top + 56}
-    >
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.backIcon}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}># {roomName}</Text>
+    <>
+      <View style={[styles.statusBarHack, { height: insets.top }]} />
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={insets.top + 56}
+      >
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Text style={styles.backIcon}>←</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}># {roomName}</Text>
+            <View
+              style={[
+                styles.dot,
+                isConnected ? styles.dotOnline : styles.dotOffline,
+              ]}
+            />
+          </View>
+
+          {pinnedMessage && (
+            <View style={styles.pinnedBanner}>
+              <Text style={styles.pinnedIcon}>📌</Text>
+              <Text style={styles.pinnedText} numberOfLines={1}>
+                {pinnedMessage.content ?? "📎 allegato"}
+              </Text>
+            </View>
+          )}
+
+          <FlatList
+            ref={flatListRef}
+            data={messages.filter((m) => !m.deletedAt)}
+            keyExtractor={(item) => item.id}
+            renderItem={renderMessage}
+            contentContainerStyle={styles.messagesList}
+            onContentSizeChange={() =>
+              flatListRef.current?.scrollToEnd({ animated: false })
+            }
+          />
+
           <View
             style={[
-              styles.dot,
-              isConnected ? styles.dotOnline : styles.dotOffline,
+              styles.inputBar,
+              { paddingBottom: insets.bottom || spacing.sm },
             ]}
-          />
-        </View>
-
-        {pinnedMessage && (
-          <View style={styles.pinnedBanner}>
-            <Text style={styles.pinnedIcon}>📌</Text>
-            <Text style={styles.pinnedText} numberOfLines={1}>
-              {pinnedMessage.content ?? "📎 allegato"}
-            </Text>
+          >
+            <TouchableOpacity onPress={handleAttachment} disabled={isUploading}>
+              <Text style={styles.attachIcon}>{isUploading ? "⏳" : "📎"}</Text>
+            </TouchableOpacity>
+            <TextInput
+              style={styles.input}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Scrivi un messaggio…"
+              placeholderTextColor={colors.textTertiary}
+              multiline
+              maxLength={4000}
+            />
+            <TouchableOpacity onPress={handleSend} disabled={!isConnected}>
+              <Text
+                style={[
+                  styles.sendIcon,
+                  !isConnected && styles.sendIconDisabled,
+                ]}
+              >
+                ➤
+              </Text>
+            </TouchableOpacity>
           </View>
-        )}
-
-        <FlatList
-          ref={flatListRef}
-          data={messages.filter((m) => !m.deletedAt)}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMessage}
-          contentContainerStyle={styles.messagesList}
-          onContentSizeChange={() =>
-            flatListRef.current?.scrollToEnd({ animated: false })
-          }
-        />
-
-        <View style={styles.inputBar}>
-          <TouchableOpacity onPress={handleAttachment} disabled={isUploading}>
-            <Text style={styles.attachIcon}>{isUploading ? "⏳" : "📎"}</Text>
-          </TouchableOpacity>
-          <TextInput
-            style={styles.input}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Scrivi un messaggio…"
-            placeholderTextColor="#6c757d"
-            multiline
-            maxLength={4000}
-          />
-          <TouchableOpacity onPress={handleSend} disabled={!isConnected}>
-            <Text
-              style={[styles.sendIcon, !isConnected && styles.sendIconDisabled]}
-            >
-              ➤
-            </Text>
-          </TouchableOpacity>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+
+      <Modal
+        visible={!!preview}
+        animationType="slide"
+        onRequestClose={() => setPreview(null)}
+      >
+        <SafeAreaView
+          style={styles.previewContainer}
+          edges={["top", "bottom", "left", "right"]}
+        >
+          <View style={styles.previewHeader}>
+            <TouchableOpacity onPress={() => setPreview(null)}>
+              <Text style={styles.previewClose}>✕</Text>
+            </TouchableOpacity>
+            <Text style={styles.previewTitle} numberOfLines={1}>
+              {preview?.name}
+            </Text>
+            <TouchableOpacity
+              onPress={() =>
+                preview &&
+                Sharing.shareAsync(preview.uri, {
+                  mimeType: preview.mimeType,
+                  dialogTitle: preview.name,
+                })
+              }
+            >
+              <Text style={styles.previewShare}>⬆</Text>
+            </TouchableOpacity>
+          </View>
+          <Image
+            source={{ uri: preview?.uri ?? "" }}
+            style={styles.previewImage}
+            resizeMode="contain"
+          />
+        </SafeAreaView>
+      </Modal>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0f1923" },
-  center: { justifyContent: "center", alignItems: "center" },
+  flex: { flex: 1 },
+  statusBarHack: { backgroundColor: colors.primary },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.background,
+  },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#1e2a4a",
+    gap: spacing.md,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
   },
-  backIcon: { color: "#748ffc", fontSize: 22, width: 28 },
-  headerTitle: { flex: 1, color: "#fff", fontSize: 16, fontWeight: "700" },
+  backIcon: { color: colors.textInverse, fontSize: 22, width: 28 },
+  headerTitle: {
+    flex: 1,
+    color: colors.textInverse,
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.bold,
+  },
   dot: { width: 8, height: 8, borderRadius: 4 },
-  dotOnline: { backgroundColor: "#51cf66" },
-  dotOffline: { backgroundColor: "#6c757d" },
+  dotOnline: { backgroundColor: colors.success },
+  dotOffline: { backgroundColor: colors.textTertiary },
   pinnedBanner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    backgroundColor: "#1e3a2f",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    gap: spacing.sm,
+    backgroundColor: "#e8f5ee",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: "#2d5a40",
+    borderBottomColor: colors.border,
   },
-  pinnedIcon: { fontSize: 14 },
-  pinnedText: { flex: 1, color: "#adb5bd", fontSize: 13 },
-  messagesList: { padding: 12, gap: 8 },
-  messageRow: { flexDirection: "row", gap: 8, marginBottom: 8 },
+  pinnedIcon: { fontSize: 13 },
+  pinnedText: {
+    flex: 1,
+    color: colors.textSecondary,
+    fontSize: typography.sizes.sm,
+  },
+  messagesList: { padding: spacing.md, gap: spacing.sm },
+  messageRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
   messageRowOwn: { flexDirection: "row-reverse" },
   avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#3b5bdb",
+    width: 34,
+    height: 34,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
     flexShrink: 0,
   },
-  avatarText: { color: "#fff", fontSize: 11, fontWeight: "700" },
+  avatarText: {
+    color: colors.textInverse,
+    fontSize: 11,
+    fontWeight: typography.weights.bold,
+  },
   bubble: {
     maxWidth: "75%",
-    backgroundColor: "#1e2a4a",
-    borderRadius: 12,
-    padding: 10,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.sm,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  bubbleOwn: { backgroundColor: "#2d5a9e" },
+  bubbleOwn: { backgroundColor: colors.primary },
   senderName: {
-    color: "#748ffc",
+    color: colors.primary,
     fontSize: 11,
     marginBottom: 3,
-    fontWeight: "600",
+    fontWeight: typography.weights.semibold,
   },
-  messageText: { color: "#e9ecef", fontSize: 14, lineHeight: 20 },
+  messageText: {
+    color: colors.text,
+    fontSize: typography.sizes.sm,
+    lineHeight: 20,
+  },
+  messageTextOwn: { color: colors.textInverse },
   attachmentCard: {
     flexDirection: "row",
-    gap: 8,
+    gap: spacing.sm,
     alignItems: "center",
-    backgroundColor: "#0f1923",
-    borderRadius: 8,
-    padding: 8,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
     marginTop: 4,
   },
   attachmentIcon: { fontSize: 22 },
-  attachmentName: { color: "#e9ecef", fontSize: 12, maxWidth: 180 },
-  attachmentSize: { color: "#6c757d", fontSize: 10, marginTop: 1 },
+  attachmentName: { color: colors.text, fontSize: 12, maxWidth: 180 },
+  attachmentSize: { color: colors.textTertiary, fontSize: 10, marginTop: 1 },
   timestamp: {
-    color: "#6c757d",
+    color: colors.textTertiary,
     fontSize: 10,
     marginTop: 4,
     alignSelf: "flex-end",
   },
+  timestampOwn: { color: "rgba(255,255,255,0.7)" },
   inputBar: {
     flexDirection: "row",
     alignItems: "flex-end",
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: "#1e2a4a",
-    backgroundColor: "#0f1923",
+    borderTopColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  attachIcon: { color: "#748ffc", fontSize: 22, paddingBottom: 4 },
+  attachIcon: { color: colors.primary, fontSize: 22, paddingBottom: 4 },
   input: {
     flex: 1,
-    backgroundColor: "#1e2a4a",
+    backgroundColor: colors.surfaceVariant,
     borderRadius: 20,
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    color: "#e9ecef",
-    fontSize: 14,
+    paddingVertical: spacing.sm,
+    color: colors.text,
+    fontSize: typography.sizes.sm,
     maxHeight: 120,
   },
-  sendIcon: { color: "#748ffc", fontSize: 22, paddingBottom: 4 },
-  sendIconDisabled: { color: "#3a4a6a" },
+  sendIcon: { color: colors.primary, fontSize: 22, paddingBottom: 4 },
+  sendIconDisabled: { color: colors.textTertiary },
+  previewContainer: { flex: 1, backgroundColor: colors.background },
+  previewHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
+  },
+  previewClose: { color: colors.textInverse, fontSize: 20, width: 28 },
+  previewTitle: {
+    flex: 1,
+    color: colors.textInverse,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+  },
+  previewShare: {
+    color: colors.textInverse,
+    fontSize: 22,
+    width: 28,
+    textAlign: "right",
+  },
+  previewImage: { flex: 1, width: "100%", backgroundColor: colors.background },
 });

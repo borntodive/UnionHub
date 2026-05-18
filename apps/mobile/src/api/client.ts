@@ -18,15 +18,11 @@ const apiClient = createApiClient({
   baseURL: API_BASE_URL,
   getAccessToken: () => useAuthStore.getState().accessToken,
   getRefreshToken: () => useAuthStore.getState().refreshToken,
-  onTokensRefreshed: async (accessToken, refreshToken) => {
+  onTokensRefreshed: (accessToken, refreshToken) => {
     useAuthStore.getState().setAuth({ accessToken, refreshToken });
-    // Also update biometric credentials if enabled
-    await useAuthStore.getState().updateBiometricCredentials(refreshToken);
   },
-  onLogout: async () => {
+  onLogout: () => {
     payslipResetCallback?.();
-    // Clear biometric credentials on logout - they'll need to re-enable after login
-    await useAuthStore.getState().disableBiometric();
     useAuthStore.getState().logout();
   },
 });

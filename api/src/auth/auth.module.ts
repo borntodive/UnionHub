@@ -11,6 +11,7 @@ import { BasesModule } from "../bases/bases.module";
 import { GradesModule } from "../grades/grades.module";
 import { MailModule } from "../mail/mail.module";
 import { RefreshToken } from "../refresh-tokens/entities/refresh-token.entity";
+import { BiometricToken } from "../biometric-tokens/entities/biometric-token.entity";
 
 @Module({
   imports: [
@@ -35,7 +36,7 @@ import { RefreshToken } from "../refresh-tokens/entities/refresh-token.entity";
       },
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([RefreshToken]),
+    TypeOrmModule.forFeature([RefreshToken, BiometricToken]),
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],

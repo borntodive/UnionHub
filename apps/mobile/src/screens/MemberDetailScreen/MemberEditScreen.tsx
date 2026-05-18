@@ -13,7 +13,6 @@ import {
   Switch,
   Modal,
   Platform,
-  InteractionManager,
 } from "react-native";
 import {
   SafeAreaView,
@@ -244,7 +243,7 @@ export const MemberEditScreen: React.FC = () => {
       // Wait for React to paint (removing Modal), then wait for native
       // animations to finish before navigating away — prevents SIGSEGV
       requestAnimationFrame(() => {
-        InteractionManager.runAfterInteractions(() => {
+        requestIdleCallback(() => {
           navigation.goBack();
         });
       });

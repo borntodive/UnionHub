@@ -11,7 +11,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  InteractionManager,
 } from "react-native";
 import {
   SafeAreaView,
@@ -163,7 +162,7 @@ export const CompleteProfileScreen: React.FC = () => {
       // Modals from the tree), then wait for all native animations/interactions
       // to finish before triggering the navigation stack swap.
       requestAnimationFrame(() => {
-        InteractionManager.runAfterInteractions(() => {
+        requestIdleCallback(() => {
           setUser(savedUserRef.current);
         });
       });
