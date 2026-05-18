@@ -28,13 +28,15 @@ Rather than chase the root cause, the fix is to eliminate OAuth entirely:
 
 | Remove                            | Add                             |
 | --------------------------------- | ------------------------------- |
-| `GOOGLE_REFRESH_TOKEN_PILOT`      | `GMAIL_APP_PASSWORD_PILOT`      |
+| `GOOGLE_REFRESH_TOKEN_PILOT`      | — (reuse `MAIL_PASS`)           |
 | `GOOGLE_REFRESH_TOKEN_CABIN_CREW` | `GMAIL_APP_PASSWORD_CABIN_CREW` |
 | `GOOGLE_PUBSUB_TOPIC`             | —                               |
 | `GOOGLE_CLIENT_ID`                | —                               |
 | `GOOGLE_CLIENT_SECRET`            | —                               |
 
 `GMAIL_USER_PILOT` and `GMAIL_USER_CABIN_CREW` remain unchanged.
+
+`MAIL_PASS` (already set for SMTP outgoing) doubles as the IMAP App Password for the pilot mailbox — same Gmail account (`pilmalta.fitcisl@gmail.com`), same App Password works for both protocols.
 
 ### IMAP Connection
 
@@ -45,7 +47,7 @@ const client = new ImapFlow({
   secure: true,
   auth: {
     user: process.env.GMAIL_USER_PILOT,
-    pass: process.env.GMAIL_APP_PASSWORD_PILOT,
+    pass: process.env.MAIL_PASS, // reuse existing App Password
   },
   logger: false,
 });
@@ -145,8 +147,8 @@ manual/2025-01-15_1430/uploads.tar.gz
 
 ### Gmail IMAP
 
-1. Generate App Password: Google Account → Security → 2-Step Verification → App passwords → select "Mail" + device name
-2. Add to `.env`: `GMAIL_APP_PASSWORD_PILOT=xxxx xxxx xxxx xxxx`
+1. Pilot mailbox: `MAIL_PASS` already set — no new env var needed.
+2. Cabin crew: generate App Password on that Google Account → Security → App passwords. Add `GMAIL_APP_PASSWORD_CABIN_CREW` to `.env`.
 3. `cd api && npm run start:dev`
 4. Open union mailbox in mobile app → emails load correctly
 5. Open email detail → body and attachments render
