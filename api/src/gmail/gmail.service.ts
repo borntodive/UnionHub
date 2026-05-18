@@ -3,13 +3,12 @@ import {
   ForbiddenException,
   InternalServerErrorException,
   Logger,
-  OnModuleInit,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { google, gmail_v1 } from "googleapis";
-import { OAuth2Client } from "google-auth-library";
+import { ImapFlow } from "imapflow";
+import { simpleParser } from "mailparser";
 import { User } from "../users/entities/user.entity";
 import { Ruolo } from "../common/enums/ruolo.enum";
 import { UserRole } from "../common/enums/user-role.enum";
@@ -47,12 +46,11 @@ export interface EmailListResult {
   nextPageToken?: string;
 }
 
-@Injectable()
-export class GmailService implements OnModuleInit {
-  private readonly logger = new Logger(GmailService.name);
+const PAGE_SIZE = 20;
 
-  // In-memory tracking per Pub/Sub webhook
-  private readonly lastHistoryId = new Map<Ruolo, string>();
+@Injectable()
+export class GmailService {
+  private readonly logger = new Logger(GmailService.name);
 
   constructor(
     private readonly configService: ConfigService,
@@ -60,333 +58,58 @@ export class GmailService implements OnModuleInit {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async onModuleInit() {
-    await this.watchInbox(Ruolo.PILOT);
-    await this.watchInbox(Ruolo.CABIN_CREW);
-  }
+  private getImapClient(ruolo: Ruolo): ImapFlow {
+    const user =
+      ruolo === Ruolo.PILOT
+        ? this.configService.get<string>("GMAIL_USER_PILOT")!
+        : this.configService.get<string>("GMAIL_USER_CABIN_CREW")!;
 
-  // ── Per-ruolo config helpers ──────────────────────────────────────
+    const pass =
+      ruolo === Ruolo.PILOT
+        ? this.configService.get<string>("MAIL_PASS")!
+        : this.configService.get<string>("GMAIL_APP_PASSWORD_CABIN_CREW")!;
 
-  private getRefreshTokenEnvKey(ruolo: Ruolo): string {
-    return ruolo === Ruolo.PILOT
-      ? "GOOGLE_REFRESH_TOKEN_PILOT"
-      : "GOOGLE_REFRESH_TOKEN_CABIN_CREW";
-  }
-
-  private getGmailUserEnvKey(ruolo: Ruolo): string {
-    return ruolo === Ruolo.PILOT ? "GMAIL_USER_PILOT" : "GMAIL_USER_CABIN_CREW";
-  }
-
-  private getOAuth2ClientForRuolo(ruolo: Ruolo): OAuth2Client {
-    const clientId = this.configService.get<string>("GOOGLE_CLIENT_ID");
-    const clientSecret = this.configService.get<string>("GOOGLE_CLIENT_SECRET");
-    const refreshToken = this.configService.get<string>(
-      this.getRefreshTokenEnvKey(ruolo),
-    );
-
-    const client = new google.auth.OAuth2(
-      clientId,
-      clientSecret,
-      "urn:ietf:wg:oauth:2.0:oob",
-    );
-
-    if (refreshToken) {
-      client.setCredentials({ refresh_token: refreshToken });
-    }
-
-    return client;
-  }
-
-  // @ts-ignore
-  private getGmailClientForRuolo(ruolo: Ruolo): gmail_v1.Gmail {
-    const auth = this.getOAuth2ClientForRuolo(ruolo);
-    return google.gmail({ version: "v1", auth });
-  }
-
-  private getGmailUserForRuolo(ruolo: Ruolo): string {
-    return (
-      this.configService.get<string>(this.getGmailUserEnvKey(ruolo)) || "me"
-    );
-  }
-
-  // ── Auth status ────────────────────────────────────────────────────
-
-  isAuthorized(ruolo: Ruolo): boolean {
-    const token = this.configService.get<string>(
-      this.getRefreshTokenEnvKey(ruolo),
-    );
-    return !!token;
-  }
-
-  getAuthorizationUrl(ruolo: Ruolo): string {
-    const clientId = this.configService.get<string>("GOOGLE_CLIENT_ID");
-    const clientSecret = this.configService.get<string>("GOOGLE_CLIENT_SECRET");
-
-    const client = new google.auth.OAuth2(
-      clientId,
-      clientSecret,
-      "urn:ietf:wg:oauth:2.0:oob",
-    );
-
-    return client.generateAuthUrl({
-      access_type: "offline",
-      scope: ["https://www.googleapis.com/auth/gmail.readonly"],
-      prompt: "consent",
+    return new ImapFlow({
+      host: "imap.gmail.com",
+      port: 993,
+      secure: true,
+      auth: { user, pass },
+      logger: false,
     });
   }
 
-  async exchangeCode(
-    code: string,
-    ruolo: Ruolo,
-  ): Promise<{ refreshToken: string; ruolo: Ruolo }> {
-    const clientId = this.configService.get<string>("GOOGLE_CLIENT_ID");
-    const clientSecret = this.configService.get<string>("GOOGLE_CLIENT_SECRET");
-
-    const client = new google.auth.OAuth2(
-      clientId,
-      clientSecret,
-      "urn:ietf:wg:oauth:2.0:oob",
-    );
-
-    try {
-      const { tokens } = await client.getToken(code);
-      if (!tokens.refresh_token) {
-        throw new InternalServerErrorException(
-          "No refresh token returned. Make sure to revoke previous access and retry.",
-        );
-      }
-      return { refreshToken: tokens.refresh_token, ruolo };
-    } catch (err: any) {
-      if (err instanceof InternalServerErrorException) throw err;
-      throw new InternalServerErrorException(
-        `Failed to exchange code: ${err.message}`,
-      );
-    }
+  private getGmailUserForRuolo(ruolo: Ruolo): string {
+    return ruolo === Ruolo.PILOT
+      ? this.configService.get<string>("GMAIL_USER_PILOT") || ""
+      : this.configService.get<string>("GMAIL_USER_CABIN_CREW") || "";
   }
-
-  // ── Pub/Sub watch ──────────────────────────────────────────────────
-
-  async watchInbox(ruolo: Ruolo): Promise<void> {
-    if (!this.isAuthorized(ruolo)) return;
-
-    const topicName = this.configService.get<string>("GOOGLE_PUBSUB_TOPIC");
-    if (!topicName) {
-      this.logger.warn(
-        "GOOGLE_PUBSUB_TOPIC not configured — Gmail push disabled",
-      );
-      return;
-    }
-
-    const gmail = this.getGmailClientForRuolo(ruolo);
-    const gmailUser = this.getGmailUserForRuolo(ruolo);
-
-    try {
-      const res = await gmail.users.watch({
-        userId: gmailUser,
-        requestBody: { labelIds: ["INBOX"], topicName },
-      });
-      if (res.data.historyId) {
-        this.lastHistoryId.set(ruolo, res.data.historyId);
-      }
-      this.logger.log(
-        `Gmail watch registered for ${ruolo}, historyId: ${res.data.historyId}`,
-      );
-    } catch (err: any) {
-      this.logger.error(
-        `Failed to set Gmail watch for ${ruolo}: ${err.message}`,
-      );
-    }
-  }
-
-  getRuoloForEmail(email: string): Ruolo | undefined {
-    const pilotEmail = this.configService.get<string>("GMAIL_USER_PILOT");
-    const cabinEmail = this.configService.get<string>("GMAIL_USER_CABIN_CREW");
-    if (email === pilotEmail) return Ruolo.PILOT;
-    if (email === cabinEmail) return Ruolo.CABIN_CREW;
-    return undefined;
-  }
-
-  async processWebhookNotification(
-    emailAddress: string,
-    newHistoryId: string,
-  ): Promise<{
-    ruolo: Ruolo;
-    newMessages: Array<{ id: string; subject: string; from: string }>;
-  } | null> {
-    const ruolo = this.getRuoloForEmail(emailAddress);
-    if (!ruolo) {
-      this.logger.warn(`Webhook for unknown email: ${emailAddress}`);
-      return null;
-    }
-
-    const lastId = this.lastHistoryId.get(ruolo);
-    this.lastHistoryId.set(ruolo, newHistoryId);
-
-    if (!lastId) {
-      // First notification after restart — just seed historyId, no notification
-      return null;
-    }
-    if (lastId === newHistoryId) return null;
-
-    const gmail = this.getGmailClientForRuolo(ruolo);
-    const gmailUser = this.getGmailUserForRuolo(ruolo);
-
-    try {
-      const historyRes = await gmail.users.history.list({
-        userId: gmailUser,
-        startHistoryId: lastId,
-        historyTypes: ["messageAdded"],
-        labelId: "INBOX",
-      });
-
-      const history = historyRes.data.history || [];
-      const newMessageIds = new Set<string>();
-      for (const record of history) {
-        for (const added of record.messagesAdded || []) {
-          if (added.message?.id) newMessageIds.add(added.message.id);
-        }
-      }
-
-      if (newMessageIds.size === 0) return null;
-
-      const newMessages = await Promise.all(
-        [...newMessageIds].map(async (msgId) => {
-          const detail = await gmail.users.messages.get({
-            userId: gmailUser,
-            id: msgId,
-            format: "metadata",
-            metadataHeaders: ["From", "Subject"],
-          });
-          const headers = detail.data.payload?.headers || [];
-          return {
-            id: msgId,
-            subject: this.getHeader(headers, "Subject") || "(no subject)",
-            from: this.getHeader(headers, "From") || "",
-          };
-        }),
-      );
-
-      // Renew watch to keep it alive (expires after 7 days)
-      await this.watchInbox(ruolo);
-
-      return { ruolo, newMessages };
-    } catch (err: any) {
-      this.logger.error(`Failed to process webhook history: ${err.message}`);
-      return null;
-    }
-  }
-
-  // ── RSA gate — returns the user's ruolo ────────────────────────────
-  // Admin/SuperAdmin bypass the RSA flag and must provide ruoloOverride.
-  // Regular users must have rsa=true and a ruolo assigned.
 
   private async assertRsa(
     userId: string,
     ruoloOverride?: Ruolo,
   ): Promise<Ruolo> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new ForbiddenException("User not found");
-    }
+    if (!user) throw new ForbiddenException("User not found");
 
     const isAdmin =
       user.role === UserRole.ADMIN || user.role === UserRole.SUPERADMIN;
 
     if (isAdmin) {
-      if (!ruoloOverride) {
+      if (!ruoloOverride)
         throw new ForbiddenException(
           "Admin must specify ruolo query param (pilot or cabin_crew)",
         );
-      }
       return ruoloOverride;
     }
 
-    if (user.rsa !== true) {
+    if (user.rsa !== true)
       throw new ForbiddenException("Access restricted to RSA members");
-    }
-    if (!user.ruolo) {
+    if (!user.ruolo)
       throw new ForbiddenException(
         "RSA user has no professional role assigned",
       );
-    }
     return user.ruolo;
   }
-
-  // ── Helpers ────────────────────────────────────────────────────────
-
-  private decodeBase64(data: string): string {
-    return Buffer.from(
-      data.replace(/-/g, "+").replace(/_/g, "/"),
-      "base64",
-    ).toString("utf-8");
-  }
-
-  // @ts-ignore
-  private extractBody(payload: gmail_v1.Schema$MessagePart): {
-    html: string | null;
-    text: string | null;
-  } {
-    let html: string | null = null;
-    let text: string | null = null;
-
-    // @ts-ignore
-    const walk = (part: gmail_v1.Schema$MessagePart) => {
-      if (part.mimeType === "text/html" && part.body?.data) {
-        html = this.decodeBase64(part.body.data);
-      } else if (part.mimeType === "text/plain" && part.body?.data) {
-        text = this.decodeBase64(part.body.data);
-      }
-      if (part.parts) {
-        part.parts.forEach(walk);
-      }
-    };
-
-    walk(payload);
-    return { html, text };
-  }
-
-  private extractAttachments(
-    // @ts-ignore
-    payload: gmail_v1.Schema$MessagePart,
-  ): EmailAttachment[] {
-    const attachments: EmailAttachment[] = [];
-
-    // @ts-ignore
-    const walk = (part: gmail_v1.Schema$MessagePart) => {
-      if (
-        part.filename &&
-        part.filename.length > 0 &&
-        part.body?.attachmentId
-      ) {
-        attachments.push({
-          attachmentId: part.body.attachmentId,
-          filename: part.filename,
-          mimeType: part.mimeType || "application/octet-stream",
-          size: part.body.size || 0,
-        });
-      }
-      if (part.parts) {
-        part.parts.forEach(walk);
-      }
-    };
-
-    walk(payload);
-    return attachments;
-  }
-
-  private getHeader(
-    // @ts-ignore
-    headers: gmail_v1.Schema$MessagePartHeader[] | undefined,
-    name: string,
-  ): string {
-    if (!headers) return "";
-    const header = headers.find(
-      (h) => h.name?.toLowerCase() === name.toLowerCase(),
-    );
-    return header?.value || "";
-  }
-
-  // ── Public API ─────────────────────────────────────────────────────
 
   async listEmails(
     userId: string,
@@ -394,47 +117,60 @@ export class GmailService implements OnModuleInit {
     ruoloOverride?: Ruolo,
   ): Promise<EmailListResult> {
     const ruolo = await this.assertRsa(userId, ruoloOverride);
-    const gmailUser = this.getGmailUserForRuolo(ruolo);
-    const gmail = this.getGmailClientForRuolo(ruolo);
+    const client = this.getImapClient(ruolo);
+    const page = pageToken ? Math.max(1, parseInt(pageToken, 10)) : 1;
 
+    await client.connect();
     try {
-      const listRes = await gmail.users.messages.list({
-        userId: gmailUser,
-        maxResults: 20,
-        pageToken: pageToken || undefined,
-      });
+      const lock = await client.getMailboxLock("INBOX");
+      try {
+        const uids = (await client.search({}, { uid: true })) as number[];
+        uids.sort((a, b) => b - a);
 
-      const messages = listRes.data.messages || [];
-      const nextPageToken = listRes.data.nextPageToken || undefined;
+        const start = (page - 1) * PAGE_SIZE;
+        const pageUids = uids.slice(start, start + PAGE_SIZE);
+        const hasMore = uids.length > start + PAGE_SIZE;
 
-      const emails: EmailSummary[] = await Promise.all(
-        messages.map(async (msg: any) => {
-          const detail = await gmail.users.messages.get({
-            userId: gmailUser,
-            id: msg.id!,
-            format: "metadata",
-            metadataHeaders: ["From", "Subject", "Date"],
+        const emails: EmailSummary[] = [];
+        for (const uid of pageUids) {
+          const msg = await client.fetchOne(
+            String(uid),
+            { envelope: true, flags: true },
+            { uid: true },
+          );
+          if (!msg) continue;
+
+          const envelope = msg.envelope!;
+          const f = envelope.from?.[0];
+          const from = f
+            ? f.name
+              ? `${f.name} <${f.address}>`
+              : (f.address ?? "")
+            : "";
+
+          emails.push({
+            id: String(uid),
+            threadId: "",
+            from,
+            subject: envelope.subject || "(no subject)",
+            date: envelope.date?.toISOString() ?? "",
+            snippet: "",
+            unread: !(msg.flags as Set<string>).has("\\Seen"),
           });
+        }
 
-          const headers = detail.data.payload?.headers;
-          const unread = (detail.data.labelIds || []).includes("UNREAD");
-
-          return {
-            id: detail.data.id!,
-            threadId: detail.data.threadId || "",
-            from: this.getHeader(headers, "From"),
-            subject: this.getHeader(headers, "Subject"),
-            date: this.getHeader(headers, "Date"),
-            snippet: detail.data.snippet || "",
-            unread,
-          };
-        }),
-      );
-
-      return { emails, nextPageToken };
+        return {
+          emails,
+          nextPageToken: hasMore ? String(page + 1) : undefined,
+        };
+      } finally {
+        lock.release();
+      }
     } catch (err: any) {
-      this.logger.error(`Failed to list emails: ${err.message}`);
+      this.logger.error(`listEmails failed: ${err.message}`);
       throw new InternalServerErrorException("Failed to retrieve emails");
+    } finally {
+      await client.logout();
     }
   }
 
@@ -444,34 +180,49 @@ export class GmailService implements OnModuleInit {
     ruoloOverride?: Ruolo,
   ): Promise<EmailDetail> {
     const ruolo = await this.assertRsa(userId, ruoloOverride);
-    const gmailUser = this.getGmailUserForRuolo(ruolo);
-    const gmail = this.getGmailClientForRuolo(ruolo);
+    const client = this.getImapClient(ruolo);
+    const uid = parseInt(messageId, 10);
 
+    await client.connect();
     try {
-      const res = await gmail.users.messages.get({
-        userId: gmailUser,
-        id: messageId,
-        format: "full",
-      });
+      const lock = await client.getMailboxLock("INBOX");
+      try {
+        const msg = await client.fetchOne(
+          String(uid),
+          { source: true },
+          { uid: true },
+        );
+        if (!msg) throw new InternalServerErrorException("Email not found");
 
-      const payload = res.data.payload!;
-      const headers = payload.headers;
-      const { html, text } = this.extractBody(payload);
-      const attachments = this.extractAttachments(payload);
+        const parsed = await simpleParser(msg.source as Buffer);
 
-      return {
-        id: res.data.id!,
-        threadId: res.data.threadId || "",
-        from: this.getHeader(headers, "From"),
-        subject: this.getHeader(headers, "Subject"),
-        date: this.getHeader(headers, "Date"),
-        bodyHtml: html,
-        bodyText: text,
-        attachments,
-      };
+        const attachments: EmailAttachment[] = (parsed.attachments ?? []).map(
+          (att, idx) => ({
+            attachmentId: String(idx),
+            filename: att.filename ?? `attachment-${idx}`,
+            mimeType: att.contentType ?? "application/octet-stream",
+            size: att.size ?? att.content.length,
+          }),
+        );
+
+        return {
+          id: String(uid),
+          threadId: "",
+          from: parsed.from?.text ?? "",
+          subject: parsed.subject ?? "(no subject)",
+          date: parsed.date?.toISOString() ?? "",
+          bodyHtml: (parsed.html as string) || null,
+          bodyText: parsed.text ?? null,
+          attachments,
+        };
+      } finally {
+        lock.release();
+      }
     } catch (err: any) {
-      this.logger.error(`Failed to get email ${messageId}: ${err.message}`);
+      this.logger.error(`getEmail ${messageId} failed: ${err.message}`);
       throw new InternalServerErrorException("Failed to retrieve email");
+    } finally {
+      await client.logout();
     }
   }
 
@@ -482,23 +233,38 @@ export class GmailService implements OnModuleInit {
     ruoloOverride?: Ruolo,
   ): Promise<{ data: string; size: number }> {
     const ruolo = await this.assertRsa(userId, ruoloOverride);
-    const gmailUser = this.getGmailUserForRuolo(ruolo);
-    const gmail = this.getGmailClientForRuolo(ruolo);
+    const client = this.getImapClient(ruolo);
+    const uid = parseInt(messageId, 10);
+    const attIdx = parseInt(attachmentId, 10);
 
+    await client.connect();
     try {
-      const res = await gmail.users.messages.attachments.get({
-        userId: gmailUser,
-        messageId,
-        id: attachmentId,
-      });
+      const lock = await client.getMailboxLock("INBOX");
+      try {
+        const msg = await client.fetchOne(
+          String(uid),
+          { source: true },
+          { uid: true },
+        );
+        if (!msg) throw new InternalServerErrorException("Email not found");
 
-      return {
-        data: res.data.data || "",
-        size: res.data.size || 0,
-      };
+        const parsed = await simpleParser(msg.source as Buffer);
+        const att = parsed.attachments?.[attIdx];
+        if (!att)
+          throw new InternalServerErrorException("Attachment not found");
+
+        return {
+          data: att.content.toString("base64"),
+          size: att.content.length,
+        };
+      } finally {
+        lock.release();
+      }
     } catch (err: any) {
-      this.logger.error(`Failed to get attachment: ${err.message}`);
+      this.logger.error(`getAttachment failed: ${err.message}`);
       throw new InternalServerErrorException("Failed to retrieve attachment");
+    } finally {
+      await client.logout();
     }
   }
 }
