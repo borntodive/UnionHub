@@ -39,7 +39,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
       const url =
         Platform.OS === "ios"
           ? IOS_APP_STORE_URL
-          : getAndroidApkUrl(nativeUpdate.latestVersion);
+          : getAndroidApkUrl(nativeUpdate.id);
       Linking.openURL(url).catch(console.error);
     } else {
       onApplyOTA();

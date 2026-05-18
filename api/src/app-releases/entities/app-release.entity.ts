@@ -22,6 +22,9 @@ export class AppRelease {
   @Column({ type: "text", nullable: true })
   releaseNotes: string | null;
 
+  @Column({ nullable: true, type: "varchar" })
+  apkFilename: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

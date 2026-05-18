@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   TextInput,
   Alert,
@@ -18,7 +17,8 @@ import {
 } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Menu, Plus, Smartphone } from "lucide-react-native";
+import { Menu, Plus, Smartphone, Paperclip, X } from "lucide-react-native";
+import * as DocumentPicker from "expo-document-picker";
 import {
   releasesApi,
   AppRelease,
@@ -30,6 +30,12 @@ import { Card } from "../../components/Card";
 
 const PLATFORMS = ["all", "ios", "android"] as const;
 
+interface ApkFile {
+  uri: string;
+  name: string;
+  type: string;
+}
+
 export const ReleasesScreen: React.FC = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -37,8 +43,12 @@ export const ReleasesScreen: React.FC = () => {
 
   const [version, setVersion] = useState("");
   const [minVersion, setMinVersion] = useState("");
-  const [platform, setPlatform] = useState<"all" | "ios" | "android">("all");
+  const [platform, setPlatform] =
+    useState<"all" | "ios" | "android">("all");
   const [releaseNotes, setReleaseNotes] = useState("");
+  const [apkFile, setApkFile] = useState<ApkFile | null>(null);
+
+  const needsApk = platform === "android" || platform === "all";
 
   const { data: releases, isLoading } = useQuery({
     queryKey: QUERY_KEYS.appReleases,
@@ -53,6 +63,7 @@ export const ReleasesScreen: React.FC = () => {
       setMinVersion("");
       setPlatform("all");
       setReleaseNotes("");
+      setApkFile(null);
       Alert.alert(
         "Successo",
         "Release pubblicata e notifica inviata agli utenti.",
@@ -65,6 +76,20 @@ export const ReleasesScreen: React.FC = () => {
       );
     },
   });
+
+  async function handlePickApk() {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: "application/vnd.android.package-archive",
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled) return;
+    const asset = result.assets[0];
+    setApkFile({
+      uri: asset.uri,
+      name: asset.name,
+      type: asset.mimeType ?? "application/vnd.android.package-archive",
+    });
+  }
 
   function handlePublish() {
     const trimmed = version.trim();
@@ -83,6 +108,10 @@ export const ReleasesScreen: React.FC = () => {
       );
       return;
     }
+    if (needsApk && !apkFile) {
+      Alert.alert("APK mancante", "Allega il file APK per Android/All.");
+      return;
+    }
 
     Alert.alert(
       "Pubblica release",
@@ -99,6 +128,7 @@ export const ReleasesScreen: React.FC = () => {
               ...(releaseNotes.trim()
                 ? { releaseNotes: releaseNotes.trim() }
                 : {}),
+              ...(apkFile ? { apk: apkFile } : {}),
             }),
         },
       ],
@@ -122,6 +152,7 @@ export const ReleasesScreen: React.FC = () => {
           <Text style={styles.releaseMeta}>
             {item.platform.toUpperCase()} · {formatDate(item.createdAt)}
             {item.minVersion ? ` · min ${item.minVersion}` : ""}
+            {item.apkFilename ? " · APK" : ""}
           </Text>
           {item.releaseNotes ? (
             <Text style={styles.releaseNotes} numberOfLines={2}>
@@ -189,7 +220,10 @@ export const ReleasesScreen: React.FC = () => {
                     styles.platformChip,
                     platform === p && styles.platformChipActive,
                   ]}
-                  onPress={() => setPlatform(p)}
+                  onPress={() => {
+                    setPlatform(p);
+                    if (p === "ios") setApkFile(null);
+                  }}
                 >
                   <Text
                     style={[
@@ -202,6 +236,31 @@ export const ReleasesScreen: React.FC = () => {
                 </TouchableOpacity>
               ))}
             </View>
+
+            {needsApk && (
+              <>
+                <Text style={styles.label}>File APK *</Text>
+                {apkFile ? (
+                  <View style={styles.apkRow}>
+                    <Paperclip size={16} color={colors.primary} />
+                    <Text style={styles.apkName} numberOfLines={1}>
+                      {apkFile.name}
+                    </Text>
+                    <TouchableOpacity onPress={() => setApkFile(null)}>
+                      <X size={16} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.pickApkButton}
+                    onPress={handlePickApk}
+                  >
+                    <Paperclip size={16} color={colors.primary} />
+                    <Text style={styles.pickApkText}>Seleziona APK</Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
 
             <Text style={styles.label}>Note di rilascio (opzionale)</Text>
             <TextInput
@@ -340,6 +399,39 @@ const styles = StyleSheet.create({
   },
   platformChipTextActive: {
     color: colors.textInverse,
+  },
+  pickApkButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: borderRadius.md,
+    borderStyle: "dashed",
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surface,
+  },
+  pickApkText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+    color: colors.primary,
+  },
+  apkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surface,
+  },
+  apkName: {
+    flex: 1,
+    fontSize: typography.sizes.sm,
+    color: colors.text,
   },
   publishButton: {
     backgroundColor: colors.primary,

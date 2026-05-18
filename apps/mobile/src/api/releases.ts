@@ -6,6 +6,7 @@ export interface AppReleaseLatest {
   minVersion: string | null;
   platform: string;
   releaseNotes: string | null;
+  apkFilename: string | null;
   createdAt: string;
 }
 
@@ -16,6 +17,11 @@ export interface CreateReleasePayload {
   minVersion?: string;
   platform?: "ios" | "android" | "all";
   releaseNotes?: string;
+  apk?: {
+    uri: string;
+    name: string;
+    type: string;
+  };
 }
 
 export const releasesApi = {
@@ -32,7 +38,17 @@ export const releasesApi = {
   },
 
   create: async (payload: CreateReleasePayload): Promise<AppRelease> => {
-    const res = await apiClient.post<AppRelease>("/app-releases", payload);
+    const formData = new FormData();
+    formData.append("version", payload.version);
+    if (payload.minVersion) formData.append("minVersion", payload.minVersion);
+    if (payload.platform) formData.append("platform", payload.platform);
+    if (payload.releaseNotes) formData.append("releaseNotes", payload.releaseNotes);
+    if (payload.apk) {
+      formData.append("apk", payload.apk as any);
+    }
+    const res = await apiClient.post<AppRelease>("/app-releases", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return res.data;
   },
 };

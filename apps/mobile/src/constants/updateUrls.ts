@@ -1,7 +1,8 @@
-// Replace idXXXXXXXXXX with the actual App Store ID after first iOS submission.
+import { API_BASE_URL } from "../api/client";
+
 export const IOS_APP_STORE_URL =
   "https://apps.apple.com/app/unionhub/id6767188690";
 
-export function getAndroidApkUrl(version: string): string {
-  return `https://unionhub.app/UnionHub_${version.replace(/\./g, "_")}.apk`;
+export function getAndroidApkUrl(releaseId: string): string {
+  return `${API_BASE_URL}/app-releases/${releaseId}/download`;
 }

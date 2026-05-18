@@ -5,6 +5,7 @@ import { releasesApi, AppReleaseLatest } from "../api/releases";
 import { compareVersions } from "../utils/compareVersions";
 
 export interface NativeUpdateInfo {
+  id: string;
   latestVersion: string;
   minVersion: string | null;
   releaseNotes: string | null;
@@ -50,6 +51,7 @@ export function useVersionCheck() {
         compareVersions(currentVersion, release.minVersion) < 0;
 
       setNativeUpdate({
+        id: release.id,
         latestVersion: release.version,
         minVersion: release.minVersion,
         releaseNotes: release.releaseNotes,
