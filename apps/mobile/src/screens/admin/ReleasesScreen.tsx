@@ -34,6 +34,7 @@ interface ApkFile {
   uri: string;
   name: string;
   type: string;
+  size?: number;
 }
 
 export const ReleasesScreen: React.FC = () => {
@@ -83,10 +84,26 @@ export const ReleasesScreen: React.FC = () => {
     });
     if (result.canceled) return;
     const asset = result.assets[0];
+
+    if (!asset.name.toLowerCase().endsWith(".apk")) {
+      Alert.alert("File non valido", "Seleziona un file con estensione .apk");
+      return;
+    }
+
+    const MAX_BYTES = 200 * 1024 * 1024; // 200 MB
+    if (asset.size && asset.size > MAX_BYTES) {
+      Alert.alert(
+        "File troppo grande",
+        `L'APK supera il limite di 200 MB (${(asset.size / 1024 / 1024).toFixed(1)} MB).`,
+      );
+      return;
+    }
+
     setApkFile({
       uri: asset.uri,
       name: asset.name,
       type: asset.mimeType ?? "application/vnd.android.package-archive",
+      size: asset.size ?? undefined,
     });
   }
 
@@ -242,9 +259,16 @@ export const ReleasesScreen: React.FC = () => {
                 {apkFile ? (
                   <View style={styles.apkRow}>
                     <Paperclip size={16} color={colors.primary} />
-                    <Text style={styles.apkName} numberOfLines={1}>
-                      {apkFile.name}
-                    </Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.apkName} numberOfLines={1}>
+                        {apkFile.name}
+                      </Text>
+                      {apkFile.size != null && (
+                        <Text style={styles.apkSize}>
+                          {(apkFile.size / 1024 / 1024).toFixed(1)} MB
+                        </Text>
+                      )}
+                    </View>
                     <TouchableOpacity onPress={() => setApkFile(null)}>
                       <X size={16} color={colors.textSecondary} />
                     </TouchableOpacity>
@@ -428,9 +452,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   apkName: {
-    flex: 1,
     fontSize: typography.sizes.sm,
     color: colors.text,
+  },
+  apkSize: {
+    fontSize: typography.sizes.xs,
+    color: colors.textTertiary,
+    marginTop: 1,
   },
   publishButton: {
     backgroundColor: colors.primary,
