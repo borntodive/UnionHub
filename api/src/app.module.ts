@@ -22,6 +22,7 @@ import { BackupsModule } from "./backups/backups.module";
 import { VolmetModule } from "./volmet/volmet.module";
 import { MetarModule } from "./metar/metar.module";
 import { ChatModule } from "./chat/chat.module";
+import { AppReleasesModule } from "./app-releases/app-releases.module";
 
 @Module({
   providers: [
@@ -67,6 +68,7 @@ import { ChatModule } from "./chat/chat.module";
     VolmetModule,
     MetarModule,
     ChatModule,
+    AppReleasesModule,
   ],
 })
 export class AppModule {}
