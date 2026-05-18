@@ -724,9 +724,27 @@ export const MemberEditScreen: React.FC = () => {
                     </View>
                     <Switch
                       value={formData.mailboxAccess}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, mailboxAccess: value })
-                      }
+                      onValueChange={(value) => {
+                        if (!value) {
+                          setFormData({ ...formData, mailboxAccess: false });
+                          return;
+                        }
+                        Alert.alert(
+                          "Conferma accesso mailbox",
+                          `Vuoi concedere l'accesso alla mailbox sindacale a ${member?.nome} ${member?.cognome}?`,
+                          [
+                            { text: "Annulla", style: "cancel" },
+                            {
+                              text: "Conferma",
+                              onPress: () =>
+                                setFormData({
+                                  ...formData,
+                                  mailboxAccess: true,
+                                }),
+                            },
+                          ],
+                        );
+                      }}
                       trackColor={{
                         false: colors.border,
                         true: colors.primary,
