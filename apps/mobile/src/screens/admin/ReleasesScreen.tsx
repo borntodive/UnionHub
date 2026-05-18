@@ -18,7 +18,7 @@ import {
 } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Smartphone } from "lucide-react-native";
+import { Menu, Plus, Smartphone } from "lucide-react-native";
 import {
   releasesApi,
   AppRelease,
@@ -134,15 +134,13 @@ export const ReleasesScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      <View
-        style={[styles.header, { paddingTop: insets.top > 0 ? 0 : spacing.md }]}
-      >
+    <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => (navigation as any).openDrawer?.()}
           style={styles.backButton}
         >
-          <ArrowLeft size={24} color={colors.textInverse} />
+          <Menu size={24} color={colors.textInverse} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Releases</Text>
         <View style={styles.headerRight} />
