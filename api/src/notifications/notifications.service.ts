@@ -204,6 +204,44 @@ export class NotificationsService {
     }
   }
 
+  async broadcastVersionNotification(opts: {
+    version: string;
+    minVersion: string | null | undefined;
+    platform: string | undefined;
+    releaseNotes: string | null | undefined;
+  }): Promise<void> {
+    const { version, minVersion, platform, releaseNotes } = opts;
+    const where =
+      platform && platform !== "all"
+        ? { isActive: true, platform }
+        : { isActive: true };
+
+    const tokens = await this.deviceTokenRepository.find({ where });
+    if (tokens.length === 0) return;
+
+    const title = `Nuova versione ${version} disponibile 🚀`;
+    const body =
+      releaseNotes?.substring(0, 100) ?? "Aggiorna l'app per le ultime novità";
+
+    const batchSize = 100;
+    for (let i = 0; i < tokens.length; i += batchSize) {
+      const batch = tokens.slice(i, i + batchSize);
+      const messages = batch.map((t) => ({
+        to: t.token,
+        sound: "default" as const,
+        title,
+        body,
+        data: {
+          type: "APP_VERSION_AVAILABLE",
+          version,
+          minVersion: minVersion ?? null,
+          platform: platform ?? "all",
+        },
+      }));
+      await this.sendExpoNotifications(messages);
+    }
+  }
+
   private async sendExpoNotifications(
     messages: ExpoPushMessage[],
   ): Promise<void> {
