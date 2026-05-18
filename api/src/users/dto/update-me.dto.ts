@@ -79,6 +79,10 @@ export class UpdateMeDto {
 
   @IsOptional()
   @IsBoolean()
+  mailboxAccess?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   rls?: boolean;
 
   @IsOptional()
