@@ -1,0 +1,36 @@
+---
+description: NestJS backend conventions for UnionHub API
+globs: api/**/*.ts
+alwaysApply: false
+---
+
+# Backend (NestJS) — `api/`
+
+## Module pattern
+
+- Controller + Service + Module + Entity + DTOs (`class-validator`)
+- Path aliases: `@/*`, `@auth/*`, `@users/*`, etc.
+- Inject dependencies; keep business logic in services
+
+## Domain rules
+
+- **Single `users` table** — members are users; login via **crewcode + password** (not email)
+- **RBAC**: SuperAdmin (all), Admin scoped by `ruolo` (`pilot` | `cabin_crew`), User self-service
+- Serialize sensitive fields (`note`, `itud`, `rsa`) only for Admin+
+- Dates: accept UI `DD/MM/YYYY`, persist `YYYY-MM-DD` in `users.service.ts`
+
+## PDF & AI
+
+- PDF: use `generateWithHtml()` (Puppeteer), not pdf-lib templates
+- Ollama: preserve HTML when input is HTML; configure via `api/.env`
+
+## Tests (TDD)
+
+- Co-locate unit tests: `*.service.spec.ts` beside `*.service.ts`
+- Run: `cd api && npm test` / `npm run test:watch`
+- E2E: `npm run test:e2e` when adding HTTP-level behavior
+
+## Database
+
+- Migrations only for schema changes; run `npm run migration:run`
+- Seeds: `npm run seed` (dev), `npm run seed:prod` (production checklist in `CLAUDE.md`)

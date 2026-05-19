@@ -1,0 +1,35 @@
+---
+description: Expo React Native mobile app conventions
+globs: apps/mobile/**/*
+alwaysApply: false
+---
+
+# Mobile (Expo) — `apps/mobile/`
+
+## Stack patterns
+
+- **TanStack Query** — server state; **Zustand** — auth, offline, payslip (AsyncStorage persist)
+- **React Hook Form** — all forms
+- **react-i18next** — `t("namespace.key")` dot notation (never `namespace:key`)
+
+## Navigation & UX
+
+- Drawer: `navigation.openDrawer()` from drawer-hosted screens
+- Document editor close → `navigate("Documents")`, not blind `goBack()` where specified in `CLAUDE.md`
+
+## Keyboard
+
+- Wrap `ScrollView` with inputs in `KeyboardAvoidingView` (`padding` iOS, `height` Android)
+- `FlatList` + search: `keyboardShouldPersistTaps="handled"`
+- Multiline at bottom: `onFocus` scroll to end on `ScrollView` ref
+
+## Auth & offline
+
+- **AuthProvider** waits for Zustand rehydration only — no token refresh on startup
+- Axios refresh on 401; **logout only on 4xx** from refresh, not network errors
+- Offline: `offlineStore`, pending issues queue; drawer hides online-only items when offline
+- Mount `useNotifications` at app root for silent cache invalidation
+
+## Payslip / tools
+
+- Calculator under `apps/mobile/src/payslip/`; follow `docs/PAYSLIP_CALCULATOR_EXPO_SPEC.md`

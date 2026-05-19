@@ -1,0 +1,47 @@
+---
+description: UnionHub AI development workflow — read context before coding
+alwaysApply: true
+---
+
+# AI Development Workflow (UnionHub)
+
+Before writing or changing code, read and align with:
+
+1. `docs/architecture.mermaid` — system boundaries and integrations
+2. `docs/technical.md` — stack, modules, security, TDD commands
+3. `tasks/tasks.md` — active task ID, acceptance criteria, test plan
+4. `docs/status.md` — stable features, known pitfalls, last decisions
+5. `CLAUDE.md` — repo-specific commands, production checklist, conventions
+
+## Repositories of truth
+
+| Area | Path |
+|------|------|
+| Backend | `api/` (NestJS 11, TypeORM, PostgreSQL) |
+| Mobile | `apps/mobile/` (Expo 52, React Native) |
+| Web / landing | `apps/web/`, landing as applicable |
+
+Do not assume `app/` for the mobile client — use `apps/mobile/`.
+
+## Test-driven development
+
+1. Define behavior from task acceptance criteria.
+2. Add or update failing tests first (backend: `*.service.spec.ts` next to services; mobile: Jest where applicable).
+3. Implement minimal change; make tests pass.
+4. Run targeted tests before claiming done (`cd api && npm test`, `cd apps/mobile && npm test`).
+
+## Context recovery
+
+When resuming after compaction or a new session, rehydrate with explicit references:
+
+- `@docs/status.md` — pitfalls and current stability
+- `@tasks/tasks.md` — what to implement now
+- `@docs/technical.md` — module and security rules
+- `@CLAUDE.md` — operational commands
+
+## Delivery checklist
+
+- [ ] Task ID noted in commit/PR description when applicable
+- [ ] Migrations generated for schema changes (never `synchronize: true` in prod)
+- [ ] i18n keys added to `apps/mobile/src/i18n/en.json` and `it.json` (dot notation)
+- [ ] No secrets in commits; `.env` unchanged unless user requested

@@ -1,0 +1,62 @@
+flowchart TB
+  subgraph clients["Clients"]
+    mobile["apps/mobile<br/>Expo / React Native"]
+    web["apps/web"]
+    landing["Landing / marketing"]
+  end
+
+  subgraph api["NestJS API — api/"]
+    auth["auth"]
+    users["users"]
+    bases["bases"]
+    contracts["contracts"]
+    grades["grades"]
+    cla["cla-contracts"]
+    documents["documents"]
+    issues["issues"]
+    notifications["notifications"]
+    chat["chat"]
+    ai["ai / hybrid-rag"]
+    gmail_mod["gmail"]
+    carddav["carddav"]
+    backups["backups"]
+    metar["metar"]
+    volmet["volmet"]
+    releases["app-releases"]
+  end
+
+  subgraph data["Data & services"]
+    pg[("PostgreSQL")]
+    ollama["Ollama / OpenRouter"]
+    expo_push["Expo Push"]
+    puppeteer["Puppeteer PDF"]
+    gmail_api["Gmail API"]
+  end
+
+  mobile --> api
+  web --> api
+  landing --> api
+
+  auth --> pg
+  users --> pg
+  bases --> pg
+  contracts --> pg
+  grades --> pg
+  cla --> pg
+  documents --> pg
+  issues --> pg
+  notifications --> pg
+  chat --> pg
+  ai --> pg
+  gmail_mod --> pg
+  carddav --> pg
+  backups --> pg
+  metar --> pg
+  volmet --> pg
+  releases --> pg
+
+  documents --> puppeteer
+  documents --> ollama
+  ai --> ollama
+  notifications --> expo_push
+  gmail_mod --> gmail_api
