@@ -20,4 +20,11 @@ export class SendMessageDto {
   @IsArray()
   @IsUUID("4", { each: true })
   attachmentIds?: string[];
+
+  // Client-generated id, echoed back on `new_message` so the sender can
+  // reconcile its optimistic copy. Never persisted.
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  clientMsgId?: string;
 }

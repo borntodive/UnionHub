@@ -15,6 +15,8 @@ interface UseChatSocketOptions {
     roomId: string;
     isPinned: boolean;
   }) => void;
+  onConnect?: () => void;
+  onError?: (data: { code: string; message: string }) => void;
 }
 
 export function useChatSocket({
@@ -23,6 +25,8 @@ export function useChatSocket({
   onNewMessage,
   onMessageDeleted,
   onMessagePinned,
+  onConnect,
+  onError,
 }: UseChatSocketOptions) {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -32,6 +36,8 @@ export function useChatSocket({
   const onNewMessageRef = useRef(onNewMessage);
   const onMessageDeletedRef = useRef(onMessageDeleted);
   const onMessagePinnedRef = useRef(onMessagePinned);
+  const onConnectRef = useRef(onConnect);
+  const onErrorRef = useRef(onError);
   useEffect(() => {
     onNewMessageRef.current = onNewMessage;
   }, [onNewMessage]);
@@ -41,6 +47,12 @@ export function useChatSocket({
   useEffect(() => {
     onMessagePinnedRef.current = onMessagePinned;
   }, [onMessagePinned]);
+  useEffect(() => {
+    onConnectRef.current = onConnect;
+  }, [onConnect]);
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -55,8 +67,14 @@ export function useChatSocket({
 
     socketRef.current = socket;
 
-    socket.on("connect", () => setIsConnected(true));
+    socket.on("connect", () => {
+      setIsConnected(true);
+      onConnectRef.current?.();
+    });
     socket.on("disconnect", () => setIsConnected(false));
+    socket.on("error", (data: { code: string; message: string }) =>
+      onErrorRef.current?.(data),
+    );
     socket.on("new_message", (msg: ChatMessage) =>
       onNewMessageRef.current(msg),
     );
@@ -77,14 +95,21 @@ export function useChatSocket({
     };
   }, [accessToken]); // reconnect only when token changes
 
+  // Returns true if the message was actually emitted (socket connected).
   const sendMessage = useCallback(
-    (content: string | undefined, attachmentIds: string[] = []) => {
-      if (!socketRef.current?.connected) return;
+    (
+      content: string | undefined,
+      attachmentIds: string[] = [],
+      clientMsgId?: string,
+    ): boolean => {
+      if (!socketRef.current?.connected) return false;
       socketRef.current.emit("send_message", {
         roomId,
         content,
         attachmentIds,
+        clientMsgId,
       });
+      return true;
     },
     [roomId],
   );

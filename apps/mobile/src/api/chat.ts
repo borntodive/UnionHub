@@ -23,7 +23,16 @@ export interface ChatMessage {
   deletedAt: string | null;
   createdAt: string;
   attachments: ChatAttachment[];
+  // Echoed back by the server on `new_message` for the original sender so it
+  // can reconcile its optimistic copy. Not persisted server-side.
+  clientMsgId?: string;
 }
+
+export type OutgoingStatus = "sending" | "failed";
+
+// Client-side message used for optimistic rendering. `_status` is present
+// only while a locally-created message is unconfirmed.
+export type DisplayMessage = ChatMessage & { _status?: OutgoingStatus };
 
 export interface GetMessagesParams {
   before?: string;

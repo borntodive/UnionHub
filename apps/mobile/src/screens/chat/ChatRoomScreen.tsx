@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+  useEffect,
+} from "react";
 import {
   View,
   Text,
@@ -20,11 +26,12 @@ import {
 } from "react-native-safe-area-context";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import * as DocumentPicker from "expo-document-picker";
-import { chatApi, ChatMessage } from "../../api/chat";
+import { chatApi, ChatMessage, DisplayMessage } from "../../api/chat";
 import { QUERY_KEYS } from "../../api/queryKeys";
 import { useAuthStore } from "../../store/authStore";
+import { useChatStore, OutgoingMessage } from "../../store/chatStore";
 import { useChatSocket } from "../../hooks/useChatSocket";
 import { UserRole } from "../../types";
 import { colors, spacing, typography, borderRadius } from "../../theme";
@@ -34,70 +41,160 @@ interface Props {
   route: { params: { roomId: string; roomName: string } };
 }
 
+const EMPTY_MESSAGES: ChatMessage[] = [];
+const EMPTY_OUTBOX: OutgoingMessage[] = [];
+const PAGE_SIZE = 50;
+const SEND_TIMEOUT_MS = 10000;
+
+const makeClientId = () =>
+  `c_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
 export function ChatRoomScreen({ navigation, route }: Props) {
   const { roomId, roomName } = route.params;
   const insets = useSafeAreaInsets();
   const { accessToken, user } = useAuthStore();
-  const queryClient = useQueryClient();
   const [inputText, setInputText] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [preview, setPreview] = useState<{
     uri: string;
     mimeType: string;
     name: string;
   } | null>(null);
   const flatListRef = useRef<FlatList>(null);
+  const loadingOlderRef = useRef(false);
+  const timeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  const { data: history, isLoading } = useQuery({
+  const confirmed =
+    useChatStore((s) => s.messagesByRoom[roomId]) ?? EMPTY_MESSAGES;
+  const outbox = useChatStore((s) => s.outboxByRoom[roomId]) ?? EMPTY_OUTBOX;
+  const mergeRoomMessages = useChatStore((s) => s.mergeRoomMessages);
+  const removeRoomMessage = useChatStore((s) => s.removeRoomMessage);
+  const updateRoomMessage = useChatStore((s) => s.updateRoomMessage);
+  const enqueueOutbox = useChatStore((s) => s.enqueueOutbox);
+  const setOutboxStatus = useChatStore((s) => s.setOutboxStatus);
+  const resolveOutbox = useChatStore((s) => s.resolveOutbox);
+
+  // Latest page from the server. The cache renders instantly; this merges in
+  // any messages received while the app was closed.
+  const { data: latest, isLoading } = useQuery({
     queryKey: QUERY_KEYS.chatMessages(roomId),
-    queryFn: () => chatApi.getMessages(roomId),
+    queryFn: () => chatApi.getMessages(roomId, { limit: PAGE_SIZE }),
   });
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  useEffect(() => {
+    if (latest) mergeRoomMessages(roomId, latest);
+  }, [latest, roomId, mergeRoomMessages]);
 
-  React.useEffect(() => {
-    if (history) setMessages(history);
-  }, [history]);
+  useEffect(() => {
+    const timeouts = timeoutsRef.current;
+    return () => {
+      Object.values(timeouts).forEach(clearTimeout);
+    };
+  }, []);
 
-  const pinnedMessage = useMemo(
-    () => [...messages].reverse().find((m) => m.isPinned && !m.deletedAt),
-    [messages],
-  );
   const isAdmin =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
 
-  const onNewMessage = useCallback((msg: ChatMessage) => {
-    setMessages((prev) => [...prev, msg]);
-    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+  const visibleConfirmed = useMemo(
+    () => confirmed.filter((m) => !m.deletedAt),
+    [confirmed],
+  );
+
+  const pinnedMessage = useMemo(
+    () => [...visibleConfirmed].reverse().find((m) => m.isPinned),
+    [visibleConfirmed],
+  );
+
+  // Newest-first for the inverted FlatList: confirmed messages + still-pending
+  // optimistic ones.
+  const data: DisplayMessage[] = useMemo(() => {
+    const pending: DisplayMessage[] = outbox.map((o) => ({
+      id: o.clientMsgId,
+      roomId: o.roomId,
+      sender: o.sender,
+      content: o.content ?? null,
+      isPinned: false,
+      deletedAt: null,
+      createdAt: o.createdAt,
+      attachments: [],
+      clientMsgId: o.clientMsgId,
+      _status: o.status,
+    }));
+    return [...visibleConfirmed, ...pending].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+  }, [visibleConfirmed, outbox]);
+
+  const scheduleTimeout = useCallback(
+    (clientMsgId: string) => {
+      const existing = timeoutsRef.current[clientMsgId];
+      if (existing) clearTimeout(existing);
+      timeoutsRef.current[clientMsgId] = setTimeout(() => {
+        delete timeoutsRef.current[clientMsgId];
+        const ob = useChatStore.getState().outboxByRoom[roomId] ?? [];
+        if (ob.some((o) => o.clientMsgId === clientMsgId)) {
+          setOutboxStatus(roomId, clientMsgId, "failed");
+        }
+      }, SEND_TIMEOUT_MS);
+    },
+    [roomId, setOutboxStatus],
+  );
+
+  const clearTimeoutFor = useCallback((clientMsgId: string) => {
+    const t = timeoutsRef.current[clientMsgId];
+    if (t) {
+      clearTimeout(t);
+      delete timeoutsRef.current[clientMsgId];
+    }
   }, []);
+
+  const onNewMessage = useCallback(
+    (msg: ChatMessage) => {
+      if (msg.clientMsgId) {
+        clearTimeoutFor(msg.clientMsgId);
+        resolveOutbox(roomId, msg.clientMsgId);
+      }
+      mergeRoomMessages(roomId, [msg]);
+      setTimeout(
+        () =>
+          flatListRef.current?.scrollToOffset({ offset: 0, animated: true }),
+        50,
+      );
+    },
+    [roomId, mergeRoomMessages, resolveOutbox, clearTimeoutFor],
+  );
 
   const onMessageDeleted = useCallback(
     ({ messageId }: { messageId: string; roomId: string }) => {
-      setMessages((prev) => prev.filter((m) => m.id !== messageId));
-      queryClient.setQueryData<ChatMessage[]>(
-        QUERY_KEYS.chatMessages(roomId),
-        (old) => (old ? old.filter((m) => m.id !== messageId) : old),
-      );
+      removeRoomMessage(roomId, messageId);
     },
-    [queryClient, roomId],
+    [roomId, removeRoomMessage],
   );
 
   const onMessagePinned = useCallback(
-    ({
-      messageId,
-      isPinned,
-    }: {
-      messageId: string;
-      roomId: string;
-      isPinned: boolean;
-    }) => {
-      setMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, isPinned } : m)),
-      );
+    ({ messageId, isPinned }: { messageId: string; isPinned: boolean }) => {
+      updateRoomMessage(roomId, messageId, { isPinned });
     },
-    [],
+    [roomId, updateRoomMessage],
   );
+
+  const onSocketError = useCallback(() => {
+    const ob = useChatStore.getState().outboxByRoom[roomId] ?? [];
+    ob.forEach((o) => {
+      if (o.status === "sending") {
+        clearTimeoutFor(o.clientMsgId);
+        setOutboxStatus(roomId, o.clientMsgId, "failed");
+      }
+    });
+  }, [roomId, setOutboxStatus, clearTimeoutFor]);
+
+  // Assigned after `flushOutbox` is defined (it depends on `sendMessage`
+  // returned by the hook below, so the ref breaks the cycle).
+  const flushOutboxRef = useRef<() => void>(() => {});
 
   const { isConnected, sendMessage, deleteMessage } = useChatSocket({
     accessToken,
@@ -105,14 +202,110 @@ export function ChatRoomScreen({ navigation, route }: Props) {
     onNewMessage,
     onMessageDeleted,
     onMessagePinned,
+    onError: onSocketError,
+    onConnect: () => flushOutboxRef.current(),
   });
+
+  // Re-send everything still queued once the socket (re)connects.
+  const flushOutbox = useCallback(() => {
+    const ob = useChatStore.getState().outboxByRoom[roomId] ?? [];
+    ob.forEach((item) => {
+      setOutboxStatus(roomId, item.clientMsgId, "sending");
+      const emitted = sendMessage(
+        item.content,
+        item.attachmentIds,
+        item.clientMsgId,
+      );
+      if (!emitted) setOutboxStatus(roomId, item.clientMsgId, "failed");
+      else scheduleTimeout(item.clientMsgId);
+    });
+  }, [roomId, sendMessage, setOutboxStatus, scheduleTimeout]);
+
+  useEffect(() => {
+    flushOutboxRef.current = flushOutbox;
+  }, [flushOutbox]);
+
+  const queueAndSend = useCallback(
+    (content?: string, attachmentIds: string[] = []) => {
+      if (!user) return;
+      const clientMsgId = makeClientId();
+      enqueueOutbox({
+        clientMsgId,
+        roomId,
+        content,
+        attachmentIds,
+        createdAt: new Date().toISOString(),
+        status: "sending",
+        sender: {
+          id: user.id,
+          nome: user.nome ?? "",
+          cognome: user.cognome ?? "",
+        },
+      });
+      const emitted = sendMessage(content, attachmentIds, clientMsgId);
+      if (!emitted) setOutboxStatus(roomId, clientMsgId, "failed");
+      else scheduleTimeout(clientMsgId);
+      setTimeout(
+        () =>
+          flatListRef.current?.scrollToOffset({ offset: 0, animated: true }),
+        50,
+      );
+    },
+    [
+      user,
+      roomId,
+      enqueueOutbox,
+      sendMessage,
+      setOutboxStatus,
+      scheduleTimeout,
+    ],
+  );
+
+  const retryOutbox = useCallback(
+    (clientMsgId: string) => {
+      const ob = useChatStore.getState().outboxByRoom[roomId] ?? [];
+      const item = ob.find((o) => o.clientMsgId === clientMsgId);
+      if (!item) return;
+      setOutboxStatus(roomId, clientMsgId, "sending");
+      const emitted = sendMessage(
+        item.content,
+        item.attachmentIds,
+        clientMsgId,
+      );
+      if (!emitted) setOutboxStatus(roomId, clientMsgId, "failed");
+      else scheduleTimeout(clientMsgId);
+    },
+    [roomId, sendMessage, setOutboxStatus, scheduleTimeout],
+  );
 
   const handleSend = () => {
     const text = inputText.trim();
     if (!text) return;
-    sendMessage(text, []);
+    queueAndSend(text, []);
     setInputText("");
   };
+
+  const loadOlder = useCallback(async () => {
+    if (loadingOlderRef.current || !hasMore) return;
+    const oldest = confirmed[0];
+    if (!oldest) return;
+    loadingOlderRef.current = true;
+    setIsLoadingOlder(true);
+    try {
+      const older = await chatApi.getMessages(roomId, {
+        before: oldest.createdAt,
+        limit: PAGE_SIZE,
+      });
+      if (older.length < PAGE_SIZE) setHasMore(false);
+      if (older.length) mergeRoomMessages(roomId, older);
+    } catch {
+      // Keep silent: the cached page is still shown; user can retry by
+      // scrolling again.
+    } finally {
+      loadingOlderRef.current = false;
+      setIsLoadingOlder(false);
+    }
+  }, [hasMore, confirmed, roomId, mergeRoomMessages]);
 
   const uploadAsset = async (uri: string, name: string, type: string) => {
     setIsUploading(true);
@@ -122,7 +315,7 @@ export function ChatRoomScreen({ navigation, route }: Props) {
         name,
         type,
       });
-      sendMessage(inputText.trim() || undefined, [attachmentId]);
+      queueAndSend(inputText.trim() || undefined, [attachmentId]);
       setInputText("");
     } catch {
       Alert.alert("Errore", "Upload fallito, riprova.");
@@ -226,8 +419,9 @@ export function ChatRoomScreen({ navigation, route }: Props) {
     ]);
   };
 
-  const renderMessage = ({ item }: { item: ChatMessage }) => {
+  const renderMessage = ({ item }: { item: DisplayMessage }) => {
     const isOwn = item.sender.id === user?.id;
+    const isPending = !!item._status;
     return (
       <View style={[styles.messageRow, isOwn && styles.messageRowOwn]}>
         {!isOwn && (
@@ -239,8 +433,14 @@ export function ChatRoomScreen({ navigation, route }: Props) {
           </View>
         )}
         <TouchableOpacity
-          style={[styles.bubble, isOwn && styles.bubbleOwn]}
-          onLongPress={() => isAdmin && handleDeleteMessage(item.id)}
+          style={[
+            styles.bubble,
+            isOwn && styles.bubbleOwn,
+            isPending && styles.bubblePending,
+          ]}
+          onLongPress={() =>
+            isAdmin && !isPending && handleDeleteMessage(item.id)
+          }
         >
           {!isOwn && (
             <Text style={styles.senderName}>
@@ -250,6 +450,10 @@ export function ChatRoomScreen({ navigation, route }: Props) {
           {item.content ? (
             <Text style={[styles.messageText, isOwn && styles.messageTextOwn]}>
               {item.content}
+            </Text>
+          ) : isPending ? (
+            <Text style={[styles.messageText, isOwn && styles.messageTextOwn]}>
+              📎 Invio allegato…
             </Text>
           ) : null}
           {item.attachments?.map((att) => (
@@ -274,18 +478,38 @@ export function ChatRoomScreen({ navigation, route }: Props) {
               </View>
             </TouchableOpacity>
           ))}
-          <Text style={[styles.timestamp, isOwn && styles.timestampOwn]}>
-            {new Date(item.createdAt).toLocaleTimeString("it-IT", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </Text>
+          {isPending ? (
+            item._status === "failed" ? (
+              <TouchableOpacity
+                onPress={() =>
+                  item.clientMsgId && retryOutbox(item.clientMsgId)
+                }
+              >
+                <Text style={styles.statusFailed}>
+                  ⚠ Invio fallito · Tocca per riprovare
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <Text
+                style={[styles.statusSending, isOwn && styles.messageTextOwn]}
+              >
+                Invio…
+              </Text>
+            )
+          ) : (
+            <Text style={[styles.timestamp, isOwn && styles.timestampOwn]}>
+              {new Date(item.createdAt).toLocaleTimeString("it-IT", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     );
   };
 
-  if (isLoading) {
+  if (isLoading && data.length === 0) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator color={colors.primary} />
@@ -326,12 +550,19 @@ export function ChatRoomScreen({ navigation, route }: Props) {
 
           <FlatList
             ref={flatListRef}
-            data={messages.filter((m) => !m.deletedAt)}
+            inverted
+            data={data}
             keyExtractor={(item) => item.id}
             renderItem={renderMessage}
             contentContainerStyle={styles.messagesList}
-            onContentSizeChange={() =>
-              flatListRef.current?.scrollToEnd({ animated: false })
+            onEndReached={loadOlder}
+            onEndReachedThreshold={0.3}
+            ListFooterComponent={
+              isLoadingOlder ? (
+                <View style={styles.olderLoader}>
+                  <ActivityIndicator color={colors.primary} size="small" />
+                </View>
+              ) : null
             }
           />
 
@@ -353,15 +584,8 @@ export function ChatRoomScreen({ navigation, route }: Props) {
               multiline
               maxLength={4000}
             />
-            <TouchableOpacity onPress={handleSend} disabled={!isConnected}>
-              <Text
-                style={[
-                  styles.sendIcon,
-                  !isConnected && styles.sendIconDisabled,
-                ]}
-              >
-                ➤
-              </Text>
+            <TouchableOpacity onPress={handleSend}>
+              <Text style={styles.sendIcon}>➤</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -451,6 +675,7 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
   },
   messagesList: { padding: spacing.md, gap: spacing.sm },
+  olderLoader: { paddingVertical: spacing.md },
   messageRow: {
     flexDirection: "row",
     gap: spacing.sm,
@@ -483,6 +708,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   bubbleOwn: { backgroundColor: colors.primary },
+  bubblePending: { opacity: 0.7 },
   senderName: {
     color: colors.primary,
     fontSize: 11,
@@ -514,6 +740,20 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
   },
   timestampOwn: { color: "rgba(255,255,255,0.7)" },
+  statusSending: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 10,
+    marginTop: 4,
+    alignSelf: "flex-end",
+    fontStyle: "italic",
+  },
+  statusFailed: {
+    color: colors.error,
+    fontSize: 11,
+    marginTop: 4,
+    alignSelf: "flex-end",
+    fontWeight: typography.weights.semibold,
+  },
   inputBar: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -536,7 +776,6 @@ const styles = StyleSheet.create({
     maxHeight: 120,
   },
   sendIcon: { color: colors.primary, fontSize: 22, paddingBottom: 4 },
-  sendIconDisabled: { color: colors.textTertiary },
   previewContainer: { flex: 1, backgroundColor: colors.background },
   previewHeader: {
     flexDirection: "row",
