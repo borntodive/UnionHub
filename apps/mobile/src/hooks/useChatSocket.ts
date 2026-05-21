@@ -78,13 +78,14 @@ export function useChatSocket({
   }, [accessToken]); // reconnect only when token changes
 
   const sendMessage = useCallback(
-    (content: string | undefined, attachmentIds: string[] = []) => {
-      if (!socketRef.current?.connected) return;
+    (content: string | undefined, attachmentIds: string[] = []): boolean => {
+      if (!socketRef.current?.connected) return false;
       socketRef.current.emit("send_message", {
         roomId,
         content,
         attachmentIds,
       });
+      return true;
     },
     [roomId],
   );

@@ -1,4 +1,6 @@
 import { Test } from "@nestjs/testing";
+import { ForbiddenException } from "@nestjs/common";
+import { SendMessageDto } from "./dto/send-message.dto";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { ChatService } from "./chat.service";
 import { ChatMessage } from "./entities/chat-message.entity";
@@ -103,5 +105,46 @@ describe("ChatService.canAccessRoom", () => {
   it("user without ruolo accesses nothing", () => {
     const u = mockUser({ role: UserRole.USER, ruolo: null, baseId: null });
     expect(service.canAccessRoom(u, "pilot-generale")).toBe(false);
+  });
+});
+
+describe("ChatService.saveMessage access", () => {
+  let service: ChatService;
+
+  beforeEach(async () => {
+    const messageRepo = {
+      create: jest.fn((x) => x),
+      save: jest.fn(() => {
+        throw new Error("save should not be called");
+      }),
+    };
+    const module = await Test.createTestingModule({
+      providers: [
+        ChatService,
+        { provide: getRepositoryToken(ChatMessage), useValue: messageRepo },
+        { provide: getRepositoryToken(ChatAttachment), useValue: {} },
+        { provide: getRepositoryToken(User), useValue: {} },
+        { provide: getRepositoryToken(Base), useValue: {} },
+        { provide: NotificationsService, useValue: {} },
+      ],
+    }).compile();
+    service = module.get(ChatService);
+  });
+
+  it("throws ForbiddenException when user cannot access room", async () => {
+    const u = mockUser({
+      role: UserRole.USER,
+      ruolo: Ruolo.PILOT,
+      baseId: "base-fco",
+    });
+    await expect(
+      service.saveMessage(
+        u as User,
+        {
+          roomId: "cabin_crew-generale",
+          content: "hi",
+        } as SendMessageDto,
+      ),
+    ).rejects.toThrow(ForbiddenException);
   });
 });

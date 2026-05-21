@@ -291,7 +291,8 @@
     "chatRequests": "Chatbot History",
     "backups": "Backups",
     "kbAdmin": "Knowledge Base",
-    "releases": "Releases"
+    "releases": "Releases",
+    "unionChat": "Union chat"
   },
   "chatbot": {
     "title": "AI Assistant",
@@ -1120,5 +1121,24 @@
     "uploadError": "Upload Failed",
     "uploadErrorMessage": "Could not upload files to the server.",
     "uploadMdOnly": "Only .md (Markdown) and .pdf files are supported."
+  },
+  "unionChat": {
+    "title": "Union chat",
+    "loadRoomsError": "Unable to load chat rooms",
+    "noRooms": "No rooms available",
+    "messagePlaceholder": "Write a message…",
+    "pinnedAttachment": "📎 attachment",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "sendFailed": "Message not sent. Check your connection.",
+    "retry": "Retry",
+    "uploadFailed": "Upload failed, please try again.",
+    "downloadFailed": "Download failed (HTTP {{status}}).",
+    "attachmentOpenFailed": "Unable to open attachment.",
+    "attachmentTitle": "Attachment",
+    "pickFromLibrary": "Choose from library",
+    "attachFile": "Attach file",
+    "deleteMessageTitle": "Delete message",
+    "deleteMessageConfirm": "Are you sure?"
   }
 }

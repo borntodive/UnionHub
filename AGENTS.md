@@ -19,23 +19,21 @@ The project consists of two main components:
 - Biometric authentication support
 - Multi-language support (English/Italian)
 
-
 ## AI Development (Cursor)
 
 Cursor rules and living docs for agent workflow:
 
-| Resource | Path |
-|----------|------|
-| Workflow (always apply) | [.cursor/rules/ai-workflow.mdc](../.cursor/rules/ai-workflow.mdc) |
-| Backend rules | [.cursor/rules/backend-nestjs.mdc](../.cursor/rules/backend-nestjs.mdc) |
-| Mobile rules | [.cursor/rules/mobile-expo.mdc](../.cursor/rules/mobile-expo.mdc) |
-| Architecture diagram | [docs/architecture.mermaid](docs/architecture.mermaid) |
-| Technical index | [docs/technical.md](docs/technical.md) |
-| Status / pitfalls | [docs/status.md](docs/status.md) |
-| Tasks | [tasks/tasks.md](tasks/tasks.md) |
+| Resource                | Path                                                                    |
+| ----------------------- | ----------------------------------------------------------------------- |
+| Workflow (always apply) | [.cursor/rules/ai-workflow.mdc](../.cursor/rules/ai-workflow.mdc)       |
+| Backend rules           | [.cursor/rules/backend-nestjs.mdc](../.cursor/rules/backend-nestjs.mdc) |
+| Mobile rules            | [.cursor/rules/mobile-expo.mdc](../.cursor/rules/mobile-expo.mdc)       |
+| Architecture diagram    | [docs/architecture.mermaid](docs/architecture.mermaid)                  |
+| Technical index         | [docs/technical.md](docs/technical.md)                                  |
+| Status / pitfalls       | [docs/status.md](docs/status.md)                                        |
+| Tasks                   | [tasks/tasks.md](tasks/tasks.md)                                        |
 
 Read `docs/technical.md` and `docs/status.md` before coding; track work in `tasks/tasks.md`.
-
 
 ---
 

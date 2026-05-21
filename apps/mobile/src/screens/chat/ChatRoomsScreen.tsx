@@ -12,6 +12,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { MessageCircle } from "lucide-react-native";
 import { chatApi, ChatRoom } from "../../api/chat";
 import { QUERY_KEYS } from "../../api/queryKeys";
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export function ChatRoomsScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const {
     data: rooms,
@@ -57,7 +59,7 @@ export function ChatRoomsScreen({ navigation }: Props) {
           <TouchableOpacity onPress={() => navigation.openDrawer()}>
             <Text style={styles.menuIcon}>☰</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Chat Sindacale</Text>
+          <Text style={styles.headerTitle}>{t("unionChat.title")}</Text>
         </View>
 
         {isLoading ? (
@@ -66,7 +68,9 @@ export function ChatRoomsScreen({ navigation }: Props) {
           </View>
         ) : isError ? (
           <View style={styles.center}>
-            <Text style={styles.errorText}>Impossibile caricare le chat</Text>
+            <Text style={styles.errorText}>
+              {t("unionChat.loadRoomsError")}
+            </Text>
           </View>
         ) : (
           <FlatList
@@ -77,7 +81,7 @@ export function ChatRoomsScreen({ navigation }: Props) {
             ItemSeparatorComponent={() => <View style={styles.separator} />}
             ListEmptyComponent={
               <View style={styles.center}>
-                <Text style={styles.emptyText}>Nessuna stanza disponibile</Text>
+                <Text style={styles.emptyText}>{t("unionChat.noRooms")}</Text>
               </View>
             }
           />

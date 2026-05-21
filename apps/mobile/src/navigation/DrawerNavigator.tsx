@@ -330,7 +330,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           {isOnline && (CHAT_FOR_ALL_USERS || isAdmin) && (
             <MenuItem
               icon={<MessageCircle size={22} color={colors.primary} />}
-              label="Chat Sindacale"
+              label={t("navigation.unionChat")}
               onPress={() => {
                 props.navigation.navigate("ChatRooms");
                 props.navigation.closeDrawer();
@@ -1120,7 +1120,7 @@ export const DrawerNavigator: React.FC = () => {
         name="ChatRooms"
         component={ChatRoomsScreen}
         options={{
-          title: "Chat Sindacale",
+          title: t("navigation.unionChat"),
           drawerIcon: ({ color }: { color: string }) => (
             <Text style={{ color, fontSize: 18 }}>💬</Text>
           ),

@@ -162,6 +162,10 @@ export class ChatService {
       throw new BadRequestException("Message must have content or attachments");
     }
 
+    if (!this.canAccessRoom(user, dto.roomId)) {
+      throw new ForbiddenException("Access denied");
+    }
+
     const message = this.messageRepo.create({
       roomId: dto.roomId,
       senderId: user.id,

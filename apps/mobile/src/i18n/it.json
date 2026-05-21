@@ -291,7 +291,8 @@
     "chatRequests": "Cronologia Chatbot",
     "backups": "Backup",
     "kbAdmin": "Knowledge Base",
-    "releases": "Releases"
+    "releases": "Releases",
+    "unionChat": "Chat sindacale"
   },
   "chatbot": {
     "title": "Assistente AI",
@@ -1120,5 +1121,24 @@
     "uploadError": "Caricamento Fallito",
     "uploadErrorMessage": "Impossibile caricare i file sul server.",
     "uploadMdOnly": "Sono supportati solo file .md (Markdown) e .pdf."
+  },
+  "unionChat": {
+    "title": "Chat sindacale",
+    "loadRoomsError": "Impossibile caricare le chat",
+    "noRooms": "Nessuna stanza disponibile",
+    "messagePlaceholder": "Scrivi un messaggio…",
+    "pinnedAttachment": "📎 allegato",
+    "connected": "Connesso",
+    "disconnected": "Disconnesso",
+    "sendFailed": "Messaggio non inviato. Controlla la connessione.",
+    "retry": "Riprova",
+    "uploadFailed": "Upload fallito, riprova.",
+    "downloadFailed": "Download fallito (HTTP {{status}}).",
+    "attachmentOpenFailed": "Impossibile aprire l'allegato.",
+    "attachmentTitle": "Allegato",
+    "pickFromLibrary": "Scegli dalla libreria",
+    "attachFile": "Allega file",
+    "deleteMessageTitle": "Elimina messaggio",
+    "deleteMessageConfirm": "Sei sicuro?"
   }
 }

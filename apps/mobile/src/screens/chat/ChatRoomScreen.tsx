@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+  useEffect,
+} from "react";
 import {
   View,
   Text,
@@ -27,6 +33,7 @@ import { QUERY_KEYS } from "../../api/queryKeys";
 import { useAuthStore } from "../../store/authStore";
 import { useChatSocket } from "../../hooks/useChatSocket";
 import { UserRole } from "../../types";
+import { useTranslation } from "react-i18next";
 import { colors, spacing, typography, borderRadius } from "../../theme";
 
 interface Props {
@@ -36,10 +43,16 @@ interface Props {
 
 export function ChatRoomScreen({ navigation, route }: Props) {
   const { roomId, roomName } = route.params;
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { accessToken, user } = useAuthStore();
   const queryClient = useQueryClient();
   const [inputText, setInputText] = useState("");
+  const [pendingSend, setPendingSend] = useState<{
+    content?: string;
+    attachmentIds: string[];
+  } | null>(null);
+  const [sendFailed, setSendFailed] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [preview, setPreview] = useState<{
@@ -67,13 +80,27 @@ export function ChatRoomScreen({ navigation, route }: Props) {
   const isAdmin =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
 
-  const onNewMessage = useCallback((msg: ChatMessage) => {
-    setMessages((prev) => [...prev, msg]);
-    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
-  }, []);
+  const onNewMessage = useCallback(
+    (msg: ChatMessage) => {
+      if (msg.roomId !== roomId) return;
+      setMessages((prev) => [...prev, msg]);
+      setTimeout(
+        () => flatListRef.current?.scrollToEnd({ animated: true }),
+        100,
+      );
+    },
+    [roomId],
+  );
 
   const onMessageDeleted = useCallback(
-    ({ messageId }: { messageId: string; roomId: string }) => {
+    ({
+      messageId,
+      roomId: eventRoomId,
+    }: {
+      messageId: string;
+      roomId: string;
+    }) => {
+      if (eventRoomId !== roomId) return;
       setMessages((prev) => prev.filter((m) => m.id !== messageId));
       queryClient.setQueryData<ChatMessage[]>(
         QUERY_KEYS.chatMessages(roomId),
@@ -87,16 +114,18 @@ export function ChatRoomScreen({ navigation, route }: Props) {
     ({
       messageId,
       isPinned,
+      roomId: eventRoomId,
     }: {
       messageId: string;
       roomId: string;
       isPinned: boolean;
     }) => {
+      if (eventRoomId !== roomId) return;
       setMessages((prev) =>
         prev.map((m) => (m.id === messageId ? { ...m, isPinned } : m)),
       );
     },
-    [],
+    [roomId],
   );
 
   const { isConnected, sendMessage, deleteMessage } = useChatSocket({
@@ -107,14 +136,54 @@ export function ChatRoomScreen({ navigation, route }: Props) {
     onMessagePinned,
   });
 
+  const handleRetrySend = useCallback(() => {
+    if (!pendingSend || !isConnected) return;
+    const ok = sendMessage(pendingSend.content, pendingSend.attachmentIds);
+    if (ok) {
+      setInputText("");
+      setPendingSend(null);
+      setSendFailed(false);
+    } else {
+      setSendFailed(true);
+    }
+  }, [pendingSend, isConnected, sendMessage]);
+
   const handleSend = () => {
     const text = inputText.trim();
     if (!text) return;
-    sendMessage(text, []);
+    if (!isConnected) {
+      setPendingSend({ content: text, attachmentIds: [] });
+      setSendFailed(true);
+      return;
+    }
+    const ok = sendMessage(text, []);
+    if (!ok) {
+      setPendingSend({ content: text, attachmentIds: [] });
+      setSendFailed(true);
+      return;
+    }
     setInputText("");
+    setPendingSend(null);
+    setSendFailed(false);
   };
 
+  useEffect(() => {
+    if (!isConnected || !pendingSend) return;
+    const ok = sendMessage(pendingSend.content, pendingSend.attachmentIds);
+    if (ok) {
+      setInputText("");
+      setPendingSend(null);
+      setSendFailed(false);
+    } else {
+      setSendFailed(true);
+    }
+  }, [isConnected]);
+
   const uploadAsset = async (uri: string, name: string, type: string) => {
+    if (!isConnected) {
+      Alert.alert(t("unionChat.attachmentTitle"), t("unionChat.disconnected"));
+      return;
+    }
     setIsUploading(true);
     try {
       const { attachmentId } = await chatApi.uploadAttachment(roomId, {
@@ -122,10 +191,18 @@ export function ChatRoomScreen({ navigation, route }: Props) {
         name,
         type,
       });
-      sendMessage(inputText.trim() || undefined, [attachmentId]);
+      const content = inputText.trim() || undefined;
+      const ok = sendMessage(content, [attachmentId]);
+      if (!ok) {
+        setPendingSend({ content, attachmentIds: [attachmentId] });
+        setSendFailed(true);
+        return;
+      }
       setInputText("");
+      setPendingSend(null);
+      setSendFailed(false);
     } catch {
-      Alert.alert("Errore", "Upload fallito, riprova.");
+      Alert.alert(t("unionChat.attachmentTitle"), t("unionChat.uploadFailed"));
     } finally {
       setIsUploading(false);
     }

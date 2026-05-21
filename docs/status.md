@@ -14,15 +14,15 @@
 
 ## Pitfalls (do not regress)
 
-| Topic | Note |
-|-------|------|
-| Mobile path | Use **`apps/mobile/`** — docs/AGENTS may still say `app/` |
-| PDF | Always **`generateWithHtml()`**; detect HTML with regex, not only `startsWith("<")` |
-| Auth startup | No refresh on mount; rehydrate AsyncStorage first |
-| Offline logout | Refresh failure must not logout on network errors (only 4xx) |
-| Migrations | Never `synchronize: true` in production |
-| ENUM reset | `reset-tables.sh` drops enum types, not only tables |
-| Payslip TDD | Complex tax logic — add tests when changing calculator |
+| Topic          | Note                                                                                |
+| -------------- | ----------------------------------------------------------------------------------- |
+| Mobile path    | Use **`apps/mobile/`** — docs/AGENTS may still say `app/`                           |
+| PDF            | Always **`generateWithHtml()`**; detect HTML with regex, not only `startsWith("<")` |
+| Auth startup   | No refresh on mount; rehydrate AsyncStorage first                                   |
+| Offline logout | Refresh failure must not logout on network errors (only 4xx)                        |
+| Migrations     | Never `synchronize: true` in production                                             |
+| ENUM reset     | `reset-tables.sh` drops enum types, not only tables                                 |
+| Payslip TDD    | Complex tax logic — add tests when changing calculator                              |
 
 ## Environment
 

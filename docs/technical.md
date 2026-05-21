@@ -4,14 +4,14 @@ UnionHub / UnionConnect — quick index for agents. Read `CLAUDE.md` and `AGENTS
 
 ## Stack
 
-| Layer | Technology |
-|-------|------------|
-| API | NestJS 11, TypeORM 0.3, PostgreSQL 15+ |
+| Layer  | Technology                                          |
+| ------ | --------------------------------------------------- |
+| API    | NestJS 11, TypeORM 0.3, PostgreSQL 15+              |
 | Mobile | Expo 52, React Native 0.83, TanStack Query, Zustand |
-| Auth | JWT access 15m + refresh 30d, crewcode login |
-| PDF | Puppeteer (`generateWithHtml`) |
-| AI | Ollama local or OpenRouter (`OLLAMA_CLOUD`) |
-| Push | Expo Push API |
+| Auth   | JWT access 15m + refresh 30d, crewcode login        |
+| PDF    | Puppeteer (`generateWithHtml`)                      |
+| AI     | Ollama local or OpenRouter (`OLLAMA_CLOUD`)         |
+| Push   | Expo Push API                                       |
 
 ## Architectural decisions
 
@@ -22,14 +22,14 @@ UnionHub / UnionConnect — quick index for agents. Read `CLAUDE.md` and `AGENTS
 
 ## Module rules (backend)
 
-| Module | Responsibility |
-|--------|----------------|
-| auth | Login, refresh, password change |
-| users | CRUD, profile gate fields, import |
-| documents | Rich text, translation, PDF |
-| issues | Segnalazioni, categories, urgencies |
-| notifications | Visible + silent broadcast |
-| cla-contracts | Versioned CLA for payslip |
+| Module        | Responsibility                      |
+| ------------- | ----------------------------------- |
+| auth          | Login, refresh, password change     |
+| users         | CRUD, profile gate fields, import   |
+| documents     | Rich text, translation, PDF         |
+| issues        | Segnalazioni, categories, urgencies |
+| notifications | Visible + silent broadcast          |
+| cla-contracts | Versioned CLA for payslip           |
 
 ## Security
 
@@ -49,14 +49,14 @@ Backend unit tests: `api/src/**/*.service.spec.ts`.
 
 ## Documentation map
 
-| Doc | Purpose |
-|-----|---------|
-| [01-ux-design.md](./01-ux-design.md) | UX / design system |
-| [02-use-cases.md](./02-use-cases.md) | Scenarios |
-| [03-frontend-architecture.md](./03-frontend-architecture.md) | Mobile architecture |
-| [04-backend-architecture.md](./04-backend-architecture.md) | API architecture |
-| [architecture.mermaid](./architecture.mermaid) | System diagram |
-| [status.md](./status.md) | AI memory / pitfalls |
-| [../tasks/tasks.md](../tasks/tasks.md) | Active tasks |
-| [../AGENTS.md](../AGENTS.md) | Agent guide |
-| [../CLAUDE.md](../CLAUDE.md) | Commands & checklist |
+| Doc                                                          | Purpose              |
+| ------------------------------------------------------------ | -------------------- |
+| [01-ux-design.md](./01-ux-design.md)                         | UX / design system   |
+| [02-use-cases.md](./02-use-cases.md)                         | Scenarios            |
+| [03-frontend-architecture.md](./03-frontend-architecture.md) | Mobile architecture  |
+| [04-backend-architecture.md](./04-backend-architecture.md)   | API architecture     |
+| [architecture.mermaid](./architecture.mermaid)               | System diagram       |
+| [status.md](./status.md)                                     | AI memory / pitfalls |
+| [../tasks/tasks.md](../tasks/tasks.md)                       | Active tasks         |
+| [../AGENTS.md](../AGENTS.md)                                 | Agent guide          |
+| [../CLAUDE.md](../CLAUDE.md)                                 | Commands & checklist |

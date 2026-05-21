@@ -34,14 +34,17 @@ export const TimeInput: React.FC<TimeInputProps> = ({
 
   const isEmpty = !value || value.length < 5;
 
-  const handleChangeText = useCallback((text: string) => {
-    // Only allow digits, max 4
-    const digits = text.replace(/\D/g, "").slice(0, 4);
-    setLocalValue(digits);
-  }, []);
+  const maxDigits = maxHours >= 100 ? 5 : 4;
+
+  const handleChangeText = useCallback(
+    (text: string) => {
+      const digits = text.replace(/\D/g, "").slice(0, maxDigits);
+      setLocalValue(digits);
+    },
+    [maxDigits],
+  );
 
   const handleBlur = useCallback(() => {
-    // Format the current input
     const digits = localValue.replace(/\D/g, "");
 
     if (digits.length === 0) {
@@ -50,15 +53,27 @@ export const TimeInput: React.FC<TimeInputProps> = ({
       return;
     }
 
-    // Pad with zeros for formatting
-    const padded = digits.padEnd(4, "0").slice(0, 4);
-    const h = Math.min(parseInt(padded.slice(0, 2)) || 0, maxHours);
-    const m = Math.min(parseInt(padded.slice(2, 4)) || 0, 59);
-    const formatted = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    let h: number, m: number;
 
+    if (maxHours >= 100 && digits.length <= 3) {
+      // e.g. "103" → 103:00 (hours only, no minutes)
+      h = Math.min(parseInt(digits) || 0, maxHours);
+      m = 0;
+    } else if (maxHours >= 100 && digits.length === 5) {
+      // HHHММ → e.g. "10330" → 103:30
+      h = Math.min(parseInt(digits.slice(0, 3)) || 0, maxHours);
+      m = Math.min(parseInt(digits.slice(3, 5)) || 0, 59);
+    } else {
+      // Standard 4-digit HHMM → e.g. "1030" → 10:30
+      const padded = digits.padEnd(4, "0").slice(0, 4);
+      h = Math.min(parseInt(padded.slice(0, 2)) || 0, maxHours);
+      m = Math.min(parseInt(padded.slice(2, 4)) || 0, 59);
+    }
+
+    const formatted = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
     onChange(formatted);
     setLocalValue(formatted);
-  }, [localValue, maxHours, onChange]);
+  }, [localValue, maxHours, maxDigits, onChange]);
 
   const handleFocus = useCallback(() => {
     // Convert "HH:MM" to "HHMM" for editing
@@ -85,7 +100,7 @@ export const TimeInput: React.FC<TimeInputProps> = ({
           placeholder={placeholder}
           placeholderTextColor={colors.textTertiary}
           keyboardType="number-pad"
-          maxLength={4}
+          maxLength={maxDigits}
         />
       </View>
     </View>
