@@ -420,6 +420,8 @@
     "importStandbyHome": "Home standby",
     "importStandbyAirport": "Standby aeroporto",
     "importStandbyNone": "Nessuno",
+    "importBannerTitle": "Importa dal roster",
+    "importBannerSubtitle": "Seleziona uno screenshot per compilare automaticamente tutti i campi",
     "importImageSelected": "Screenshot selezionato",
     "importLegal": "Turno entro i limiti FTL",
     "importIllegal": "Turno fuori dai limiti FTL",

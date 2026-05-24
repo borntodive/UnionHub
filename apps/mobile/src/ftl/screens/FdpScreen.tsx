@@ -161,6 +161,27 @@ export const FdpScreen: React.FC = () => {
           )}
         </View>
 
+        {/* Import banner — visible only when calculator is empty */}
+        {!reportTime && (
+          <TouchableOpacity
+            style={styles.importBanner}
+            onPress={() => setImportVisible(true)}
+            activeOpacity={0.8}
+          >
+            <View style={styles.importBannerIcon}>
+              <Upload size={28} color={colors.primary} />
+            </View>
+            <View style={styles.importBannerText}>
+              <Text style={styles.importBannerTitle}>
+                {t("ftl.importBannerTitle")}
+              </Text>
+              <Text style={styles.importBannerSubtitle}>
+                {t("ftl.importBannerSubtitle")}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
         {/* Inputs */}
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>{t("ftl.inputs")}</Text>
@@ -344,6 +365,41 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold,
   },
   resetButton: { padding: spacing.xs },
+  importBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    gap: spacing.md,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  importBannerIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: borderRadius.md,
+    backgroundColor: `${colors.primary}18`,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  importBannerText: { flex: 1 },
+  importBannerTitle: {
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.bold,
+    color: colors.primary,
+    marginBottom: 2,
+  },
+  importBannerSubtitle: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    lineHeight: 18,
+  },
   scroll: { flex: 1 },
   content: { padding: spacing.md, paddingBottom: spacing.xl },
   resultCard: {

@@ -156,7 +156,7 @@ export class AuthController {
     @Request() req: RequestWithUser,
   ): Promise<{ biometricToken: string }> {
     const user = await this.usersService.findById(req.user.userId);
-    const biometricToken = await this.authService.createBiometricToken(user);
+    const biometricToken = await this.authService.generateBiometricToken(user);
     return { biometricToken };
   }
 

@@ -420,6 +420,8 @@
     "importStandbyHome": "Home standby",
     "importStandbyAirport": "Airport standby",
     "importStandbyNone": "None",
+    "importBannerTitle": "Import from roster",
+    "importBannerSubtitle": "Pick a screenshot to auto-fill all fields",
     "importImageSelected": "Screenshot selected",
     "importLegal": "Duty within FTL limits",
     "importIllegal": "Duty exceeds FTL limits",
