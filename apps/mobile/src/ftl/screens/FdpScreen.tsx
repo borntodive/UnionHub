@@ -161,26 +161,24 @@ export const FdpScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Import banner — visible only when calculator is empty */}
-        {!reportTime && (
-          <TouchableOpacity
-            style={styles.importBanner}
-            onPress={() => setImportVisible(true)}
-            activeOpacity={0.8}
-          >
-            <View style={styles.importBannerIcon}>
-              <Upload size={28} color={colors.primary} />
-            </View>
-            <View style={styles.importBannerText}>
-              <Text style={styles.importBannerTitle}>
-                {t("ftl.importBannerTitle")}
-              </Text>
-              <Text style={styles.importBannerSubtitle}>
-                {t("ftl.importBannerSubtitle")}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        )}
+        {/* Import banner */}
+        <TouchableOpacity
+          style={styles.importBanner}
+          onPress={() => setImportVisible(true)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.importBannerIcon}>
+            <Upload size={28} color={colors.primary} />
+          </View>
+          <View style={styles.importBannerText}>
+            <Text style={styles.importBannerTitle}>
+              {t("ftl.importBannerTitle")}
+            </Text>
+            <Text style={styles.importBannerSubtitle}>
+              {t("ftl.importBannerSubtitle")}
+            </Text>
+          </View>
+        </TouchableOpacity>
 
         {/* Inputs */}
         <View style={styles.card}>
