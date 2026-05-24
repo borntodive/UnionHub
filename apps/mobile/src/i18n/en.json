@@ -100,7 +100,8 @@
     "backToLogin": "Back to Login",
     "inputMethod": "Input Method",
     "byEmail": "By Email",
-    "byCrewcode": "By Crewcode"
+    "byCrewcode": "By Crewcode",
+    "biometricAuthEnabled": "Biometric authentication enabled"
   },
   "documents": {
     "title": "Communications",
@@ -248,7 +249,13 @@
     "payslipRegionalSurcharge": "Regional Surcharge (€)",
     "payslipFondoVolo": "D.Lgs. 164/97",
     "payslipAnteL996": "Worker before 1996",
-    "payslipOltre18Anni": "More than 18 years before 1996"
+    "payslipOltre18Anni": "More than 18 years before 1996",
+    "logoutAllTitle": "Sign out from all devices",
+    "logoutAllMessage": "You will be signed out from all devices and will need to login again with your credentials. Biometric authentication will be disabled.",
+    "logoutAllConfirm": "Sign out all",
+    "logoutAll": "Sign out from all devices",
+    "logoutAllDesc": "Revoke all active sessions and disable Face ID",
+    "logoutAllAction": "Sign out all"
   },
   "navigation": {
     "home": "Home",

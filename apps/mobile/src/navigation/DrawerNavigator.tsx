@@ -126,7 +126,6 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
-  const logoutAll = useAuthStore((state) => state.logoutAll);
   const refreshToken = useAuthStore((state) => state.refreshToken);
   const navigation = useNavigation();
   const isOnline = useOfflineStore((state) => state.isOnline);
@@ -145,32 +144,6 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       usePayslipStore.getState().resetSettings();
       logout();
     }
-  };
-
-  const handleLogoutAll = async () => {
-    Alert.alert(
-      "Disconnetti da tutti i dispositivi",
-      "Verrai disconnesso da tutti i dispositivi e dovrai accedere nuovamente con le tue credenziali. Face ID verrà disabilitato.",
-      [
-        { text: "Annulla", style: "cancel" },
-        {
-          text: "Disconnetti tutti",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              if (refreshToken) {
-                await authApi.logoutAll(refreshToken);
-              }
-            } catch {
-              // Ignore server errors — local cleanup always runs
-            } finally {
-              usePayslipStore.getState().resetSettings();
-              await logoutAll();
-            }
-          },
-        },
-      ],
-    );
   };
 
   const navigateToScreen = (screenName: string) => {
@@ -590,15 +563,6 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <LogOut size={22} color={colors.error} />
             <Text style={styles.logoutText}>{t("auth.logout")}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.logoutAllButton}
-            onPress={handleLogoutAll}
-          >
-            <Text style={styles.logoutAllText}>
-              Disconnetti da tutti i dispositivi
-            </Text>
           </TouchableOpacity>
 
           <Text style={styles.versionText}>
@@ -1291,15 +1255,6 @@ const styles = StyleSheet.create({
     color: colors.error,
     marginLeft: spacing.md,
     fontWeight: typography.weights.medium,
-  },
-  logoutAllButton: {
-    paddingVertical: spacing.xs,
-    marginTop: spacing.xs,
-  },
-  logoutAllText: {
-    fontSize: typography.sizes.sm,
-    color: colors.textTertiary,
-    textDecorationLine: "underline",
   },
   versionText: {
     fontSize: typography.sizes.xs,

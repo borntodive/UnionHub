@@ -197,7 +197,7 @@ export class AuthService {
     );
   }
 
-  private async generateBiometricToken(user: User): Promise<string> {
+  async generateBiometricToken(user: User): Promise<string> {
     const rawToken = crypto.randomBytes(32).toString("hex");
     const tokenHash = this.hashToken(rawToken);
 

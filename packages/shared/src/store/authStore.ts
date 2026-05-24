@@ -22,7 +22,7 @@ export interface AuthState {
   logoutAll: () => Promise<void>;
   setUser: (user: User) => void;
   setLoading: (loading: boolean) => void;
-  enableBiometric: () => Promise<void>;
+  enableBiometric: (biometricToken?: string) => Promise<void>;
   disableBiometric: () => Promise<void>;
   getBiometricToken: () => Promise<string | null>;
 }
@@ -103,8 +103,18 @@ export function createAuthStore(
         setUser: (user) => set({ user }),
         setLoading: (isLoading) => set({ isLoading }),
 
-        enableBiometric: async () => {
+        enableBiometric: async (biometricToken?: string) => {
           await secureStorage.setItemAsync(BIOMETRIC_ENABLED_KEY, "true");
+          if (biometricToken) {
+            await secureStorage
+              .setItemAsync(SECURE_BIOMETRIC_TOKEN_KEY, biometricToken)
+              .catch((err) => {
+                console.warn(
+                  "[authStore] Failed to save biometric token:",
+                  err,
+                );
+              });
+          }
           set({ biometricEnabled: true });
         },
 

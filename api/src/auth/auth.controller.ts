@@ -149,6 +149,17 @@ export class AuthController {
     return this.authService.biometricLogin(dto.biometricToken, ip, userAgent);
   }
 
+  @Post("biometric-token")
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async generateBiometricToken(
+    @Request() req: RequestWithUser,
+  ): Promise<{ biometricToken: string }> {
+    const user = await this.usersService.findById(req.user.userId);
+    const biometricToken = await this.authService.createBiometricToken(user);
+    return { biometricToken };
+  }
+
   @Post("logout-all")
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)

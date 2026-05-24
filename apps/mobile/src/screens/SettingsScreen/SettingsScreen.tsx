@@ -21,6 +21,7 @@ import {
   Mail,
   BookUser,
   UserX,
+  LogOut,
 } from "lucide-react-native";
 import { Linking, Share } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -30,6 +31,8 @@ import { colors, spacing, typography, borderRadius } from "../../theme";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../store/authStore";
 import { UserRole, Ruolo } from "../../types";
+import { authApi } from "../../api/auth";
+import { useBiometricAuth } from "../../hooks/useBiometricAuth";
 import apiClient from "../../api/client";
 import { usersApi } from "../../api/users";
 import { gradesApi } from "../../api/grades";
@@ -592,7 +595,16 @@ const CheckboxRow: React.FC<CheckboxRowProps> = ({
 export const SettingsScreen: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { biometricEnabled, disableBiometric, user, logout } = useAuthStore();
+  const {
+    biometricEnabled,
+    enableBiometric,
+    disableBiometric,
+    user,
+    logout,
+    logoutAll,
+    refreshToken,
+  } = useAuthStore();
+  const { isAvailable, authenticate, getBiometricLabel } = useBiometricAuth();
   const { settings, setSettings } = usePayslipStore();
   const { notificationPrefs, setNotificationPrefs } = useOfflineStore();
   const isAdmin =
@@ -763,6 +775,46 @@ export const SettingsScreen: React.FC = () => {
         },
       ],
     );
+  };
+
+  const handleLogoutAll = async () => {
+    Alert.alert(t("settings.logoutAllTitle"), t("settings.logoutAllMessage"), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("settings.logoutAllConfirm"),
+        style: "destructive",
+        onPress: async () => {
+          try {
+            if (refreshToken) {
+              await authApi.logoutAll(refreshToken);
+            }
+          } catch {
+            // server errors ignored — local cleanup always runs
+          } finally {
+            usePayslipStore.getState().resetSettings();
+            await logoutAll();
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleEnableBiometric = async () => {
+    if (!isAvailable) {
+      Alert.alert(t("common.error"), t("auth.biometricNotAvailable"));
+      return;
+    }
+    const success = await authenticate(
+      t("auth.enableBiometric", { method: getBiometricLabel() }),
+    );
+    if (!success) return;
+    try {
+      const token = await authApi.generateBiometricToken();
+      await enableBiometric(token);
+      Alert.alert(t("common.success"), t("auth.biometricAuthEnabled"));
+    } catch {
+      Alert.alert(t("common.error"), t("errors.generic"));
+    }
   };
 
   const handleDisableBiometric = () => {
@@ -1000,6 +1052,16 @@ export const SettingsScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
           )}
+          {!biometricEnabled && isAvailable && (
+            <TouchableOpacity
+              style={styles.enableButton}
+              onPress={handleEnableBiometric}
+            >
+              <Text style={styles.enableButtonText}>
+                {t("auth.enableBiometric", { method: getBiometricLabel() })}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -1025,6 +1087,27 @@ export const SettingsScreen: React.FC = () => {
             >
               <Text style={styles.disableButtonText}>
                 {t("settings.unsubscribe")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Logout All */}
+          <View style={[styles.card, { marginTop: spacing.sm }]}>
+            <View style={styles.row}>
+              <View style={styles.iconContainer}>
+                <LogOut size={24} color={colors.error} />
+              </View>
+              <View style={styles.textContainer}>
+                <Text style={styles.label}>{t("settings.logoutAll")}</Text>
+                <Text style={styles.value}>{t("settings.logoutAllDesc")}</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.disableButton}
+              onPress={handleLogoutAll}
+            >
+              <Text style={styles.disableButtonText}>
+                {t("settings.logoutAllAction")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1490,6 +1573,18 @@ const styles = StyleSheet.create({
   disableButtonText: {
     fontSize: typography.sizes.base,
     color: colors.error,
+    fontWeight: typography.weights.medium,
+  },
+  enableButton: {
+    marginTop: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.primary + "15",
+    borderRadius: borderRadius.md,
+    alignItems: "center",
+  },
+  enableButtonText: {
+    fontSize: typography.sizes.base,
+    color: colors.primary,
     fontWeight: typography.weights.medium,
   },
   infoRow: {

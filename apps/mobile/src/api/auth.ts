@@ -65,6 +65,13 @@ export const authApi = {
     return response.data;
   },
 
+  generateBiometricToken: async (): Promise<string> => {
+    const response = await apiClient.post<{ biometricToken: string }>(
+      "/auth/biometric-token",
+    );
+    return response.data.biometricToken;
+  },
+
   logout: async (refreshToken: string): Promise<void> => {
     await apiClient.post("/auth/logout", { refreshToken });
   },

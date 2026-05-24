@@ -100,7 +100,8 @@
     "backToLogin": "Torna al Login",
     "inputMethod": "Modalità di inserimento",
     "byEmail": "Via Email",
-    "byCrewcode": "Via Crewcode"
+    "byCrewcode": "Via Crewcode",
+    "biometricAuthEnabled": "Autenticazione biometrica abilitata"
   },
   "documents": {
     "title": "Comunicati",
@@ -248,7 +249,13 @@
     "payslipRegionalSurcharge": "Addizionale Regionale (€)",
     "payslipFondoVolo": "D.Lgs. 164/97",
     "payslipAnteL996": "Lavoratore ante 1996",
-    "payslipOltre18Anni": "Più di 18 anni prima del 1996"
+    "payslipOltre18Anni": "Più di 18 anni prima del 1996",
+    "logoutAllTitle": "Disconnetti da tutti i dispositivi",
+    "logoutAllMessage": "Verrai disconnesso da tutti i dispositivi e dovrai accedere nuovamente con le tue credenziali. Face ID verrà disabilitato.",
+    "logoutAllConfirm": "Disconnetti tutti",
+    "logoutAll": "Disconnetti da tutti i dispositivi",
+    "logoutAllDesc": "Revoca tutte le sessioni attive e disabilita Face ID",
+    "logoutAllAction": "Disconnetti tutti"
   },
   "navigation": {
     "home": "Home",
