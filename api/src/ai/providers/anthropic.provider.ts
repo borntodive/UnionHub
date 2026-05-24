@@ -13,6 +13,17 @@ export interface CompleteParams {
   userId?: string;
 }
 
+export interface VisionParams {
+  system?: string;
+  /** base64-encoded image data */
+  imageBase64: string;
+  mediaType?: "image/jpeg" | "image/png" | "image/webp" | "image/gif";
+  prompt: string;
+  maxTokens?: number;
+  functionName: string;
+  userId?: string;
+}
+
 export interface CompleteResult {
   text: string;
   inputTokens: number;
@@ -101,6 +112,101 @@ export class AnthropicProvider {
           const delay = RETRY_DELAY_MS * attempt;
           this.logger.warn(
             `Anthropic attempt ${attempt} failed (${status}), retrying in ${delay}ms`,
+          );
+          await new Promise((r) => setTimeout(r, delay));
+        }
+      }
+    }
+
+    await this.telemetry.log({
+      functionName: params.functionName,
+      userId: params.userId,
+      model: MODEL,
+      inputTokens: 0,
+      outputTokens: 0,
+      cacheReadTokens: 0,
+      cacheCreationTokens: 0,
+      latencyMs: Date.now() - start,
+      success: false,
+      error: lastError?.message,
+    });
+
+    throw lastError;
+  }
+
+  async completeWithVision(params: VisionParams): Promise<CompleteResult> {
+    const start = Date.now();
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const response = await this.client.messages.create({
+          model: MODEL,
+          max_tokens: params.maxTokens ?? 512,
+          temperature: 0.0,
+          ...(params.system ? { system: params.system } : {}),
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image",
+                  source: {
+                    type: "base64",
+                    media_type: params.mediaType ?? "image/jpeg",
+                    data: params.imageBase64,
+                  },
+                },
+                { type: "text", text: params.prompt },
+              ],
+            },
+          ],
+        });
+
+        const text =
+          response.content
+            .filter((b) => b.type === "text")
+            .map((b) => (b as { type: "text"; text: string }).text)
+            .join("") ?? "";
+
+        const result: CompleteResult = {
+          text,
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens,
+          cacheReadTokens:
+            (response.usage as unknown as { cache_read_input_tokens?: number })
+              .cache_read_input_tokens ?? 0,
+          cacheCreationTokens:
+            (
+              response.usage as unknown as {
+                cache_creation_input_tokens?: number;
+              }
+            ).cache_creation_input_tokens ?? 0,
+        };
+
+        await this.telemetry.log({
+          functionName: params.functionName,
+          userId: params.userId,
+          model: MODEL,
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
+          cacheReadTokens: result.cacheReadTokens,
+          cacheCreationTokens: result.cacheCreationTokens,
+          latencyMs: Date.now() - start,
+          success: true,
+        });
+
+        return result;
+      } catch (err: unknown) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        const status = (err as { status?: number }).status ?? 0;
+
+        if (status === 401 || status === 400) break;
+
+        if (attempt < MAX_RETRIES) {
+          const delay = RETRY_DELAY_MS * attempt;
+          this.logger.warn(
+            `Anthropic vision attempt ${attempt} failed (${status}), retrying in ${delay}ms`,
           );
           await new Promise((r) => setTimeout(r, delay));
         }

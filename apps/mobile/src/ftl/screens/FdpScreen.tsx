@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -15,7 +15,9 @@ import {
   AlertTriangle,
   Info,
   RotateCcw,
+  Upload,
 } from "lucide-react-native";
+import { ImportDutyModal } from "../components/ImportDutyModal";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { colors, spacing, typography, borderRadius } from "../../theme";
@@ -36,6 +38,7 @@ export const FdpScreen: React.FC = () => {
   const navigation = useNavigation();
   const { t } = useTranslation();
   const { reportTime, sectors, standby, set, reset } = useFtlStore();
+  const [importVisible, setImportVisible] = useState(false);
 
   const showStandby = standby.type !== "none";
   // callTime: for home standby, but NOT for night standby 2000–2300 (fixed formula)
@@ -88,6 +91,12 @@ export const FdpScreen: React.FC = () => {
             <Menu size={24} color={colors.textInverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t("ftl.title")}</Text>
+          <TouchableOpacity
+            onPress={() => setImportVisible(true)}
+            style={styles.resetButton}
+          >
+            <Upload size={20} color={colors.textInverse} />
+          </TouchableOpacity>
           <TouchableOpacity onPress={reset} style={styles.resetButton}>
             <RotateCcw size={20} color={colors.textInverse} />
           </TouchableOpacity>
@@ -307,6 +316,11 @@ export const FdpScreen: React.FC = () => {
             </View>
           )}
       </ScrollView>
+
+      <ImportDutyModal
+        visible={importVisible}
+        onClose={() => setImportVisible(false)}
+      />
     </View>
   );
 };

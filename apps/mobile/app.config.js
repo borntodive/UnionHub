@@ -46,7 +46,7 @@ module.exports = {
         NSCameraUsageDescription:
           "UnionHub uses the camera to scan and upload registration documents.",
         NSPhotoLibraryUsageDescription:
-          "UnionHub accesses your photo library to send images in chat.",
+          "UnionHub accesses your photo library to send images in chat and to import roster screenshots in the FTL calculator.",
         NSLocationWhenInUseUsageDescription:
           "Location is used to find nearby VOLMET stations.",
         UIViewControllerBasedStatusBarAppearance: false,
@@ -124,7 +124,7 @@ module.exports = {
         "expo-image-picker",
         {
           photosPermission:
-            "UnionHub accesses your photo library to send images in chat.",
+            "UnionHub accesses your photo library to send images in chat and to import roster screenshots in the FTL calculator.",
         },
       ],
     ],
