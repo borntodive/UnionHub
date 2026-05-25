@@ -17,6 +17,7 @@ import { UserRole } from "../../common/enums/user-role.enum";
 import { Ruolo } from "../../common/enums/ruolo.enum";
 import { WhatsappStatus } from "../../common/enums/whatsapp-status.enum";
 import * as bcrypt from "bcrypt";
+import * as crypto from "crypto";
 import { seedClaContracts2025 } from "./cla-contracts-2025.seed";
 import { seedClaContracts2026 } from "./cla-contracts-2026.seed";
 import { seedClaContracts2026Test } from "./cla-contracts-2026-test.seed";
@@ -390,6 +391,28 @@ async function runSeed() {
       console.log("  Created SuperAdmin: COVEAN / password");
     } else {
       console.log("  SuperAdmin already exists");
+    }
+
+    // ── Bot Moderator ─────────────────────────────────────────────────────
+    const existingBot = await usersRepository.findOne({
+      where: { crewcode: "BOT_MOD" },
+    });
+    if (!existingBot) {
+      await usersRepository.save(
+        usersRepository.create({
+          crewcode: "BOT_MOD",
+          password: await bcrypt.hash(crypto.randomUUID(), 10),
+          role: UserRole.SUPERADMIN,
+          ruolo: null,
+          nome: "Moderatore",
+          cognome: "CISL",
+          email: "bot.moderatore@cisl.internal",
+          isActive: true,
+          mustChangePassword: false,
+          isBot: true,
+        }),
+      );
+      console.log("✓ BOT_MOD user created");
     }
 
     // ── CLA Contracts ─────────────────────────────────────────────────────
