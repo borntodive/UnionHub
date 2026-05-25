@@ -413,6 +413,8 @@ async function runSeed() {
         }),
       );
       console.log("✓ BOT_MOD user created");
+    } else {
+      console.log("  BOT_MOD already exists");
     }
 
     // ── CLA Contracts ─────────────────────────────────────────────────────
