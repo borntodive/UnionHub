@@ -279,6 +279,11 @@ export function ChatRoomScreen({ navigation, route }: Props) {
       }
       if (mimeType.startsWith("image/")) {
         setPreview({ uri: localUri, mimeType, name: originalName });
+      } else if (mimeType === "application/pdf") {
+        navigation.navigate("PdfViewer", {
+          fileUri: localUri,
+          title: originalName,
+        });
       } else {
         await Sharing.shareAsync(localUri, {
           mimeType,
@@ -451,7 +456,7 @@ export function ChatRoomScreen({ navigation, route }: Props) {
       >
         <SafeAreaView
           style={styles.previewContainer}
-          edges={["top", "bottom", "left", "right"]}
+          edges={["top", "left", "right"]}
         >
           <View style={styles.previewHeader}>
             <TouchableOpacity onPress={() => setPreview(null)}>
@@ -614,7 +619,7 @@ const styles = StyleSheet.create({
   },
   sendIcon: { color: colors.primary, fontSize: 22, paddingBottom: 4 },
   sendIconDisabled: { color: colors.textTertiary },
-  previewContainer: { flex: 1, backgroundColor: colors.background },
+  previewContainer: { flex: 1, backgroundColor: colors.primary },
   previewHeader: {
     flexDirection: "row",
     alignItems: "center",
