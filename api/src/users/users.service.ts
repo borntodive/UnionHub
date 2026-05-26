@@ -259,6 +259,7 @@ export class UsersService {
     // Use QueryBuilder for more complex queries
     const queryBuilder = this.baseUserQuery()
       .where(where)
+      .andWhere("user.isBot = false")
       .andWhere("user.isActive = :isActive", {
         // pending/rejected users are always isActive=false; skip the default true filter
         isActive:
