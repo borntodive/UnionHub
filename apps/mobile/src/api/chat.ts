@@ -3,6 +3,9 @@ import apiClient, { API_BASE_URL } from "./client";
 export interface ChatRoom {
   id: string;
   name: string;
+  unreadCount: number;
+  lastMessagePreview: string | null;
+  onlineCount: number;
 }
 
 export interface ChatAttachment {
@@ -69,6 +72,9 @@ export const chatApi = {
   pinMessage: async (messageId: string): Promise<ChatMessage> =>
     (await apiClient.patch<ChatMessage>(`/chat/messages/${messageId}/pin`))
       .data,
+
+  markRoomRead: async (roomId: string): Promise<void> =>
+    void (await apiClient.post(`/chat/rooms/${roomId}/read`)),
 
   getAttachmentUrl: (attachmentId: string): string =>
     `${API_BASE_URL}/chat/attachments/${attachmentId}`,
