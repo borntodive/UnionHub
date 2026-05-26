@@ -23,6 +23,7 @@ import { BackupsModule } from "./backups/backups.module";
 import { VolmetModule } from "./volmet/volmet.module";
 import { MetarModule } from "./metar/metar.module";
 import { ChatModule } from "./chat/chat.module";
+import { ModerationModule } from "./moderation/moderation.module";
 import { AppReleasesModule } from "./app-releases/app-releases.module";
 
 @Module({
@@ -70,6 +71,7 @@ import { AppReleasesModule } from "./app-releases/app-releases.module";
     VolmetModule,
     MetarModule,
     ChatModule,
+    ModerationModule,
     AppReleasesModule,
   ],
 })

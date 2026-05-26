@@ -119,6 +119,9 @@ export class User {
   @Column({ type: "boolean", default: false })
   isUSO: boolean;
 
+  @Column({ type: "boolean", default: false })
+  isBot: boolean;
+
   @Column({
     type: "enum",
     enum: WhatsappStatus,

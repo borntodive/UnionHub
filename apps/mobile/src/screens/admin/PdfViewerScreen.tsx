@@ -46,7 +46,7 @@ export const PdfViewerScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<PdfViewerRouteProp>();
   const insets = useSafeAreaInsets();
-  const { documentId, url, title } = route.params;
+  const { documentId, url, fileUri: fileUriParam, title } = route.params;
 
   const [fileUri, setFileUri] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +58,15 @@ export const PdfViewerScreen: React.FC = () => {
 
     const loadPdf = async () => {
       try {
+        // Local file path already on disk — use directly, no base64 round-trip
+        if (fileUriParam) {
+          if (!cancelled) {
+            cachedUriRef.current = null; // don't delete a file we didn't create
+            setFileUri(fileUriParam);
+          }
+          return;
+        }
+
         let base64: string;
 
         if (url) {
@@ -114,7 +123,7 @@ export const PdfViewerScreen: React.FC = () => {
         cachedUriRef.current = null;
       }
     };
-  }, [documentId, url]);
+  }, [documentId, url, fileUriParam]);
 
   const handleShare = async () => {
     if (!fileUri) return;

@@ -40,7 +40,12 @@ export type RootStackParamList = {
   // Documents / Communications
   Documents: undefined;
   DocumentEditor: { documentId?: string } | undefined;
-  PdfViewer: { documentId?: string; url?: string; title: string };
+  PdfViewer: {
+    documentId?: string;
+    url?: string;
+    fileUri?: string;
+    title: string;
+  };
   PendingMembers: undefined;
   // Issues
   ReportIssue: undefined;

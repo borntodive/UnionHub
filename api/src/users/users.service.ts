@@ -259,6 +259,7 @@ export class UsersService {
     // Use QueryBuilder for more complex queries
     const queryBuilder = this.baseUserQuery()
       .where(where)
+      .andWhere("user.isBot = false")
       .andWhere("user.isActive = :isActive", {
         // pending/rejected users are always isActive=false; skip the default true filter
         isActive:
@@ -891,7 +892,7 @@ export class UsersService {
       options.ruolo = requestingUser.ruolo;
     }
 
-    const where: any = { isActive: true };
+    const where: any = { isActive: true, isBot: false };
     if (options.ruolo) where.ruolo = options.ruolo;
     if (options.baseId) where.baseId = options.baseId;
     if (options.contrattoId) where.contrattoId = options.contrattoId;
@@ -968,7 +969,10 @@ export class UsersService {
     rsaCount: number;
     usoCount: number;
   }> {
-    const conditions: string[] = ["user.isActive = :isActive"];
+    const conditions: string[] = [
+      "user.isActive = :isActive",
+      "user.isBot = false",
+    ];
     const params: any = { isActive: true };
     if (ruolo) {
       conditions.push("user.ruolo = :ruolo");
