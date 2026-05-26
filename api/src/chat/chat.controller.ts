@@ -43,6 +43,15 @@ export class ChatController {
     return this.chatService.getRoomsForUser(req.user.userId);
   }
 
+  @Post("rooms/:roomId/read")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async markRead(
+    @Req() req: any,
+    @Param("roomId") roomId: string,
+  ): Promise<void> {
+    await this.chatService.markRoomRead(req.user.userId, roomId);
+  }
+
   @Get("rooms/:roomId/messages")
   async getMessages(
     @Req() req: any,
