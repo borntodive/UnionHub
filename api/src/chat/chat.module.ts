@@ -9,11 +9,18 @@ import { ChatMessage } from "./entities/chat-message.entity";
 import { ChatAttachment } from "./entities/chat-attachment.entity";
 import { User } from "../users/entities/user.entity";
 import { Base } from "../bases/entities/base.entity";
+import { ChatReadReceipt } from "./entities/chat-read-receipt.entity";
 import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ChatMessage, ChatAttachment, User, Base]),
+    TypeOrmModule.forFeature([
+      ChatMessage,
+      ChatAttachment,
+      User,
+      Base,
+      ChatReadReceipt,
+    ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
