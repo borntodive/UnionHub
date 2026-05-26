@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { IsNull, Repository } from "typeorm";
 import * as path from "path";
 import * as fs from "fs";
 import { ChatMessage } from "./entities/chat-message.entity";
@@ -16,6 +16,7 @@ import { UserRole } from "../common/enums/user-role.enum";
 import { Ruolo } from "../common/enums/ruolo.enum";
 import { User } from "../users/entities/user.entity";
 import { Base } from "../bases/entities/base.entity";
+import { ChatReadReceipt } from "./entities/chat-read-receipt.entity";
 import { NotificationsService } from "../notifications/notifications.service";
 
 // Flip to true to roll out chat notifications to all users
@@ -24,6 +25,11 @@ const CHAT_FOR_ALL_USERS = false;
 export interface ChatRoom {
   id: string;
   name: string;
+}
+
+export interface ChatRoomWithMeta extends ChatRoom {
+  unreadCount: number;
+  lastMessagePreview: string | null;
 }
 
 @Injectable()
@@ -39,6 +45,8 @@ export class ChatService {
     private readonly usersRepo: Repository<User>,
     @InjectRepository(Base)
     private readonly basesRepo: Repository<Base>,
+    @InjectRepository(ChatReadReceipt)
+    private readonly readReceiptRepo: Repository<ChatReadReceipt>,
     private readonly notificationsService: NotificationsService,
   ) {
     this.uploadsDir =
@@ -47,7 +55,7 @@ export class ChatService {
 
   // ─── Room access ────────────────────────────────────────────────────────────
 
-  async getRoomsForUser(userId: string): Promise<ChatRoom[]> {
+  async getRoomsForUser(userId: string): Promise<ChatRoomWithMeta[]> {
     const user = await this.usersRepo.findOne({
       where: { id: userId },
       relations: ["base"],
@@ -56,32 +64,68 @@ export class ChatService {
 
     const bases = await this.basesRepo.find();
 
+    let rooms: ChatRoom[];
+
     if (user.role === UserRole.SUPERADMIN) {
-      return [
+      rooms = [
         ...this.buildRoomsForRuolo(Ruolo.PILOT, bases),
         ...this.buildRoomsForRuolo(Ruolo.CABIN_CREW, bases),
       ];
+    } else if (!user.ruolo) {
+      return [];
+    } else if (user.role === UserRole.ADMIN) {
+      rooms = this.buildRoomsForRuolo(user.ruolo, bases);
+    } else {
+      const ruoloLabel = user.ruolo === Ruolo.PILOT ? "Piloti" : "Cabin Crew";
+      const prefix = user.ruolo;
+      rooms = [{ id: `${prefix}-generale`, name: `${ruoloLabel} - Generale` }];
+      if (user.base) {
+        rooms.push({
+          id: `${prefix}-${user.base.id}`,
+          name: `${ruoloLabel} - ${user.base.nome}`,
+        });
+      }
     }
 
-    if (!user.ruolo) return [];
+    return Promise.all(
+      rooms.map(async (room) => ({
+        ...room,
+        unreadCount: await this.getUnreadCount(userId, room.id),
+        lastMessagePreview: await this.getLastMessagePreview(room.id),
+      })),
+    );
+  }
 
-    if (user.role === UserRole.ADMIN) {
-      return this.buildRoomsForRuolo(user.ruolo, bases);
-    }
+  async markRoomRead(userId: string, roomId: string): Promise<void> {
+    await this.readReceiptRepo.upsert(
+      { userId, roomId, lastReadAt: new Date() },
+      { conflictPaths: ["userId", "roomId"] },
+    );
+  }
 
-    // Regular user: generale + own base room
-    const ruoloLabel = user.ruolo === Ruolo.PILOT ? "Piloti" : "Cabin Crew";
-    const prefix = user.ruolo;
-    const rooms: ChatRoom[] = [
-      { id: `${prefix}-generale`, name: `${ruoloLabel} - Generale` },
-    ];
-    if (user.base) {
-      rooms.push({
-        id: `${prefix}-${user.base.id}`,
-        name: `${ruoloLabel} - ${user.base.nome}`,
+  async getUnreadCount(userId: string, roomId: string): Promise<number> {
+    const receipt = await this.readReceiptRepo.findOne({
+      where: { userId, roomId },
+    });
+    const qb = this.messageRepo
+      .createQueryBuilder("m")
+      .where("m.roomId = :roomId", { roomId })
+      .andWhere("m.deletedAt IS NULL");
+    if (receipt) {
+      qb.andWhere("m.createdAt > :lastReadAt", {
+        lastReadAt: receipt.lastReadAt,
       });
     }
-    return rooms;
+    return qb.getCount();
+  }
+
+  private async getLastMessagePreview(roomId: string): Promise<string | null> {
+    const msg = await this.messageRepo.findOne({
+      where: { roomId, deletedAt: IsNull() },
+      order: { createdAt: "DESC" },
+    });
+    if (!msg) return null;
+    return msg.content?.slice(0, 60) ?? "📎 allegato";
   }
 
   private buildRoomsForRuolo(ruolo: Ruolo, bases: Base[]): ChatRoom[] {

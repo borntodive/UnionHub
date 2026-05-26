@@ -7,6 +7,7 @@ import { ChatMessage } from "./entities/chat-message.entity";
 import { ChatAttachment } from "./entities/chat-attachment.entity";
 import { User } from "../users/entities/user.entity";
 import { Base } from "../bases/entities/base.entity";
+import { ChatReadReceipt } from "./entities/chat-read-receipt.entity";
 import { NotificationsService } from "../notifications/notifications.service";
 import { UserRole } from "../common/enums/user-role.enum";
 import { Ruolo } from "../common/enums/ruolo.enum";
@@ -33,6 +34,7 @@ describe("ChatService.canAccessRoom", () => {
         { provide: getRepositoryToken(ChatAttachment), useValue: {} },
         { provide: getRepositoryToken(User), useValue: {} },
         { provide: getRepositoryToken(Base), useValue: {} },
+        { provide: getRepositoryToken(ChatReadReceipt), useValue: {} },
         { provide: NotificationsService, useValue: {} },
       ],
     }).compile();
@@ -125,6 +127,7 @@ describe("ChatService.saveMessage access", () => {
         { provide: getRepositoryToken(ChatAttachment), useValue: {} },
         { provide: getRepositoryToken(User), useValue: {} },
         { provide: getRepositoryToken(Base), useValue: {} },
+        { provide: getRepositoryToken(ChatReadReceipt), useValue: {} },
         { provide: NotificationsService, useValue: {} },
       ],
     }).compile();
@@ -146,5 +149,63 @@ describe("ChatService.saveMessage access", () => {
         } as SendMessageDto,
       ),
     ).rejects.toThrow(ForbiddenException);
+  });
+});
+
+describe("ChatService.markRoomRead", () => {
+  it("upserts a read receipt record", async () => {
+    const upsertFn = jest.fn().mockResolvedValue(undefined);
+    const module = await Test.createTestingModule({
+      providers: [
+        ChatService,
+        { provide: getRepositoryToken(ChatMessage), useValue: {} },
+        { provide: getRepositoryToken(ChatAttachment), useValue: {} },
+        { provide: getRepositoryToken(User), useValue: {} },
+        { provide: getRepositoryToken(Base), useValue: {} },
+        {
+          provide: getRepositoryToken(ChatReadReceipt),
+          useValue: { upsert: upsertFn },
+        },
+        { provide: NotificationsService, useValue: {} },
+      ],
+    }).compile();
+    const svc = module.get(ChatService);
+    await svc.markRoomRead("user-1", "pilot-generale");
+    expect(upsertFn).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-1", roomId: "pilot-generale" }),
+      { conflictPaths: ["userId", "roomId"] },
+    );
+  });
+});
+
+describe("ChatService.getUnreadCount", () => {
+  it("returns 0 when user has read up to now", async () => {
+    const countFn = jest.fn().mockResolvedValue(0);
+    const findOneFn = jest.fn().mockResolvedValue({ lastReadAt: new Date() });
+    const qb: any = {
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getCount: countFn,
+    };
+    const module = await Test.createTestingModule({
+      providers: [
+        ChatService,
+        {
+          provide: getRepositoryToken(ChatMessage),
+          useValue: { createQueryBuilder: () => qb },
+        },
+        { provide: getRepositoryToken(ChatAttachment), useValue: {} },
+        { provide: getRepositoryToken(User), useValue: {} },
+        { provide: getRepositoryToken(Base), useValue: {} },
+        {
+          provide: getRepositoryToken(ChatReadReceipt),
+          useValue: { findOne: findOneFn },
+        },
+        { provide: NotificationsService, useValue: {} },
+      ],
+    }).compile();
+    const svc = module.get(ChatService);
+    const count = await svc.getUnreadCount("user-1", "pilot-generale");
+    expect(count).toBe(0);
   });
 });
