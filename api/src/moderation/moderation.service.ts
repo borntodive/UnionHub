@@ -21,7 +21,7 @@ export class ModerationService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(ModerationService.name);
   private socket: Socket | null = null;
   private refreshInterval: ReturnType<typeof setInterval> | null = null;
-  botUserId: string | null = null;
+  private botUserId: string | null = null;
   private isConnecting = false;
 
   constructor(
@@ -103,7 +103,8 @@ export class ModerationService implements OnModuleInit, OnModuleDestroy {
   }
 
   async classifyMessage(msg: ChatMessage): Promise<string | null> {
-    if (msg.sender?.id === this.botUserId) return null;
+    if (msg.sender?.id === this.botUserId || msg.senderId === this.botUserId)
+      return null;
     const content = msg.content;
     if (!content || !content.trim()) return null;
 
