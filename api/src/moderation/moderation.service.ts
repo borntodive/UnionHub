@@ -22,6 +22,7 @@ export class ModerationService implements OnModuleInit, OnModuleDestroy {
   private socket: Socket | null = null;
   private refreshInterval: ReturnType<typeof setInterval> | null = null;
   botUserId: string | null = null;
+  private isConnecting = false;
 
   constructor(
     private readonly aiService: AiService,
@@ -35,6 +36,7 @@ export class ModerationService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.connect();
       this.refreshInterval = setInterval(async () => {
+        if (this.isConnecting) return;
         this.socket?.disconnect();
         await this.connect();
       }, TOKEN_REFRESH_INTERVAL_MS);
@@ -49,37 +51,44 @@ export class ModerationService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async connect(): Promise<void> {
-    const botUser = await this.usersRepo.findOne({
-      where: { crewcode: "BOT_MOD", isBot: true },
-    });
-    if (!botUser) {
-      this.logger.warn("BOT_MOD user not found in DB — moderation disabled");
-      return;
+    this.isConnecting = true;
+    try {
+      const botUser = await this.usersRepo.findOne({
+        where: { crewcode: "BOT_MOD", isBot: true },
+      });
+      if (!botUser) {
+        this.logger.warn("BOT_MOD user not found in DB — moderation disabled");
+        return;
+      }
+
+      this.botUserId = botUser.id;
+      const secret = this.configService.get<string>("JWT_SECRET");
+      const token = this.jwtService.sign(
+        { sub: botUser.id, crewcode: botUser.crewcode, role: botUser.role },
+        { secret, expiresIn: "15m" },
+      );
+
+      const port = this.configService.get<number>("PORT") ?? 3000;
+      this.socket = io(`http://localhost:${port}/chat`, {
+        auth: { token },
+        transports: ["websocket"],
+        reconnection: false,
+      });
+
+      this.socket.on("connect", () =>
+        this.logger.log("ModerationService connected to chat gateway"),
+      );
+      this.socket.on("disconnect", () =>
+        this.logger.warn("ModerationService disconnected from chat gateway"),
+      );
+      this.socket.on("new_message", (msg: ChatMessage) => {
+        this.handleNewMessage(msg).catch((err) =>
+          this.logger.error("handleNewMessage failed", err),
+        );
+      });
+    } finally {
+      this.isConnecting = false;
     }
-
-    this.botUserId = botUser.id;
-    const secret = this.configService.get<string>("JWT_SECRET");
-    const token = this.jwtService.sign(
-      { sub: botUser.id, crewcode: botUser.crewcode, role: botUser.role },
-      { secret, expiresIn: "15m" },
-    );
-
-    const port = this.configService.get<number>("PORT") ?? 3000;
-    this.socket = io(`http://localhost:${port}/chat`, {
-      auth: { token },
-      transports: ["websocket"],
-      reconnection: false,
-    });
-
-    this.socket.on("connect", () =>
-      this.logger.log("ModerationService connected to chat gateway"),
-    );
-    this.socket.on("disconnect", () =>
-      this.logger.warn("ModerationService disconnected from chat gateway"),
-    );
-    this.socket.on("new_message", (msg: ChatMessage) => {
-      this.handleNewMessage(msg).catch(() => {});
-    });
   }
 
   private async handleNewMessage(msg: ChatMessage): Promise<void> {

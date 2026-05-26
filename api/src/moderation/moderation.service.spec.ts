@@ -29,7 +29,13 @@ describe("ModerationService.classifyMessage", () => {
         },
         {
           provide: ConfigService,
-          useValue: { get: jest.fn().mockReturnValue("secret") },
+          useValue: {
+            get: jest
+              .fn()
+              .mockImplementation((key: string) =>
+                key === "PORT" ? 3000 : "test-secret",
+              ),
+          },
         },
         { provide: getRepositoryToken(User), useValue: mockUsersRepo },
       ],
