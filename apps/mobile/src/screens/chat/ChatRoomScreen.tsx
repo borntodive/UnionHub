@@ -36,6 +36,41 @@ import { UserRole } from "../../types";
 import { useTranslation } from "react-i18next";
 import { colors, spacing, typography, borderRadius } from "../../theme";
 
+type DateSeparator = { type: "separator"; label: string; key: string };
+type ListItem = ChatMessage | DateSeparator;
+
+function buildListItems(
+  messages: ChatMessage[],
+  todayLabel: string,
+  yesterdayLabel: string,
+): ListItem[] {
+  const items: ListItem[] = [];
+  let lastDateStr: string | null = null;
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  for (const msg of messages) {
+    const d = new Date(msg.createdAt);
+    const dateStr = d.toDateString();
+    if (dateStr !== lastDateStr) {
+      lastDateStr = dateStr;
+      let label: string;
+      if (dateStr === today.toDateString()) label = todayLabel;
+      else if (dateStr === yesterday.toDateString()) label = yesterdayLabel;
+      else
+        label = d.toLocaleDateString("it-IT", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+      items.push({ type: "separator", label, key: `sep-${dateStr}` });
+    }
+    items.push(msg);
+  }
+  return items;
+}
+
 interface Props {
   navigation: any;
   route: { params: { roomId: string; roomName: string } };
@@ -76,6 +111,16 @@ export function ChatRoomScreen({ navigation, route }: Props) {
   const pinnedMessage = useMemo(
     () => [...messages].reverse().find((m) => m.isPinned && !m.deletedAt),
     [messages],
+  );
+
+  const listItems = useMemo(
+    () =>
+      buildListItems(
+        messages.filter((m) => !m.deletedAt),
+        t("unionChat.today"),
+        t("unionChat.yesterday"),
+      ),
+    [messages, t],
   );
   const isAdmin =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
@@ -408,9 +453,20 @@ export function ChatRoomScreen({ navigation, route }: Props) {
 
           <FlatList
             ref={flatListRef}
-            data={messages.filter((m) => !m.deletedAt)}
-            keyExtractor={(item) => item.id}
-            renderItem={renderMessage}
+            data={listItems}
+            keyExtractor={(item) => ("type" in item ? item.key : item.id)}
+            renderItem={({ item }: { item: ListItem }) => {
+              if ("type" in item) {
+                return (
+                  <View style={styles.dateSeparatorContainer}>
+                    <View style={styles.dateSeparatorLine} />
+                    <Text style={styles.dateSeparatorText}>{item.label}</Text>
+                    <View style={styles.dateSeparatorLine} />
+                  </View>
+                );
+              }
+              return renderMessage({ item });
+            }}
             contentContainerStyle={styles.messagesList}
             onContentSizeChange={() =>
               flatListRef.current?.scrollToEnd({ animated: false })
@@ -533,6 +589,22 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
   },
   messagesList: { padding: spacing.md, gap: spacing.sm },
+  dateSeparatorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  dateSeparatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dateSeparatorText: {
+    color: colors.textTertiary,
+    fontSize: typography.sizes.xs,
+    marginHorizontal: spacing.sm,
+  },
   messageRow: {
     flexDirection: "row",
     gap: spacing.sm,

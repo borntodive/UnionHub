@@ -1173,6 +1173,8 @@
     "pickFromLibrary": "Scegli dalla libreria",
     "attachFile": "Allega file",
     "deleteMessageTitle": "Elimina messaggio",
-    "deleteMessageConfirm": "Sei sicuro?"
+    "deleteMessageConfirm": "Sei sicuro?",
+    "today": "Oggi",
+    "yesterday": "Ieri"
   }
 }
