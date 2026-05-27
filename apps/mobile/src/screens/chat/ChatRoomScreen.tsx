@@ -96,6 +96,16 @@ export function ChatRoomScreen({ navigation, route }: Props) {
     name: string;
   } | null>(null);
   const flatListRef = useRef<FlatList>(null);
+  const [newMessageCount, setNewMessageCount] = useState(0);
+  const isAtBottomRef = useRef(true);
+
+  const handleScroll = useCallback((event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const distanceFromBottom =
+      contentSize.height - contentOffset.y - layoutMeasurement.height;
+    isAtBottomRef.current = distanceFromBottom < 100;
+    if (isAtBottomRef.current) setNewMessageCount(0);
+  }, []);
 
   const { data: history, isLoading } = useQuery({
     queryKey: QUERY_KEYS.chatMessages(roomId),
@@ -129,10 +139,14 @@ export function ChatRoomScreen({ navigation, route }: Props) {
     (msg: ChatMessage) => {
       if (msg.roomId !== roomId) return;
       setMessages((prev) => [...prev, msg]);
-      setTimeout(
-        () => flatListRef.current?.scrollToEnd({ animated: true }),
-        100,
-      );
+      if (isAtBottomRef.current) {
+        setTimeout(
+          () => flatListRef.current?.scrollToEnd({ animated: true }),
+          100,
+        );
+      } else {
+        setNewMessageCount((c) => c + 1);
+      }
     },
     [roomId],
   );
@@ -471,7 +485,26 @@ export function ChatRoomScreen({ navigation, route }: Props) {
             onContentSizeChange={() =>
               flatListRef.current?.scrollToEnd({ animated: false })
             }
+            onScroll={handleScroll}
+            scrollEventThrottle={100}
           />
+
+          {newMessageCount > 0 && (
+            <TouchableOpacity
+              style={styles.scrollFab}
+              onPress={() => {
+                flatListRef.current?.scrollToEnd({ animated: true });
+                setNewMessageCount(0);
+              }}
+            >
+              <Text style={styles.scrollFabIcon}>↓</Text>
+              <View style={styles.scrollFabBadge}>
+                <Text style={styles.scrollFabBadgeText}>
+                  {newMessageCount > 99 ? "99+" : newMessageCount}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
 
           <View
             style={[
@@ -604,6 +637,40 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     fontSize: typography.sizes.xs,
     marginHorizontal: spacing.sm,
+  },
+  scrollFab: {
+    position: "absolute",
+    bottom: 80,
+    right: spacing.md,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  scrollFabIcon: { color: colors.textInverse, fontSize: 20 },
+  scrollFabBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: colors.error,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  scrollFabBadgeText: {
+    color: colors.textInverse,
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.bold,
   },
   messageRow: {
     flexDirection: "row",
