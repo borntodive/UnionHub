@@ -211,6 +211,50 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.to(data.roomId).emit("user_stopped_typing", { userId: user.id });
   }
 
+  @SubscribeMessage("add_reaction")
+  async handleAddReaction(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { messageId: string; roomId: string; emoji: string },
+  ): Promise<void> {
+    const user: User = client.data.user;
+    if (!user) return;
+    try {
+      const reactions = await this.chatService.toggleReaction(
+        data.messageId,
+        user.id,
+        data.emoji,
+      );
+      this.server
+        .to(data.roomId)
+        .emit("reaction_updated", { messageId: data.messageId, reactions });
+    } catch (err: any) {
+      this.logger.error("add_reaction failed", err);
+      client.emit("error", { code: "REACTION_FAILED", message: err.message });
+    }
+  }
+
+  @SubscribeMessage("remove_reaction")
+  async handleRemoveReaction(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { messageId: string; roomId: string; emoji: string },
+  ): Promise<void> {
+    const user: User = client.data.user;
+    if (!user) return;
+    try {
+      const reactions = await this.chatService.toggleReaction(
+        data.messageId,
+        user.id,
+        data.emoji,
+      );
+      this.server
+        .to(data.roomId)
+        .emit("reaction_updated", { messageId: data.messageId, reactions });
+    } catch (err: any) {
+      this.logger.error("remove_reaction failed", err);
+      client.emit("error", { code: "REACTION_FAILED", message: err.message });
+    }
+  }
+
   async getOnlineCount(roomId: string): Promise<number> {
     const sockets = await this.server.in(roomId).fetchSockets();
     return sockets.length;
