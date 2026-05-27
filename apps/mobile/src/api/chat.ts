@@ -26,6 +26,12 @@ export interface ChatMessage {
   deletedAt: string | null;
   createdAt: string;
   attachments: ChatAttachment[];
+  reactions?: ReactionCount[];
+  replyTo?: {
+    id: string;
+    content: string | null;
+    sender: { nome: string; cognome: string };
+  } | null;
 }
 
 export interface ReactionCount {
