@@ -135,6 +135,22 @@ export function ChatRoomScreen({ navigation, route }: Props) {
   const isAdmin =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
 
+  const markRead = useCallback(() => {
+    chatApi
+      .markRoomRead(roomId)
+      .then(() =>
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.chatRooms }),
+      )
+      .catch(() => {});
+  }, [roomId, queryClient]);
+
+  useEffect(() => {
+    markRead();
+    return () => {
+      markRead();
+    };
+  }, [markRead]);
+
   const onNewMessage = useCallback(
     (msg: ChatMessage) => {
       if (msg.roomId !== roomId) return;
@@ -144,11 +160,12 @@ export function ChatRoomScreen({ navigation, route }: Props) {
           () => flatListRef.current?.scrollToEnd({ animated: true }),
           100,
         );
+        markRead();
       } else {
         setNewMessageCount((c) => c + 1);
       }
     },
-    [roomId],
+    [roomId, markRead],
   );
 
   const onMessageDeleted = useCallback(
@@ -495,6 +512,7 @@ export function ChatRoomScreen({ navigation, route }: Props) {
               onPress={() => {
                 flatListRef.current?.scrollToEnd({ animated: true });
                 setNewMessageCount(0);
+                markRead();
               }}
             >
               <Text style={styles.scrollFabIcon}>↓</Text>
