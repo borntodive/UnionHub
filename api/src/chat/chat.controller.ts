@@ -24,6 +24,7 @@ import * as path from "path";
 import * as fs from "fs";
 import * as crypto from "crypto";
 import { ChatService } from "./chat.service";
+import { ChatGateway } from "./chat.gateway";
 import { GetMessagesDto } from "./dto/get-messages.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
@@ -36,11 +37,20 @@ const uploadsDir =
 @Controller("chat")
 @UseGuards(JwtAuthGuard)
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly chatGateway: ChatGateway,
+  ) {}
 
   @Get("rooms")
   async getRooms(@Req() req: any) {
-    return this.chatService.getRoomsForUser(req.user.userId);
+    const rooms = await this.chatService.getRoomsForUser(req.user.userId);
+    return Promise.all(
+      rooms.map(async (room) => ({
+        ...room,
+        onlineCount: await this.chatGateway.getOnlineCount(room.id),
+      })),
+    );
   }
 
   @Post("rooms/:roomId/read")

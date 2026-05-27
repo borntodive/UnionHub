@@ -179,6 +179,43 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage("typing_start")
+  handleTypingStart(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string },
+  ): void {
+    const user: User = client.data.user;
+    if (
+      !user ||
+      !this.chatService.canAccessRoom(
+        { role: user.role, ruolo: user.ruolo, baseId: user.base?.id },
+        data.roomId,
+      )
+    ) {
+      return;
+    }
+    client.to(data.roomId).emit("user_typing", {
+      userId: user.id,
+      nome: user.nome,
+      cognome: user.cognome,
+    });
+  }
+
+  @SubscribeMessage("typing_stop")
+  handleTypingStop(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string },
+  ): void {
+    const user: User = client.data.user;
+    if (!user) return;
+    client.to(data.roomId).emit("user_stopped_typing", { userId: user.id });
+  }
+
+  async getOnlineCount(roomId: string): Promise<number> {
+    const sockets = await this.server.in(roomId).fetchSockets();
+    return sockets.length;
+  }
+
   private async getOnlineUserIds(roomId: string): Promise<string[]> {
     const sockets = await this.server.in(roomId).fetchSockets();
     return sockets.map((s) => s.data.userId).filter(Boolean);
