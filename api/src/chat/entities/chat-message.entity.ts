@@ -11,6 +11,7 @@ import {
 } from "typeorm";
 import { User } from "../../users/entities/user.entity";
 import { ChatAttachment } from "./chat-attachment.entity";
+import { ChatReaction } from "./chat-reaction.entity";
 
 @Entity("chat_messages")
 @Index(["roomId", "createdAt"])
@@ -45,4 +46,7 @@ export class ChatMessage {
     cascade: true,
   })
   attachments: ChatAttachment[];
+
+  @OneToMany(() => ChatReaction, (r) => r.message, { eager: false })
+  reactions: ChatReaction[];
 }
