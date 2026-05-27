@@ -44,7 +44,10 @@ import {
   Smartphone,
 } from "lucide-react-native";
 import { Image } from "react-native";
+import { useQueryClient } from "@tanstack/react-query";
 import { usersApi } from "../api/users";
+import { QUERY_KEYS } from "../api/queryKeys";
+import { ChatRoom } from "../api/chat";
 
 import { colors, spacing, typography, borderRadius } from "../theme";
 import { useAuthStore } from "../store/authStore";
@@ -155,6 +158,14 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERADMIN;
   const isSuperAdmin = user?.role === UserRole.SUPERADMIN;
   const isMailbox = user?.mailboxAccess === true;
+
+  const queryClient = useQueryClient();
+  const chatRooms =
+    queryClient.getQueryData<ChatRoom[]>(QUERY_KEYS.chatRooms) ?? [];
+  const totalUnread = chatRooms.reduce(
+    (sum, r) => sum + (r.unreadCount ?? 0),
+    0,
+  );
 
   const [pendingCount, setPendingCount] = useState(0);
 
@@ -304,6 +315,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             <MenuItem
               icon={<MessageCircle size={22} color={colors.primary} />}
               label={t("navigation.unionChat")}
+              badge={totalUnread > 0 ? totalUnread : undefined}
               onPress={() => {
                 props.navigation.navigate("ChatRooms");
                 props.navigation.closeDrawer();

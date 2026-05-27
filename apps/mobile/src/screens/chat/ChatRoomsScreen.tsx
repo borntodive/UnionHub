@@ -48,6 +48,13 @@ export function ChatRoomsScreen({ navigation }: Props) {
         <Text style={styles.roomHash}>#</Text>
       </View>
       <Text style={styles.roomName}>{item.name}</Text>
+      {item.unreadCount > 0 && (
+        <View style={styles.unreadBadge}>
+          <Text style={styles.unreadBadgeText}>
+            {item.unreadCount > 99 ? "99+" : item.unreadCount}
+          </Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 
@@ -141,4 +148,18 @@ const styles = StyleSheet.create({
   separator: { height: 1, backgroundColor: colors.border },
   errorText: { color: colors.error, fontSize: typography.sizes.sm },
   emptyText: { color: colors.textSecondary, fontSize: typography.sizes.sm },
+  unreadBadge: {
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 5,
+  },
+  unreadBadgeText: {
+    color: colors.textInverse,
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.bold,
+  },
 });
