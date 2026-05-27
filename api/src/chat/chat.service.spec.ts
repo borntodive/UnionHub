@@ -8,6 +8,7 @@ import { ChatAttachment } from "./entities/chat-attachment.entity";
 import { User } from "../users/entities/user.entity";
 import { Base } from "../bases/entities/base.entity";
 import { ChatReadReceipt } from "./entities/chat-read-receipt.entity";
+import { ChatReaction } from "./entities/chat-reaction.entity";
 import { NotificationsService } from "../notifications/notifications.service";
 import { UserRole } from "../common/enums/user-role.enum";
 import { Ruolo } from "../common/enums/ruolo.enum";
@@ -35,6 +36,7 @@ describe("ChatService.canAccessRoom", () => {
         { provide: getRepositoryToken(User), useValue: {} },
         { provide: getRepositoryToken(Base), useValue: {} },
         { provide: getRepositoryToken(ChatReadReceipt), useValue: {} },
+        { provide: getRepositoryToken(ChatReaction), useValue: {} },
         { provide: NotificationsService, useValue: {} },
       ],
     }).compile();
@@ -128,6 +130,7 @@ describe("ChatService.saveMessage access", () => {
         { provide: getRepositoryToken(User), useValue: {} },
         { provide: getRepositoryToken(Base), useValue: {} },
         { provide: getRepositoryToken(ChatReadReceipt), useValue: {} },
+        { provide: getRepositoryToken(ChatReaction), useValue: {} },
         { provide: NotificationsService, useValue: {} },
       ],
     }).compile();
@@ -166,6 +169,7 @@ describe("ChatService.markRoomRead", () => {
           provide: getRepositoryToken(ChatReadReceipt),
           useValue: { upsert: upsertFn },
         },
+        { provide: getRepositoryToken(ChatReaction), useValue: {} },
         { provide: NotificationsService, useValue: {} },
       ],
     }).compile();
@@ -201,11 +205,47 @@ describe("ChatService.getUnreadCount", () => {
           provide: getRepositoryToken(ChatReadReceipt),
           useValue: { findOne: findOneFn },
         },
+        { provide: getRepositoryToken(ChatReaction), useValue: {} },
         { provide: NotificationsService, useValue: {} },
       ],
     }).compile();
     const svc = module.get(ChatService);
     const count = await svc.getUnreadCount("user-1", "pilot-generale");
     expect(count).toBe(0);
+  });
+});
+
+describe("ChatService.getReactions", () => {
+  it("aggregates reactions and marks reactedByMe", async () => {
+    const mockReactions = [
+      { emoji: "👍", userId: "user-1" },
+      { emoji: "👍", userId: "user-2" },
+      { emoji: "❤️", userId: "user-3" },
+    ];
+    const findFn = jest.fn().mockResolvedValue(mockReactions);
+    const module = await Test.createTestingModule({
+      providers: [
+        ChatService,
+        { provide: getRepositoryToken(ChatMessage), useValue: {} },
+        { provide: getRepositoryToken(ChatAttachment), useValue: {} },
+        { provide: getRepositoryToken(User), useValue: {} },
+        { provide: getRepositoryToken(Base), useValue: {} },
+        { provide: getRepositoryToken(ChatReadReceipt), useValue: {} },
+        {
+          provide: getRepositoryToken(ChatReaction),
+          useValue: { find: findFn },
+        },
+        { provide: NotificationsService, useValue: {} },
+      ],
+    }).compile();
+    const svc = module.get(ChatService);
+    const result = await svc.getReactions("msg-1", "user-1");
+    expect(findFn).toHaveBeenCalledWith({ where: { messageId: "msg-1" } });
+    expect(result).toEqual(
+      expect.arrayContaining([
+        { emoji: "👍", count: 2, reactedByMe: true },
+        { emoji: "❤️", count: 1, reactedByMe: false },
+      ]),
+    );
   });
 });

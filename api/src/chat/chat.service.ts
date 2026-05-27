@@ -17,6 +17,7 @@ import { Ruolo } from "../common/enums/ruolo.enum";
 import { User } from "../users/entities/user.entity";
 import { Base } from "../bases/entities/base.entity";
 import { ChatReadReceipt } from "./entities/chat-read-receipt.entity";
+import { ChatReaction } from "./entities/chat-reaction.entity";
 import { NotificationsService } from "../notifications/notifications.service";
 
 // Flip to true to roll out chat notifications to all users
@@ -31,6 +32,14 @@ export interface ChatRoomWithMeta extends ChatRoom {
   unreadCount: number;
   lastMessagePreview: string | null;
 }
+
+export interface ReactionCount {
+  emoji: string;
+  count: number;
+  reactedByMe: boolean;
+}
+
+const ALLOWED_EMOJIS = ["👍", "❤️", "😂", "😮", "😢"];
 
 @Injectable()
 export class ChatService {
@@ -47,6 +56,8 @@ export class ChatService {
     private readonly basesRepo: Repository<Base>,
     @InjectRepository(ChatReadReceipt)
     private readonly readReceiptRepo: Repository<ChatReadReceipt>,
+    @InjectRepository(ChatReaction)
+    private readonly reactionRepo: Repository<ChatReaction>,
     private readonly notificationsService: NotificationsService,
   ) {
     this.uploadsDir =
@@ -128,6 +139,55 @@ export class ChatService {
     return msg.content?.slice(0, 60) ?? "📎 allegato";
   }
 
+  // ─── Reactions ──────────────────────────────────────────────────────────────
+
+  async getReactions(
+    messageId: string,
+    userId: string,
+  ): Promise<ReactionCount[]> {
+    const rows = await this.reactionRepo.find({ where: { messageId } });
+    return this.aggregateReactions(rows, userId);
+  }
+
+  async toggleReaction(
+    messageId: string,
+    userId: string,
+    emoji: string,
+  ): Promise<ReactionCount[]> {
+    if (!ALLOWED_EMOJIS.includes(emoji)) {
+      throw new BadRequestException("Emoji not allowed");
+    }
+    const existing = await this.reactionRepo.findOne({
+      where: { messageId, userId, emoji },
+    });
+    if (existing) {
+      await this.reactionRepo.remove(existing);
+    } else {
+      await this.reactionRepo.save(
+        this.reactionRepo.create({ messageId, userId, emoji }),
+      );
+    }
+    return this.getReactions(messageId, userId);
+  }
+
+  private aggregateReactions(
+    rows: { emoji: string; userId: string }[],
+    userId: string,
+  ): ReactionCount[] {
+    const map = new Map<string, { count: number; reactedByMe: boolean }>();
+    for (const r of rows) {
+      const entry = map.get(r.emoji) ?? { count: 0, reactedByMe: false };
+      entry.count++;
+      if (r.userId === userId) entry.reactedByMe = true;
+      map.set(r.emoji, entry);
+    }
+    return Array.from(map.entries()).map(([emoji, { count, reactedByMe }]) => ({
+      emoji,
+      count,
+      reactedByMe,
+    }));
+  }
+
   private buildRoomsForRuolo(ruolo: Ruolo, bases: Base[]): ChatRoom[] {
     const label = ruolo === Ruolo.PILOT ? "Piloti" : "Cabin Crew";
     return [
@@ -185,6 +245,7 @@ export class ChatService {
       .createQueryBuilder("m")
       .leftJoinAndSelect("m.sender", "sender")
       .leftJoinAndSelect("m.attachments", "attachments")
+      .leftJoinAndSelect("m.reactions", "reactions")
       .where("m.roomId = :roomId", { roomId })
       .andWhere("m.deletedAt IS NULL")
       .orderBy("m.createdAt", "DESC")
@@ -195,7 +256,11 @@ export class ChatService {
     }
 
     const messages = await qb.getMany();
-    return messages.reverse();
+    const reversed = messages.reverse();
+    return reversed.map((msg) => ({
+      ...msg,
+      reactions: this.aggregateReactions(msg.reactions ?? [], userId),
+    })) as unknown as ChatMessage[];
   }
 
   async saveMessage(user: User, dto: SendMessageDto): Promise<ChatMessage> {
