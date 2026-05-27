@@ -1,9 +1,15 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
-import { ChatMessage } from "../api/chat";
+import { ChatMessage, ReactionCount } from "../api/chat";
 import { API_BASE_URL } from "../api/client";
 
 const API_BASE = API_BASE_URL.replace("/api/v1", "");
+
+export interface TypingUser {
+  userId: string;
+  nome: string;
+  cognome: string;
+}
 
 interface UseChatSocketOptions {
   accessToken: string | null;
@@ -15,6 +21,12 @@ interface UseChatSocketOptions {
     roomId: string;
     isPinned: boolean;
   }) => void;
+  onUserTyping?: (user: TypingUser) => void;
+  onUserStoppedTyping?: (data: { userId: string }) => void;
+  onReactionUpdated?: (data: {
+    messageId: string;
+    reactions: ReactionCount[];
+  }) => void;
 }
 
 export function useChatSocket({
@@ -23,15 +35,20 @@ export function useChatSocket({
   onNewMessage,
   onMessageDeleted,
   onMessagePinned,
+  onUserTyping,
+  onUserStoppedTyping,
+  onReactionUpdated,
 }: UseChatSocketOptions) {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  // Keep callback refs stable so the effect dep array stays [accessToken]
-  // without capturing stale closures.
   const onNewMessageRef = useRef(onNewMessage);
   const onMessageDeletedRef = useRef(onMessageDeleted);
   const onMessagePinnedRef = useRef(onMessagePinned);
+  const onUserTypingRef = useRef(onUserTyping);
+  const onUserStoppedTypingRef = useRef(onUserStoppedTyping);
+  const onReactionUpdatedRef = useRef(onReactionUpdated);
+
   useEffect(() => {
     onNewMessageRef.current = onNewMessage;
   }, [onNewMessage]);
@@ -41,6 +58,15 @@ export function useChatSocket({
   useEffect(() => {
     onMessagePinnedRef.current = onMessagePinned;
   }, [onMessagePinned]);
+  useEffect(() => {
+    onUserTypingRef.current = onUserTyping;
+  }, [onUserTyping]);
+  useEffect(() => {
+    onUserStoppedTypingRef.current = onUserStoppedTyping;
+  }, [onUserStoppedTyping]);
+  useEffect(() => {
+    onReactionUpdatedRef.current = onReactionUpdated;
+  }, [onReactionUpdated]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -70,20 +96,36 @@ export function useChatSocket({
       (data: { messageId: string; roomId: string; isPinned: boolean }) =>
         onMessagePinnedRef.current(data),
     );
+    socket.on("user_typing", (user: TypingUser) =>
+      onUserTypingRef.current?.(user),
+    );
+    socket.on("user_stopped_typing", (data: { userId: string }) =>
+      onUserStoppedTypingRef.current?.(data),
+    );
+    socket.on(
+      "reaction_updated",
+      (data: { messageId: string; reactions: ReactionCount[] }) =>
+        onReactionUpdatedRef.current?.(data),
+    );
 
     return () => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [accessToken]); // reconnect only when token changes
+  }, [accessToken]);
 
   const sendMessage = useCallback(
-    (content: string | undefined, attachmentIds: string[] = []): boolean => {
+    (
+      content: string | undefined,
+      attachmentIds: string[] = [],
+      replyToId?: string,
+    ): boolean => {
       if (!socketRef.current?.connected) return false;
       socketRef.current.emit("send_message", {
         roomId,
         content,
         attachmentIds,
+        replyToId,
       });
       return true;
     },
@@ -103,5 +145,36 @@ export function useChatSocket({
     socketRef.current.emit("pin_message", { messageId, pin });
   }, []);
 
-  return { isConnected, sendMessage, deleteMessage, pinMessage };
+  const emitTypingStart = useCallback(() => {
+    socketRef.current?.emit("typing_start", { roomId });
+  }, [roomId]);
+
+  const emitTypingStop = useCallback(() => {
+    socketRef.current?.emit("typing_stop", { roomId });
+  }, [roomId]);
+
+  const emitAddReaction = useCallback(
+    (messageId: string, emoji: string) => {
+      socketRef.current?.emit("add_reaction", { messageId, roomId, emoji });
+    },
+    [roomId],
+  );
+
+  const emitRemoveReaction = useCallback(
+    (messageId: string, emoji: string) => {
+      socketRef.current?.emit("remove_reaction", { messageId, roomId, emoji });
+    },
+    [roomId],
+  );
+
+  return {
+    isConnected,
+    sendMessage,
+    deleteMessage,
+    pinMessage,
+    emitTypingStart,
+    emitTypingStop,
+    emitAddReaction,
+    emitRemoveReaction,
+  };
 }

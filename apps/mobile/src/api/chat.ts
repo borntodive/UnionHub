@@ -28,6 +28,12 @@ export interface ChatMessage {
   attachments: ChatAttachment[];
 }
 
+export interface ReactionCount {
+  emoji: string;
+  count: number;
+  reactedByMe: boolean;
+}
+
 export interface GetMessagesParams {
   before?: string;
   limit?: number;
