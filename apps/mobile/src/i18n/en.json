@@ -1175,6 +1175,10 @@
     "deleteMessageTitle": "Delete message",
     "deleteMessageConfirm": "Are you sure?",
     "today": "Today",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "typing": "{{names}} is typing…",
+    "typingMultiple": "{{names}} are typing…",
+    "typingOthers": "{{names}} and others are typing…",
+    "online": "{{count}} online"
   }
 }

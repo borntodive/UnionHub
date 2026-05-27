@@ -1175,6 +1175,10 @@
     "deleteMessageTitle": "Elimina messaggio",
     "deleteMessageConfirm": "Sei sicuro?",
     "today": "Oggi",
-    "yesterday": "Ieri"
+    "yesterday": "Ieri",
+    "typing": "{{names}} sta scrivendo…",
+    "typingMultiple": "{{names}} stanno scrivendo…",
+    "typingOthers": "{{names}} e altri stanno scrivendo…",
+    "online": "{{count}} online"
   }
 }

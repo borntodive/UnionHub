@@ -55,6 +55,14 @@ export function ChatRoomsScreen({ navigation }: Props) {
           </Text>
         </View>
       )}
+      {item.onlineCount > 0 && (
+        <View style={styles.onlineIndicator}>
+          <View style={styles.onlineDot} />
+          <Text style={styles.onlineText}>
+            {t("unionChat.online", { count: item.onlineCount })}
+          </Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 
@@ -161,5 +169,20 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.bold,
+  },
+  onlineIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  onlineDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.success,
+  },
+  onlineText: {
+    color: colors.textTertiary,
+    fontSize: typography.sizes.xs,
   },
 });

@@ -31,10 +31,28 @@ import * as DocumentPicker from "expo-document-picker";
 import { chatApi, ChatMessage } from "../../api/chat";
 import { QUERY_KEYS } from "../../api/queryKeys";
 import { useAuthStore } from "../../store/authStore";
-import { useChatSocket } from "../../hooks/useChatSocket";
+import { useChatSocket, TypingUser } from "../../hooks/useChatSocket";
 import { UserRole } from "../../types";
 import { useTranslation } from "react-i18next";
 import { colors, spacing, typography, borderRadius } from "../../theme";
+
+function formatTypingText(
+  users: TypingUser[],
+  t: (key: string, opts?: object) => string,
+  currentUserId: string,
+): string | null {
+  const others = users.filter((u) => u.userId !== currentUserId);
+  if (others.length === 0) return null;
+  const names = others
+    .slice(0, 2)
+    .map((u) => `${u.nome} ${u.cognome[0]}.`)
+    .join(", ");
+  if (others.length === 1) return t("unionChat.typing", { names });
+  if (others.length === 2) return t("unionChat.typingMultiple", { names });
+  return t("unionChat.typingOthers", {
+    names: `${others[0].nome} ${others[0].cognome[0]}.`,
+  });
+}
 
 type DateSeparator = { type: "separator"; label: string; key: string };
 type ListItem = ChatMessage | DateSeparator;
@@ -204,12 +222,45 @@ export function ChatRoomScreen({ navigation, route }: Props) {
     [roomId],
   );
 
-  const { isConnected, sendMessage, deleteMessage } = useChatSocket({
+  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
+  const typingTimeoutsRef = useRef<
+    Record<string, ReturnType<typeof setTimeout>>
+  >({});
+
+  const onUserTyping = useCallback((u: TypingUser) => {
+    setTypingUsers((prev) => {
+      const filtered = prev.filter((x) => x.userId !== u.userId);
+      return [...filtered, u];
+    });
+    clearTimeout(typingTimeoutsRef.current[u.userId]);
+    typingTimeoutsRef.current[u.userId] = setTimeout(() => {
+      setTypingUsers((prev) => prev.filter((x) => x.userId !== u.userId));
+      delete typingTimeoutsRef.current[u.userId];
+    }, 3000);
+  }, []);
+
+  const onUserStoppedTyping = useCallback(({ userId }: { userId: string }) => {
+    clearTimeout(typingTimeoutsRef.current[userId]);
+    delete typingTimeoutsRef.current[userId];
+    setTypingUsers((prev) => prev.filter((u) => u.userId !== userId));
+  }, []);
+
+  const typingDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const {
+    isConnected,
+    sendMessage,
+    deleteMessage,
+    emitTypingStart,
+    emitTypingStop,
+  } = useChatSocket({
     accessToken,
     roomId,
     onNewMessage,
     onMessageDeleted,
     onMessagePinned,
+    onUserTyping,
+    onUserStoppedTyping,
   });
 
   const handleRetrySend = useCallback(() => {
@@ -225,6 +276,11 @@ export function ChatRoomScreen({ navigation, route }: Props) {
   }, [pendingSend, isConnected, sendMessage]);
 
   const handleSend = () => {
+    emitTypingStop();
+    if (typingDebounceRef.current) {
+      clearTimeout(typingDebounceRef.current);
+      typingDebounceRef.current = null;
+    }
     const text = inputText.trim();
     if (!text) return;
     if (!isConnected) {
@@ -524,6 +580,15 @@ export function ChatRoomScreen({ navigation, route }: Props) {
             </TouchableOpacity>
           )}
 
+          {(() => {
+            const typingText = formatTypingText(typingUsers, t, user?.id ?? "");
+            return typingText ? (
+              <View style={styles.typingBanner}>
+                <Text style={styles.typingText}>{typingText}</Text>
+              </View>
+            ) : null;
+          })()}
+
           <View
             style={[
               styles.inputBar,
@@ -536,7 +601,17 @@ export function ChatRoomScreen({ navigation, route }: Props) {
             <TextInput
               style={styles.input}
               value={inputText}
-              onChangeText={setInputText}
+              onChangeText={(text) => {
+                setInputText(text);
+                if (isConnected) {
+                  if (typingDebounceRef.current)
+                    clearTimeout(typingDebounceRef.current);
+                  emitTypingStart();
+                  typingDebounceRef.current = setTimeout(() => {
+                    emitTypingStop();
+                  }, 2000);
+                }
+              }}
               placeholder="Scrivi un messaggio…"
               placeholderTextColor={colors.textTertiary}
               multiline
@@ -689,6 +764,16 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.bold,
+  },
+  typingBanner: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    backgroundColor: colors.background,
+  },
+  typingText: {
+    color: colors.textTertiary,
+    fontSize: typography.sizes.xs,
+    fontStyle: "italic",
   },
   messageRow: {
     flexDirection: "row",
