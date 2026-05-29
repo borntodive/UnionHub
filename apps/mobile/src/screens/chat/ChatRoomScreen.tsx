@@ -28,13 +28,15 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as DocumentPicker from "expo-document-picker";
-import { chatApi, ChatMessage } from "../../api/chat";
+import { chatApi, ChatMessage, ReactionCount } from "../../api/chat";
 import { QUERY_KEYS } from "../../api/queryKeys";
 import { useAuthStore } from "../../store/authStore";
 import { useChatSocket, TypingUser } from "../../hooks/useChatSocket";
 import { UserRole } from "../../types";
 import { useTranslation } from "react-i18next";
 import { colors, spacing, typography, borderRadius } from "../../theme";
+
+const ALLOWED_EMOJIS = ["👍", "❤️", "😂", "😮", "😢"];
 
 function formatTypingText(
   users: TypingUser[],
@@ -245,6 +247,21 @@ export function ChatRoomScreen({ navigation, route }: Props) {
     setTypingUsers((prev) => prev.filter((u) => u.userId !== userId));
   }, []);
 
+  const onReactionUpdated = useCallback(
+    ({
+      messageId,
+      reactions,
+    }: {
+      messageId: string;
+      reactions: ReactionCount[];
+    }) => {
+      setMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, reactions } : m)),
+      );
+    },
+    [],
+  );
+
   const typingDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
@@ -253,6 +270,8 @@ export function ChatRoomScreen({ navigation, route }: Props) {
     deleteMessage,
     emitTypingStart,
     emitTypingStop,
+    emitAddReaction,
+    emitRemoveReaction,
   } = useChatSocket({
     accessToken,
     roomId,
@@ -261,6 +280,7 @@ export function ChatRoomScreen({ navigation, route }: Props) {
     onMessagePinned,
     onUserTyping,
     onUserStoppedTyping,
+    onReactionUpdated,
   });
 
   const handleRetrySend = useCallback(() => {
@@ -429,6 +449,64 @@ export function ChatRoomScreen({ navigation, route }: Props) {
     }
   };
 
+  const handleLongPressMessage = useCallback(
+    (msg: ChatMessage) => {
+      const emojiOptions = ALLOWED_EMOJIS;
+      const deleteLabel = "Elimina";
+      const cancelLabel = "Annulla";
+      const options = isAdmin
+        ? [...emojiOptions, deleteLabel, cancelLabel]
+        : [...emojiOptions, cancelLabel];
+      const cancelIndex = options.length - 1;
+      const destructiveIndex = isAdmin ? options.length - 2 : undefined;
+
+      const handleChoice = (index: number) => {
+        if (index < emojiOptions.length) {
+          const emoji = emojiOptions[index];
+          const hasReacted = msg.reactions?.some(
+            (r) => r.emoji === emoji && r.reactedByMe,
+          );
+          if (hasReacted) {
+            emitRemoveReaction(msg.id, emoji);
+          } else {
+            emitAddReaction(msg.id, emoji);
+          }
+        } else if (isAdmin && index === destructiveIndex) {
+          handleDeleteMessage(msg.id);
+        }
+      };
+
+      if (Platform.OS === "ios") {
+        ActionSheetIOS.showActionSheetWithOptions(
+          {
+            options,
+            cancelButtonIndex: cancelIndex,
+            destructiveButtonIndex: destructiveIndex,
+          },
+          handleChoice,
+        );
+      } else {
+        Alert.alert("Reazione", undefined, [
+          ...emojiOptions.map((emoji, i) => ({
+            text: emoji,
+            onPress: () => handleChoice(i),
+          })),
+          ...(isAdmin
+            ? [
+                {
+                  text: deleteLabel,
+                  style: "destructive" as const,
+                  onPress: () => handleDeleteMessage(msg.id),
+                },
+              ]
+            : []),
+          { text: cancelLabel, style: "cancel" as const },
+        ]);
+      }
+    },
+    [isAdmin, emitAddReaction, emitRemoveReaction, roomId],
+  );
+
   const handleDeleteMessage = (messageId: string) => {
     Alert.alert("Elimina messaggio", "Sei sicuro?", [
       { text: "Annulla", style: "cancel" },
@@ -452,49 +530,77 @@ export function ChatRoomScreen({ navigation, route }: Props) {
             </Text>
           </View>
         )}
-        <TouchableOpacity
-          style={[styles.bubble, isOwn && styles.bubbleOwn]}
-          onLongPress={() => isAdmin && handleDeleteMessage(item.id)}
-        >
-          {!isOwn && (
-            <Text style={styles.senderName}>
-              {item.sender.nome} {item.sender.cognome}
-            </Text>
-          )}
-          {item.content ? (
-            <Text style={[styles.messageText, isOwn && styles.messageTextOwn]}>
-              {item.content}
-            </Text>
-          ) : null}
-          {item.attachments?.map((att) => (
-            <TouchableOpacity
-              key={att.id}
-              style={styles.attachmentCard}
-              onPress={() =>
-                handleOpenAttachment(att.id, att.originalName, att.mimeType)
-              }
-              disabled={downloadingId === att.id}
-            >
-              <Text style={styles.attachmentIcon}>
-                {downloadingId === att.id ? "⏳" : "📄"}
+        <View style={styles.messageContent}>
+          <TouchableOpacity
+            style={[styles.bubble, isOwn && styles.bubbleOwn]}
+            onLongPress={() => handleLongPressMessage(item)}
+          >
+            {!isOwn && (
+              <Text style={styles.senderName}>
+                {item.sender.nome} {item.sender.cognome}
               </Text>
-              <View>
-                <Text style={styles.attachmentName} numberOfLines={1}>
-                  {att.originalName}
+            )}
+            {item.content ? (
+              <Text
+                style={[styles.messageText, isOwn && styles.messageTextOwn]}
+              >
+                {item.content}
+              </Text>
+            ) : null}
+            {item.attachments?.map((att) => (
+              <TouchableOpacity
+                key={att.id}
+                style={styles.attachmentCard}
+                onPress={() =>
+                  handleOpenAttachment(att.id, att.originalName, att.mimeType)
+                }
+                disabled={downloadingId === att.id}
+              >
+                <Text style={styles.attachmentIcon}>
+                  {downloadingId === att.id ? "⏳" : "📄"}
                 </Text>
-                <Text style={styles.attachmentSize}>
-                  {(att.size / 1024).toFixed(0)} KB
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-          <Text style={[styles.timestamp, isOwn && styles.timestampOwn]}>
-            {new Date(item.createdAt).toLocaleTimeString("it-IT", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </Text>
-        </TouchableOpacity>
+                <View>
+                  <Text style={styles.attachmentName} numberOfLines={1}>
+                    {att.originalName}
+                  </Text>
+                  <Text style={styles.attachmentSize}>
+                    {(att.size / 1024).toFixed(0)} KB
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+            <Text style={[styles.timestamp, isOwn && styles.timestampOwn]}>
+              {new Date(item.createdAt).toLocaleTimeString("it-IT", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </Text>
+          </TouchableOpacity>
+          {item.reactions && item.reactions.length > 0 && (
+            <View style={[styles.reactionRow, isOwn && styles.reactionRowOwn]}>
+              {item.reactions.map((r) => (
+                <TouchableOpacity
+                  key={r.emoji}
+                  style={[
+                    styles.reactionPill,
+                    r.reactedByMe && styles.reactionPillActive,
+                  ]}
+                  onPress={() => {
+                    if (r.reactedByMe) {
+                      emitRemoveReaction(item.id, r.emoji);
+                    } else {
+                      emitAddReaction(item.id, r.emoji);
+                    }
+                  }}
+                >
+                  <Text style={styles.reactionPillText}>
+                    {r.emoji} {r.count}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
       </View>
     );
   };
@@ -581,7 +687,11 @@ export function ChatRoomScreen({ navigation, route }: Props) {
           )}
 
           {(() => {
-            const typingText = formatTypingText(typingUsers, t, user?.id ?? "");
+            const typingText = formatTypingText(
+              typingUsers,
+              t as (key: string, opts?: object) => string,
+              user?.id ?? "",
+            );
             return typingText ? (
               <View style={styles.typingBanner}>
                 <Text style={styles.typingText}>{typingText}</Text>
@@ -781,6 +891,29 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   messageRowOwn: { flexDirection: "row-reverse" },
+  messageContent: { flexShrink: 1, maxWidth: "75%" },
+  reactionRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 4,
+    marginTop: 4,
+  },
+  reactionRowOwn: { justifyContent: "flex-end" },
+  reactionPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  reactionPillActive: {
+    backgroundColor: "#e8f5ee",
+    borderColor: colors.primary,
+  },
+  reactionPillText: { fontSize: 13, color: colors.text },
   avatar: {
     width: 34,
     height: 34,
