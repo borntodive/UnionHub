@@ -117,6 +117,7 @@ export function ChatRoomScreen({ navigation, route }: Props) {
   } | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const [newMessageCount, setNewMessageCount] = useState(0);
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const isAtBottomRef = useRef(true);
 
   const handleScroll = useCallback((event: any) => {
@@ -285,15 +286,20 @@ export function ChatRoomScreen({ navigation, route }: Props) {
 
   const handleRetrySend = useCallback(() => {
     if (!pendingSend || !isConnected) return;
-    const ok = sendMessage(pendingSend.content, pendingSend.attachmentIds);
+    const ok = sendMessage(
+      pendingSend.content,
+      pendingSend.attachmentIds,
+      replyingTo?.id,
+    );
     if (ok) {
       setInputText("");
       setPendingSend(null);
       setSendFailed(false);
+      setReplyingTo(null);
     } else {
       setSendFailed(true);
     }
-  }, [pendingSend, isConnected, sendMessage]);
+  }, [pendingSend, isConnected, sendMessage, replyingTo]);
 
   const handleSend = () => {
     emitTypingStop();
@@ -308,7 +314,7 @@ export function ChatRoomScreen({ navigation, route }: Props) {
       setSendFailed(true);
       return;
     }
-    const ok = sendMessage(text, []);
+    const ok = sendMessage(text, [], replyingTo?.id);
     if (!ok) {
       setPendingSend({ content: text, attachmentIds: [] });
       setSendFailed(true);
@@ -317,6 +323,7 @@ export function ChatRoomScreen({ navigation, route }: Props) {
     setInputText("");
     setPendingSend(null);
     setSendFailed(false);
+    setReplyingTo(null);
   };
 
   useEffect(() => {
@@ -344,7 +351,7 @@ export function ChatRoomScreen({ navigation, route }: Props) {
         type,
       });
       const content = inputText.trim() || undefined;
-      const ok = sendMessage(content, [attachmentId]);
+      const ok = sendMessage(content, [attachmentId], replyingTo?.id);
       if (!ok) {
         setPendingSend({ content, attachmentIds: [attachmentId] });
         setSendFailed(true);
@@ -353,6 +360,7 @@ export function ChatRoomScreen({ navigation, route }: Props) {
       setInputText("");
       setPendingSend(null);
       setSendFailed(false);
+      setReplyingTo(null);
     } catch {
       Alert.alert(t("unionChat.attachmentTitle"), t("unionChat.uploadFailed"));
     } finally {
