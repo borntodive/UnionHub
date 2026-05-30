@@ -49,4 +49,11 @@ export class ChatMessage {
 
   @OneToMany(() => ChatReaction, (r) => r.message, { eager: false })
   reactions: ChatReaction[];
+
+  @Column({ type: "uuid", nullable: true })
+  replyToId: string | null;
+
+  @ManyToOne(() => ChatMessage, { nullable: true, onDelete: "SET NULL" })
+  @JoinColumn({ name: "replyToId" })
+  replyTo: ChatMessage | null;
 }
