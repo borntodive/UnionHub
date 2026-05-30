@@ -246,6 +246,8 @@ export class ChatService {
       .leftJoinAndSelect("m.sender", "sender")
       .leftJoinAndSelect("m.attachments", "attachments")
       .leftJoinAndSelect("m.reactions", "reactions")
+      .leftJoinAndSelect("m.replyTo", "replyTo")
+      .leftJoinAndSelect("replyTo.sender", "replyToSender")
       .where("m.roomId = :roomId", { roomId })
       .andWhere("m.deletedAt IS NULL")
       .orderBy("m.createdAt", "DESC")
@@ -275,10 +277,20 @@ export class ChatService {
       throw new ForbiddenException("Access denied");
     }
 
+    if (dto.replyToId) {
+      const parent = await this.messageRepo.findOne({
+        where: { id: dto.replyToId, roomId: dto.roomId },
+      });
+      if (!parent) {
+        throw new BadRequestException("Replied-to message not found in room");
+      }
+    }
+
     const message = this.messageRepo.create({
       roomId: dto.roomId,
       senderId: user.id,
       content: dto.content ?? null,
+      replyToId: dto.replyToId ?? null,
     });
     const saved = await this.messageRepo.save(message);
 

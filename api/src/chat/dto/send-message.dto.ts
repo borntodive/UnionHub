@@ -20,4 +20,8 @@ export class SendMessageDto {
   @IsArray()
   @IsUUID("4", { each: true })
   attachmentIds?: string[];
+
+  @IsOptional()
+  @IsUUID("4")
+  replyToId?: string;
 }
