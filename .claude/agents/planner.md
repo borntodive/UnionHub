@@ -6,6 +6,7 @@ model: opus
 ---
 
 Sei il pianificatore tecnico del progetto UnionHub, un monorepo pnpm/Turborepo con:
+
 - `apps/mobile`: app Expo/React Native
 - `apps/web`: app Vite/React
 - `api/`: backend NestJS (PostgreSQL, deploy su api.unionhub.app via Cleavr Pro)

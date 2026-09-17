@@ -22,15 +22,15 @@ UnionHub/
 
 ## Ruoli
 
-| Ruolo | Nome agente | Modello | Cosa fa |
-|---|---|---|---|
-| Direttore | *(sessione principale)* | quello che scegli tu | Coordina, decide priorità, delega agli altri |
-| Pianificatore | `planner` | Opus | Scompone le richieste in task concreti |
-| Grafica | `ui-designer` | Sonnet | UI/UX, coerenza visiva mobile/web |
-| Backend | `backend-dev` | Sonnet | NestJS, DB, RAG, logica payslip/contratti |
-| Frontend | `frontend-dev` | Sonnet | Logica client mobile ed web, integrazione API |
-| Revisore | `reviewer` | Opus | Code review sola lettura prima del merge |
-| Esploratore | `feature-scout` | Sonnet | Propone nuove funzionalità, non scrive codice |
+| Ruolo         | Nome agente             | Modello              | Cosa fa                                       |
+| ------------- | ----------------------- | -------------------- | --------------------------------------------- |
+| Direttore     | _(sessione principale)_ | quello che scegli tu | Coordina, decide priorità, delega agli altri  |
+| Pianificatore | `planner`               | Opus                 | Scompone le richieste in task concreti        |
+| Grafica       | `ui-designer`           | Sonnet               | UI/UX, coerenza visiva mobile/web             |
+| Backend       | `backend-dev`           | Sonnet               | NestJS, DB, RAG, logica payslip/contratti     |
+| Frontend      | `frontend-dev`          | Sonnet               | Logica client mobile ed web, integrazione API |
+| Revisore      | `reviewer`              | Opus                 | Code review sola lettura prima del merge      |
+| Esploratore   | `feature-scout`         | Sonnet               | Propone nuove funzionalità, non scrive codice |
 
 Il "direttore" non ha un file proprio: è semplicemente la sessione Claude Code che avvii tu. È lei a interpretare le tue richieste e a decidere quale/i sub-agente/i coinvolgere.
 

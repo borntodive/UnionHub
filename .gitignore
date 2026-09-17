@@ -273,3 +273,6 @@ graphify-out/cache/semantic/baaff621eb09f4e5f1170f7e0504dfba2864089c624f4c079fd8
 graphify-out/cache/semantic/f11f80ab5cc4add5f212490bb7131b962807f1a6b7d93c571cd186d2376563a1.json
 graphify-out/cache/semantic/fc888f3e10d363f3df8c214f3a848b5840c6954c071e028b1017a226c2ac0a01.json
 graphify-out/cache/semantic/fe3c3f58baff70a950c8c160a16bb8a33f9609bb283f9d6fd2ba7c5ea83a0f89.json
+
+# Full graphify output dir (generated, can be regenerated with graphify update .)
+graphify-out/

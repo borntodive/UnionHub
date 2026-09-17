@@ -192,8 +192,8 @@ replyTo?: {
 
 **Swipe-to-reply gesture** (`ChatRoomScreen`):
 
-- Use `Swipeable` from `react-native-gesture-handler` (already installed). Each message row wrapped in `Swipeable` with `renderRightActions` returning null and `onSwipeableOpen("left")` → set `replyingTo: ChatMessage` state + haptic feedback + immediately call `swipeableRef.current.close()`.
-- Haptic feedback: `expo-haptics` must be added (`npx expo install expo-haptics`). Call `Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)`. Import guarded in try/catch to avoid crash if unavailable.
+- Use `Swipeable` from `react-native-gesture-handler` (already installed). Each message row wrapped in `Swipeable` with `renderRightActions` returning null and `onSwipeableOpen("left")` → set `replyingTo: ChatMessage` state + immediately call `swipeableRef.current.close()`.
+- No haptic feedback.
 - No left-action rendered (avoids conflict with FlatList horizontal scroll). `overshootLeft={false}`.
 
 **Reply preview bar** (above input bar, visible when `replyingTo != null`):
@@ -236,6 +236,4 @@ replyTo?: {
 
 ## New Dependencies
 
-| Package        | Command                         | Why                               |
-| -------------- | ------------------------------- | --------------------------------- |
-| `expo-haptics` | `npx expo install expo-haptics` | Haptic feedback on swipe-to-reply |
+None. All required packages already installed.

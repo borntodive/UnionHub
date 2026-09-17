@@ -24,6 +24,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { Swipeable } from "react-native-gesture-handler";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -116,6 +117,7 @@ export function ChatRoomScreen({ navigation, route }: Props) {
     name: string;
   } | null>(null);
   const flatListRef = useRef<FlatList>(null);
+  const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
   const [newMessageCount, setNewMessageCount] = useState(0);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const isAtBottomRef = useRef(true);
@@ -529,87 +531,109 @@ export function ChatRoomScreen({ navigation, route }: Props) {
   const renderMessage = ({ item }: { item: ChatMessage }) => {
     const isOwn = item.sender.id === user?.id;
     return (
-      <View style={[styles.messageRow, isOwn && styles.messageRowOwn]}>
-        {!isOwn && (
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {item.sender.nome[0]}
-              {item.sender.cognome[0]}
-            </Text>
+      <Swipeable
+        ref={(ref) => {
+          if (ref) swipeableRefs.current.set(item.id, ref);
+          else swipeableRefs.current.delete(item.id);
+        }}
+        renderLeftActions={() => (
+          <View style={styles.replySwipeAction}>
+            <Text style={styles.replySwipeIcon}>↩</Text>
           </View>
         )}
-        <View style={styles.messageContent}>
-          <TouchableOpacity
-            style={[styles.bubble, isOwn && styles.bubbleOwn]}
-            onLongPress={() => handleLongPressMessage(item)}
-          >
-            {!isOwn && (
-              <Text style={styles.senderName}>
-                {item.sender.nome} {item.sender.cognome}
+        leftThreshold={40}
+        friction={2}
+        onSwipeableOpen={(direction) => {
+          if (direction === "left") {
+            setReplyingTo(item);
+            swipeableRefs.current.get(item.id)?.close();
+          }
+        }}
+      >
+        <View style={[styles.messageRow, isOwn && styles.messageRowOwn]}>
+          {!isOwn && (
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {item.sender.nome[0]}
+                {item.sender.cognome[0]}
               </Text>
-            )}
-            {item.content ? (
-              <Text
-                style={[styles.messageText, isOwn && styles.messageTextOwn]}
-              >
-                {item.content}
-              </Text>
-            ) : null}
-            {item.attachments?.map((att) => (
-              <TouchableOpacity
-                key={att.id}
-                style={styles.attachmentCard}
-                onPress={() =>
-                  handleOpenAttachment(att.id, att.originalName, att.mimeType)
-                }
-                disabled={downloadingId === att.id}
-              >
-                <Text style={styles.attachmentIcon}>
-                  {downloadingId === att.id ? "⏳" : "📄"}
-                </Text>
-                <View>
-                  <Text style={styles.attachmentName} numberOfLines={1}>
-                    {att.originalName}
-                  </Text>
-                  <Text style={styles.attachmentSize}>
-                    {(att.size / 1024).toFixed(0)} KB
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-            <Text style={[styles.timestamp, isOwn && styles.timestampOwn]}>
-              {new Date(item.createdAt).toLocaleTimeString("it-IT", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </Text>
-          </TouchableOpacity>
-          {item.reactions && item.reactions.length > 0 && (
-            <View style={[styles.reactionRow, isOwn && styles.reactionRowOwn]}>
-              {item.reactions.map((r) => (
-                <TouchableOpacity
-                  key={r.emoji}
-                  style={[
-                    styles.reactionPill,
-                    r.reactedByMe && styles.reactionPillActive,
-                  ]}
-                  onPress={() => {
-                    if (r.reactedByMe) {
-                      emitRemoveReaction(item.id, r.emoji);
-                    } else {
-                      emitAddReaction(item.id, r.emoji);
-                    }
-                  }}
-                >
-                  <Text style={styles.reactionPillText}>
-                    {r.emoji} {r.count}
-                  </Text>
-                </TouchableOpacity>
-              ))}
             </View>
           )}
+          <View style={styles.messageContent}>
+            <TouchableOpacity
+              style={[styles.bubble, isOwn && styles.bubbleOwn]}
+              onLongPress={() => handleLongPressMessage(item)}
+            >
+              {!isOwn && (
+                <Text style={styles.senderName}>
+                  {item.sender.nome} {item.sender.cognome}
+                </Text>
+              )}
+              {item.content ? (
+                <Text
+                  style={[styles.messageText, isOwn && styles.messageTextOwn]}
+                >
+                  {item.content}
+                </Text>
+              ) : null}
+              {item.attachments?.map((att) => (
+                <TouchableOpacity
+                  key={att.id}
+                  style={styles.attachmentCard}
+                  onPress={() =>
+                    handleOpenAttachment(att.id, att.originalName, att.mimeType)
+                  }
+                  disabled={downloadingId === att.id}
+                >
+                  <Text style={styles.attachmentIcon}>
+                    {downloadingId === att.id ? "⏳" : "📄"}
+                  </Text>
+                  <View>
+                    <Text style={styles.attachmentName} numberOfLines={1}>
+                      {att.originalName}
+                    </Text>
+                    <Text style={styles.attachmentSize}>
+                      {(att.size / 1024).toFixed(0)} KB
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+              <Text style={[styles.timestamp, isOwn && styles.timestampOwn]}>
+                {new Date(item.createdAt).toLocaleTimeString("it-IT", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </Text>
+            </TouchableOpacity>
+            {item.reactions && item.reactions.length > 0 && (
+              <View
+                style={[styles.reactionRow, isOwn && styles.reactionRowOwn]}
+              >
+                {item.reactions.map((r) => (
+                  <TouchableOpacity
+                    key={r.emoji}
+                    style={[
+                      styles.reactionPill,
+                      r.reactedByMe && styles.reactionPillActive,
+                    ]}
+                    onPress={() => {
+                      if (r.reactedByMe) {
+                        emitRemoveReaction(item.id, r.emoji);
+                      } else {
+                        emitAddReaction(item.id, r.emoji);
+                      }
+                    }}
+                  >
+                    <Text style={styles.reactionPillText}>
+                      {r.emoji} {r.count}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
         </View>
-      </View>
+      </Swipeable>
     );
   };
 
@@ -706,6 +730,22 @@ export function ChatRoomScreen({ navigation, route }: Props) {
               </View>
             ) : null;
           })()}
+
+          {replyingTo && (
+            <View style={styles.replyPreviewBar}>
+              <View style={styles.replyPreviewContent}>
+                <Text style={styles.replyPreviewSender} numberOfLines={1}>
+                  {replyingTo.sender.nome} {replyingTo.sender.cognome}
+                </Text>
+                <Text style={styles.replyPreviewText} numberOfLines={1}>
+                  {replyingTo.content ?? "📎 allegato"}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setReplyingTo(null)}>
+                <Text style={styles.replyPreviewDismiss}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <View
             style={[

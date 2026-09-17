@@ -13,6 +13,7 @@ Quando invocato:
 2. Concentrati sui file modificati, non su un audit generale del repo.
 
 Checklist di revisione:
+
 - Correttezza logica rispetto all'obiettivo del task
 - Sicurezza: nessun secret o credenziale esposta, validazione input, specialmente su endpoint NestJS in `api/`
 - Coerenza con i pattern già in uso nel monorepo (naming, struttura cartelle, tipi condivisi tra mobile/web/api)
@@ -22,6 +23,7 @@ Checklist di revisione:
 - Performance: query N+1, re-render inutili su React, chiamate API ridondanti
 
 Formato output, organizzato per priorità:
+
 - **Critico** (blocca il merge)
 - **Da sistemare** (dovrebbe essere corretto prima del merge)
 - **Suggerimenti** (miglioria opzionale)
