@@ -18,6 +18,20 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
+    "types": [
+      "node",
+      "jest",
+      "express",
+      "multer",
+      "bcrypt",
+      "better-sqlite3",
+      "nodemailer",
+      "mailparser",
+      "marked",
+      "pdf-parse",
+      "passport-jwt",
+      "uuid"
+    ],
     "paths": {
       "@/*": ["src/*"],
       "@config/*": ["src/config/*"],

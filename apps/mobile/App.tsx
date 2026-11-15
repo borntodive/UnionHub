@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./src/i18n";
 
@@ -122,11 +123,13 @@ function AppContent() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <SafeAreaProvider>
-          <AppContent />
-        </SafeAreaProvider>
-      </QueryClientProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <QueryClientProvider client={queryClient}>
+          <SafeAreaProvider>
+            <AppContent />
+          </SafeAreaProvider>
+        </QueryClientProvider>
+      </GestureHandlerRootView>
     </ErrorBoundary>
   );
 }
